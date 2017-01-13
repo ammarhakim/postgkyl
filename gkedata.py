@@ -18,7 +18,7 @@ class GkeData:
         if not os.path.exists(self.fName):
             raise exceptions.RuntimeError(
                 "GkeData: File %s does not exist!" % fName)
-        self.fh = tables.openFile(fName)
+        self.fh = tables.open_file(fName, 'a')
 
         grid = self.fh.root.StructGrid
         # read in information about grid
@@ -61,7 +61,7 @@ class GkeHistoryData:
 
         # read in first history file
         fn = base + ("_%d.h5" % start)
-        fh = tables.openFile(fn)
+        fh = tables.open_file(fn)
         self.history = fh.root.DataStruct.data.read()
         self.time = fh.root.DataStruct.timeMesh.read()
         fh.close()

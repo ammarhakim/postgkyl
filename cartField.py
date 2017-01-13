@@ -2,6 +2,7 @@
 # standart imports
 import numpy
 import exceptions
+import tables
 # custom imports
 import gkedata
 import gkedgbasis
@@ -38,7 +39,7 @@ basisMap = {'lobatto' : ((gkedgbasis.GkeDgLobatto1DPolyOrder1Basis,
 def fixCoordinates(coords, values,
                    fix1=None, fix2=None, fix3=None,
                    fix4=None, fix5=None, fix6=None):
-    """
+    r"""
     Fixes specified coordinates and decreases the dimension of data.
     """
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
@@ -74,8 +75,9 @@ class CartField(object):
         r"""
         Load Gkeyll output file using the gkedata class.
         """
-        self.data = gkedata.GkeData(fileName)
         self.isLoaded = 1
+        self.fileName = fileName
+        self.data = gkedata.GkeData(fileName)
 
     def plot(self, comp=0, 
              fix1=None, fix2=None, fix3=None,
@@ -112,16 +114,31 @@ class CartField(object):
                 raise exeptions.RuntimeError(
                     "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.")
 
+    def close(self):
+        r"""
+        Closes the HDF5 file
+        """
+        self.data.fh.close()
+
 class CartFieldDG(CartField):
     r"""
     Class for Gkeyll DG Cartesian fields
     """
 
-    def __init__(self, basis, polyOrder, fileName=None):
-        super(CartFieldDG, self).__init__(fileName)
+    def __init__(self, basis, polyOrder, fileName=None, loadProj=True):
+        if fileName is not None:
+            self.load(fileName, loadProj)
         self.basis     = basis
         self.polyOrder = polyOrder
         self.isProj    = 0
+
+    def load(self, fileName, loadProj=True):
+        super(CartFieldDG, self).load(fileName)
+        if loadProj:
+            try:
+                self.dataProj = numpy.array(self.data.fh.root.StructGridFieldProj)
+            except:
+                pass
 
     def project(self, component=0):
         r"""
@@ -167,5 +184,22 @@ class CartFieldDG(CartField):
         else:
             raise exeptions.RuntimeError(
                 "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.")
+
+    def save(self, saveAs=None):
+        if saveAs is None:
+            try:
+                self.data.fh.remove_node("/StructGridFieldProj")
+            except:
+                pass
+            self.data.fh.create_array("/", 'StructGridFieldProj', self.dataProj, 'Projected DG data field')
+            self.data.fh.flush()
+        else:
+            self.data.fh.copy_file(saveAs, overwrite=True)
+            fh = tables.open_file(saveAs, 'a')
+            fh.create_array("/", 'StructGridFieldProj', self.dataProj, 'Projected DG data field')
+            fh.flush()
+            fh.close()
+
+        
 
 
