@@ -35,29 +35,6 @@ basisMap = {'lobatto' : ((gkedgbasis.GkeDgLobatto1DPolyOrder1Basis,
                               None,
                               None))}
 
-# helper functions
-def fixCoordinates(coords, values,
-                   fix1=None, fix2=None, fix3=None,
-                   fix4=None, fix5=None, fix6=None):
-    r"""
-    Fixes specified coordinates and decreases the dimension of data.
-    """
-    fix = (fix1, fix2, fix3, fix4, fix5, fix6)
-    coordsFix = coords
-    valuesFix = values
-    for i, value in reversed(list(enumerate(fix))):
-        if value is not None and len(values.shape) > i:
-            mask = numpy.zeros(values.shape[i])
-            mask[fix[i]] = 1
-
-            coordsFix = numpy.delete(coordsFix, i, 0)
-            coordsFix = numpy.compress(mask, coordsFix, axis=i+1)  
-            coordsFix = numpy.squeeze(coordsFix)
-
-            valuesFix = numpy.compress(mask, valuesFix, axis=i) 
-            valuesFix = numpy.squeeze(valuesFix)
-    return coordsFix, valuesFix
-                      
 class CartField(object):
     r"""
     Base class for Gkeyll Cartesian fields
@@ -85,34 +62,8 @@ class CartField(object):
         r"""
         Plots the field data.
         """
-        if not self.isLoaded:
-            raise exceptions.RuntimeError(
-                "CartField.plot: Data needs to be loaded first. Use CartField.load(fileName).")
-
-        coords = []
-        for i in range(self.data.ndim):
-            temp = numpy.linspace(self.data.lowerBounds[i], self.data.upperBounds[i], self.data.cells[i])
-            coords.append(temp)
-        coordsMat = numpy.array(numpy.meshgrid(*coords, indexing='ij'))
-        
-        comp = numpy.array(comp)
-        if comp.ndim == 0:
-            comp = numpy.expand_dims(comp, 0)
-        for i in range(comp.size):
-            mask    = numpy.zeros(self.data.q.shape[self.data.ndim])
-            mask[i] = 1
-            values = numpy.compress(mask, self.data.q, self.data.ndim)
-            values = numpy.squeeze(values)
-            coordsPlot, valuesPlot = fixCoordinates(coordsMat, values,
-                                                    fix1, fix2, fix3, fix4, fix5, fix6)
-            if len(valuesPlot.shape) == 1:
-                plotting.plot1D(coordsPlot, valuesPlot)
-            elif len(valuesPlot.shape) == 2:
-                plotting.plot2D(numpy.transpose(coordsPlot[0]), numpy.transpose(coordsPlot[1]),
-                                numpy.transpose(valuesPlot))
-            else:
-                raise exeptions.RuntimeError(
-                    "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.")
+        plotting.plotField(self, comp,
+                           fix1, fix2, fix3, fix4, fix5, fix6)
 
     def close(self):
         r"""
@@ -166,24 +117,13 @@ class CartFieldDG(CartField):
         r"""
         Plots the DG field data.
         """
-        if noProject is not None:
-            super(CartFieldDG, self).plot(comp, fix1, fix2, fix3, fix4, fix5, fix6)
-            return
-
-        if not self.isProj:
-            print("Data not projected, projecting.")
-            self.project()
-        
-        coordsPlot, valuesPlot = fixCoordinates(self.coords, self.dataProj,
-                                                fix1, fix2, fix3, fix4, fix5, fix6)
-        if len(valuesPlot.shape) == 1:
-            plotting.plot1D(coordsPlot, valuesPlot)
-        elif len(valuesPlot.shape) == 2:
-            plotting.plot2D(numpy.transpose(coordsPlot[0]), numpy.transpose(coordsPlot[1]),
-                            numpy.transpose(valuesPlot))
+        if noProject:
+            plotting.plotField(self, comp,
+                               fix1, fix2, fix3, fix4, fix5, fix6)
         else:
-            raise exeptions.RuntimeError(
-                "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.")
+            plotting.plotField(self, comp, True,
+                               fix1, fix2, fix3, fix4, fix5, fix6)
+
 
     def save(self, saveAs=None):
         if saveAs is None:

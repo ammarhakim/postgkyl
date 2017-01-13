@@ -8,6 +8,29 @@ import numpy
 import matplotlib.pyplot as plt
 
 # Helper plotting methods
+def fixCoordinates(coords, values,
+                   fix1=None, fix2=None, fix3=None,
+                   fix4=None, fix5=None, fix6=None):
+    r"""
+    Fixes specified coordinates and decreases the dimension of data.
+    """
+    fix = (fix1, fix2, fix3, fix4, fix5, fix6)
+    coordsFix = coords
+    valuesFix = values
+    for i, value in reversed(list(enumerate(fix))):
+        if value is not None and len(values.shape) > i:
+            mask = numpy.zeros(values.shape[i])
+            mask[fix[i]] = 1
+
+            coordsFix = numpy.delete(coordsFix, i, 0)
+            coordsFix = numpy.compress(mask, coordsFix, axis=i+1)  
+            coordsFix = numpy.squeeze(coordsFix)
+
+            valuesFix = numpy.compress(mask, valuesFix, axis=i) 
+            valuesFix = numpy.squeeze(valuesFix)
+    return coordsFix, valuesFix
+                      
+
 def figureSetup():
     plt.rcParams['lines.linewidth']            = 4
     plt.rcParams['font.size']                  = 18
@@ -65,5 +88,50 @@ def plot2D(dataX, dataY, dataZ):
     ax.pcolormesh(dataX, dataY, dataZ)
     ax.axis('tight')
     #colorbar(ax)
-     
- 
+
+def plotField(field, comp=0, isDG=False,
+              fix1=None, fix2=None, fix3=None,
+              fix4=None, fix5=None, fix6=None):
+
+    if not field.isLoaded:
+        raise exceptions.RuntimeError(
+            "CartField.plot: Data needs to be loaded first. Use CartField.load(fileName).")
+
+    if isDG and not field.isProj:
+        print("Data not projected, projecting.")
+        field.project()
+
+    if not isDG:
+        coords = []
+        for i in range(field.data.ndim):
+            temp = numpy.linspace(field.data.lowerBounds[i], field.data.upperBounds[i], field.data.cells[i])
+            coords.append(temp)
+        coords = numpy.array(numpy.meshgrid(*coords, indexing='ij'))
+    else:
+        coords = field.coords
+        
+    comp = numpy.array(comp)
+    if comp.ndim == 0:
+        comp = numpy.expand_dims(comp, 0)
+    for i in range(comp.size):
+        # extractiong the coordinate
+        if not isDG:
+            values  = field.data.q
+        else:
+            values = field.dataProj
+        if len(values.shape) != field.data.ndim:
+            mask    = numpy.zeros(values.shape[field.data.ndim])
+            mask[i] = 1
+            values = numpy.compress(mask, values, field.data.ndim)
+            values = numpy.squeeze(values)
+        coordsPlot, valuesPlot = fixCoordinates(coords, values,
+                                                fix1, fix2, fix3, fix4, fix5, fix6)
+        if len(valuesPlot.shape) == 1:
+            plot1D(coordsPlot, valuesPlot)
+        elif len(valuesPlot.shape) == 2:
+            plot2D(numpy.transpose(coordsPlot[0]),
+                   numpy.transpose(coordsPlot[1]),
+                   numpy.transpose(valuesPlot))
+        else:
+            raise exeptions.RuntimeError(
+                "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.") 
