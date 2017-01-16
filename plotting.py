@@ -5,32 +5,11 @@ Basic Gkeyll plotting methods
 
 # standart imports
 import numpy
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt                      
+# custom imports
+import cartField
 
-# Helper plotting methods
-def fixCoordinates(coords, values,
-                   fix1=None, fix2=None, fix3=None,
-                   fix4=None, fix5=None, fix6=None):
-    r"""
-    Fixes specified coordinates and decreases the dimension of data.
-    """
-    fix = (fix1, fix2, fix3, fix4, fix5, fix6)
-    coordsFix = coords
-    valuesFix = values
-    for i, value in reversed(list(enumerate(fix))):
-        if value is not None and len(values.shape) > i:
-            mask = numpy.zeros(values.shape[i])
-            mask[fix[i]] = 1
-
-            coordsFix = numpy.delete(coordsFix, i, 0)
-            coordsFix = numpy.compress(mask, coordsFix, axis=i+1)  
-            coordsFix = numpy.squeeze(coordsFix)
-
-            valuesFix = numpy.compress(mask, valuesFix, axis=i) 
-            valuesFix = numpy.squeeze(valuesFix)
-    return coordsFix, valuesFix
-                      
-
+# Helper functions
 def figureSetup():
     plt.rcParams['lines.linewidth']            = 4
     plt.rcParams['font.size']                  = 18
@@ -51,10 +30,10 @@ def figureSetup():
     #plt.rcParams['mathtext.default'] = 'regular'
 
 def colorbar(obj, mode=1, redraw=False, _fig_=None, _ax_=None, aspect=None):
-    '''
+    r"""
     Add a colorbar adjacent to obj, with a matching height
     For use of aspect, see http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set_aspect ; E.g., to fill the rectangle, try "auto"
-    '''
+    """
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     if mode == 1:
         _fig_ = obj.figure; _ax_ = obj.axes
@@ -95,20 +74,17 @@ def plotField(field, comp=0, isDG=False,
 
     if not field.isLoaded:
         raise exceptions.RuntimeError(
-            "CartField.plot: Data needs to be loaded first. Use CartField.load(fileName).")
+            "CartField.plot: Data needs to be loaded first.",
+            " Use CartField.load(fileName).")
 
     if isDG and not field.isProj:
         print("Data not projected, projecting.")
         field.project()
 
     if not isDG:
-        coords = []
-        for i in range(field.data.ndim):
-            temp = numpy.linspace(field.data.lowerBounds[i], field.data.upperBounds[i], field.data.cells[i])
-            coords.append(temp)
-        coords = numpy.array(numpy.meshgrid(*coords, indexing='ij'))
-    else:
         coords = field.coords
+    else:
+        coords = field.coordsProj
         
     comp = numpy.array(comp)
     if comp.ndim == 0:
@@ -116,16 +92,18 @@ def plotField(field, comp=0, isDG=False,
     for i in range(comp.size):
         # extractiong the coordinate
         if not isDG:
-            values  = field.data.q
+            values = field.q
         else:
-            values = field.dataProj
-        if len(values.shape) != field.data.ndim:
-            mask    = numpy.zeros(values.shape[field.data.ndim])
+            values = field.qProj
+        # selectiong component
+        if len(values.shape) != field.numDims:
+            mask    = numpy.zeros(values.shape[field.numDims])
             mask[i] = 1
-            values = numpy.compress(mask, values, field.data.ndim)
-            values = numpy.squeeze(values)
-        coordsPlot, valuesPlot = fixCoordinates(coords, values,
-                                                fix1, fix2, fix3, fix4, fix5, fix6)
+            values  = numpy.compress(mask, values, field.numDims)
+            values  = numpy.squeeze(values)
+        coordsPlot, valuesPlot = cartField.fixCoordinates(coords, values,
+                                                          fix1, fix2, fix3,
+                                                          fix4, fix5, fix6)
         if len(valuesPlot.shape) == 1:
             plot1D(coordsPlot, valuesPlot)
         elif len(valuesPlot.shape) == 2:
@@ -134,4 +112,5 @@ def plotField(field, comp=0, isDG=False,
                    numpy.transpose(valuesPlot))
         else:
             raise exeptions.RuntimeError(
-                "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.") 
+                "CartField.plot: Dimension of the field is bigger than two.",
+                " Some dimensions need to be fixed.") 

@@ -192,11 +192,11 @@ class GkeDgBasis:
         self.numNodes = numNodes
         self.numEqns = dat.q.shape[-1]/numNodes
         self.ndim = dat.upperBounds.shape[0]
-        self.dx = (dat.upperBounds[:]-dat.lowerBounds[:])/dat.cells[:]
+        self.dx = (dat.upperBounds[:]-dat.lowerBounds[:])/dat.numCells[:]
         self.Xc = []
         for d in range(self.ndim):
             self.Xc.append(
-                pylab.linspace(dat.lowerBounds[d]+0.5*self.dx[d], dat.upperBounds[d]-0.5*self.dx[d], dat.cells[d])
+                pylab.linspace(dat.lowerBounds[d]+0.5*self.dx[d], dat.upperBounds[d]-0.5*self.dx[d], dat.numCells[d])
                 )
 
     def _evalSum(self, coeff, fields):
