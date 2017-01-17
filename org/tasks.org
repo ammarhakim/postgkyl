@@ -5,4 +5,4 @@
 ** TODO Implement field time arrays and their plotting
 ** TODO Implement particle-field correlation diagnostics
 ** TODO Add growth rate stuff
-** TODO Create simple MARKDOWN documentation
+** TODO Create a simple MARKDOWN documentation

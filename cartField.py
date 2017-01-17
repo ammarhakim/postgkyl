@@ -5,7 +5,6 @@ import exceptions
 import tables
 import os
 # custom imports
-import gkedata
 import gkedgbasis
 import plotting
 
@@ -68,7 +67,7 @@ class CartField(object):
     def __init__(self, fileName=None):
         self.isLoaded = 0
         if fileName is not None:
-            self.loadG1(fileName)
+            self.load(fileName)
 
     def __del__(self):
         try:
@@ -76,15 +75,15 @@ class CartField(object):
         except:
             pass
 
-    def loadG1(self, fileName):
+    def load(self, fileName):
         r"""
         Load Gkeyll output file specified by 'fileName'.
         """
-        self.isLoaded = 1
         self.fileName = fileName
         if not os.path.exists(self.fileName):
             raise exceptions.RuntimeError(
-                'CartField:load File {} does not exist!'.format(fileName))
+                'CartField:load File \'{}\' does not exist!'.format(fileName))
+        self.isLoaded = 1
         self.fh = tables.open_file(fileName, 'a')
         grid = self.fh.root.StructGrid
 
@@ -136,14 +135,14 @@ class CartFieldDG(CartField):
                  numComponents=1,loadProj=True):
         self.isLoaded = 0
         if fileName is not None:
-            self.loadG1(fileName, loadProj)
+            self.load(fileName, loadProj)
         self.basis     = basis
         self.polyOrder = polyOrder
         self.numComps  = numComponents
         self.isProj    = 0
 
-    def loadG1(self, fileName, loadProj=True):
-        super(CartFieldDG, self).loadG1(fileName)
+    def load(self, fileName, loadProj=True):
+        super(CartFieldDG, self).load(fileName)
         if loadProj:
             try:
                 self.qProj = \
