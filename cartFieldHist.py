@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+postgkyl module containing history array classes CartFieldHist and
+CartFieldDGHist
+"""
+
 # standart imports
 import numpy
 import exceptions
@@ -48,8 +53,22 @@ class CartFieldHist(object):
     def plot(self, numSnapshots, comp=0, 
              fix1=None, fix2=None, fix3=None,
              fix4=None, fix5=None, fix6=None):
-        r"""
-        Plots the specified number of snapshots.
+        """Plot time snapshots snapshots of the history data.
+        
+        Inputs:
+        numSnapshots -- number of time snapshots to create
+        
+        Keyword arguments:
+        comp -- list or tuple of components to be plotted (default 0)
+        fix1 -- fixes the first coordinate to provided index (default None)
+        fix2 -- fixes the second coordinate to provided index (default None)
+        fix3 -- fixes the third coordinate to provided index (default None)
+        fix4 -- fixes the fourth coordinate to provided index (default None)
+        fix5 -- fixes the fifth coordinate to provided index (default None)
+        fix6 -- fixes the sixth coordinate to provided index (default None)
+        
+        Returns:
+        None
         """
         plotting.plotFieldHist(self, numSnapshots, comp=comp,
                                fix1=fix1, fix2=fix2, fix3=fix3,
@@ -95,8 +114,20 @@ class CartFieldDGHist(CartFieldHist):
     
 
     def project(self):
-        r"""
-        Project data with apropriate basis from GkeDgBasis
+        """Project all data with an apropriate basis from the module GkeDgBasis
+
+        Inputs:
+        None
+
+        Keywords:
+        None
+
+        Returns:
+        None
+
+        Note:
+        Calculates projection for all the components specified
+        by the 'numComps' variable during the initialization.
         """
         if not self.isLoaded:
             raise exceptions.RuntimeError(
@@ -110,8 +141,28 @@ class CartFieldDGHist(CartFieldHist):
     def plot(self, numSnapshots, comp=0, noProj=None, 
              fix1=None, fix2=None, fix3=None,
              fix4=None, fix5=None, fix6=None):
-        r"""
-        Plots the specified number of DG snapshots.
+        """Plot time snapshots snapshots of the history data.
+        
+        Inputs:
+        numSnapshots -- number of time snapshots to create
+        
+        Keyword arguments:
+        comp -- list or tuple of components to be plotted (default 0)
+        noProj -- disable automated projection of data (default False)
+        fix1 -- fixes the first coordinate to provided index (default None)
+        fix2 -- fixes the second coordinate to provided index (default None)
+        fix3 -- fixes the third coordinate to provided index (default None)
+        fix4 -- fixes the fourth coordinate to provided index (default None)
+        fix5 -- fixes the fifth coordinate to provided index (default None)
+        fix6 -- fixes the sixth coordinate to provided index (default None)
+        
+        Returns:
+        None
+        
+        Note: 
+        If the projected data are not available, the project
+        method will be called before plotting, unless specified
+        otherwise by flag 'noProj'.
         """
         if noProj:
             plotting.plotFieldHist(self, numSnapshots, comp=comp,

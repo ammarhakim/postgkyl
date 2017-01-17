@@ -2,7 +2,7 @@
 """Gkeyll postprocessing package
 
 Modules:
-cartField     -- contains basis cartesian field classes CartField and CartFieldDG
+cartField     -- contains basic cartesian field classes CartField and CartFieldDG
 cartFieldHist -- contains history array classes CartFieldHist and CartFieldDGHist
 plotting      -- contains plotting methods
 """

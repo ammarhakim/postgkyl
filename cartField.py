@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+posgkyl module containing basic cartesian field classes CartField and
+CartFieldDG
+"""
 
 # standart imports
 import numpy
@@ -284,9 +288,9 @@ class CartFieldDG(CartField):
         None
 
         Note: 
-        If the projected data re not available, the project
+        If the projected data are not available, the project
         method will be called before plotting, unless specified
-        otherwise.
+        otherwise by flag 'noProj'.
         """
         if noProj:
             plotting.plotField(self, comp, isDG=False,
@@ -298,7 +302,7 @@ class CartFieldDG(CartField):
                                fix4=fix4, fix5=fix5, fix6=fix6)
 
     def project(self):
-        """Project data with an apropriate basis from the module GkeDgBasis
+        """Project data with an apropriate basis from the module GkeDgBasis.
 
         Inputs:
         None
@@ -309,7 +313,7 @@ class CartFieldDG(CartField):
         Returns:
         None
 
-        None:
+        Note:
         Calculates projection for all the components specified
         by the 'numComps' variable during the initialization.
         """
