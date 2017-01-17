@@ -48,34 +48,38 @@ def colorbar(obj, mode=1, redraw=False, _fig_=None, _ax_=None, aspect=None):
         _fig_.canvas.draw()
     return _cbar_
 
-def plot1D(dataX, dataY):
+def plot1D(dataX, dataY, fig=None, ax=None,
+           color='RoyalBlue'):
     r"""
     Plots 1D Gkeyll data
     """
     figureSetup()
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(dataX, dataY)
-    ax.grid()
-    plt.tight_layout()
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(1, 1)
+    ax.plot(dataX, dataY, color=color)
+    ax.grid(True)
+    plt.tight_layout(True)
 
-def plot2D(dataX, dataY, dataZ):
+def plot2D(dataX, dataY, dataZ, fig=None, ax=None):
     r"""
     Plots 2D Gkeyll data
     """
     figureSetup()
-    fig, ax = plt.subplots(1, 1)
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(1, 1)
     ax.pcolormesh(dataX, dataY, dataZ)
     ax.axis('tight')
     #colorbar(ax)
 
 def plotField(field, comp=0, isDG=False,
               fix1=None, fix2=None, fix3=None,
-              fix4=None, fix5=None, fix6=None):
+              fix4=None, fix5=None, fix6=None,
+              fig=None, ax=None,
+              color='RoyalBlue'):
 
     if not field.isLoaded:
         raise exceptions.RuntimeError(
-            "CartField.plot: Data needs to be loaded first.",
-            " Use CartField.load(fileName).")
+            "CartField.plot: Data needs to be loaded first. Use CartField.load(fileName).")
 
     if isDG and not field.isProj:
         print("Data not projected, projecting.")
@@ -104,13 +108,46 @@ def plotField(field, comp=0, isDG=False,
         coordsPlot, valuesPlot = cartField.fixCoordinates(coords, values,
                                                           fix1, fix2, fix3,
                                                           fix4, fix5, fix6)
+        coordsPlot = numpy.squeeze(coordsPlot)
+        valuesPlot = numpy.squeeze(valuesPlot)
+        
         if len(valuesPlot.shape) == 1:
-            plot1D(coordsPlot, valuesPlot)
+            plot1D(coordsPlot, valuesPlot,
+                   fig=fig, ax=ax,
+                   color=color)
         elif len(valuesPlot.shape) == 2:
             plot2D(numpy.transpose(coordsPlot[0]),
                    numpy.transpose(coordsPlot[1]),
-                   numpy.transpose(valuesPlot))
+                   numpy.transpose(valuesPlot),
+                   fig=fig, ax=ax)
         else:
             raise exeptions.RuntimeError(
                 "CartField.plot: Dimension of the field is bigger than two.",
                 " Some dimensions need to be fixed.") 
+
+
+def plotFieldHist(fieldHist, numSnapshots,
+                  comp=0, isDG=False,
+                  fix1=None, fix2=None, fix3=None,
+                  fix4=None, fix5=None, fix6=None,
+                  fig=None, ax=None):
+
+    # get colormap
+    bluesCM = plt.get_cmap('Blues')
+    
+    snapshots = numpy.linspace(fieldHist.history[0].time,
+                               fieldHist.history[-1].time,
+                               numSnapshots)
+    # convert array to nearest integers
+    snapshots = numpy.rint(snapshots)
+
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(1, 1)
+
+    for i, idx in enumerate(snapshots):
+        color = bluesCM(float(i)/(numSnapshots-1))
+        plotField(fieldHist.history[int(idx)], comp=comp, isDG=isDG,
+                  fix1=fix1, fix2=fix2, fix3=fix3,
+                  fix4=fix4, fix5=fix5, fix6=fix6,
+                  fig=fig, ax=ax,
+                  color=color)

@@ -26,19 +26,24 @@ class CartFieldHist(object):
         """
         self.fileNameBase = fileNameBase
         files = glob.glob('{}_*.h5'.format(self.fileNameBase))
-        if files == '':
+        if files == []:
             raise exceptions.RuntimeError(
                 'CartFieldHist:load Files with base \'{}\' does not exist!'.format(self.fileNameBase))
         self.isLoaded = 1
-        #self.history = numpy.zeros(len(files))
-        time = numpy.zeros(len(files))
+        # load history
         self.history = [cartField.CartField(name) for name in files]
         self.history = numpy.array(self.history)
+        # sort history
+        time = [temp.time for temp in self.history]
+        idxSort = numpy.argsort(time)
+        self.history = self.history[idxSort]
 
-       #for i in range(len(files)):
-       #     name = '{}_{}.h5'.format(self.fileNameBase, i)
-       #     print(name)
-       #     self.history[i] = cartField.CartField(name)
-       #     time[i] = self.history[i].time
-       # idxSort = numpy.argsort(time)
-       # self.history = self.history(idxSort)
+    def plot(self, numSnapshots, comp=0, 
+             fix1=None, fix2=None, fix3=None,
+             fix4=None, fix5=None, fix6=None):
+        r"""
+        Plots the specified number of snapshots.
+        """
+        plotting.plotFieldHist(self, numSnapshots, comp=comp,
+                               fix1=fix1, fix2=fix2, fix3=fix3,
+                               fix4=fix4, fix5=fix5, fix6=fix6)

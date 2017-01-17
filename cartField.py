@@ -117,8 +117,9 @@ class CartField(object):
         r"""
         Plots the field data.
         """
-        plotting.plotField(self, comp,
-                           fix1, fix2, fix3, fix4, fix5, fix6)
+        plotting.plotField(self, comp=comp,
+                           fix1=fix1, fix2=fix2, fix3=fix3,
+                           fix4=fix4, fix5=fix5, fix6=fix6)
 
     def close(self):
         r"""
