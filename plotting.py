@@ -57,6 +57,7 @@ def plot1D(dataX, dataY, fig=None, ax=None,
     if fig is None or ax is None:
         fig, ax = plt.subplots(1, 1)
     ax.plot(dataX, dataY, color=color)
+    ax.set_xlim([numpy.min(dataX), numpy.max(dataX)])
     ax.grid(True)
     plt.tight_layout(True)
 
@@ -122,8 +123,7 @@ def plotField(field, comp=0, isDG=False,
                    fig=fig, ax=ax)
         else:
             raise exeptions.RuntimeError(
-                "CartField.plot: Dimension of the field is bigger than two.",
-                " Some dimensions need to be fixed.") 
+                "CartField.plot: Dimension of the field is bigger than two. Some dimensions need to be fixed.") 
 
 
 def plotFieldHist(fieldHist, numSnapshots,
@@ -133,10 +133,9 @@ def plotFieldHist(fieldHist, numSnapshots,
                   fig=None, ax=None):
 
     # get colormap
-    bluesCM = plt.get_cmap('Blues')
+    mask = plt.get_cmap('coolwarm')
     
-    snapshots = numpy.linspace(fieldHist.history[0].time,
-                               fieldHist.history[-1].time,
+    snapshots = numpy.linspace(0, len(fieldHist.history)-1,
                                numSnapshots)
     # convert array to nearest integers
     snapshots = numpy.rint(snapshots)
@@ -145,7 +144,7 @@ def plotFieldHist(fieldHist, numSnapshots,
         fig, ax = plt.subplots(1, 1)
 
     for i, idx in enumerate(snapshots):
-        color = bluesCM(float(i)/(numSnapshots-1))
+        color = mask(float(i)/(numSnapshots-1))
         plotField(fieldHist.history[int(idx)], comp=comp, isDG=isDG,
                   fix1=fix1, fix2=fix2, fix3=fix3,
                   fix4=fix4, fix5=fix5, fix6=fix6,

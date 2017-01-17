@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # standart imports
 import numpy
 import exceptions
@@ -39,8 +40,30 @@ basisMap = {'lobatto' : ((gkedgbasis.GkeDgLobatto1DPolyOrder1Basis,
 def fixCoordinates(coords, values,
                    fix1=None, fix2=None, fix3=None,
                    fix4=None, fix5=None, fix6=None):
-    r"""
-    Fixes specified coordinates and decreases the dimension of data.
+    """Fix specified coordinates.
+
+    Inputs:
+    coords -- array of coordinates
+    values -- array of field values
+
+    Keyword arguments:
+    fix1 -- fixes the first coordinate to provided index (default None)
+    fix2 -- fixes the second coordinate to provided index (default None)
+    fix3 -- fixes the third coordinate to provided index (default None)
+    fix4 -- fixes the fourth coordinate to provided index (default None)
+    fix5 -- fixes the fifth coordinate to provided index (default None)
+    fix6 -- fixes the sixth coordinate to provided index (default None)
+
+    Returns:
+    coordsFix -- coordinates with decreased number of dimentsions
+    valuesFix -- field values with decreased number of dimentsions
+
+    Example:
+    By fixing and x-index (fix1), 1X1V simulation data transforms
+    to 1D.
+
+    Note:
+    Fixing higher dimensions than available in the data has no effect.
     """
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
     coordsFix = coords
@@ -49,7 +72,7 @@ def fixCoordinates(coords, values,
         if value is not None and len(values.shape) > i:
             mask = numpy.zeros(values.shape[i])
             mask[fix[i]] = 1
-
+            # delete coordinate matrices for the fixed coordinate
             coordsFix = numpy.delete(coordsFix, i, 0)
             coordsFix = numpy.compress(mask, coordsFix, axis=i+1)  
             coordsFix = numpy.squeeze(coordsFix)
@@ -60,24 +83,57 @@ def fixCoordinates(coords, values,
 
 
 class CartField(object):
-    r"""
-    Base class for Gkeyll Cartesian fields
+    """Base class for Gkeyll cartesian fields loading and manipulation.
+
+    Methods:
+    __init__ -- initialize class and load file if specified
+    __del__  -- close opened HDF5 file
+    close    -- close opened HDF5 file
+    load     -- open Gkeyll output HDF5 file
+    plot     -- plot the specified components of field
     """
 
     def __init__(self, fileName=None):
+        """Initialize the field and load HDF5 file if specified.
+
+        Inputs:
+        None
+
+        Keyword arguments:
+        fileName -- HDF5 file name to be opened (default None)
+        """
         self.isLoaded = 0
         if fileName is not None:
             self.load(fileName)
 
     def __del__(self):
+        """Close HDF5 file if opened."""
         try:
             self.fh.close()
         except:
             pass
 
+    def close(self):
+        """Close the HDF5 file"""
+        self.fh.close()
+
     def load(self, fileName):
-        r"""
-        Load Gkeyll output file specified by 'fileName'.
+        """Load Gkeyll HDF5 output file.
+
+        Inputs:
+        fileName -- HDF5 file name to be opened
+
+        Keyword arguments:
+        None
+
+        Returns:
+        None
+
+        Note:
+        Sets the isLoaded flag to 1.
+
+        Exceptions:
+        RuntimeError -- raise when specified file does not exist
         """
         self.fileName = fileName
         if not os.path.exists(self.fileName):
@@ -93,7 +149,7 @@ class CartField(object):
         self.numCells    = grid._v_attrs.vsNumCells
         self.numDims     = len(self.numCells)
 
-        # construct coordinates
+        # construct coordinate matrices
         coords = []
         for i in range(self.numDims):
             temp = numpy.linspace(self.lowerBounds[i], 
@@ -114,26 +170,57 @@ class CartField(object):
     def plot(self, comp=0, 
              fix1=None, fix2=None, fix3=None,
              fix4=None, fix5=None, fix6=None):
-        r"""
-        Plots the field data.
+        """Plot the current field data.
+
+        Calls the general field plotting function plotting.plotField
+
+        Inputs:
+        None
+
+        Keyword arguments:
+        comp -- list or tuple of components to be plotted (default 0)
+        fix1 -- fixes the first coordinate to provided index (default None)
+        fix2 -- fixes the second coordinate to provided index (default None)
+        fix3 -- fixes the third coordinate to provided index (default None)
+        fix4 -- fixes the fourth coordinate to provided index (default None)
+        fix5 -- fixes the fifth coordinate to provided index (default None)
+        fix6 -- fixes the sixth coordinate to provided index (default None)
+
+        Returns:
+        None
         """
         plotting.plotField(self, comp=comp,
                            fix1=fix1, fix2=fix2, fix3=fix3,
                            fix4=fix4, fix5=fix5, fix6=fix6)
 
-    def close(self):
-        r"""
-        Closes the HDF5 file
-        """
-        self.fh.close()
 
 class CartFieldDG(CartField):
-    r"""
-    Class for Gkeyll DG Cartesian fields
+    """Base class for Gkeyll cartesian DG fields loading and manipulation.
+
+    Parent: CartField
+
+    Methods:
+    __init__ -- initialize class and load file if specified
+    __del__  -- close opened HDF5 file
+    load     -- open Gkeyll output HDF5 file
+    plot     -- plot the specified components of field
+    projets  -- projet DG data based on basis and polynomial order
+    save     -- save the DG projected data to a HDF5 file
     """
 
     def __init__(self, basis, polyOrder, fileName=None, 
                  numComponents=1,loadProj=True):
+        """Initialize the field and load HDF5 file if specified.
+
+        Inputs:
+        basis     -- DG polynomial basis
+        polyOrder -- polynomial order of DG approximation
+
+        Keyword arguments:
+        fileName -- HDF5 file name to be opened (default None)
+        numComps -- number of components of data (default 1)
+        loadProj -- flag to load projected data from file (default true)
+        """
         self.isLoaded = 0
         if fileName is not None:
             self.load(fileName, loadProj)
@@ -143,6 +230,25 @@ class CartFieldDG(CartField):
         self.isProj    = 0
 
     def load(self, fileName, loadProj=True):
+        """Load Gkeyll HDF5 output file.
+
+        Calls the parent's (CartField) load file.
+
+        Inputs:
+        fileName -- HDF5 file name to be opened
+
+        Keyword arguments:
+        loadProj -- flag to load projected data from file (default true)
+
+        Returns:
+        None
+
+        Note:
+        Sets the isLoaded flag to 1.
+
+        Exceptions:
+        RuntimeError -- raise when specified file does not exist
+        """
         super(CartFieldDG, self).load(fileName)
         if loadProj:
             try:
@@ -154,13 +260,62 @@ class CartFieldDG(CartField):
             except:
                 pass
 
+    def plot(self, comp=0, noProj=False,
+             fix1=None, fix2=None, fix3=None,
+             fix4=None, fix5=None, fix6=None):
+        """Plot the current field data.
+
+        Calls the general field plotting function plotting.plotField
+
+        Inputs:
+        None
+
+        Keyword arguments:
+        comp   -- list or tuple of components to be plotted (default 0)
+        noProj -- disable automated projection of data (default False)
+        fix1   -- fixes the first coordinate to provided index (default None)
+        fix2   -- fixes the second coordinate to provided index (default None)
+        fix3   -- fixes the third coordinate to provided index (default None)
+        fix4   -- fixes the fourth coordinate to provided index (default None)
+        fix5   -- fixes the fifth coordinate to provided index (default None)
+        fix6   -- fixes the sixth coordinate to provided index (default None)
+
+        Returns:
+        None
+
+        Note: 
+        If the projected data re not available, the project
+        method will be called before plotting, unless specified
+        otherwise.
+        """
+        if noProj:
+            plotting.plotField(self, comp, isDG=False,
+                               fix1=fix1, fix2=fix2, fix3=fix3,
+                               fix4=fix4, fix5=fix5, fix6=fix6)
+        else:
+            plotting.plotField(self, comp, isDG=True,
+                               fix1=fix1, fix2=fix2, fix3=fix3,
+                               fix4=fix4, fix5=fix5, fix6=fix6)
+
     def project(self):
-        r"""
-        Project data with apropriate basis from GkeDgBasis
+        """Project data with an apropriate basis from the module GkeDgBasis
+
+        Inputs:
+        None
+
+        Keywords:
+        None
+
+        Returns:
+        None
+
+        None:
+        Calculates projection for all the components specified
+        by the 'numComps' variable during the initialization.
         """
         if not self.isLoaded:
             raise exceptions.RuntimeError(
-                "CartField.project: Data needs to be loaded first. Use CartField.load(fileName).")
+                "CartFieldDG.project: Data needs to be loaded first. Use CartFieldDG.load(fileName).")
         
         self.isProj = 1
 
@@ -168,14 +323,14 @@ class CartFieldDG(CartField):
             temp = basisMap[self.basis][self.numDims-1][self.polyOrder-1](self)
         else:
             raise ValueError(
-                "CartField.project: Basis, dimension, polynomial ",
-                "order combination is not supported.")
+                "CartFieldDG.project: Basis, dimension, polynomial order combination is not supported.")
         
+        # project the zeroth component
         projection      = numpy.array(temp.project(0))
         self.coordsProj = numpy.squeeze(projection[0:self.numDims, :])
         self.qProj      = projection[-1, :]
         self.qProj      = numpy.expand_dims(self.qProj, axis=self.numDims)
-
+        # project the potential additional components
         if self.numComps > 1:
             for i in numpy.arange(self.numComps-1)+1:
                 projection = numpy.array(temp.project(i))
@@ -185,21 +340,11 @@ class CartFieldDG(CartField):
                 self.qProj = numpy.append(self.qProj, projection,
                                           axis=self.numDims)
 
-    def plot(self, comp=0, noProj=None,
-             fix1=None, fix2=None, fix3=None,
-             fix4=None, fix5=None, fix6=None):
-        r"""
-        Plots the DG field data.
-        """
-        if noProj:
-            plotting.plotField(self, comp,
-                               fix1, fix2, fix3, fix4, fix5, fix6)
-        else:
-            plotting.plotField(self, comp, True,
-                               fix1, fix2, fix3, fix4, fix5, fix6)
-
-
     def save(self, saveAs=None):
+        """Save projected data and coordinates into HDF5 file.
+
+        This will be slightly modified soon.
+        """
         if saveAs is None:
             try:
                 self.data.fh.remove_node("/StructGridFieldProj")
