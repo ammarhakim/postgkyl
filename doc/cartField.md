@@ -41,13 +41,13 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
   dimensionality of thus reduced. For example, a 1X1V distribution
   function might be loaded
   
-  ```python
+: ```python
   distfElc = postgkyl.CartField('distfElc_0.h5')
   ```
   
-  1D velocity profile plot for fixed $x_i$ may be the produced with
+: 1D velocity profile plot for fixed $x_i$ may be the produced with
   
-  ```python
+: ```python
   distfElc.plot(fix1=i)
   ```
 
