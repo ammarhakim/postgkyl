@@ -1,7 +1,7 @@
 # Cartesian fields objects
 
 The `cartField` module contains two basic classes for the data
-manipulation - `CartField` and `CartFieldDG'. The later one is a child
+manipulation - `CartField` and `CartFieldDG`. The later one is a child
 of `CartField` that includes addition variables and methods to treat
 discontinuous Galerkin data.
 
@@ -34,8 +34,7 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
 `CartField.load(fileName)`
 :  Load the specified data file.
 
-`CartField.plot(comp=0, fix1=None, fix2=None, fix3=None, fix4=None,
-                fix5=None, fix6=None)`
+`CartField.plot(comp=0, fix1=None, fix2=None, fix3=None, fix4=None, fix5=None, fix6=None)`
 : Plot the field data.  Components might be
   selected using the `comp` keyword. When multiple components are
   selected `comp=(0, 1, 2)`, a corresponding number of plots will be
@@ -43,12 +42,12 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
 
 : An arbitrary number of coordinates might be fixed and the
   dimensionality of thus reduced. For example, a 1X1V distribution
-function might be loaded
-~~~~~~~ {.py} distfElc =
-postgkyl.CartField('distfElc_0.h5')
-~~~~~~~
-1D velocity profile plot for fixed $x_i$ may be the produced with
-~~~~~~~ {.py}
-distfElc.plot(fix1=i)
-~~~~~~~
+  function might be loaded
+  ~~~~~~~ {.py}
+  distfElc = postgkyl.CartField('distfElc_0.h5')
+  ~~~~~~~
+  1D velocity profile plot for fixed $x_i$ may be the produced with
+  ~~~~~~~ {.py}
+  distfElc.plot(fix1=i)
+  ~~~~~~~
 
