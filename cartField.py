@@ -208,7 +208,7 @@ class CartFieldDG(CartField):
     __del__  -- close opened HDF5 file
     load     -- open Gkeyll output HDF5 file
     plot     -- plot the specified components of field
-    projets  -- projet DG data based on basis and polynomial order
+    projet   -- projet DG data based on basis and polynomial order
     save     -- save the DG projected data to a HDF5 file
     """
 

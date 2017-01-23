@@ -1,6 +1,19 @@
-# postgkyl project's README
+# About
 
-Please use docstrings and follow the official Python docstring
-conventions (https://www.python.org/dev/peps/pep-0257/)
+This is the PostGkyl project. It is the Python module to provide a
+unified acces to Gkeyll and Gkyl data together with a broad variety of
+analytical tools.
 
-Some functions require the newest version of numpy (1.11)
+# Licence
+
+PostGkyl can be used freely for research at universities, national
+laboratories and other non-profit institutions.
+
+# Dependencies
+
+Some functions require the newest version of numpy (1.11). When using
+the popular Anaconda distrubution, the update is straightforward:
+
+~~~~~~~
+conda update numpy
+~~~~~~~
