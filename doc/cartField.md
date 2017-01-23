@@ -1,4 +1,4 @@
-# Cartesian fields objects
+# Cartesian field objects
 
 The `cartField` module contains two basic classes for the data
 manipulation - `CartField` and `CartFieldDG`. The later one is a child
@@ -41,13 +41,16 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
   dimensionality of thus reduced. For example, a 1X1V distribution
   function might be loaded
   
-: ```python
-  distfElc = postgkyl.CartField('distfElc_0.h5')
-  ```
+    ```python
+    distfElc = postgkyl.CartField('distfElc_0.h5')
+    ```
   
 : 1D velocity profile plot for fixed $x_i$ may be the produced with
   
-: ```python
-  distfElc.plot(fix1=i)
-  ```
+    ```python
+    distfElc.plot(fix1=i)
+    ```
 
+## The following methods are provided for `CartFieldDG`
+
+`CartFieldDG.load(fileName, loadDG=True)`
