@@ -43,10 +43,13 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
 : An arbitrary number of coordinates might be fixed and the
   dimensionality of thus reduced. For example, a 1X1V distribution
   function might be loaded
+  
   ~~~~~~~ {.py}
   distfElc = postgkyl.CartField('distfElc_0.h5')
   ~~~~~~~
+  
   1D velocity profile plot for fixed $x_i$ may be the produced with
+  
   ~~~~~~~ {.py}
   distfElc.plot(fix1=i)
   ~~~~~~~
