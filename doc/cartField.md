@@ -6,25 +6,22 @@ of `CartField` that includes addition variables and methods to treat
 discontinuous Galerkin data.
 
 To construct the object, for example use:
-
-~~~~~~~ {.py}
+```python
 field = postgkyl.CartField('fileName.h5')
-~~~~~~~
+```
 
 Note, that the `fileName` is not necessary for the initialization. The
 data can be loaded afterward using:
-
-~~~~~~~ {.py}
+```python
 field = postgkyl.CartField()
 field.load('fileName.h5')
-~~~~~~~
+```
 
 When using `CartFieldDG`, the polynomial basis and the order of
 polynomial approximation must be specified:
-
-~~~~~~~ {.py}
+```python
 field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
-~~~~~~~
+```
 
 ## The following methods are provided for the `CartField`
 
@@ -43,14 +40,11 @@ field = postgkyl.CartFieldDG('serendipity', 2, 'fileName.h5')
 : An arbitrary number of coordinates might be fixed and the
   dimensionality of thus reduced. For example, a 1X1V distribution
   function might be loaded
-  
-  ~~~~~~~ {.py}
+  ```python
   distfElc = postgkyl.CartField('distfElc_0.h5')
-  ~~~~~~~
-  
+  ```
   1D velocity profile plot for fixed $x_i$ may be the produced with
-  
-  ~~~~~~~ {.py}
+  ```python
   distfElc.plot(fix1=i)
-  ~~~~~~~
+  ```
 
