@@ -1,10 +1,24 @@
+import tables
 import gkedata
 import gkedginterpdat as gid
 import pylab
 import numpy
 import math
-
+postgkyl_path = gkedata.__file__[:gkedata.__file__.rfind("/")]
 ## Below are a set of helper functions used in the DG classes
+
+def loadMatrix(dim, polyOrder, basis):
+    varid ='xformMatrix%i%i' % (dim,polyOrder)
+    if basis == 'nodal Serendipity':
+        fh = tables.open_file(postgkyl_path+'/xformMatricesNodalSerendipity.h5')
+        mat = fh.root.matrices._v_children[varid].read()
+    elif basis == 'modal Serendipity':
+        fh = tables.open_file(postgkyl_path+'/xformMatricesModalSerendipity.h5')
+        mat = fh.root.matrices._v_children[varid].read()
+    elif basis == 'modal Maximal Order':
+        fh = tables.open_file(postgkyl_path+'/xformMatricesModalMaximalOrder.h5')
+        mat = fh.root.matrices._v_children[varid].read()
+    return mat    
 
 def makeMatrix(*ll):
     nrow = len(ll)
@@ -410,19 +424,72 @@ class GkeDgSerendip2DPolyOrder2Basis(GkeDgBasis):
         return XX, YY, interpOnMesh2D(self.cMat_i3, qn)
 
 #################
+class GkeDgSerendipNorm1DPolyOrder1Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 1 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 2)
+        self.cMat_i2 = loadMatrix(1,1,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(2, self.Xc[0]), interpOnMesh1D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipNorm1DPolyOrder2Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 2 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 3)
+        self.cMat_i3 = loadMatrix(1,2,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(3, self.Xc[0]), interpOnMesh1D(self.cMat_i3.transpose(), qn) 
+
+#################
+class GkeDgSerendipNorm1DPolyOrder3Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 3 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 4)
+        self.cMat_i4 = loadMatrix(1,3,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(4, self.Xc[0]), interpOnMesh1D(self.cMat_i4.transpose(), qn) 
+
+#################
+class GkeDgSerendipNorm1DPolyOrder4Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 4 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 5)
+        self.cMat_i5 = loadMatrix(1,4,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(5, self.Xc[0]), interpOnMesh1D(self.cMat_i5.transpose(), qn) 
+    
+    
+#################
 class GkeDgSerendipNorm2DPolyOrder1Basis(GkeDgBasis):
     r"""Serendipity basis (correct, normal layout), polyOrder = 1 basis, in 2D
     """
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 4)
-        self.cMat_i2 = gid.GkeDgSerendipNorm2DPolyOrder1Basis.cMat_i2
+        self.cMat_i2 = loadMatrix(2,1,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1])
         XX, YY = pylab.meshgrid(X, Y, indexing='ij')
-        return XX, YY, interpOnMesh2D(self.cMat_i2, qn)
+        return XX, YY, interpOnMesh2D(self.cMat_i2.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm2DPolyOrder2Basis(GkeDgBasis):
@@ -431,13 +498,13 @@ class GkeDgSerendipNorm2DPolyOrder2Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 8)
-        self.cMat_i3 = gid.GkeDgSerendipNorm2DPolyOrder2Basis.cMat_i3
+        self.cMat_i3 = loadMatrix(2,2,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1])
         XX, YY = pylab.meshgrid(X, Y, indexing='ij')
-        return XX, YY, interpOnMesh2D(self.cMat_i3, qn)    
+        return XX, YY, interpOnMesh2D(self.cMat_i3.transpose(), qn)    
 
 #################
 class GkeDgSerendipNorm2DPolyOrder3Basis(GkeDgBasis):
@@ -446,13 +513,13 @@ class GkeDgSerendipNorm2DPolyOrder3Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 12)
-        self.cMat_i4 = gid.GkeDgSerendipNorm2DPolyOrder3Basis.cMat_i4
+        self.cMat_i4 = loadMatrix(2,3,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1])
         XX, YY = pylab.meshgrid(X, Y, indexing='ij')
-        return XX, YY, interpOnMesh2D(self.cMat_i4, qn) 
+        return XX, YY, interpOnMesh2D(self.cMat_i4.transpose(), qn) 
 
 #################
 class GkeDgSerendipNorm2DPolyOrder4Basis(GkeDgBasis):
@@ -461,13 +528,13 @@ class GkeDgSerendipNorm2DPolyOrder4Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 17)
-        self.cMat_i5 = gid.GkeDgSerendipNorm2DPolyOrder4Basis.cMat_i5
+        self.cMat_i5 = loadMatrix(2,4,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1])
         XX, YY = pylab.meshgrid(X, Y, indexing='ij')
-        return XX, YY, interpOnMesh2D(self.cMat_i5, qn) 
+        return XX, YY, interpOnMesh2D(self.cMat_i5.transpose(), qn) 
 
 #################
 class GkeDgSerendipNorm3DPolyOrder1Basis(GkeDgBasis):
@@ -476,13 +543,13 @@ class GkeDgSerendipNorm3DPolyOrder1Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 8)
-        self.cMat_i2 = gid.GkeDgSerendipNorm3DPolyOrder1Basis.cMat_i2
+        self.cMat_i2 = loadMatrix(3,1,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2])
         XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
-        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2, qn)
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm3DPolyOrder2Basis(GkeDgBasis):
@@ -491,13 +558,13 @@ class GkeDgSerendipNorm3DPolyOrder2Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 20)
-        self.cMat_i3 = gid.GkeDgSerendipNorm3DPolyOrder2Basis.cMat_i3
+        self.cMat_i3 = loadMatrix(3,2,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
         XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
-        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3, qn)   
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
 
 #################
 class GkeDgSerendipNorm3DPolyOrder3Basis(GkeDgBasis):
@@ -506,13 +573,13 @@ class GkeDgSerendipNorm3DPolyOrder3Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 32)
-        self.cMat_i4 = gid.GkeDgSerendipNorm3DPolyOrder3Basis.cMat_i4
+        self.cMat_i4 = loadMatrix(3,3,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2])
         XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
-        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4, qn)
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm3DPolyOrder4Basis(GkeDgBasis):
@@ -521,13 +588,13 @@ class GkeDgSerendipNorm3DPolyOrder4Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 50)
-        self.cMat_i5 = gid.GkeDgSerendipNorm3DPolyOrder4Basis.cMat_i5
+        self.cMat_i5 = loadMatrix(3,4,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2])
         XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
-        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5, qn)
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm4DPolyOrder1Basis(GkeDgBasis):
@@ -536,13 +603,13 @@ class GkeDgSerendipNorm4DPolyOrder1Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 16)
-        self.cMat_i2 = gid.GkeDgSerendipNorm4DPolyOrder1Basis.cMat_i2
+        self.cMat_i2 = loadMatrix(4,1,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z, V = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3])
         XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
-        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2, qn)
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm4DPolyOrder2Basis(GkeDgBasis):
@@ -551,14 +618,44 @@ class GkeDgSerendipNorm4DPolyOrder2Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 48)
-        self.cMat_i3 = gid.GkeDgSerendipNorm4DPolyOrder2Basis.cMat_i3
+        self.cMat_i3 = loadMatrix(4,2,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
         XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
-        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3, qn)
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
 
+#################
+class GkeDgSerendipNorm4DPolyOrder3Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 3 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 80)
+        self.cMat_i4 = loadMatrix(4,3,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgSerendipNorm4DPolyOrder4Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 4 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 136)
+        self.cMat_i5 = loadMatrix(4,4,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i5.transpose(), qn)    
+    
 #################
 class GkeDgSerendipNorm5DPolyOrder1Basis(GkeDgBasis):
     r"""Serendipity basis (correct, normal layout), polyOrder = 1 basis, in 5D
@@ -566,13 +663,13 @@ class GkeDgSerendipNorm5DPolyOrder1Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 32)
-        self.cMat_i2 = gid.GkeDgSerendipNorm5DPolyOrder1Basis.cMat_i2
+        self.cMat_i2 = loadMatrix(5,1,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z, V, U = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3]), makeMesh(2, self.Xc[4])
         XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
-        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2, qn)
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm5DPolyOrder2Basis(GkeDgBasis):
@@ -581,10 +678,626 @@ class GkeDgSerendipNorm5DPolyOrder2Basis(GkeDgBasis):
 
     def __init__(self, dat):
         GkeDgBasis.__init__(self, dat, 112)
-        self.cMat_i3 = gid.GkeDgSerendipNorm5DPolyOrder2Basis.cMat_i3
+        self.cMat_i3 = loadMatrix(5,2,'nodal Serendipity')
 
     def project(self, c):
         qn = self._getRaw(c)
         X, Y, Z, V, U = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3]), makeMesh(3, self.Xc[4])
         XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
-        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3, qn)
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3.transpose(), qn)
+
+#################
+class GkeDgSerendipNorm5DPolyOrder3Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 3 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 192)
+        self.cMat_i4 = loadMatrix(5,3,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3]), makeMesh(4, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgSerendipNorm5DPolyOrder4Basis(GkeDgBasis):
+    r"""Serendipity basis (correct, normal layout), polyOrder = 4 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 352)
+        self.cMat_i5 = loadMatrix(5,4,'nodal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3]), makeMesh(5, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i5.transpose(), qn)    
+
+#################
+class GkeDgSerendipModal1DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 1 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 2)
+        self.cMat_i2 = loadMatrix(1,1,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(2, self.Xc[0]), interpOnMesh1D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipModal1DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 2 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 3)
+        self.cMat_i3 = loadMatrix(1,2,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(3, self.Xc[0]), interpOnMesh1D(self.cMat_i3.transpose(), qn) 
+
+#################
+class GkeDgSerendipModal1DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 3 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 4)
+        self.cMat_i4 = loadMatrix(1,3,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(4, self.Xc[0]), interpOnMesh1D(self.cMat_i4.transpose(), qn) 
+
+#################
+class GkeDgSerendipModal1DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 4 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 5)
+        self.cMat_i5 = loadMatrix(1,4,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(5, self.Xc[0]), interpOnMesh1D(self.cMat_i5.transpose(), qn) 
+    
+    
+#################
+class GkeDgSerendipModal2DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 1 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 4)
+        self.cMat_i2 = loadMatrix(2,1,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipModal2DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 2 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 8)
+        self.cMat_i3 = loadMatrix(2,2,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i3.transpose(), qn)    
+
+#################
+class GkeDgSerendipModal2DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 3 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 12)
+        self.cMat_i4 = loadMatrix(2,3,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i4.transpose(), qn) 
+
+#################
+class GkeDgSerendipModal2DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 4 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 17)
+        self.cMat_i5 = loadMatrix(2,4,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i5.transpose(), qn) 
+
+#################
+class GkeDgSerendipModal3DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 1 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 8)
+        self.cMat_i2 = loadMatrix(3,1,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipModal3DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 2 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 20)
+        self.cMat_i3 = loadMatrix(3,2,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
+
+#################
+class GkeDgSerendipModal3DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 3 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 32)
+        self.cMat_i4 = loadMatrix(3,3,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgSerendipModal3DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 4 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 50)
+        self.cMat_i5 = loadMatrix(3,4,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5.transpose(), qn)
+
+#################
+class GkeDgSerendipModal4DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 1 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 16)
+        self.cMat_i2 = loadMatrix(4,1,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipModal4DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 2 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 48)
+        self.cMat_i3 = loadMatrix(4,2,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
+
+#################
+class GkeDgSerendipModal4DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 3 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 80)
+        self.cMat_i4 = loadMatrix(4,3,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgSerendipModal4DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 4 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 136)
+        self.cMat_i5 = loadMatrix(4,4,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i5.transpose(), qn)    
+    
+#################
+class GkeDgSerendipModal5DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 1 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 32)
+        self.cMat_i2 = loadMatrix(5,1,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3]), makeMesh(2, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgSerendipModal5DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 2 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 112)
+        self.cMat_i3 = loadMatrix(5,2,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3]), makeMesh(3, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3.transpose(), qn)
+
+#################
+class GkeDgSerendipModal5DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 3 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 192)
+        self.cMat_i4 = loadMatrix(5,3,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3]), makeMesh(4, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgSerendipModal5DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Serendipity basis, polyOrder = 4 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 352)
+        self.cMat_i5 = loadMatrix(5,4,'modal Serendipity')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3]), makeMesh(5, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i5.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal1DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 1 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 2)
+        self.cMat_i2 = loadMatrix(1,1,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(2, self.Xc[0]), interpOnMesh1D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal1DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 2 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 3)
+        self.cMat_i3 = loadMatrix(1,2,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(3, self.Xc[0]), interpOnMesh1D(self.cMat_i3.transpose(), qn) 
+
+#################
+class GkeDgMaximalOrderModal1DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 3 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 4)
+        self.cMat_i4 = loadMatrix(1,3,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(4, self.Xc[0]), interpOnMesh1D(self.cMat_i4.transpose(), qn) 
+
+#################
+class GkeDgMaximalOrderModal1DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 4 basis, in 1D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 5)
+        self.cMat_i5 = loadMatrix(1,4,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        return makeMesh(5, self.Xc[0]), interpOnMesh1D(self.cMat_i5.transpose(), qn) 
+    
+    
+#################
+class GkeDgMaximalOrderModal2DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 1 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 3)
+        self.cMat_i2 = loadMatrix(2,1,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal2DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 2 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 6)
+        self.cMat_i3 = loadMatrix(2,2,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i3.transpose(), qn)    
+
+#################
+class GkeDgMaximalOrderModal2DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 3 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 10)
+        self.cMat_i4 = loadMatrix(2,3,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i4.transpose(), qn) 
+
+#################
+class GkeDgMaximalOrderModal2DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 4 basis, in 2D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 15)
+        self.cMat_i5 = loadMatrix(2,4,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1])
+        XX, YY = pylab.meshgrid(X, Y, indexing='ij')
+        return XX, YY, interpOnMesh2D(self.cMat_i5.transpose(), qn) 
+
+#################
+class GkeDgMaximalOrderModal3DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 1 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 4)
+        self.cMat_i2 = loadMatrix(3,1,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal3DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 2 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 10)
+        self.cMat_i3 = loadMatrix(3,2,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
+
+#################
+class GkeDgMaximalOrderModal3DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 3 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 20)
+        self.cMat_i4 = loadMatrix(3,3,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal3DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 4 basis, in 3D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 35)
+        self.cMat_i5 = loadMatrix(3,4,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2])
+        XX, YY, ZZ = pylab.meshgrid(X, Y, Z, indexing='ij')
+        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal4DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 1 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 5)
+        self.cMat_i2 = loadMatrix(4,1,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal4DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 2 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 15)
+        self.cMat_i3 = loadMatrix(4,2,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal4DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 3 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 35)
+        self.cMat_i4 = loadMatrix(4,3,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal4DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 4 basis, in 4D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 70)
+        self.cMat_i5 = loadMatrix(4,4,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3])
+        XX, YY, ZZ, VV = pylab.meshgrid(X, Y, Z, V, indexing='ij')
+        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i5.transpose(), qn)    
+    
+#################
+class GkeDgMaximalOrderModal5DPolyOrder1Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 1 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 6)
+        self.cMat_i2 = loadMatrix(5,1,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3]), makeMesh(2, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal5DPolyOrder2Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 2 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 21)
+        self.cMat_i3 = loadMatrix(5,2,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3]), makeMesh(3, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal5DPolyOrder3Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 3 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 56)
+        self.cMat_i4 = loadMatrix(5,3,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3]), makeMesh(4, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i4.transpose(), qn)
+
+#################
+class GkeDgMaximalOrderModal5DPolyOrder4Basis(GkeDgBasis):
+    r"""Modal Maximal Order basis, polyOrder = 4 basis, in 5D
+    """
+
+    def __init__(self, dat):
+        GkeDgBasis.__init__(self, dat, 126)
+        self.cMat_i5 = loadMatrix(5,4,'modal Maximal Order')
+
+    def project(self, c):
+        qn = self._getRaw(c)
+        X, Y, Z, V, U = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3]), makeMesh(5, self.Xc[4])
+        XX, YY, ZZ, VV, UU = pylab.meshgrid(X, Y, Z, V, U, indexing='ij')
+        return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i5.transpose(), qn) 
