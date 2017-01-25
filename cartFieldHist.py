@@ -28,11 +28,11 @@ class CartFieldHist(object):
     """
 
     def __init__(self, fileNameBase=None):
-         """Initialize the array of field and load HDF5 files if specified.
-
+        """Initialize the array of field and load HDF5 files if specified.
+        
         Inputs:
         None
-
+        
         Keyword arguments:
         fileNameBase -- HDF5 file name base (name without frame number)
                         to be opened (default None)
