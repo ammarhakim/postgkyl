@@ -7,6 +7,9 @@ cartFieldHist -- contains history array classes CartFieldHist and CartFieldDGHis
 plotting      -- contains plotting methods
 """
 
+# import basic data handling class
+from gData import GData
+
 # import the baseline field class
 from cartField import CartField
 from cartField import CartFieldDG
