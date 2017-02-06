@@ -74,6 +74,13 @@ class GData:
         self.lowerBounds = adios.attr(fh, 'lowerBounds').value
         self.upperBounds = adios.attr(fh, 'upperBounds').value
         self.numCells    = adios.attr(fh, 'numCells').value
+        # create D field for consistency if needed
+        if self.lowerBounds.ndim == 0:
+            self.lowerBounds = numpy.expand_dims(self.lowerBounds, 0)
+        if self.upperBounds.ndim == 0:
+            self.upperBounds = numpy.expand_dims(self.upperBounds, 0)
+        if self.numCells.ndim == 0:
+            self.numCells = numpy.expand_dims(self.numCells, 0)
         self.numDims     = len(self.numCells)
 
         # read in time data if it exists
