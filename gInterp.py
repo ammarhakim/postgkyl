@@ -67,9 +67,11 @@ def interpOnMesh1D(cMat, qIn):
     numInterp, numNodes = cMat.shape[0], cMat.shape[1]
     nx = qIn.shape[0]
     qout = numpy.zeros((numInterp*nx,), numpy.float)
-    vList = [qIn[:,i] for i in range(numNodes)]
+    #vList = [qIn[:,i] for i in range(numNodes)]
+    vList = numpy.moveaxis(qIn, -1, 0)
     for i in range(numInterp):
-        qout[i:numInterp*nx:numInterp] = evalSum(cMat[i,:], vList)
+        qout[i:numInterp*nx:numInterp] = numpy.tensordot(cMat[i,:], vList, axes=1)
+#        qout[i:numInterp*nx:numInterp] = evalSum(cMat[i,:], vList)
     return qout
 
 def interpOnMesh2D(cMat, qIn):
@@ -77,11 +79,13 @@ def interpOnMesh2D(cMat, qIn):
     nx = qIn.shape[0]
     ny = qIn.shape[1]
     qout = numpy.zeros((numInterp*nx, numInterp*ny), numpy.float)
-    vList = [qIn[:,:,i] for i in range(numNodes)]
+    #vList = [qIn[:,:,i] for i in range(numNodes)]
+    vList = numpy.moveaxis(qIn, -1, 0)
     n = 0
     for j in range(numInterp):
         for i in range(numInterp):
-            qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp] = evalSum(cMat[n,:], vList)
+            qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
+#            qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp] = evalSum(cMat[n,:], vList)
             n = n+1
     return qout
 
@@ -129,14 +133,16 @@ def interpOnMesh5D(cMat, qIn):
     nv = qIn.shape[3]
     nu = qIn.shape[4]
     qout = numpy.zeros((numInterp*nx,numInterp*ny,numInterp*nz,numInterp*nv,numInterp*nu), numpy.float)
-    vList = [qIn[:,:,:,:,:,i] for i in range(numNodes)]
+    #vList = [qIn[:,:,:,:,:,i] for i in range(numNodes)]
+    vList = numpy.moveaxis(qIn, -1, 0)
     n = 0
     for m in range(numInterp):
         for l in range(numInterp):
             for k in range(numInterp):
                 for j in range(numInterp):
                     for i in range(numInterp):
-                        qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp, m:numInterp*nu:numInterp] = evalSum(cMat[n,:], vList)
+                        qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp, m:numInterp*nu:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
+#                        qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp, m:numInterp*nu:numInterp] = evalSum(cMat[n,:], vList)
                         n = n+1
     return qout
 
