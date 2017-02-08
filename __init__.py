@@ -10,6 +10,9 @@ plotting      -- contains plotting methods
 # import basic data handling class
 from gData import GData
 
+from gInterp import GkeDgSerendipNorm3DPolyOrder2Basis
+from gInterp import GkeDgSerendipNorm4DPolyOrder2Basis
+
 # import the baseline field class
 from cartField import CartField
 from cartField import CartFieldDG
