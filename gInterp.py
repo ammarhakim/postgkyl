@@ -24,7 +24,7 @@ def loadMatrix(dim, polyOrder, basis):
         fh = tables.open_file(postgkylPath+'/xformMatricesModalSerendipity.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     elif basis.lower() == 'modal maximal order':
-        fh = tables.open_file(postgkylPath+'/xformMatricesModalMaximalOrder.h5')
+        fh = tables.open_file(postgkylPath+'/xformMatricesModalMaximal.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     else:
         raise exceptions.RuntimeError(
