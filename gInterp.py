@@ -41,6 +41,11 @@ def makeMatrix(*ll):
         mat[i,:] = ll[i]
     return mat
 
+def decompose(n, dim, numInterp):
+    """Decompose n to the number decription with basis numInterp"""
+    return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / (numInterp**numpy.arange(dim)), numInterp )
+
+
 def evalSum(coeff, fields):
     res = 0.0*fields[0]
     for i in range(len(coeff)):
@@ -95,16 +100,36 @@ def interpOnMesh3D(cMat, qIn):
     ny = qIn.shape[1]
     nz = qIn.shape[2]
     qout = numpy.zeros((numInterp*nx,numInterp*ny,numInterp*nz), numpy.float)
-    #vList = [qIn[:,:,:,i] for i in range(numNodes)]
-    vList = numpy.moveaxis(qIn, -1, 0)
+    vList = [qIn[:,:,:,i] for i in range(numNodes)]
+    #vList = numpy.moveaxis(qIn, -1, 0)
     n = 0
     for k in range(numInterp):
         for j in range(numInterp):
             for i in range(numInterp):
-                qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
-#                qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp] = evalSum(cMat[n,:], vList)
+#                qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
+                qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp] = evalSum(cMat[n,:], vList)
                 n = n+1
     return qout
+
+def interpOnMesh(cMat, qIn):
+    numCells = numpy.array(qIn.shape)
+    # last index is indexing nodes, get rid of it
+    numCells = numCells[:-1]
+    dim = len(numCells)
+    numInterp, numNodes = int(cMat.shape[0] ** (1.0/dim)), cMat.shape[1]
+    qOut = numpy.zeros(numCells*numInterp, numpy.float)
+    # move the node index from last to the first
+    qIn = numpy.moveaxis(qIn, -1, 0)
+
+    # Main loop
+    # Note: this might be possible to do without any for cycles,
+    # but I don't know how... yet
+    for n in range(numInterp ** dim):
+        temp       = numpy.tensordot(cMat[n, :], qIn, axes=1)
+        startIdx   = decompose(n, dim, numInterp)
+        idxs       = [slice(startIdx[i], numCells[i]*numInterp, numInterp) for i in range(dim)]
+        qOut[idxs] = temp
+    return qOut
 
 def interpOnMesh4D(cMat, qIn):
     numInterp, numNodes = int(cMat.shape[0] ** (1.0/4.0)), cMat.shape[1]
@@ -120,8 +145,8 @@ def interpOnMesh4D(cMat, qIn):
         for k in range(numInterp):
             for j in range(numInterp):
                 for i in range(numInterp):
-                    qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
-#                    qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp] = evalSum(cMat[n,:], vList)
+#                    qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp] = numpy.tensordot(cMat[n,:], vList, axes=1)
+                    qout[i:numInterp*nx:numInterp, j:numInterp*ny:numInterp, k:numInterp*nz:numInterp, l:numInterp*nv:numInterp] = evalSum(cMat[n,:], vList)
                     n = n+1
     return qout
 
@@ -184,38 +209,6 @@ def computeIntegratedQuantity3D(weights, qIn, Xc, Yc, Zc):
                 for i in range(numNodes):
                     qout = qout + 0.5*dx*dy*dz*weights[i]*qIn[l, k, j, i]
     return qout
-
-# def computeIntegratedQuantity4D(weights, qIn):
-#     numNodes = weights.shape[0]
-#     nx = qIn.shape[0]
-#     ny = qIn.shape[1]
-#     nz = qIn.shape[2]
-#     nv = qIn.shape[3]
-#     qout = 0.0
-#     for m in range(nx):
-#         for l in range(ny):
-#             for k in range(nz):
-#                 for j in range(nv):
-#                     for i in range(numNodes):
-#                         qout = qout +  weights[i]*qIn[m, l, k, j, i]
-#     return qout
-
-# def computeIntegratedQuantity5D(weights, qIn):
-#     numNodes = weights.shape[0]
-#     nx = qIn.shape[0]
-#     ny = qIn.shape[1]
-#     nz = qIn.shape[2]
-#     nv = qIn.shape[3]
-#     nu = qIn.shape[4]
-#     qout = 0.0
-#     for n in range(nx):
-#         for m in range(ny):
-#             for l in range(nz):
-#                 for k in range(nv):
-#                     for j in range(nu):
-#                         for i in range(numNodes):
-#                             qout = qout +  weights[i]*qIn[n, m, l, k, j, i]
-#     return qout
 
 class GInterp:
     r"""__init__(dat : GkeData, numNodes : int) -> GkeDgData
@@ -612,7 +605,9 @@ class GkeDgSerendipNorm3DPolyOrder2Basis(GInterp):
         qn = self._getRaw(c)
         X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
-        return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
+        #return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
+        # HERE !!!
+        return XX, YY, ZZ, interpOnMesh(self.cMat_i3.transpose(), qn)   
 
 #################
 class GkeDgSerendipNorm3DPolyOrder3Basis(GInterp):
@@ -672,7 +667,7 @@ class GkeDgSerendipNorm4DPolyOrder2Basis(GInterp):
         qn = self._getRaw(c)
         X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
-        return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
+        return XX, YY, ZZ, VV, interpOnMesh(self.cMat_i3.transpose(), qn)
 
 #################
 class GkeDgSerendipNorm4DPolyOrder3Basis(GInterp):
