@@ -266,7 +266,31 @@ class GInterp:
             elif self.ndim == 6:
                 rawData[:,:,:,:,:,:,n] = q[:,:,:,:,:,:,component+n*numEqns]
 
-        return rawData        
+        return rawData
+
+    def _getRawModal(self, component):
+        q = self.q
+        numEqns = self.numEqns
+        shp = [q.shape[i] for i in range(self.ndim)]
+        shp.append(self.numNodes)
+        rawData = numpy.zeros(shp, numpy.float)
+        lo = component*self.numNodes
+        up = lo+self.numNodes
+        # THERE MUST BE A BETTER WAY TO DO THIS
+        if self.ndim == 1:
+            rawData[:,:] = q[:,lo:up]
+        elif self.ndim == 2:
+            rawData[:,:,:] = q[:,:,lo:up]
+        elif self.ndim == 3:
+            rawData[:,:,:,:] = q[:,:,:,lo:up]
+        elif self.ndim == 4:
+            rawData[:,:,:,:,:] = q[:,:,:,:,lo:up]
+        elif self.ndim == 5:
+            rawData[:,:,:,:,:,:] = q[:,:,:,:,:,lo:up]
+        elif self.ndim == 6:
+            rawData[:,:,:,:,:,:,:] = q[:,:,:,:,:,:,lo:up]
+
+        return rawData    
 
     def project(self, c):
         r"""project(c : int)
@@ -750,7 +774,7 @@ class GkeDgSerendipModal1DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(1,1,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(2, self.Xc[0]), interpOnMesh1D(self.cMat_i2.transpose(), qn)
 
 #################
@@ -763,7 +787,7 @@ class GkeDgSerendipModal1DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(1,2,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(3, self.Xc[0]), interpOnMesh1D(self.cMat_i3.transpose(), qn) 
 
 #################
@@ -776,7 +800,7 @@ class GkeDgSerendipModal1DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(1,3,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(4, self.Xc[0]), interpOnMesh1D(self.cMat_i4.transpose(), qn) 
 
 #################
@@ -789,7 +813,7 @@ class GkeDgSerendipModal1DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(1,4,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(5, self.Xc[0]), interpOnMesh1D(self.cMat_i5.transpose(), qn) 
     
     
@@ -803,7 +827,7 @@ class GkeDgSerendipModal2DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(2,1,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i2.transpose(), qn)
@@ -818,7 +842,7 @@ class GkeDgSerendipModal2DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(2,2,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i3.transpose(), qn)    
@@ -833,7 +857,7 @@ class GkeDgSerendipModal2DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(2,3,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i4.transpose(), qn) 
@@ -848,7 +872,7 @@ class GkeDgSerendipModal2DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(2,4,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i5.transpose(), qn) 
@@ -863,7 +887,7 @@ class GkeDgSerendipModal3DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(3,1,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2.transpose(), qn)
@@ -878,7 +902,7 @@ class GkeDgSerendipModal3DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(3,2,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
@@ -893,7 +917,7 @@ class GkeDgSerendipModal3DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(3,3,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4.transpose(), qn)
@@ -908,7 +932,7 @@ class GkeDgSerendipModal3DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(3,4,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5.transpose(), qn)
@@ -923,7 +947,7 @@ class GkeDgSerendipModal4DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(4,1,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2.transpose(), qn)
@@ -938,7 +962,7 @@ class GkeDgSerendipModal4DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(4,2,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
@@ -953,7 +977,7 @@ class GkeDgSerendipModal4DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(4,3,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i4.transpose(), qn)
@@ -968,7 +992,7 @@ class GkeDgSerendipModal4DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(4,4,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i5.transpose(), qn)    
@@ -983,7 +1007,7 @@ class GkeDgSerendipModal5DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(5,1,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3]), makeMesh(2, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2.transpose(), qn)
@@ -998,7 +1022,7 @@ class GkeDgSerendipModal5DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(5,2,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3]), makeMesh(3, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3.transpose(), qn)
@@ -1013,7 +1037,7 @@ class GkeDgSerendipModal5DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(5,3,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3]), makeMesh(4, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i4.transpose(), qn)
@@ -1028,7 +1052,7 @@ class GkeDgSerendipModal5DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(5,4,'modal Serendipity')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3]), makeMesh(5, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i5.transpose(), qn)
@@ -1043,7 +1067,7 @@ class GkeDgMaximalOrderModal1DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(1,1,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(2, self.Xc[0]), interpOnMesh1D(self.cMat_i2.transpose(), qn)
 
 #################
@@ -1056,7 +1080,7 @@ class GkeDgMaximalOrderModal1DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(1,2,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(3, self.Xc[0]), interpOnMesh1D(self.cMat_i3.transpose(), qn) 
 
 #################
@@ -1069,7 +1093,7 @@ class GkeDgMaximalOrderModal1DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(1,3,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(4, self.Xc[0]), interpOnMesh1D(self.cMat_i4.transpose(), qn) 
 
 #################
@@ -1082,7 +1106,7 @@ class GkeDgMaximalOrderModal1DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(1,4,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         return makeMesh(5, self.Xc[0]), interpOnMesh1D(self.cMat_i5.transpose(), qn) 
     
     
@@ -1096,7 +1120,7 @@ class GkeDgMaximalOrderModal2DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(2,1,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i2.transpose(), qn)
@@ -1111,7 +1135,7 @@ class GkeDgMaximalOrderModal2DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(2,2,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i3.transpose(), qn)    
@@ -1126,7 +1150,7 @@ class GkeDgMaximalOrderModal2DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(2,3,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i4.transpose(), qn) 
@@ -1141,7 +1165,7 @@ class GkeDgMaximalOrderModal2DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(2,4,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1])
         XX, YY = numpy.meshgrid(X, Y, indexing='ij')
         return XX, YY, interpOnMesh2D(self.cMat_i5.transpose(), qn) 
@@ -1156,7 +1180,7 @@ class GkeDgMaximalOrderModal3DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(3,1,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i2.transpose(), qn)
@@ -1171,7 +1195,7 @@ class GkeDgMaximalOrderModal3DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(3,2,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i3.transpose(), qn)   
@@ -1186,7 +1210,7 @@ class GkeDgMaximalOrderModal3DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(3,3,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i4.transpose(), qn)
@@ -1201,7 +1225,7 @@ class GkeDgMaximalOrderModal3DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(3,4,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2])
         XX, YY, ZZ = numpy.meshgrid(X, Y, Z, indexing='ij')
         return XX, YY, ZZ, interpOnMesh3D(self.cMat_i5.transpose(), qn)
@@ -1216,7 +1240,7 @@ class GkeDgMaximalOrderModal4DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(4,1,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i2.transpose(), qn)
@@ -1231,7 +1255,7 @@ class GkeDgMaximalOrderModal4DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(4,2,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i3.transpose(), qn)
@@ -1246,7 +1270,7 @@ class GkeDgMaximalOrderModal4DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(4,3,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i4.transpose(), qn)
@@ -1261,7 +1285,7 @@ class GkeDgMaximalOrderModal4DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(4,4,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3])
         XX, YY, ZZ, VV = numpy.meshgrid(X, Y, Z, V, indexing='ij')
         return XX, YY, ZZ, VV, interpOnMesh4D(self.cMat_i5.transpose(), qn)    
@@ -1276,7 +1300,7 @@ class GkeDgMaximalOrderModal5DPolyOrder1Basis(GInterp):
         self.cMat_i2 = loadMatrix(5,1,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(2, self.Xc[0]), makeMesh(2, self.Xc[1]), makeMesh(2, self.Xc[2]), makeMesh(2, self.Xc[3]), makeMesh(2, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i2.transpose(), qn)
@@ -1291,7 +1315,7 @@ class GkeDgMaximalOrderModal5DPolyOrder2Basis(GInterp):
         self.cMat_i3 = loadMatrix(5,2,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(3, self.Xc[0]), makeMesh(3, self.Xc[1]), makeMesh(3, self.Xc[2]), makeMesh(3, self.Xc[3]), makeMesh(3, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i3.transpose(), qn)
@@ -1306,7 +1330,7 @@ class GkeDgMaximalOrderModal5DPolyOrder3Basis(GInterp):
         self.cMat_i4 = loadMatrix(5,3,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(4, self.Xc[0]), makeMesh(4, self.Xc[1]), makeMesh(4, self.Xc[2]), makeMesh(4, self.Xc[3]), makeMesh(4, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i4.transpose(), qn)
@@ -1321,7 +1345,7 @@ class GkeDgMaximalOrderModal5DPolyOrder4Basis(GInterp):
         self.cMat_i5 = loadMatrix(5,4,'modal Maximal Order')
 
     def project(self, c):
-        qn = self._getRaw(c)
+        qn = self._getRawModal(c)
         X, Y, Z, V, U = makeMesh(5, self.Xc[0]), makeMesh(5, self.Xc[1]), makeMesh(5, self.Xc[2]), makeMesh(5, self.Xc[3]), makeMesh(5, self.Xc[4])
         XX, YY, ZZ, VV, UU = numpy.meshgrid(X, Y, Z, V, U, indexing='ij')
         return XX, YY, ZZ, VV, UU, interpOnMesh5D(self.cMat_i5.transpose(), qn) 
