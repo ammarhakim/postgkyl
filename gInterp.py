@@ -15,7 +15,7 @@ postgkylPath = os.path.dirname(os.path.realpath(__file__))
 ## Below are a set of helper functions used in the DG classes
 
 def loadMatrix(dim, polyOrder, basis):
-    """Load interpolation matrix from a pre-computed HDF5 file."""
+    """Load interpolation matrix from the pre-computed HDF5 file."""
     varid ='xformMatrix%i%i' % (dim,polyOrder)
     if basis.lower() == 'nodal serendipity':
         fh = tables.open_file(postgkylPath+'/xformMatricesNodalSerendipity.h5')
@@ -32,23 +32,15 @@ def loadMatrix(dim, polyOrder, basis):
     fh.close()
     return mat    
 
-def makeMatrix(*ll):
-    nrow = len(ll)
-    ncol = len(ll[0])
-    mat = numpy.zeros((nrow,ncol), numpy.float)
-    for i in range(nrow):
-        mat[i,:] = ll[i]
-    return mat
-
 def decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
     return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / (numInterp**numpy.arange(dim)), numInterp )
 
 def makeMesh(nInterp, Xc):
-    dx = Xc[1]-Xc[0]
+    dx = Xc[1] - Xc[0]
     nx = Xc.shape[0]
-    xlo = Xc[0]-0.5*dx
-    xup = Xc[-1]+0.5*dx
+    xlo = Xc[0]  - 0.5*dx
+    xup = Xc[-1] + 0.5*dx
     dx2 = dx/nInterp
     return numpy.linspace(xlo+0.5*dx2, xup-0.5*dx2, nInterp*nx)
 
@@ -79,13 +71,19 @@ def interpOnMesh(cMat, qIn):
         idxs = [slice(startIdx[i], numCells[i]*numInterp, numInterp) 
                 for i in range(numDims)]
         qOut[idxs] = temp
-    return qOut
+    return numpy.array(qOut)
 
 class GInterp:
-    r"""__init__(dat : GkeData, numNodes : int) -> GkeDgData
+    """Base class for DG interpolation.
 
-    Base class for post-processing DG data. The derived class should
-    set the number of nodes in the element.
+    __init__(data : GData, numNodes : int)
+
+    Note:
+    This class should not be used on its own. Currently supported
+    child classes are:
+    - GInterpZeroOrder
+    - GInterpNodalSerendipity
+    - GInterpModalMaxOrder
     """
 
     def __init__(self, dat, numNodes):
@@ -119,11 +117,6 @@ class GInterp:
         up = lo+self.numNodes
         rawData = q[...,lo:up]
         return rawData    
-
-    def project(self, c):
-        r"""project(c : int)
-        """
-        return 0, 0
 
 #################
 
@@ -159,7 +152,7 @@ class GInterpNodalSerendipity(GInterp):
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids  = numpy.meshgrid(*coords, indexing='ij')
-        return grids, interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalSerendipity(GInterp):
     """Modal Serendipity basis PUT MORE STUF HERE"""
@@ -182,7 +175,7 @@ class GInterpModalSerendipity(GInterp):
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids  = numpy.meshgrid(*coords, indexing='ij')
-        return grids, interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalMaxOrder(GInterp):
     """Modal Maximal Order basis PUT MORE STUF HERE"""
@@ -205,4 +198,4 @@ class GInterpModalMaxOrder(GInterp):
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids  = numpy.meshgrid(*coords, indexing='ij')
-        return grids, interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
