@@ -15,12 +15,10 @@ from gInterp import GInterpNodalSerendipity
 from gInterp import GInterpModalSerendipity
 from gInterp import GInterpModalMaxOrder
 
-# import the baseline field class
-from cartField import CartField
-from cartField import CartFieldDG
-from cartField import fixCoordinates
+# import the convenience batch-handling classes
+from gBatch import GBatchData
+from gBatch import GBatchInterpNodalSerendipity
+from gBatch import GBatchInterpModalSerendipity
+from gBatch import GBatchInterpModalMaxOrder
 
-# import the field batch history class
-from cartFieldHist import CartFieldHist
-from cartFieldHist import CartFieldDGHist
 
