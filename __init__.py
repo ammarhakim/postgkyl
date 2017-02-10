@@ -21,4 +21,6 @@ from gBatch import GBatchInterpNodalSerendipity
 from gBatch import GBatchInterpModalSerendipity
 from gBatch import GBatchInterpModalMaxOrder
 
+from gTools import rotationMatrix
+
 
