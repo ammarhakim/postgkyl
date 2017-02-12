@@ -2,9 +2,6 @@
 """Gkeyll postprocessing package
 
 Modules:
-cartField     -- contains basic cartesian field classes CartField and CartFieldDG
-cartFieldHist -- contains history array classes CartFieldHist and CartFieldDGHist
-plotting      -- contains plotting methods
 """
 
 # import basic data handling class
@@ -21,6 +18,6 @@ from gBatch import GBatchInterpNodalSerendipity
 from gBatch import GBatchInterpModalSerendipity
 from gBatch import GBatchInterpModalMaxOrder
 
-from gTools import rotationMatrix
-
+# import diganostics
+from gDiagnostics import partFieldC
 
