@@ -19,5 +19,5 @@ from gBatch import GBatchInterpModalSerendipity
 from gBatch import GBatchInterpModalMaxOrder
 
 # import diganostics
-from gDiagnostics import partFieldC
+from gDiagnostics import fieldParticleC
 
