@@ -21,3 +21,6 @@ from gBatch import GBatchInterpModalMaxOrder
 # import diganostics
 from gDiagnostics import fieldParticleC
 
+# import tools
+from gTools import fftFiltering
+
