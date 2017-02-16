@@ -23,4 +23,5 @@ from gDiagnostics import fieldParticleC
 
 # import tools
 from gTools import fftFiltering
+from gTools import butterFiltering
 
