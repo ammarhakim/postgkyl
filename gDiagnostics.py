@@ -28,14 +28,27 @@ def fieldParticleC(f, g, N, mode='forward'):
     elif mode == 'backward':
         offset = N
     elif mode == 'center':
-        ofset = numpy.floor(N/2)
+        offset = numpy.floor(N/2)
     else:
         raise exceptions.RuntimeError(
             "fieldParticleC: Mode '{}' is not supported!\n  Supported modes are:\n    'forward' (default)\n    'backward'\n    'center'.".format(mode))
 
-    C = numpy.zeros((length, f.shape[1]))
+    if len(g.shape) == 1:
+        C = numpy.zeros(f.shape)
+    else:
+        C = numpy.zeros(f.shape[:-1])
+
     for i in numpy.arange(length-N)+offset:
         for j in range(N):
-            C[i, :] = C[i, :] + f[i+j-offset, :]*g[i+j-offset]
+            if len(g.shape) == 1:
+                C[i, ...] += f[i+j-offset, ...]*g[i+j-offset]
+            elif g.shape[-1] == 2:
+                C[i, ...] += f[i+j-offset, ..., 0]*g[i+j-offset, ..., 0] + \
+                             f[i+j-offset, ..., 1]*g[i+j-offset, ..., 1]
+            else:
+                C[i, ...] += f[i+j-offset, ..., 0]*g[i+j-offset, ..., 0] + \
+                             f[i+j-offset, ..., 1]*g[i+j-offset, ..., 1] + \
+                             f[i+j-offset, ..., 2]*g[i+j-offset, ..., 2]
+
 
     return -C/N

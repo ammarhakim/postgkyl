@@ -39,7 +39,6 @@ def rotationMatrix(vector):
 def clickCoords(event):
     global ix, iy
     ix, iy = event.xdata, event.ydata
-    print('Frequency cut-off selected: {}'.format(ix))
     plt.close()
 
 def fftFiltering(data, dt=1, cutoff=None):
@@ -64,17 +63,19 @@ def fftFiltering(data, dt=1, cutoff=None):
     if cutoff is None:
         fig, ax = plt.subplots(1, 1)
         # plot just N/2 points
-        ax.plot(freq[:N/2], 2.0/N*numpy.abs(FT[:N/2]))
+        ax.semilogy(freq[1:N/2], 2.0/N*numpy.abs(FT[1:N/2]))
         ax.grid()
         ax.set_xlabel('Freq')
         ax.set_ylabel('Normalized FFT')
+        ax.set_title('Please, click on the plot to select cut-off frequency')
         plt.tight_layout()
 
         cid = fig.canvas.mpl_connect('button_press_event', clickCoords)
         plt.show()
 
         cutoff = ix
-
+        print('Frequency cut-off selected: {}'.format(ix))
+           
     # remove high frequency signal and return inverse FFT
     FT[freq >  cutoff] = 0
     FT[freq < -cutoff] = 0
@@ -100,9 +101,7 @@ def butterFiltering(data, dt, cutoff):
     Key words:
     dt     -- set spacing of data (default: 1)
     cutoff -- set high frequency cut-off (in Hz)
-
     """
-
     order = 6
     fs = 1/dt # sample rate
     return butter_lowpass_filter(data, cutoff, fs, order)
