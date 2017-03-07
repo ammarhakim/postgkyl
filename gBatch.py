@@ -16,15 +16,12 @@ class GBatchData:
 
     __init__(fNameRoot : string)
     Search for files and load them to 'batch' array
-
-    Methods:
-
     """
 
     def __init__(self, fNameRoot):
         """Search for files and load them to 'batch' array
 
-        Inputs:
+        Parameters:
         fNameRoot -- file name roots
 
         Notes:
@@ -32,10 +29,11 @@ class GBatchData:
         """
         
         self.fNameRoot = fNameRoot
-        files = glob.glob('{}*.??'.format(self.fNameRoot))
+        files = glob.glob('*{}*.??'.format(self.fNameRoot))
         if files == []:
             raise exceptions.RuntimeError(
-                'GBatchData: Files with root \'{}\' do not exist!'.format(self.fNameRoot))
+                'GBatchData: Files with root \'{}\' do not exist!'.
+                format(self.fNameRoot))
 
         # load batch
         self.array = [gData.GData(name) for name in files]
@@ -57,7 +55,9 @@ class GBatchInterpNodalSerendipity:
             coords, temp = projObj.project(comp)
             projection.append(temp)
             percent = float(i)/len(self.data.array)*100
-            sys.stdout.write('\rGBatchInterpNodalSerendipity projecting: {:6.2f}% done'.format(percent))
+            sys.stdout.write(
+                '\rGBatchInterpNodalSerendipity projecting: {:6.2f}% done'.
+                format(percent))
             sys.stdout.flush()
         print('\rGBatchInterpNodalSerendipity projecting: 100.00% done')
         return numpy.array(coords), numpy.array(projection)
@@ -74,7 +74,9 @@ class GBatchInterpModalSerendipity:
             coords, temp = projObj.project(comp)
             projection.append(temp)
             percent = float(i)/len(self.data.array)*100
-            sys.stdout.write('\rGBatchInterpModalSerendipity projecting: {:6.2f}% done'.format(percent))
+            sys.stdout.write(
+                '\rGBatchInterpModalSerendipity projecting: {:6.2f}% done'.
+                format(percent))
             sys.stdout.flush()
         return coords, projection
 
@@ -90,6 +92,8 @@ class GBatchInterpModalMaxOrder:
             coords, temp = projObj.project(comp)
             projection.append(temp)
             percent = float(i)/len(self.data.array)*100
-            sys.stdout.write('\rGBatchInterpModalMaxOrder projecting: {:6.2f}% done'.format(percent))
+            sys.stdout.write(
+                '\rGBatchInterpModalMaxOrder projecting: {:6.2f}% done'.
+                format(percent))
             sys.stdout.flush()
         return coords, projection

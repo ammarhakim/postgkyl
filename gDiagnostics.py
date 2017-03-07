@@ -6,15 +6,15 @@ Postgkyl module with diagnostics functions
 import numpy
 import exceptions
 
-def fieldParticleC(f, g, N, mode='forward'):
+def fieldParticleC(f, g, N, mode='center'):
     """Calculate the field-particle correlation
     
-    Inputs:
+    Parameters:
     f(x_0, v, t) -- modified distribution function
     g(x_0, t)    -- field
     N            -- number of time steps for averaging
-    mode         -- averaging mode; 'forward' (default),
-                    'backward', and 'center'
+    mode         -- averaging mode; 'forward',
+                    'backward', and 'center' (default)
 
     Returns:
     Numpy array with dimension of time x velocity

@@ -18,23 +18,28 @@ def loadMatrix(dim, polyOrder, basis):
     """Load interpolation matrix from the pre-computed HDF5 file."""
     varid ='xformMatrix%i%i' % (dim,polyOrder)
     if basis.lower() == 'nodal serendipity':
-        fh = tables.open_file(postgkylPath+'/xformMatricesNodalSerendipity.h5')
+        fh = tables.open_file(postgkylPath+
+                              '/xformMatricesNodalSerendipity.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     elif basis.lower() == 'modal serendipity':
-        fh = tables.open_file(postgkylPath+'/xformMatricesModalSerendipity.h5')
+        fh = tables.open_file(postgkylPath+
+                              '/xformMatricesModalSerendipity.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     elif basis.lower() == 'modal maximal order':
-        fh = tables.open_file(postgkylPath+'/xformMatricesModalMaximal.h5')
+        fh = tables.open_file(postgkylPath+
+                              '/xformMatricesModalMaximal.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     else:
         raise exceptions.RuntimeError(
-            "GInterp: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basis))
+            "GInterp: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".
+            format(basis))
     fh.close()
     return mat    
 
 def decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
-    return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / (numInterp**numpy.arange(dim)), numInterp )
+    return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / 
+                      (numInterp**numpy.arange(dim)), numInterp )
 
 def makeMesh(nInterp, Xc):
     dx = Xc[1] - Xc[0]
@@ -47,16 +52,16 @@ def makeMesh(nInterp, Xc):
 def interpOnMesh(cMat, qIn):
     """Interpolate DG data on a uniform mesh.
 
-    Inputs:
+    Parameters:
     cMat -- interpolation matrix (loaded using loadMatrix)
     qIn  -- data to project
     """
     numCells = numpy.array(qIn.shape)
     # last entry is indexing nodes, get rid of it
-    numCells  = numCells[:-1]
-    numDims   = len(numCells)
+    numCells = numCells[:-1]
+    numDims = len(numCells)
     numInterp = int(cMat.shape[0] ** (1.0/numDims))
-    numNodes  = cMat.shape[1]
+    numNodes = cMat.shape[1]
     qOut = numpy.zeros(numCells*numInterp, numpy.float)
     # move the node index from last to the first
     qIn = numpy.moveaxis(qIn, -1, 0)
@@ -104,7 +109,7 @@ class GInterp:
         shp.append(self.numNodes)
         rawData = numpy.zeros(shp, numpy.float)
         for n in range(self.numNodes):
-            rawData[...,n] = q[...,component+n*numEqns]
+            rawData[..., n] = q[..., component+n*numEqns]
         return rawData
 
     def _getRawModal(self, component):
@@ -115,14 +120,14 @@ class GInterp:
         rawData = numpy.zeros(shp, numpy.float)
         lo = component*self.numNodes
         up = lo+self.numNodes
-        rawData = q[...,lo:up]
+        rawData = q[..., lo:up]
         return rawData    
 
 #################
 
 class GInterpZeroOrder(GInterp):
-    r"""This is provided to allow treating finite-volume data as DG
-    with piecwise contant basis.
+    """This is provided to allow treating finite-volume data as DG
+    with piecewise constant basis.
     """
 
     def __init__(self, dat):
@@ -145,13 +150,14 @@ class GInterpNodalSerendipity(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder, 'nodal Serendipity')
+        self.cMat = loadMatrix(self.numDims, self.polyOrder,
+                               'nodal Serendipity')
 
     def project(self, comp=0):
         q = self._getRawNodal(comp)
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids  = numpy.meshgrid(*coords, indexing='ij')
+        grids = numpy.meshgrid(*coords, indexing='ij')
         return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalSerendipity(GInterp):
@@ -168,13 +174,14 @@ class GInterpModalSerendipity(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder, 'modal Serendipity')
+        self.cMat = loadMatrix(self.numDims, self.polyOrder,
+                               'modal Serendipity')
 
     def project(self, comp=0):
         q = self._getRawModal(comp)
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids  = numpy.meshgrid(*coords, indexing='ij')
+        grids = numpy.meshgrid(*coords, indexing='ij')
         return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalMaxOrder(GInterp):
@@ -191,11 +198,12 @@ class GInterpModalMaxOrder(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder, 'modal Maximal Order')
+        self.cMat = loadMatrix(self.numDims, self.polyOrder,
+                               'modal Maximal Order')
 
     def project(self, comp=0):
         q = self._getRawModal(comp)
         coords = [makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids  = numpy.meshgrid(*coords, indexing='ij')
+        grids = numpy.meshgrid(*coords, indexing='ij')
         return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
