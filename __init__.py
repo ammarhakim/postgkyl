@@ -6,6 +6,7 @@ Modules:
 
 # import basic data handling class
 from gData import GData
+from gData import GHistoryData
 
 from gInterp import GInterpZeroOrder
 from gInterp import GInterpNodalSerendipity
