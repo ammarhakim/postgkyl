@@ -60,10 +60,9 @@ parser.add_option('--axis-eq', action = 'store_true',
                   dest = 'eqvAxis',
                   help = "If set, 2D plots will have equal axis",
                   default = False)
-parser.add_option('--contour', action = 'store_true',
-                  dest = 'contour',
-                  help = "Plot countours instead of color bitmap",
-                  default = False)
+parser.add_option('--color', action = 'store',
+                  dest = 'color', default = 'RoyalBlue',
+                  help = "Color of 1D plots")
 # misellaneous
 parser.add_option('--dont-show', action = 'store_true',
                   dest = 'dontShow', default = False,
@@ -135,18 +134,13 @@ if options.xkcd:
 # plotting 
 fig, ax = plt.subplots()
 if numDims == 1:
-    im = ax.plot(coords[0], values)
-    plt.autoscale(enable=True, axis='x', tight=True)
+    im = ax.plot(coords[0], values,
+                 color=options.color)
 elif numDims == 2:
     if not options.contour:
         im = ax.pcolormesh(coords[0], coords[1], values)
     else:
         im = ax.contour(coords[0], coords[1], values)
-    fig.colorbar(im)
-    if options.eqvAxis:
-        ax.axis('tight')
-    else:
-        ax.axis('image')
 else:
     raise exceptions.RuntimeError(
         "Plotting 3D data is not currently supported")
@@ -155,14 +149,23 @@ else:
 ax.set_xlabel(options.xlabel)
 ax.set_ylabel(options.ylabel)
 ax.grid(options.grid)
+if numDims == 1:
+    plt.autoscale(enable=True, axis='x', tight=True)
+elif numDims == 2:
+    fig.colorbar(im)
+    if options.eqvAxis:
+        ax.axis('tight')
+    else:
+        ax.axis('image')
 
+plt.tight_layout()
+
+# this should be last
 if options.xkcd:
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
     plt.xticks([])
     plt.yticks([])
-
-plt.tight_layout()
 
 if not options.dontShow:
     plt.show()
