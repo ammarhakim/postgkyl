@@ -85,15 +85,15 @@ if options.fName:
     data = pg.GData(options.fName)
     if options.nodalSerendipity:
         dg = pg.GInterpNodalSerendipity(data, int(options.nodalSerendipity))
-        coords, values = dg.project(options.component)
+        coords, values = dg.project(int(options.component))
         numDims = data.numDims
     elif options.modalSerendipity:
         dg = pg.GInterpModalSerendipity(data, int(options.modalSerendipity))
-        coords, values = dg.project(options.component)
+        coords, values = dg.project(int(options.component))
         numDims = data.numDims
     elif options.maxOrder:
         dg = pg.GInterpMaxOrder(data, int(options.maxOrder))
-        coords, values = dg.project(options.component)
+        coords, values = dg.project(int(options.component))
         numDims = data.numDims
     else:
         c = [centeredLinspace(data.lowerBounds[d],
@@ -101,7 +101,7 @@ if options.fName:
                               data.numCells[d])
              for d in range(data.numDims)]
         coords = numpy.meshgrid(*c, indexing='ij')
-        values = data.q[..., options.component]
+        values = data.q[..., int(options.component)]
         numDims = data.numDims
 elif options.fNameRoot:
     hist = pg.GHistoryData(options.fNameRoot)
