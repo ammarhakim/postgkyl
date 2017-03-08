@@ -7,11 +7,13 @@ import numpy
 import matplotlib.pyplot as plt
 import exceptions
 import sys
+import os
 from optparse import OptionParser
 # custom imports
 import postgkyl as pg
 
-# set terminal options
+#---------------------------------------------------------------------
+# Parser -------------------------------------------------------------
 parser = OptionParser()
 # what to plot
 parser.add_option('-p', '--plot', action = 'store',
@@ -35,10 +37,10 @@ parser.add_option('--mo', action = 'store',
                   help = 'Polynomial order of the max order basis')
 # saving plot
 parser.add_option('-s', '--save', action = 'store_true',
-                  dest = 'savePng',
-                  help = 'Save png of plot displayed')
+                  dest = 'save',
+                  help = 'Save the displayed plot (png by default)')
 parser.add_option('-o', '--output', action = 'store',
-                  dest = 'outNm',
+                  dest = 'outName',
                   help = 'When saving figures, use this file name')
 # how to plot
 parser.add_option('--xlabel', action = 'store',
@@ -73,9 +75,10 @@ parser.add_option('--dont-show', action = 'store_true',
 parser.add_option('-x', '--xkcd', action = 'store_true',
                   dest = 'xkcd', default = False,
                   help = 'Plot xkcd.com style plots!')
-
 (options, args) = parser.parse_args()
 
+#---------------------------------------------------------------------
+# Data Loading -------------------------------------------------------
 def centeredLinspace(lower, upper, numElem):
     dx = (upper-lower)/numElem
     return numpy.linspace(lower+0.5*dx, upper-0.5*dx, numElem)
@@ -111,6 +114,9 @@ elif options.fNameRoot:
 else:
     print('Nothing specified to plot')
     sys.exit()
+
+#---------------------------------------------------------------------
+# Plotting -----------------------------------------------------------
 
 # plotting parameters are based solely on the personal taste of Ammar :)
 plt.rcParams['lines.linewidth']            = 2
@@ -153,7 +159,8 @@ ax.set_xlabel(options.xlabel)
 ax.set_ylabel(options.ylabel)
 ax.grid(options.grid)
 if numDims == 1:
-    plt.autoscale(enable=True, axis='x', tight=True)
+    #plt.autoscale(enable=True, axis='x', tight=True)
+    plt.axis('tight')
 elif numDims == 2:
     fig.colorbar(im)
     if options.freeAxis:
@@ -163,12 +170,29 @@ elif numDims == 2:
 
 plt.tight_layout()
 
-# this should be last
+# this should be last formatting option
 if options.xkcd:
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
     plt.xticks([])
     plt.yticks([])
 
+#---------------------------------------------------------------------
+# Saving Figure ------------------------------------------------------
+if options.save:
+    if options.outName is None:
+        if options.fName:
+            fn = options.fName.split('.')[-2]
+            fn = fn.split('/')[-1]
+        elif options.fNameRoot:
+            fn = options.fNameRoot
+        outName = '{}/{}.png'.format(os.getcwd(), fn)
+    else:
+        outName = options.outName
+    #fig.savefig(outName)
+    print('Saving:\n{}'.format(outName))
+
 if not options.dontShow:
     plt.show()
+else:
+    plt.close(fig)
