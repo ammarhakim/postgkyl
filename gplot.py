@@ -197,8 +197,8 @@ if options.save:
         outName = '{}/{}.png'.format(os.getcwd(), fn)
     else:
         outName = options.outName
-    #fig.savefig(outName)
-    print('Saving:\n{}'.format(outName))
+    fig.savefig(outName)
+    #print('Saving:\n{}'.format(outName))
 
 if not options.dontShow:
     plt.show()
