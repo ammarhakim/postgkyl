@@ -78,6 +78,9 @@ parser.add_option('--dont-show', action = 'store_true',
 parser.add_option('-x', '--xkcd', action = 'store_true',
                   dest = 'xkcd', default = False,
                   help = 'Plot xkcd.com style plots!')
+parser.add_option('-w', '--write-history', action = 'store_true',
+                  dest = 'writeHistory', default = False,
+                  help = 'Write the loaded history to text a file')
 (options, args) = parser.parse_args()
 
 #---------------------------------------------------------------------
@@ -115,7 +118,7 @@ elif options.fNameRoot:
     values = hist.values
     numDims = 1
 else:
-    print('Nothing specified to plot')
+    print(' *** No data specified for plotting')
     sys.exit()
 
 #---------------------------------------------------------------------
@@ -245,6 +248,9 @@ if options.xkcd:
 
 if options.save:
     fig.savefig(outName, bbox_inches='tight')
+
+if options.writeHistory:
+    hist.save()
 
 if not options.dontShow:
     plt.show()
