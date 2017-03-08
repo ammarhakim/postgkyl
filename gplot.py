@@ -63,6 +63,9 @@ parser.add_option('--axis-eq', action = 'store_true',
 parser.add_option('--color', action = 'store',
                   dest = 'color', default = 'RoyalBlue',
                   help = "Color of 1D plots")
+parser.add_option('--contour', action = 'store_true',
+                  dest = 'contour', default = False,
+                  help = "Plot contour instead of a bitmat for 2D plots")
 # misellaneous
 parser.add_option('--dont-show', action = 'store_true',
                   dest = 'dontShow', default = False,
@@ -85,11 +88,11 @@ if options.fName:
         coords, values = dg.project(options.component)
         numDims = data.numDims
     elif options.modalSerendipity:
-        dg = pg.GInterpModalSerendipity(data, options.modalSerendipity)
+        dg = pg.GInterpModalSerendipity(data, int(options.modalSerendipity))
         coords, values = dg.project(options.component)
         numDims = data.numDims
     elif options.maxOrder:
-        dg = pg.GInterpMaxOrder(data, options.maxOrder)
+        dg = pg.GInterpMaxOrder(data, int(options.maxOrder))
         coords, values = dg.project(options.component)
         numDims = data.numDims
     else:
@@ -153,7 +156,7 @@ if numDims == 1:
     plt.autoscale(enable=True, axis='x', tight=True)
 elif numDims == 2:
     fig.colorbar(im)
-    if options.eqvAxis:
+    if not options.eqvAxis:
         ax.axis('tight')
     else:
         ax.axis('image')
