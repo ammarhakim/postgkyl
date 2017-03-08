@@ -49,9 +49,9 @@ parser.add_option('--xlabel', action = 'store',
 parser.add_option('--ylabel', action = 'store',
                   dest = 'ylabel', default = '',
                   help = 'y-label to put on plots')
-parser.add_option('-t', '--title', action = 'store',
-                  dest = 'title',
-                  help = 'Title to put on plots')
+parser.add_option('-t', '--title', action = 'store_false',
+                  dest = 'title', default=True,
+                  help = 'Turn OFF title to put on plots')
 parser.add_option('-g', '--grid', action = 'store_false',
                   dest = 'grid', default = True,
                   help = 'Do not show grid')
@@ -79,7 +79,7 @@ parser.add_option('-x', '--xkcd', action = 'store_true',
 
 #---------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
-def centeredLinspace(lower, upper, numElem):
+def _centeredLinspace(lower, upper, numElem):
     dx = (upper-lower)/numElem
     return numpy.linspace(lower+0.5*dx, upper-0.5*dx, numElem)
 
@@ -99,9 +99,9 @@ if options.fName:
         coords, values = dg.project(int(options.component))
         numDims = data.numDims
     else:
-        c = [centeredLinspace(data.lowerBounds[d],
-                              data.upperBounds[d],
-                              data.numCells[d])
+        c = [_centeredLinspace(data.lowerBounds[d],
+                               data.upperBounds[d],
+                               data.numCells[d])
              for d in range(data.numDims)]
         coords = numpy.meshgrid(*c, indexing='ij')
         values = data.q[..., int(options.component)]
@@ -116,70 +116,61 @@ else:
     sys.exit()
 
 #---------------------------------------------------------------------
+# Creating Titles ----------------------------------------------------
+if options.fName:
+    name = options.fName
+elif options.fNameRoot:
+    name = options.fNameRoot
+
+if options.fName:
+    name = name.split('/')[-1] # get rid of the full path
+    name = ''.join(name.split('.')[: -1]) # get rid of the extension
+    # This weird Python construct is here in case someone would like
+    # to use '.' in name... I really dislike it but I don't know about
+    # any better -pc
+    
+    # add component number
+    name = '{}_c{:d}'.format(name, int(options.component))
+else:
+   pass
+
+if options.outName is None:
+    outName = '{}/{}.png'.format(os.getcwd(), name)
+else:
+    outName = options.outName
+
+if options.fName:
+    titleName = '{}\nt = {:1.4e}'.format(name, data.time)
+else:
+    titleName = '{}\nhistory'.format(name)
+
+#---------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
 # plotting parameters are based solely on the personal taste of Ammar :)
-plt.rcParams['lines.linewidth']            = 2
-plt.rcParams['font.size']                  = 18
-#plt.rcParams['font.weight']                = 'bold'
-plt.rcParams['axes.labelsize']             = 'large'
-#plt.rcParams['xtick.major.size']           = 8 # default is 4
-#plt.rcParams['xtick.major.width']          = 3 # default is 0.5
-#plt.rcParams['ytick.major.size']           = 8 # default is 4
-#plt.rcParams['ytick.major.width']          = 3 # default is 0.5
-plt.rcParams['figure.facecolor']           = 'white'
-#plt.rcParams['figure.subplot.bottom']      = 0.125
-#plt.rcParams['figure.subplot.right']       = 0.85 # keep labels/ticks of
-plt.rcParams['image.interpolation']        = 'none'
-plt.rcParams['image.origin']               = 'lower'
+plt.rcParams['lines.linewidth'] = 2
+plt.rcParams['font.size'] = 18
+#plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['axes.labelsize'] = 'large'
+#plt.rcParams['xtick.major.size'] = 8 # default is 4
+#plt.rcParams['xtick.major.width'] = 3 # default is 0.5
+#plt.rcParams['ytick.major.size'] = 8 # default is 4
+#plt.rcParams['ytick.major.width'] = 3 # default is 0.5
+plt.rcParams['figure.facecolor'] = 'white'
+#plt.rcParams['figure.subplot.bottom'] = 0.125
+#plt.rcParams['figure.subplot.right'] = 0.85 # keep labels/ticks of
+plt.rcParams['image.interpolation'] = 'none'
+plt.rcParams['image.origin'] = 'lower'
 plt.rcParams['contour.negative_linestyle'] = 'solid'
-#plt.rcParams['savefig.bbox']               = 'tight'
-#plt.rcParams['mathtext.default']           = 'regular'
+#plt.rcParams['savefig.bbox'] = 'tight'
+#plt.rcParams['mathtext.default'] = 'regular'
 
-def colorbar_adj(obj, mode=1, redraw=False, _fig_=None, _ax_=None, aspect=None):
-    '''
-    Add a colorbar adjacent to obj, with a matching height
-    For use of aspect, see http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set_aspect ; E.g., to fill the rectangle, try "auto"
-    '''
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    if mode == 1:
-        _fig_ = obj.figure; _ax_ = obj.axes
-    elif mode == 2: # assume obj is in the current figure/axis instance
-        _fig_ = plt.gcf(); _ax_ = plt.gca()
-    _divider_ = make_axes_locatable(_ax_)
-    _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
-    _cbar_ =  _fig_.colorbar(obj, cax=_cax_)
-    if aspect != None:
-        _ax_.set_aspect(aspect)
-    if redraw:
-        _fig_.canvas.draw()
-    return _cbar_
-
-class MakeTitle:
-    def __init__(self, gd, component, title, transformMod, transformVar, outNm):
-        self.title = gd.fName[:-3]+"["+str(component)+"]"
-        self.title = self.title + (" at t %g" % gd.time)
-        if transformMod:
-            self.title = transformVar
-            self.title = self.title + (" at t %g" % gd.time)
-        if title:
-            self.title = title
-
-        self.figName = gd.fName[:-3]
-        if transformMod:
-            self.figName = self.figName+"_"+transformVar
-        else:
-            self.figName = self.figName + "-c" + str(component)
-        self.figName = self.figName+".png"
-
-        if outNm:
-            self.figName = outNm+".png"
-
-# this needs to be last
+# this needs to be set after the rest of rcParams
 if options.xkcd:
+    plt.rcParams['mathtext.default'] = 'regular'
     plt.xkcd()
 
-# plotting 
+# plot 
 fig, ax = plt.subplots()
 if numDims == 1:
     if not options.xkcd:
@@ -198,15 +189,36 @@ else:
     raise exceptions.RuntimeError(
         "Plotting 3D data is not currently supported")
 
-# formating
-ax.set_xlabel(options.xlabel)
-ax.set_ylabel(options.ylabel)
+# format
+def _colorbar(obj, redraw=False, aspect=None, label=''):
+    """Add a colorbar adjacent to obj, with a matching height
+
+    For use of aspect, see:
+    http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set_aspect
+    """
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    _fig_ = obj.figure
+    _ax_ = obj.axes
+    _divider_ = make_axes_locatable(_ax_)
+    _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
+    _cbar_ =  _fig_.colorbar(obj, cax=_cax_, label=label)
+    if aspect != None:
+        _ax_.set_aspect(aspect)
+    if redraw:
+        _fig_.canvas.draw()
+    return _cbar_
+
+if options.title:
+    ax.set_title(titleName)
+ax.set_xlabel(str(options.xlabel))
+ax.set_ylabel(str(options.ylabel))
 ax.grid(options.grid)
 if numDims == 1:
     #plt.autoscale(enable=True, axis='x', tight=True)
-    plt.axis('tight')
+    ax.axis('tight')
 elif numDims == 2:
-    colorbar_adj(im)
+    _colorbar(im)
     if options.freeAxis:
         ax.axis('tight')
     else:
@@ -226,20 +238,8 @@ if options.xkcd:
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
 
-#---------------------------------------------------------------------
-# Saving Figure ------------------------------------------------------
 if options.save:
-    if options.outName is None:
-        if options.fName:
-            fn = options.fName.split('.')[-2]
-            fn = fn.split('/')[-1]
-        elif options.fNameRoot:
-            fn = options.fNameRoot
-        outName = '{}/{}.png'.format(os.getcwd(), fn)
-    else:
-        outName = options.outName
     fig.savefig(outName, bbox_inches='tight')
-    #print('Saving:\n{}'.format(outName))
 
 if not options.dontShow:
     plt.show()

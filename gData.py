@@ -98,6 +98,7 @@ class GData:
         # read in data
         self.q = adios.readvar(self.fName, 'CartGridField')
 
+
 class GHistoryData:
     """Provide interface to read history data.
 
