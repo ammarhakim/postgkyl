@@ -92,7 +92,7 @@ if options.fName:
         coords, values = dg.project(int(options.component))
         numDims = data.numDims
     elif options.maxOrder:
-        dg = pg.GInterpMaxOrder(data, int(options.maxOrder))
+        dg = pg.GInterpModalMaxOrder(data, int(options.maxOrder))
         coords, values = dg.project(int(options.component))
         numDims = data.numDims
     else:
