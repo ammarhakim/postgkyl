@@ -49,12 +49,15 @@ parser.add_option('--xlabel', action = 'store',
 parser.add_option('--ylabel', action = 'store',
                   dest = 'ylabel', default = '',
                   help = 'y-label to put on plots')
-parser.add_option('-t', '--title', action = 'store_false',
-                  dest = 'title', default=True,
+parser.add_option('-t', '--title', action = 'store',
+                  dest = 'title',
+                  help = 'Set title to put on plots')
+parser.add_option('--no-title', action = 'store_false',
+                  dest = 'titleOn', default=True,
                   help = 'Turn OFF title to put on plots')
-parser.add_option('-g', '--grid', action = 'store_false',
-                  dest = 'grid', default = True,
-                  help = 'Do not show grid')
+parser.add_option('-g', '--no-grid', action = 'store_false',
+                  dest = 'gridOn', default = True,
+                  help = 'Turn OFF the grid')
 parser.add_option('--cmap', action = 'store',
                   dest = 'cmap',
                   help = 'Color map to use for 2D plots')
@@ -116,7 +119,7 @@ else:
     sys.exit()
 
 #---------------------------------------------------------------------
-# Creating Titles ----------------------------------------------------
+# Creating Titles and Names ------------------------------------------
 if options.fName:
     name = options.fName
 elif options.fNameRoot:
@@ -137,13 +140,15 @@ else:
 if options.outName is None:
     outName = '{}/{}.png'.format(os.getcwd(), name)
 else:
-    outName = options.outName
+    outName = str(options.outName)
 
-if options.fName:
-    titleName = '{}\nt = {:1.4e}'.format(name, data.time)
+if options.title is None:
+    if options.fName:
+        title = '{}\nt = {:1.4e}'.format(name, data.time)
+    else:
+        title = '{}\nhistory'.format(name)
 else:
-    titleName = '{}\nhistory'.format(name)
-
+    title = str(options.title)
 #---------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
@@ -209,11 +214,11 @@ def _colorbar(obj, redraw=False, aspect=None, label=''):
         _fig_.canvas.draw()
     return _cbar_
 
-if options.title:
-    ax.set_title(titleName)
+if options.titleOn:
+    ax.set_title(title)
 ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
-ax.grid(options.grid)
+ax.grid(options.gridOn)
 if numDims == 1:
     #plt.autoscale(enable=True, axis='x', tight=True)
     ax.axis('tight')
