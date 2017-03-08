@@ -56,9 +56,9 @@ parser.add_option('-g', '--grid', action = 'store_false',
 parser.add_option('--cmap', action = 'store',
                   dest = 'cmap',
                   help = 'Color map to use for 2D plots')
-parser.add_option('--axis-eq', action = 'store_true',
-                  dest = 'eqvAxis',
-                  help = "If set, 2D plots will have equal axis",
+parser.add_option('--axis-free', action = 'store_true',
+                  dest = 'freeAxis',
+                  help = "If set, 2D plots will no longer have equal axis",
                   default = False)
 parser.add_option('--color', action = 'store',
                   dest = 'color', default = 'RoyalBlue',
@@ -156,7 +156,7 @@ if numDims == 1:
     plt.autoscale(enable=True, axis='x', tight=True)
 elif numDims == 2:
     fig.colorbar(im)
-    if not options.eqvAxis:
+    if options.freeAxis:
         ax.axis('tight')
     else:
         ax.axis('image')
