@@ -136,6 +136,45 @@ plt.rcParams['contour.negative_linestyle'] = 'solid'
 #plt.rcParams['savefig.bbox']               = 'tight'
 #plt.rcParams['mathtext.default']           = 'regular'
 
+def colorbar_adj(obj, mode=1, redraw=False, _fig_=None, _ax_=None, aspect=None):
+    '''
+    Add a colorbar adjacent to obj, with a matching height
+    For use of aspect, see http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.set_aspect ; E.g., to fill the rectangle, try "auto"
+    '''
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    if mode == 1:
+        _fig_ = obj.figure; _ax_ = obj.axes
+    elif mode == 2: # assume obj is in the current figure/axis instance
+        _fig_ = plt.gcf(); _ax_ = plt.gca()
+    _divider_ = make_axes_locatable(_ax_)
+    _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
+    _cbar_ =  _fig_.colorbar(obj, cax=_cax_)
+    if aspect != None:
+        _ax_.set_aspect(aspect)
+    if redraw:
+        _fig_.canvas.draw()
+    return _cbar_
+
+class MakeTitle:
+    def __init__(self, gd, component, title, transformMod, transformVar, outNm):
+        self.title = gd.fName[:-3]+"["+str(component)+"]"
+        self.title = self.title + (" at t %g" % gd.time)
+        if transformMod:
+            self.title = transformVar
+            self.title = self.title + (" at t %g" % gd.time)
+        if title:
+            self.title = title
+
+        self.figName = gd.fName[:-3]
+        if transformMod:
+            self.figName = self.figName+"_"+transformVar
+        else:
+            self.figName = self.figName + "-c" + str(component)
+        self.figName = self.figName+".png"
+
+        if outNm:
+            self.figName = outNm+".png"
+
 # this needs to be last
 if options.xkcd:
     plt.xkcd()
@@ -150,6 +189,8 @@ if numDims == 1:
                      clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:
+        if options.cmap:
+            plt.set_cmap(options.cmap)
         im = ax.pcolormesh(coords[0], coords[1], values)
     else:
         im = ax.contour(coords[0], coords[1], values)
@@ -165,7 +206,7 @@ if numDims == 1:
     #plt.autoscale(enable=True, axis='x', tight=True)
     plt.axis('tight')
 elif numDims == 2:
-    fig.colorbar(im)
+    colorbar_adj(im)
     if options.freeAxis:
         ax.axis('tight')
     else:
@@ -197,7 +238,7 @@ if options.save:
         outName = '{}/{}.png'.format(os.getcwd(), fn)
     else:
         outName = options.outName
-    fig.savefig(outName)
+    fig.savefig(outName, bbox_inches='tight')
     #print('Saving:\n{}'.format(outName))
 
 if not options.dontShow:
