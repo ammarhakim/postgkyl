@@ -143,8 +143,11 @@ if options.xkcd:
 # plotting 
 fig, ax = plt.subplots()
 if numDims == 1:
-    im = ax.plot(coords[0], values,
-                 color=options.color)
+    if not options.xkcd:
+        im = ax.plot(coords[0], values, color=options.color)
+    else:
+        im = ax.plot(coords[0], values, color=options.color, 
+                     clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:
         im = ax.pcolormesh(coords[0], coords[1], values)
@@ -172,10 +175,15 @@ plt.tight_layout()
 
 # this should be last formatting option
 if options.xkcd:
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-    plt.xticks([])
-    plt.yticks([])
+    # Move left and bottom spines outward by 10 points
+    ax.spines['left'].set_position(('outward', 10))
+    ax.spines['bottom'].set_position(('outward', 10))
+    # Hide the right and top spines
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    # Only show ticks on the left and bottom spines
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
 
 #---------------------------------------------------------------------
 # Saving Figure ------------------------------------------------------
