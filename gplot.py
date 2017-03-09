@@ -182,7 +182,7 @@ plt.rcParams['contour.negative_linestyle'] = 'solid'
 #plt.rcParams['mathtext.default'] = 'regular'
 plt.rcParams['grid.linewidth'] = 0.5
 plt.rcParams['grid.linestyle'] = 'dotted'
-plt.rcParams['axes.titlesize'] = 10
+plt.rcParams['axes.titlesize'] = 16
 
 # this needs to be set after the rest of rcParams
 if options.xkcd:
@@ -234,7 +234,7 @@ ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
 if numDims == 1:
     plt.autoscale(enable=True, axis='x', tight=True)
-    ax.axis('tight')
+    #ax.axis('tight')
 elif numDims == 2:
     _colorbar(im, ax, fig)
     if options.freeAxis:
