@@ -155,7 +155,7 @@ else:
 
 if options.title is None:
     if options.fName:
-        title = '{}\nt = {:1.4e}'.format(name, data.time)
+        title = '{}\nt={:1.2e}'.format(name, data.time)
     else:
         title = '{}\nhistory'.format(name)
 else:
@@ -165,7 +165,7 @@ else:
 
 # plotting parameters are based solely on the personal taste of Ammar :)
 plt.rcParams['lines.linewidth'] = 2
-plt.rcParams['font.size'] = 18
+plt.rcParams['font.size'] = 16
 #plt.rcParams['font.weight'] = 'bold'
 plt.rcParams['axes.labelsize'] = 'large'
 #plt.rcParams['xtick.major.size'] = 8 # default is 4
@@ -180,6 +180,9 @@ plt.rcParams['image.origin'] = 'lower'
 plt.rcParams['contour.negative_linestyle'] = 'solid'
 #plt.rcParams['savefig.bbox'] = 'tight'
 #plt.rcParams['mathtext.default'] = 'regular'
+plt.rcParams['grid.linewidth'] = 0.5
+plt.rcParams['grid.linestyle'] = 'dotted'
+plt.rcParams['axes.titlesize'] = 10
 
 # this needs to be set after the rest of rcParams
 if options.xkcd:
@@ -230,7 +233,7 @@ ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
 if numDims == 1:
-    #plt.autoscale(enable=True, axis='x', tight=True)
+    plt.autoscale(enable=True, axis='x', tight=True)
     ax.axis('tight')
 elif numDims == 2:
     _colorbar(im, ax, fig)
@@ -252,6 +255,8 @@ if options.xkcd:
     # Only show ticks on the left and bottom spines
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
+    # Turn OFF grid
+    ax.grid(False)
 
 if options.save:
     fig.savefig(outName, bbox_inches='tight')
