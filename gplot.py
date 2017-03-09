@@ -62,8 +62,8 @@ parser.add_option('-g', '--no-grid', action = 'store_false',
                   dest = 'gridOn', default = True,
                   help = 'Turn OFF the grid')
 parser.add_option('--cmap', action = 'store',
-                  dest = 'cmap',
-                  help = 'Color map to use for 2D plots')
+                  dest = 'cmap', default = 'jet',
+                  help = 'Color map to use for 2D plots (default \'jet\')')
 parser.add_option('--axis-free', action = 'store_true',
                   dest = 'freeAxis',
                   help = "If set, 2D plots will no longer have equal axis",
@@ -196,9 +196,8 @@ if numDims == 1:
                      clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:
-        if options.cmap:
-            plt.set_cmap(options.cmap)
-        im = ax.pcolormesh(coords[0], coords[1], values)
+        im = ax.pcolormesh(coords[0], coords[1], values,
+                           cmap=options.cmap)
     else:
         im = ax.contour(coords[0], coords[1], values)
 else:
