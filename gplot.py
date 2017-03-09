@@ -25,6 +25,9 @@ parser.add_option('-y', '--history', action = 'store',
 parser.add_option('-c', '--component', action = 'store',
                   dest = 'component', default = 0,
                   help = 'Component to plot (default 0)')
+parser.add_option('-m', '--mask', action = 'store',
+                  dest = 'maskName',
+                  help = 'G file that serves as a mask')
 # projecting
 parser.add_option('--ns', action = 'store',
                   dest = 'nodalSerendipity',
@@ -120,6 +123,11 @@ elif options.fNameRoot:
 else:
     print(' *** No data specified for plotting')
     sys.exit()
+
+# masking
+if options.maskName:
+    maskField = pg.GData(options.maskName).q[...,0]
+    values = numpy.ma.masked_where(maskField < 0.0, values)
 
 #---------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
