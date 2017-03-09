@@ -195,9 +195,9 @@ if numDims == 1:
         im = ax.plot(coords[0], values, color=options.color, 
                      clip_on=False, zorder=100)
 elif numDims == 2:
+    plt.set_cmap(options.cmap)
     if not options.contour:
-        im = ax.pcolormesh(coords[0], coords[1], values,
-                           cmap=options.cmap)
+        im = ax.pcolormesh(coords[0], coords[1], values)
     else:
         im = ax.contour(coords[0], coords[1], values)
 else:
@@ -205,7 +205,7 @@ else:
         "Plotting 3D data is not currently supported")
 
 # format
-def _colorbar(obj, redraw=False, aspect=None, label=''):
+def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     """Add a colorbar adjacent to obj, with a matching height
 
     For use of aspect, see:
@@ -213,15 +213,15 @@ def _colorbar(obj, redraw=False, aspect=None, label=''):
     """
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    _fig_ = obj.figure
-    _ax_ = obj.axes
-    _divider_ = make_axes_locatable(_ax_)
+    #_fig_ = obj.figure
+    #_ax_ = obj.axes
+    _divider_ = make_axes_locatable(_ax)
     _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
-    _cbar_ =  _fig_.colorbar(obj, cax=_cax_, label=label)
+    _cbar_ =  fig.colorbar(obj, cax=_cax_, label=label)
     if aspect != None:
-        _ax_.set_aspect(aspect)
+        _ax.set_aspect(aspect)
     if redraw:
-        _fig_.canvas.draw()
+        _fig.canvas.draw()
     return _cbar_
 
 if options.titleOn:
@@ -233,7 +233,7 @@ if numDims == 1:
     #plt.autoscale(enable=True, axis='x', tight=True)
     ax.axis('tight')
 elif numDims == 2:
-    _colorbar(im)
+    _colorbar(im, ax, fig)
     if options.freeAxis:
         ax.axis('tight')
     else:
