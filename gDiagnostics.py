@@ -24,14 +24,14 @@ def fieldParticleC(f, g, N, mode='center'):
     """
     length = g.shape[0]
     if mode == 'forward':
-        offset = 0
+        offset = int(0)
     elif mode == 'backward':
-        offset = N
+        offset = int(N)
     elif mode == 'center':
-        offset = numpy.floor(N/2)
+        offset = int(numpy.floor(N/2))
     else:
         raise exceptions.RuntimeError(
-            "fieldParticleC: Mode '{}' is not supported!\n  Supported modes are:\n    'forward' (default)\n    'backward'\n    'center'.".format(mode))
+            "fieldParticleC: Mode '{}' is not supported!\n  Supported modes are:\n    'forward' \n    'backward'\n    'center' (default)".format(mode))
 
     if len(g.shape) == 1:
         C = numpy.zeros(f.shape)

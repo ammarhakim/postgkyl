@@ -46,6 +46,9 @@ parser.add_option('-o', '--output', action = 'store',
                   dest = 'outName',
                   help = 'When saving figures, use this file name')
 # how to plot
+parser.add_option('--style', action = 'store',
+                  dest = 'style', default = '',
+                  help = 'Selects style file to use')
 parser.add_option('--xlabel', action = 'store',
                   dest = 'xlabel', default = '',
                   help = 'x-label to put on plots')
@@ -163,7 +166,7 @@ else:
 #---------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
-# plotting parameters are based solely on the personal taste of Ammar :)
+# plotting parameters are based solely on the personal taste of Ammar...
 plt.rcParams['lines.linewidth'] = 2
 plt.rcParams['font.size'] = 16
 #plt.rcParams['font.weight'] = 'bold'
@@ -183,6 +186,11 @@ plt.rcParams['contour.negative_linestyle'] = 'solid'
 plt.rcParams['grid.linewidth'] = 0.5
 plt.rcParams['grid.linestyle'] = 'dotted'
 plt.rcParams['axes.titlesize'] = 16
+plt.rcParams['image.cmap'] = str(options.cmap)
+
+# load personal Matplotlib style file
+if options.style:
+    plt.style.use(str(options.style))
 
 # this needs to be set after the rest of rcParams
 if options.xkcd:
@@ -198,7 +206,6 @@ if numDims == 1:
         im = ax.plot(coords[0], values, color=options.color, 
                      clip_on=False, zorder=100)
 elif numDims == 2:
-    plt.set_cmap(options.cmap)
     if not options.contour:
         im = ax.pcolormesh(coords[0], coords[1], values)
     else:
