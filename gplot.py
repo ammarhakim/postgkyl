@@ -28,6 +28,9 @@ parser.add_option('-c', '--component', action = 'store',
 parser.add_option('-m', '--mask', action = 'store',
                   dest = 'maskName',
                   help = 'G file that serves as a mask')
+parser.add_option('--surf3D', action = 'store',
+                  dest = 'surf3D',
+                  help = 'Select isosurfae for 3D plotting')
 # projecting
 parser.add_option('--ns', action = 'store',
                   dest = 'nodalSerendipity',
@@ -237,9 +240,23 @@ elif numDims == 2:
         im = ax.pcolormesh(coords[0], coords[1], values)
     else:
         im = ax.contour(coords[0], coords[1], values)
+elif numDims == 3:
+    if options.surf3D:
+        from skimage import measure
+        from mpl_toolkits.mplot3d import Axes3D
+        plt.close(fig)
+
+        verts, faces = measure.marching_cubes(values, float(options.surf3D))
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2])
+    else:
+        raise exceptions.RuntimeError(
+            "Isosurface value needs to be specified for 3D plotting.\nUse the flag --surf3D.")
+
 else:
     raise exceptions.RuntimeError(
-        "Plotting 3D data is not currently supported")
+        "Plotting {}D plot? Seriously?".format(numDims))
 
 # format
 def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
@@ -275,6 +292,14 @@ elif numDims == 2:
         ax.axis('tight')
     else:
         ax.axis('image')
+#elif numDims == 3:
+    #ax.set_xlim(coords[0].min(), coords[0].max())
+    #ax.set_ylim(coords[1].min(), coords[1].max())
+    #ax.set_zlim(coords[2].min(), coords[2].max())
+    #if options.freeAxis:
+    #    ax.axis('tight')
+    #else:
+    #    ax.axis('image')
 
 plt.tight_layout()
 
