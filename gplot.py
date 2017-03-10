@@ -87,6 +87,26 @@ parser.add_option('-x', '--xkcd', action = 'store_true',
 parser.add_option('-w', '--write-history', action = 'store_true',
                   dest = 'writeHistory', default = False,
                   help = 'Write the loaded history to text a file')
+# Fixing components (slices)
+parser.add_option('--fix1', action = 'store',
+                  dest = 'fix1', default = None,
+                  help = 'Fix the first component on selected index')
+parser.add_option('--fix2', action = 'store',
+                  dest = 'fix2', default = None,
+                  help = 'Fix the second component on selected index')
+parser.add_option('--fix3', action = 'store',
+                  dest = 'fix3', default = None,
+                  help = 'Fix the third component on selected index')
+parser.add_option('--fix4', action = 'store',
+                  dest = 'fix4', default = None,
+                  help = 'Fix the fourth component on selected index')
+parser.add_option('--fix5', action = 'store',
+                  dest = 'fix5', default = None,
+                  help = 'Fix the fifth component on selected index')
+parser.add_option('--fix6', action = 'store',
+                  dest = 'fix6', default = None,
+                  help = 'Fix the sixth component on selected index')
+
 (options, args) = parser.parse_args()
 
 #---------------------------------------------------------------------
@@ -101,15 +121,15 @@ if options.fName:
     if options.nodalSerendipity:
         dg = pg.GInterpNodalSerendipity(data, int(options.nodalSerendipity))
         coords, values = dg.project(int(options.component))
-        numDims = data.numDims
+        #numDims = data.numDims
     elif options.modalSerendipity:
         dg = pg.GInterpModalSerendipity(data, int(options.modalSerendipity))
         coords, values = dg.project(int(options.component))
-        numDims = data.numDims
+        #numDims = data.numDims
     elif options.maxOrder:
         dg = pg.GInterpModalMaxOrder(data, int(options.maxOrder))
         coords, values = dg.project(int(options.component))
-        numDims = data.numDims
+        #numDims = data.numDims
     else:
         c = [_centeredLinspace(data.lowerBounds[d],
                                data.upperBounds[d],
@@ -117,12 +137,13 @@ if options.fName:
              for d in range(data.numDims)]
         coords = numpy.meshgrid(*c, indexing='ij')
         values = data.q[..., int(options.component)]
-        numDims = data.numDims
+        #numDims = data.numDims
+    coords = numpy.squeeze(coords)
 elif options.fNameRoot:
     hist = pg.GHistoryData(options.fNameRoot)
-    coords = numpy.expand_dims(hist.time, axis=0)
+    coords = hist.time
     values = hist.values
-    numDims = 1
+    #numDims = 1
 else:
     print(' *** No data specified for plotting')
     sys.exit()
@@ -131,6 +152,12 @@ else:
 if options.maskName:
     maskField = pg.GData(options.maskName).q[...,0]
     values = numpy.ma.masked_where(maskField < 0.0, values)
+
+coords, values = pg.fixCoordSlice(coords, values,
+                                  options.fix1, options.fix2,
+                                  options.fix3, options.fix4,
+                                  options.fix5, options.fix6)
+numDims = len(values.shape)
 
 #---------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
@@ -201,9 +228,9 @@ if options.xkcd:
 fig, ax = plt.subplots()
 if numDims == 1:
     if not options.xkcd:
-        im = ax.plot(coords[0], values, color=options.color)
+        im = ax.plot(coords, values, color=options.color)
     else:
-        im = ax.plot(coords[0], values, color=options.color, 
+        im = ax.plot(coords, values, color=options.color, 
                      clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:

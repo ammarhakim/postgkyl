@@ -23,6 +23,7 @@ from gBatch import GBatchInterpModalMaxOrder
 from gDiagnostics import fieldParticleC
 
 # import tools
+from gTools import fixCoordSlice
 from gTools import fftFiltering
 from gTools import butterFiltering
 
