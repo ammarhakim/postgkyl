@@ -151,16 +151,22 @@ else:
     print(' *** No data specified for plotting')
     sys.exit()
 
+coordsTemp, values = pg.fixCoordSlice(coords, values,
+                                      options.fix1, options.fix2,
+                                      options.fix3, options.fix4,
+                                      options.fix5, options.fix6)
+numDims = len(values.shape)
+    
 # masking
 if options.maskName:
     maskField = pg.GData(options.maskName).q[...,0]
+    coordsTemp, maskField = pg.fixCoordSlice(coords, maskField,
+                                             options.fix1, options.fix2,
+                                             options.fix3, options.fix4,
+                                             options.fix5, options.fix6)
     values = numpy.ma.masked_where(maskField < 0.0, values)
 
-coords, values = pg.fixCoordSlice(coords, values,
-                                  options.fix1, options.fix2,
-                                  options.fix3, options.fix4,
-                                  options.fix5, options.fix6)
-numDims = len(values.shape)
+coords = coordsTemp
 
 #---------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
