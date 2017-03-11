@@ -88,7 +88,6 @@ def fixCoordSlice(coords, values,
             coords1D = numpy.linspace(temp.min(), temp.max(),
                                       temp.shape[i])
             idx = findNearestIdx(coords1D, float(val))
-            print(idx)
             # create for mask compressing
             mask = numpy.zeros(values.shape[i])
             mask[int(idx)] = 1
