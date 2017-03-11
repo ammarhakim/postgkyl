@@ -68,8 +68,8 @@ parser.add_option('-g', '--no-grid', action = 'store_false',
                   dest = 'gridOn', default = True,
                   help = 'Turn OFF the grid')
 parser.add_option('--cmap', action = 'store',
-                  dest = 'cmap', default = 'jet',
-                  help = 'Color map to use for 2D plots (default \'jet\')')
+                  dest = 'cmap', default = 'inferno',
+                  help = 'Color map to use for 2D plots (default \'inferno\')')
 parser.add_option('--axis-free', action = 'store_true',
                   dest = 'freeAxis',
                   help = "If set, 2D plots will no longer have equal axis",
