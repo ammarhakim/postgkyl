@@ -60,7 +60,7 @@ def interpOnMesh(cMat, qIn):
     # last entry is indexing nodes, get rid of it
     numCells = numCells[:-1]
     numDims = len(numCells)
-    numInterp = int(cMat.shape[0] ** (1.0/numDims))
+    numInterp = int(round(cMat.shape[0] ** (1.0/numDims)))
     numNodes = cMat.shape[1]
     qOut = numpy.zeros(numCells*numInterp, numpy.float)
     # move the node index from last to the first
