@@ -14,7 +14,7 @@ postgkylPath = os.path.dirname(os.path.realpath(__file__))
 
 ## Below are a set of helper functions used in the DG classes
 
-def loadMatrix(dim, polyOrder, basis):
+def _loadMatrix(dim, polyOrder, basis):
     """Load interpolation matrix from the pre-computed HDF5 file."""
     varid ='xformMatrix%i%i' % (dim,polyOrder)
     if basis.lower() == 'nodal serendipity':
@@ -36,12 +36,12 @@ def loadMatrix(dim, polyOrder, basis):
     fh.close()
     return mat    
 
-def decompose(n, dim, numInterp):
+def _decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
     return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / 
                       (numInterp**numpy.arange(dim)), numInterp )
 
-def makeMesh(nInterp, Xc):
+def _makeMesh(nInterp, Xc):
     dx = Xc[1] - Xc[0]
     nx = Xc.shape[0]
     xlo = Xc[0]  - 0.5*dx
@@ -49,7 +49,7 @@ def makeMesh(nInterp, Xc):
     dx2 = dx/nInterp
     return numpy.linspace(xlo+0.5*dx2, xup-0.5*dx2, nInterp*nx)
 
-def interpOnMesh(cMat, qIn):
+def _interpOnMesh(cMat, qIn):
     """Interpolate DG data on a uniform mesh.
 
     Parameters:
@@ -71,7 +71,7 @@ def interpOnMesh(cMat, qIn):
         # https://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
         temp  = numpy.tensordot(cMat[n, :], qIn, axes=1)
         # decompose n to i,j,k,... indices based on the number of dimensions
-        startIdx = decompose(n, numDims, numInterp)
+        startIdx = _decompose(n, numDims, numInterp)
         # define multi-D qOut slices
         idxs = [slice(startIdx[i], numCells[i]*numInterp, numInterp) 
                 for i in range(numDims)]
@@ -151,15 +151,15 @@ class GInterpNodalSerendipity(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder,
-                               'nodal Serendipity')
+        self.cMat = _loadMatrix(self.numDims, self.polyOrder,
+                                'nodal Serendipity')
 
     def project(self, comp=0):
         q = self._getRawNodal(comp)
-        coords = [makeMesh(self.polyOrder+1, self.Xc[d])
+        coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalSerendipity(GInterp):
     """Modal Serendipity basis PUT MORE STUF HERE"""
@@ -175,15 +175,15 @@ class GInterpModalSerendipity(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder,
-                               'modal Serendipity')
+        self.cMat = _loadMatrix(self.numDims, self.polyOrder,
+                                'modal Serendipity')
 
     def project(self, comp=0):
         q = self._getRawModal(comp)
-        coords = [makeMesh(self.polyOrder+1, self.Xc[d])
+        coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalMaxOrder(GInterp):
     """Modal Maximal Order basis PUT MORE STUF HERE"""
@@ -199,12 +199,12 @@ class GInterpModalMaxOrder(GInterp):
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
                          self.numNodes[self.numDims-1, polyOrder-1])
-        self.cMat = loadMatrix(self.numDims, self.polyOrder,
-                               'modal Maximal Order')
+        self.cMat = _loadMatrix(self.numDims, self.polyOrder,
+                                'modal Maximal Order')
 
     def project(self, comp=0):
         q = self._getRawModal(comp)
-        coords = [makeMesh(self.polyOrder+1, self.Xc[d])
+        coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)

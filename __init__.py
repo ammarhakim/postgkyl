@@ -5,25 +5,25 @@ Modules:
 """
 
 # import basic data handling class
-from gData import GData
-from gData import GHistoryData
+from postgkyl.gData import GData
+from postgkyl.gData import GHistoryData
 
-from gInterp import GInterpZeroOrder
-from gInterp import GInterpNodalSerendipity
-from gInterp import GInterpModalSerendipity
-from gInterp import GInterpModalMaxOrder
+from postgkyl.gInterp import GInterpZeroOrder
+from postgkyl.gInterp import GInterpNodalSerendipity
+from postgkyl.gInterp import GInterpModalSerendipity
+from postgkyl.gInterp import GInterpModalMaxOrder
 
 # import the convenience batch-handling classes
-from gBatch import GBatchData
-from gBatch import GBatchInterpNodalSerendipity
-from gBatch import GBatchInterpModalSerendipity
-from gBatch import GBatchInterpModalMaxOrder
+from postgkyl.gBatch import GBatchData
+from postgkyl.gBatch import GBatchInterpNodalSerendipity
+from postgkyl.gBatch import GBatchInterpModalSerendipity
+from postgkyl.gBatch import GBatchInterpModalMaxOrder
 
 # import diganostics
-from gDiagnostics import fieldParticleC
+from postgkyl.gDiagnostics import fieldParticleC
 
 # import tools
-from gTools import fixCoordSlice
-from gTools import fftFiltering
-from gTools import butterFiltering
+from postgkyl.gTools import fixCoordSlice
+from postgkyl.gTools import fftFiltering
+from postgkyl.gTools import butterFiltering
 
