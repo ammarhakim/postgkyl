@@ -134,7 +134,8 @@ class GInterpZeroOrder(GInterp):
         GInterp.__init__(self, dat, 1)
 
     def project(self, c):
-        return self.Xc[0], self._getRawNodal(c)
+        grids = numpy.meshgrid(*self.Xc, indexing='ij')
+        return numpy.array(grids), numpy.squeeze(self._getRawNodal(c))
 
 class GInterpNodalSerendipity(GInterp):
     """Nodal Serendipity basis PUT MORE STUF HERE"""
