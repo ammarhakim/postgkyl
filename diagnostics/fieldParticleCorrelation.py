@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """
-Postgkyl module with diagnostics functions
-"""
+Postgkyl module for field-particle correlations
 
+Reference:
+Klein & Howes, 2016, https://arxiv.org/abs/1607.01738v1
+"""
 import numpy
 import exceptions
 
-def fieldParticleC(f, g, N, mode='center'):
+def Ce(f, g, N, mode='center'):
     """Calculate the field-particle correlation
     
     Parameters:
@@ -18,9 +20,6 @@ def fieldParticleC(f, g, N, mode='center'):
 
     Returns:
     Numpy array with dimension of time x velocity
-
-    Reference:
-    Klein & Howes, 2016, https://arxiv.org/abs/1607.01738v1
     """
     length = g.shape[0]
     if mode == 'forward':
