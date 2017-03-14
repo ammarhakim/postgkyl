@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 """
-Postgkyl module to load G* data
+Postgkyl sub-module to load and save G* data
 """
-
 import numpy
 import os
 import exceptions

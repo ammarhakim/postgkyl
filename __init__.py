@@ -1,29 +1,22 @@
 #!/usr/bin/env python
-"""Gkeyll postprocessing package
+"""G&H project postprocessing package
 
-Modules:
+Sub-modules:
+  *  data -- G1 and G2 data loading and handling
+  *  diagnostics -- various diagnostics library
+  *  tools -- miscellaneous useful tools
 """
 
-# import basic data handling class
-from postgkyl.gData import GData
-from postgkyl.gData import GHistoryData
+# import to module root
+from postgkyl.data.data import GData
+from postgkyl.data.data import GHistoryData
+from postgkyl.data.interp import GInterpZeroOrder
+from postgkyl.data.interp import GInterpNodalSerendipity
+from postgkyl.data.interp import GInterpModalSerendipity
+from postgkyl.data.interp import GInterpModalMaxOrder
+# import not to root
+import diagnostics
+import tools
 
-from postgkyl.gInterp import GInterpZeroOrder
-from postgkyl.gInterp import GInterpNodalSerendipity
-from postgkyl.gInterp import GInterpModalSerendipity
-from postgkyl.gInterp import GInterpModalMaxOrder
 
-# import the convenience batch-handling classes
-from postgkyl.gBatch import GBatchData
-from postgkyl.gBatch import GBatchInterpNodalSerendipity
-from postgkyl.gBatch import GBatchInterpModalSerendipity
-from postgkyl.gBatch import GBatchInterpModalMaxOrder
-
-# import diganostics
-from postgkyl.gDiagnostics import fieldParticleC
-
-# import tools
-from postgkyl.gTools import fixCoordSlice
-from postgkyl.gTools import fftFiltering
-from postgkyl.gTools import butterFiltering
 

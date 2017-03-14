@@ -151,7 +151,7 @@ else:
     print(' *** No data specified for plotting')
     sys.exit()
 
-coordsTemp, values = pg.fixCoordSlice(coords, values,
+coordsTemp, values = pg.tools.fixCoordSlice(coords, values,
                                       options.fix1, options.fix2,
                                       options.fix3, options.fix4,
                                       options.fix5, options.fix6)
@@ -160,7 +160,7 @@ numDims = len(values.shape)
 # masking
 if options.maskName:
     maskField = pg.GData(options.maskName).q[...,0]
-    coordsTemp, maskField = pg.fixCoordSlice(coords, maskField,
+    coordsTemp, maskField = pg.tools.fixCoordSlice(coords, maskField,
                                              options.fix1, options.fix2,
                                              options.fix3, options.fix4,
                                              options.fix5, options.fix6)

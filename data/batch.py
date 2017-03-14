@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 """
-Postgkyl module for convinience batch manipulation
+Postgkyl sub-module for convinience batch manipulation
 """
-
 import numpy
 import glob
 import sys
 import exceptions
 
-import gData
-import gInterp
+import data
+import interp
 
 class GBatchData:
     """Convenience batch load of GData

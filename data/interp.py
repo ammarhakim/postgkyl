@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """
-Postgkyl module to interpolate G* data
+Postgkyl sub-module to interpolate G* data
 """
-
 import tables
-import gData
+import data
 import numpy
 import os
 import exceptions
