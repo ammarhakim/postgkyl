@@ -7,5 +7,7 @@ Files:
 
 # import correlation functions
 from postgkyl.diagnostics.fieldParticleCorrelation import Ce
+# import growth functions
+from postgkyl.diagnostics.growth import fitGrowth
 
 
