@@ -6,7 +6,6 @@ Reference:
 Klein & Howes, 2016, https://arxiv.org/abs/1607.01738v1
 """
 import numpy
-import exceptions
 
 def Ce(f, g, N, mode='center'):
     """Calculate the field-particle correlation
@@ -29,7 +28,7 @@ def Ce(f, g, N, mode='center'):
     elif mode == 'center':
         offset = int(numpy.floor(N/2))
     else:
-        raise exceptions.RuntimeError(
+        raise NameError(
             "fieldParticleC: Mode '{}' is not supported!\n  Supported modes are:\n    'forward' \n    'backward'\n    'center' (default)".format(mode))
 
     if len(g.shape) == 1:

@@ -5,10 +5,6 @@ Postgkyl sub-module for convinience batch manipulation
 import numpy
 import glob
 import sys
-import exceptions
-
-import data
-import interp
 
 class GBatchData:
     """Convenience batch load of GData
@@ -23,6 +19,9 @@ class GBatchData:
         Parameters:
         fNameRoot -- file name roots
 
+        Raises:
+        NameError -- when files with root don't exis
+
         Notes:
         Load function is determined based on the extension
         """
@@ -30,7 +29,7 @@ class GBatchData:
         self.fNameRoot = fNameRoot
         files = glob.glob('*{}*.??'.format(self.fNameRoot))
         if files == []:
-            raise exceptions.RuntimeError(
+            raise NameError(
                 'GBatchData: Files with root \'{}\' do not exist!'.
                 format(self.fNameRoot))
 
