@@ -3,10 +3,8 @@
 Postgkyl sub-module to interpolate G* data
 """
 import tables
-import data
 import numpy
 import os
-import exceptions
 
 # obtain Postgkyl path
 postgkylPath = os.path.dirname(os.path.realpath(__file__))
@@ -29,7 +27,7 @@ def _loadMatrix(dim, polyOrder, basis):
                               '/xformMatricesModalMaximal.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     else:
-        raise exceptions.RuntimeError(
+        raise NameError(
             "GInterp: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".
             format(basis))
     fh.close()

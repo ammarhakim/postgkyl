@@ -4,7 +4,6 @@ Postgkyl sub-module to load and save G* data
 """
 import numpy
 import os
-import exceptions
 import glob
 
 class GData:
@@ -25,12 +24,16 @@ class GData:
         Parameters:
         fName -- file name
 
+        Raises:
+        NameError -- when specified file is not found
+        NameError -- when file extension is neither h5 or bp
+
         Notes:
         Load function is determined based on the extension
         """
         self.fName = fName
         if not os.path.exists(self.fName):
-            raise exceptions.RuntimeError(
+            raise NameError(
                 "GData: File {} does not exist!".format(fName))
         # Parse the file name and select the last part (extension)
         ext = self.fName.split('.')[-1]
@@ -39,7 +42,7 @@ class GData:
         elif ext == 'bp':
             self._loadG2bp()
         else:
-            raise exceptions.RuntimeError(
+            raise NameError(
                 "GData: File extension {} is not supported.".format(ext))
 
     def _loadG1h5(self):
@@ -117,13 +120,17 @@ class GHistoryData:
         Inputs:
         fNameRoot -- file name root
 
+        Raises:
+        NameError -- when files with root don't exis
+        NameError -- when file extension is neither h5 or bp
+
         Notes:
         Load function is determined based on the extension
         """
         self.fNameRoot = fNameRoot
         self.files = glob.glob('*{}*.??'.format(self.fNameRoot))
         if self.files == []:
-            raise exceptions.RuntimeError(
+            raise NameError(
                 'GHistoryData: Files with root \'{}\' do not exist!'.
                   format(self.fNameRoot))
 
@@ -134,7 +141,7 @@ class GHistoryData:
         elif ext == 'bp':
             self._loadG2bp(start)
         else:
-            raise exceptions.RuntimeError(
+            raise NameError(
                 "GData: File extension {} is not supported.".format(ext))
 
     def _loadG1h5(self, start):

@@ -5,7 +5,6 @@ Postgkyl script to plot data directly from the terminal
 # standart imports
 import numpy
 import matplotlib.pyplot as plt
-import exceptions
 import sys
 import os
 from optparse import OptionParser
@@ -257,11 +256,11 @@ elif numDims == 3:
         ax = fig.add_subplot(111, projection='3d')
         ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2])
     else:
-        raise exceptions.RuntimeError(
+        raise RuntimeError(
             "Isosurface value needs to be specified for 3D plotting.\nUse the flag --surf3D.")
 
 else:
-    raise exceptions.RuntimeError(
+    raise RuntimeError(
         "Plotting {}D plot? Seriously?".format(numDims))
 
 # format
