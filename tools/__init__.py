@@ -7,13 +7,15 @@ Files:
 """
 
 # import fields.py functions
-from postgkyl.tools.fields import rotationMatrix
-from postgkyl.tools.fields import findNearest
-from postgkyl.tools.fields import findNearestIdx
-from postgkyl.tools.fields import fixCoordSlice
+from . import fields
+from .fields import rotationMatrix
+from .fields import findNearest
+from .fields import findNearestIdx
+from .fields import fixCoordSlice
 # import filters.py functions
-from postgkyl.tools.filters import fftFiltering
-from postgkyl.tools.filters import butterFiltering
+from . import filters
+from .filters import fftFiltering
+from .filters import butterFiltering
 
 
 
