@@ -6,8 +6,10 @@ Files:
 """
 
 # import correlation functions
-from postgkyl.diagnostics.fieldParticleCorrelation import Ce
+from . import fieldParticleCorrelation
+from .fieldParticleCorrelation import Ce
 # import growth functions
-from postgkyl.diagnostics.growth import fitGrowth
+from . import growth
+from .growth import fitGrowth
 
 

@@ -7,16 +7,19 @@ Sub-modules:
   *  tools -- miscellaneous useful tools
 """
 
-# import to module root
-from postgkyl.data.data import GData
-from postgkyl.data.data import GHistoryData
-from postgkyl.data.interp import GInterpZeroOrder
-from postgkyl.data.interp import GInterpNodalSerendipity
-from postgkyl.data.interp import GInterpModalSerendipity
-from postgkyl.data.interp import GInterpModalMaxOrder
-# import not to root
-import diagnostics
-import tools
+# import submodules
+from . import data
+from . import diagnostics
+from . import tools
+
+# import selectrd classes to the root
+from .data.load import GData
+from .data.load import GHistoryData
+from .data.interp import GInterpZeroOrder
+from .data.interp import GInterpNodalSerendipity
+from .data.interp import GInterpModalSerendipity
+from .data.interp import GInterpModalMaxOrder
+
 
 
 

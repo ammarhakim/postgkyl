@@ -35,8 +35,8 @@ def _loadMatrix(dim, polyOrder, basis):
 
 def _decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
-    return numpy.mod( numpy.full(dim, n, dtype=numpy.int) / 
-                      (numInterp**numpy.arange(dim)), numInterp )
+    return numpy.mod(numpy.full(dim, n, dtype=numpy.int) / 
+                     (numInterp**numpy.arange(dim)), numInterp )
 
 def _makeMesh(nInterp, Xc):
     dx = Xc[1] - Xc[0]
@@ -56,7 +56,7 @@ def _interpOnMesh(cMat, qIn):
     numCells = numpy.array(qIn.shape)
     # last entry is indexing nodes, get rid of it
     numCells = numCells[:-1]
-    numDims = len(numCells)
+    numDims = int(len(numCells))
     numInterp = int(round(cMat.shape[0] ** (1.0/numDims)))
     numNodes = cMat.shape[1]
     qOut = numpy.zeros(numCells*numInterp, numpy.float)
@@ -70,7 +70,7 @@ def _interpOnMesh(cMat, qIn):
         # decompose n to i,j,k,... indices based on the number of dimensions
         startIdx = _decompose(n, numDims, numInterp)
         # define multi-D qOut slices
-        idxs = [slice(startIdx[i], numCells[i]*numInterp, numInterp) 
+        idxs = [slice(int(startIdx[i]), int(numCells[i]*numInterp), numInterp)
                 for i in range(numDims)]
         qOut[idxs] = temp
     return numpy.array(qOut)
@@ -106,7 +106,7 @@ class GInterp:
         shp.append(self.numNodes)
         rawData = numpy.zeros(shp, numpy.float)
         for n in range(self.numNodes):
-            rawData[..., n] = q[..., component+n*numEqns]
+            rawData[..., n] = q[..., int(component+n*numEqns)]
         return rawData
 
     def _getRawModal(self, component):

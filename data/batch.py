@@ -5,6 +5,9 @@ Postgkyl sub-module for convinience batch manipulation
 import numpy
 import glob
 import sys
+# custom
+import load
+import interp
 
 class GBatchData:
     """Convenience batch load of GData
@@ -34,7 +37,7 @@ class GBatchData:
                 format(self.fNameRoot))
 
         # load batch
-        self.array = [gData.GData(name) for name in files]
+        self.array = [load.GData(name) for name in files]
         self.array = numpy.array(self.array)
         # sort history
         time = [temp.time for temp in self.array]
@@ -49,7 +52,7 @@ class GBatchInterpNodalSerendipity:
     def project(self, comp=0):
         projection = []
         for i, dat in enumerate(self.data.array):
-            projObj = gInterp.GInterpNodalSerendipity(dat, self.polyOrder)
+            projObj = interp.GInterpNodalSerendipity(dat, self.polyOrder)
             coords, temp = projObj.project(comp)
             projection.append(temp)
             percent = float(i)/len(self.data.array)*100

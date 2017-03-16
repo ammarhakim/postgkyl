@@ -8,16 +8,19 @@ Files:
 """
 
 # import basic data handling classes
-from postgkyl.data.data import GData
-from postgkyl.data.data import GHistoryData
+from . import load
+from .load import GData
+from .load import GHistoryData
 # import interpolators
-from postgkyl.data.interp import GInterpZeroOrder
-from postgkyl.data.interp import GInterpNodalSerendipity
-from postgkyl.data.interp import GInterpModalSerendipity
-from postgkyl.data.interp import GInterpModalMaxOrder
+from . import interp
+from .interp import GInterpZeroOrder
+from .interp import GInterpNodalSerendipity
+from .interp import GInterpModalSerendipity
+from .interp import GInterpModalMaxOrder
 # import batch files
-from postgkyl.data.batch import GBatchData
-from postgkyl.data.batch import GBatchInterpNodalSerendipity
-from postgkyl.data.batch import GBatchInterpModalSerendipity
-from postgkyl.data.batch import GBatchInterpModalMaxOrder
+from . import batch
+from .batch import GBatchData
+from .batch import GBatchInterpNodalSerendipity
+from .batch import GBatchInterpModalSerendipity
+from .batch import GBatchInterpModalMaxOrder
 
