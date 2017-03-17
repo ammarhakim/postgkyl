@@ -6,8 +6,8 @@ import numpy
 import glob
 import sys
 # custom
-import load
-import interp
+from . import load
+from . import interp
 
 class GBatchData:
     """Convenience batch load of GData
@@ -56,11 +56,13 @@ class GBatchInterpNodalSerendipity:
             coords, temp = projObj.project(comp)
             projection.append(temp)
             percent = float(i)/len(self.data.array)*100
+            progress = '[' + int(percent/10)*'=' + (10-int(percent/10))*' ' + ']'
             sys.stdout.write(
-                '\rGBatchInterpNodalSerendipity projecting: {:6.2f}% done'.
-                format(percent))
+                '\rGBatchInterpNodalSerendipity projecting: {:6.2f}% done {}'.
+                format(percent, progress))
             sys.stdout.flush()
-        print('\rGBatchInterpNodalSerendipity projecting: 100.00% done')
+        print('\rGBatchInterpNodalSerendipity projecting: {:6.2f}% done {}'.
+              format(100, '[==========]'))
         return numpy.array(coords), numpy.array(projection)
 
 class GBatchInterpModalSerendipity:
