@@ -56,9 +56,9 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
     # (should be replaced by a propper DG derivation...)
     axis = tuple(numpy.arange(vDim) + 1)
     if vDim == 1:
-        df = numpy.gradient(f, dv, axis=axis, edge_order=2)
+        df = numpy.array(numpy.gradient(f, dv, axis=axis, edge_order=2))
     else:
-        df = numpy.gradient(f, *dv, axis=axis, edge_order=2)
+        df = numpy.array(numpy.gradient(f, *dv, axis=axis, edge_order=2))
 
     # get v^2
     if vDim == 1:
@@ -89,13 +89,14 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
 
     # masking
     mask = numpy.zeros(f.shape)
-    if mode == 'forward':
-        mask[-N+1 :, ...] = 1
-    elif mode == 'backward':
-        mask[: N-1, ...] = 1
-    elif mode == 'center':
-        mask[: int(numpy.floor(N/2))-1, ...] = 1
-        mask[-int(numpy.ceil(N/2))+1 :, ...] = 1
+    if N > 1:
+        if mode == 'forward':
+            mask[-N+1 :, ...] = 1
+        elif mode == 'backward':
+            mask[: N-1, ...] = 1
+        elif mode == 'center':
+            mask[: int(numpy.floor(N/2))-1, ...] = 1
+            mask[-int(numpy.ceil(N/2))-1 :, ...] = 1
 
     Cm = numpy.ma.masked_array(C, mask)
 
