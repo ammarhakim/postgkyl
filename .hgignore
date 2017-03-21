@@ -6,4 +6,4 @@ syntax: glob
 *~
 #*#
 .#*
-doc/build/*
+MANIFEST
