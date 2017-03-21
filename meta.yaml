@@ -1,6 +1,6 @@
 package:
   name: postgkyl
-  version: "0.1.0"
+  version: "0.1.1"
 
 source:
   path: ./
@@ -23,3 +23,5 @@ test:
 
 about:
   home: https://bitbucket.org/ammarhakim/postgkyl
+  license: BSD
+  license_file: LICENSE
