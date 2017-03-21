@@ -1,0 +1,25 @@
+package:
+  name: postgkyl
+  version: "0.1.0"
+
+source:
+  path: ./
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - numpy >=1.11
+    - scipy
+    - matplotlib
+    - pytables
+
+test:
+  imports:
+    - postgkyl
+
+about:
+  home: https://bitbucket.org/ammarhakim/postgkyl
