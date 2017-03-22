@@ -323,7 +323,7 @@ if options.xkcd:
     ax.grid(False)
 
 if options.save:
-    fig.savefig(outName, bbox_inches='tight')
+    fig.savefig(outName, bbox_inches='tight', dpi=200)
 
 if options.writeHistory:
     hist.save()
