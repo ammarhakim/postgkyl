@@ -12,6 +12,7 @@ developed by Gkeyll (and Hyde) Consortium.
    :caption: Contents:
 
    installation
+   tutorials
 	     
 
 Indices and tables
