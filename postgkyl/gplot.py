@@ -80,6 +80,9 @@ parser.add_option('--contour', action = 'store_true',
                   dest = 'contour', default = False,
                   help = "Plot contour instead of a bitmat for 2D plots")
 # misellaneous
+parser.add_option('-i', '--info', action = 'store_true',
+                  dest = 'info', default = False,
+                  help = 'Print information about the file')
 parser.add_option('--dont-show', action = 'store_true',
                   dest = 'dontShow', default = False,
                   help = 'Do not show plot')
@@ -322,6 +325,22 @@ if options.xkcd:
     # Turn OFF grid
     ax.grid(False)
 
+if options.info:
+    if options.fName:
+        print('Printing file info:')
+        print(' * File name: {:s}'.format(data.fName))
+        print(' * Time: {:f}'.format(data.time))
+        print(' * Dimensions ({:d}):'.format(data.numDims))
+        for i in range(data.numDims):
+            print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
+                  format(i+1, data.numCells[i],
+                         data.lowerBounds[i], data.upperBounds[i]))
+    elif options.fNameRoot:
+        print('Printing files info:')
+        print(' * File names: {:s} .. {:s} ({:d} files)'.
+              format(hist.files[0], hist.files[-1], len(hist.files)))
+        print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
+    
 if options.save:
     fig.savefig(outName, bbox_inches='tight', dpi=200)
 
