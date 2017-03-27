@@ -201,6 +201,26 @@ if options.title is None:
         title = '{}\nhistory'.format(name)
 else:
     title = str(options.title)
+
+if options.info:
+    if options.fName:
+        print('Printing file info:')
+        print(' * File name: {:s}'.format(data.fName))
+        print(' * Time: {:f}'.format(data.time))
+        print(' * Dimensions ({:d}):'.format(data.numDims))
+        for i in range(data.numDims):
+            print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
+                  format(i+1, data.numCells[i],
+                         data.lowerBounds[i], data.upperBounds[i]))
+    elif options.fNameRoot:
+        print('Printing files info:')
+        print(' * File names: {:s} .. {:s} ({:d} files)'.
+              format(hist.files[0], hist.files[-1], len(hist.files)))
+        print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
+
+    exit(0)
+
+
 #---------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
@@ -324,24 +344,6 @@ if options.xkcd:
     ax.xaxis.set_ticks_position('bottom')
     # Turn OFF grid
     ax.grid(False)
-
-if options.info:
-    if options.fName:
-        print('Printing file info:')
-        print(' * File name: {:s}'.format(data.fName))
-        print(' * Time: {:f}'.format(data.time))
-        print(' * Dimensions ({:d}):'.format(data.numDims))
-        for i in range(data.numDims):
-            print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
-                  format(i+1, data.numCells[i],
-                         data.lowerBounds[i], data.upperBounds[i]))
-    elif options.fNameRoot:
-        print('Printing files info:')
-        print(' * File names: {:s} .. {:s} ({:d} files)'.
-              format(hist.files[0], hist.files[-1], len(hist.files)))
-        print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
-
-    exit(0)
     
 if options.save:
     fig.savefig(outName, bbox_inches='tight', dpi=200)
