@@ -340,6 +340,8 @@ if options.info:
         print(' * File names: {:s} .. {:s} ({:d} files)'.
               format(hist.files[0], hist.files[-1], len(hist.files)))
         print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
+
+    exit(0)
     
 if options.save:
     fig.savefig(outName, bbox_inches='tight', dpi=200)
