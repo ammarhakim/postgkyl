@@ -164,6 +164,7 @@ class GHistoryData:
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
+        #self.files = self.files[sortIdx]
         self.time = self.time[sortIdx]
         self.values = self.values[sortIdx]
 
@@ -185,7 +186,7 @@ class GHistoryData:
         to construct a file name
         """
         if fName is None:
-            fName = '{}/{}.dat'.format(os.getcwd(), self.fNameRoot)
+            fName = '{:s}/{:s}.dat'.format(os.getcwd(), self.fNameRoot)
 
         out = numpy.vstack([self.time, self.values]).transpose()
         numpy.savetxt(fName, out)
