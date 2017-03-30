@@ -17,3 +17,9 @@ the popular Anaconda distrubution, the update is straightforward:
 ~~~~~~~
 conda update numpy
 ~~~~~~~
+
+You can install postgkyl directly from conda:
+
+~~~~~~~
+conda install -c pcagas postgkyl
+~~~~~~~
