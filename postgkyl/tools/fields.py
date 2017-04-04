@@ -49,7 +49,7 @@ def findNearestIdx(array, value):
     else:
         return idx
 
-def fixCoordSlice(coords, values,
+def fixCoordSlice(coords, values, mode='idx',
                   fix1=None, fix2=None, fix3=None,
                   fix4=None, fix5=None, fix6=None):
     """Fix specified coordinates and decrease dimensionality
@@ -57,6 +57,8 @@ def fixCoordSlice(coords, values,
     Parameters:
     coords -- array of coordinates
     values -- array of field values
+    mode -- changes input between direct index ('idx', default) 
+            and coordinate value ('value')
     fix1 -- fixes the first coordinate to provided index (default None)
     fix2 -- fixes the second coordinate to provided index (default None)
     fix3 -- fixes the third coordinate to provided index (default None)
@@ -76,24 +78,22 @@ def fixCoordSlice(coords, values,
     Fixing higher dimensions than available in the data has no effect.
     """
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
+
+    numDims = len(values.shape)
+    idxCoords = []
+    # create an index array that covers the whole 'values' array but is
+    # convenient for the fixing of some dimensions
+    idxValues = [slice(0, values.shape[d]) for d in range(numDims)]
+
     coordsOut = numpy.copy(coords)
     valuesOut = numpy.copy(values)
-    for i, val in reversed(list(enumerate(fix))):
-        if val is not None and len(values.shape) > i:
-            # turn N-D coords into correct 1D coord array
-            temp = coords[i]
-            coords1D = numpy.linspace(temp.min(), temp.max(),
-                                      temp.shape[i])
-            idx = findNearestIdx(coords1D, float(val))
-            # create for mask compressing
-            mask = numpy.zeros(values.shape[i])
-            mask[int(idx)] = 1
-            # delete coordinate matrices for the fixed coordinate
-            coordsOut = numpy.delete(coordsOut, i, 0)
-            coordsOut = numpy.compress(mask, coordsOut, axis=i+1)  
-            coordsOut = numpy.squeeze(coordsOut)
-
-            valuesOut = numpy.compress(mask, valuesOut, axis=i) 
-            valuesOut = numpy.squeeze(valuesOut)
-    return coordsOut, valuesOut
+    for i, idx in enumerate(fix):
+        if i < numDims:
+            if idx is not None:
+                if mode == 'value':
+                    idx = findNearestIdx(coords[i], float(idx))
+                idxValues[i] = int(idx)
+            else:
+                idxCoords.append(int(i))
+    return coords[idxCoords], values[idxValues]
 

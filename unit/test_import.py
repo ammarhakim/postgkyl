@@ -3,5 +3,8 @@
 Postgkyl test: importing Postgkyl
 """
 print('Postgkyl test: importing Postgkyl')
-import postgkyl
-print('PASSED: Postgkyl imported successfully')
+try:
+    import postgkyl
+    print('PASSED: Postgkyl imported successfully')
+except:
+    print('FAILED: Postgkyl was not imported')

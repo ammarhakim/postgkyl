@@ -155,8 +155,7 @@ class GInterpNodalSerendipity(GInterp):
         q = self._getRawNodal(comp)
         coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalSerendipity(GInterp):
     """Modal Serendipity basis PUT MORE STUF HERE"""
@@ -179,8 +178,7 @@ class GInterpModalSerendipity(GInterp):
         q = self._getRawModal(comp)
         coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)
 
 class GInterpModalMaxOrder(GInterp):
     """Modal Maximal Order basis PUT MORE STUF HERE"""
@@ -203,5 +201,4 @@ class GInterpModalMaxOrder(GInterp):
         q = self._getRawModal(comp)
         coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
-        grids = numpy.meshgrid(*coords, indexing='ij')
-        return numpy.array(grids), _interpOnMesh(self.cMat.transpose(), q)
+        return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)

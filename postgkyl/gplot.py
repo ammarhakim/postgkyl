@@ -4,7 +4,7 @@ Postgkyl script to plot data directly from the terminal
 """
 # standart imports
 import numpy
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as mpl
 import sys
 import os
 from optparse import OptionParser
@@ -126,49 +126,39 @@ if options.fName:
     if options.nodalSerendipity:
         dg = pg.GInterpNodalSerendipity(data, int(options.nodalSerendipity))
         coords, values = dg.project(int(options.component))
-        #numDims = data.numDims
     elif options.modalSerendipity:
         dg = pg.GInterpModalSerendipity(data, int(options.modalSerendipity))
         coords, values = dg.project(int(options.component))
-        #numDims = data.numDims
     elif options.maxOrder:
         dg = pg.GInterpModalMaxOrder(data, int(options.maxOrder))
         coords, values = dg.project(int(options.component))
-        #numDims = data.numDims
     else:
         c = [_centeredLinspace(data.lowerBounds[d],
                                data.upperBounds[d],
                                data.numCells[d])
              for d in range(data.numDims)]
-        coords = numpy.meshgrid(*c, indexing='ij')
+        coords = numpy.array(c)
         values = data.q[..., int(options.component)]
-        #numDims = data.numDims
-    coords = numpy.squeeze(coords)
+
+    coords, values = pg.tools.fixCoordSlice(coords, values, 'value',
+                                            options.fix1, options.fix2,
+                                            options.fix3, options.fix4,
+                                            options.fix5, options.fix6)
+    numDims = len(values.shape)
+
 elif options.fNameRoot:
     hist = pg.GHistoryData(options.fNameRoot)
     coords = hist.time
     values = hist.values
-    #numDims = 1
+    numDims = 1
 else:
     print(' *** No data specified for plotting')
     sys.exit()
 
-coordsTemp, values = pg.tools.fixCoordSlice(coords, values,
-                                      options.fix1, options.fix2,
-                                      options.fix3, options.fix4,
-                                      options.fix5, options.fix6)
-numDims = len(values.shape)
-    
 # masking
 if options.maskName:
     maskField = pg.GData(options.maskName).q[...,0]
-    coordsTemp, maskField = pg.tools.fixCoordSlice(coords, maskField,
-                                             options.fix1, options.fix2,
-                                             options.fix3, options.fix4,
-                                             options.fix5, options.fix6)
     values = numpy.ma.masked_where(maskField < 0.0, values)
-
-coords = coordsTemp
 
 #---------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
@@ -220,62 +210,61 @@ if options.info:
 
     exit(0)
 
-
 #---------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
 # plotting parameters are based solely on the personal taste of Ammar...
-plt.rcParams['lines.linewidth'] = 2
-plt.rcParams['font.size'] = 16
-#plt.rcParams['font.weight'] = 'bold'
-plt.rcParams['axes.labelsize'] = 'large'
-#plt.rcParams['xtick.major.size'] = 8 # default is 4
-#plt.rcParams['xtick.major.width'] = 3 # default is 0.5
-#plt.rcParams['ytick.major.size'] = 8 # default is 4
-#plt.rcParams['ytick.major.width'] = 3 # default is 0.5
-plt.rcParams['figure.facecolor'] = 'white'
-#plt.rcParams['figure.subplot.bottom'] = 0.125
-#plt.rcParams['figure.subplot.right'] = 0.85 # keep labels/ticks of
-plt.rcParams['image.interpolation'] = 'none'
-plt.rcParams['image.origin'] = 'lower'
-plt.rcParams['contour.negative_linestyle'] = 'solid'
-#plt.rcParams['savefig.bbox'] = 'tight'
-#plt.rcParams['mathtext.default'] = 'regular'
-plt.rcParams['grid.linewidth'] = 0.5
-plt.rcParams['grid.linestyle'] = 'dotted'
-plt.rcParams['axes.titlesize'] = 16
-plt.rcParams['image.cmap'] = str(options.cmap)
+mpl.rcParams['lines.linewidth'] = 2
+mpl.rcParams['font.size'] = 16
+#mpl.rcParams['font.weight'] = 'bold'
+mpl.rcParams['axes.labelsize'] = 'large'
+#mpl.rcParams['xtick.major.size'] = 8 # default is 4
+#mpl.rcParams['xtick.major.width'] = 3 # default is 0.5
+#mpl.rcParams['ytick.major.size'] = 8 # default is 4
+#mpl.rcParams['ytick.major.width'] = 3 # default is 0.5
+mpl.rcParams['figure.facecolor'] = 'white'
+#mpl.rcParams['figure.subplot.bottom'] = 0.125
+#mpl.rcParams['figure.subplot.right'] = 0.85 # keep labels/ticks of
+mpl.rcParams['image.interpolation'] = 'none'
+mpl.rcParams['image.origin'] = 'lower'
+mpl.rcParams['contour.negative_linestyle'] = 'solid'
+#mpl.rcParams['savefig.bbox'] = 'tight'
+#mpl.rcParams['mathtext.default'] = 'regular'
+mpl.rcParams['grid.linewidth'] = 0.5
+mpl.rcParams['grid.linestyle'] = 'dotted'
+mpl.rcParams['axes.titlesize'] = 16
+mpl.rcParams['image.cmap'] = str(options.cmap)
 
 # load personal Matplotlib style file
 if options.style:
-    plt.style.use(str(options.style))
+    mpl.style.use(str(options.style))
 
 # this needs to be set after the rest of rcParams
 if options.xkcd:
-    plt.rcParams['mathtext.default'] = 'regular'
-    plt.xkcd()
+    mpl.rcParams['mathtext.default'] = 'regular'
+    mpl.xkcd()
 
 # plot 
-fig, ax = plt.subplots()
+fig, ax = mpl.subplots()
 if numDims == 1:
     if not options.xkcd:
-        im = ax.plot(coords, values, color=options.color)
+        im = ax.plot(coords[0], values, color=options.color)
     else:
-        im = ax.plot(coords, values, color=options.color, 
+        im = ax.plot(coords[0], values, color=options.color, 
                      clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:
-        im = ax.pcolormesh(coords[0], coords[1], values)
+        im = ax.pcolormesh(coords[0], coords[1], values.transpose())
     else:
-        im = ax.contour(coords[0], coords[1], values)
+        im = ax.contour(coords[0], coords[1], values.transpose())
 elif numDims == 3:
     if options.surf3D:
         from skimage import measure
         from mpl_toolkits.mplot3d import Axes3D
-        plt.close(fig)
+        mpl.close(fig)
 
         verts, faces = measure.marching_cubes(values, float(options.surf3D))
-        fig = plt.figure()
+        fig = mpl.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2])
     else:
@@ -295,8 +284,6 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     """
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    #_fig_ = obj.figure
-    #_ax_ = obj.axes
     _divider_ = make_axes_locatable(_ax)
     _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
     _cbar_ =  fig.colorbar(obj, cax=_cax_, label=label)
@@ -312,7 +299,7 @@ ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
 if numDims == 1:
-    plt.autoscale(enable=True, axis='x', tight=True)
+    mpl.autoscale(enable=True, axis='x', tight=True)
     #ax.axis('tight')
 elif numDims == 2:
     _colorbar(im, ax, fig)
@@ -320,16 +307,8 @@ elif numDims == 2:
         ax.axis('tight')
     else:
         ax.axis('image')
-#elif numDims == 3:
-    #ax.set_xlim(coords[0].min(), coords[0].max())
-    #ax.set_ylim(coords[1].min(), coords[1].max())
-    #ax.set_zlim(coords[2].min(), coords[2].max())
-    #if options.freeAxis:
-    #    ax.axis('tight')
-    #else:
-    #    ax.axis('image')
 
-plt.tight_layout()
+mpl.tight_layout()
 
 # this should be last formatting option
 if options.xkcd:
@@ -342,7 +321,7 @@ if options.xkcd:
     # Only show ticks on the left and bottom spines
     ax.yaxis.set_ticks_position('left')
     ax.xaxis.set_ticks_position('bottom')
-    # Turn OFF grid
+    # Turn OFF the grid
     ax.grid(False)
     
 if options.save:
@@ -352,6 +331,6 @@ if options.writeHistory:
     hist.save()
 
 if not options.dontShow:
-    plt.show()
+    mpl.show()
 else:
-    plt.close(fig)
+    mpl.close(fig)

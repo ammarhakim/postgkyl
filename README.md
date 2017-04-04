@@ -4,22 +4,41 @@ This is the PostGkyl project. It is the Python module to provide a
 unified acces to Gkeyll and Gkyl data together with a broad variety of
 analytical tools.
 
-# Licence
+# Dependencies and Installation
 
-PostGkyl can be used freely for research at universities, national
-laboratories and other non-profit institutions.
+Postgkyl requires the following packages:
 
-# Dependencies
+ * numpy (1.11+)
+ * scipy
+ * matplotlib (2.0+)
+ * pytables
 
-Some functions require the newest version of numpy (1.11). When using
-the popular Anaconda distrubution, the update is straightforward:
-
-~~~~~~~
-conda update numpy
-~~~~~~~
-
-You can install postgkyl directly from conda:
+You can install postgkyl directly through Conda (all dependencies will
+be downloaded and installed automatically):
 
 ~~~~~~~
 conda install -c pcagas postgkyl
 ~~~~~~~
+
+Conda package manager can be obtained ether through the full
+[Anaconda](https://www.continuum.io/downloads) distribution or the
+lightweight [Miniconda](https://conda.io/miniconda.html)
+
+# Changelog
+
+* 2017/04/04
+       - `project` method of the Interp classes now returns only
+         `numpy` array of 1D coordinate fields instead of
+         meshgrids. Due to the matrix-like indexing of the `values`,
+         transposition is necessary when plotting with
+         `pcolormes`. E.g.:
+
+         `mpl.pcolormesh(coords[0], coords[1], values.transpose())`
+
+       - `fixCoordSlice()` now has a new keyword `mode` that allows to
+         select the input (either directly index or the value)
+
+# Licence
+
+Postgkyl uses the BSD license. The full license is available [here](LICENSE).
+
