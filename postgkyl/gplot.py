@@ -141,6 +141,11 @@ if options.fName:
         coords = numpy.array(c)
         values = data.q[..., int(options.component)]
 
+    # masking
+    if options.maskName:
+        maskField = pg.GData(options.maskName).q[..., 0]
+        values = numpy.ma.masked_where(maskField < 0.0, values)
+
     coords, values = pg.tools.fixCoordSlice(coords, values, 'value',
                                             options.fix1, options.fix2,
                                             options.fix3, options.fix4,
@@ -149,17 +154,14 @@ if options.fName:
 
 elif options.fNameRoot:
     hist = pg.GHistoryData(options.fNameRoot)
-    coords = hist.time
+    coords = numpy.expand_dims(hist.time, axis=0)
     values = hist.values
+    if len(values.shape) > 1:
+        values = values[:, int(options.component)]
     numDims = 1
 else:
     print(' *** No data specified for plotting')
     sys.exit()
-
-# masking
-if options.maskName:
-    maskField = pg.GData(options.maskName).q[..., 0]
-    values = numpy.ma.masked_where(maskField < 0.0, values)
 
 # --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
@@ -281,7 +283,7 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     _divider_ = make_axes_locatable(_ax)
     _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
     _cbar_ = fig.colorbar(obj, cax=_cax_, label=label)
-    if aspect in not None:
+    if aspect is not None:
         _ax.set_aspect(aspect)
     if redraw:
         _fig.canvas.draw()
