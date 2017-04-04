@@ -1,7 +1,7 @@
 # About
 
 This is the PostGkyl project. It is the Python module to provide a
-unified acces to Gkeyll and Gkyl data together with a broad variety of
+unified access to Gkeyll and Gkyl data together with a broad variety of
 analytical tools.
 
 # Dependencies and Installation
@@ -38,7 +38,7 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
        - `fixCoordSlice()` now has a new keyword `mode` that allows to
          select the input (either directly index or the value)
 
-# Licence
+# License
 
 Postgkyl uses the BSD license. The full license is available [here](LICENSE).
 
