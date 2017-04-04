@@ -7,9 +7,10 @@ Klein & Howes, 2016, https://arxiv.org/abs/1607.01738v1
 """
 import numpy
 
+
 def Ce(N, f, E, v, dv=None, q=1, mode='center'):
     """Calculate the field-particle correlation
-    
+
     Parameters:
     N -- number of time steps for averaging
     f(x0, v, t) -- distribution function
@@ -29,7 +30,7 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
     RuntimeError -- when input parameters don't have correct dimensions
 
     Notes:
-    Averaging 
+    Averaging
     """
     if mode == 'forward':
         offset = int(0)
@@ -42,7 +43,7 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
             "Ce: Mode '{}' is not supported!\n  Supported modes are:\n    'forward' \n    'backward'\n    'center' (default)".format(mode))
 
     length = f.shape[0]
-    vDim = len(f.shape)-1 # 1st dimension is time
+    vDim = len(f.shape)-1  # 1st dimension is time
     if vDim > 3:
         raise RuntimeError(
             "Ce: velocity dimension appears to be {}.\nNote that Ce is expecting distribution function only in velocity space for fixed 'x'".format(vDim))
@@ -52,7 +53,7 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
     if dv is None:
         dv = numpy.full(vDim, 1)
 
-    # calculate the gradient 
+    # Calculate the gradient
     # (should be replaced by a propper DG derivation...)
     axis = tuple(numpy.arange(vDim) + 1)
     if vDim == 1:
@@ -78,11 +79,11 @@ def Ce(N, f, E, v, dv=None, q=1, mode='center'):
                 E = numpy.squeeze(E)
                 C[i, ...] += 0.5*q*v2*df[i+j-offset, ...]*E[i+j-offset]
             elif vDim == 2:
-                C[i, ...] += 0.5*q*v2*(df[0, i+j-offset, ...]*E[0, i+j-offset]+ 
+                C[i, ...] += 0.5*q*v2*(df[0, i+j-offset, ...]*E[0, i+j-offset]+
                                        df[1, i+j-offset, ...]*E[1, i+j-offset])
             else:
-                C[i, ...] += 0.5*q*v2*(df[0, i+j-offset, ...]*E[0, i+j-offset]+ 
-                                       df[1, i+j-offset, ...]*E[1, i+j-offset]+ 
+                C[i, ...] += 0.5*q*v2*(df[0, i+j-offset, ...]*E[0, i+j-offset]+
+                                       df[1, i+j-offset, ...]*E[1, i+j-offset]+
                                        df[2, i+j-offset, ...]*E[2, i+j-offset])
 
     C = numpy.array(-C/N)

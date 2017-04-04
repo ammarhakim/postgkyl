@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import sys
 
-#---------------------------------------------------------------------
+
+# --------------------------------------------------------------------
 # Growth rate fitting stuff ------------------------------------------
 def exp2(x, a, b):
     """Define custom exponential a*exp(2b*x)
@@ -23,6 +24,7 @@ def exp2(x, a, b):
     therefore the factor 2
     """
     return a*numpy.exp(2*b*x)
+
 
 def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
     """Fit function to continuously increasing region of data
@@ -44,17 +46,17 @@ def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
         maxN = len(x)
     bestParams = p0
 
-    print('fitGrowth: fitting region {:d} -> {:d}'.format(minN, maxN)) 
+    print('fitGrowth: fitting region {:d} -> {:d}'.format(minN, maxN))
     for n in numpy.linspace(minN, maxN-1, maxN-minN):
         n = int(n)
-        xn = x[0 : n] # continuously increasing fitting region
+        xn = x[0 : n]  # continuously increasing fitting region
         yn = y[0 : n]
         try:
             params, cov = opt.curve_fit(function, xn, yn, bestParams)
             residual = yn - function(xn, *params)
             ssRes = numpy.sum(residual**2)
             ssTot = numpy.sum((yn - numpy.mean(yn))**2)
-            R2 = 1 - ssRes/ssTot   
+            R2 = 1 - ssRes/ssTot
             if R2 > bestR2:
                 bestR2 = R2
                 bestParams = params
@@ -66,9 +68,7 @@ def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
             sys.stdout.flush()
         except RuntimeError:
             print('fitGrowth: curve_fit failed for N = {}'.format(n))
-       
+
     print('\rgamma = {:+5.3f} (best {:+5.3f}) R^2 = {:6.4f}   {:6.2f}% done {}'.
           format(params[1], bestParams[1], R2, 100, '[==========]'))
     return bestParams, bestR2, bestN
-
-            

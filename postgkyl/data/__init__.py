@@ -23,4 +23,3 @@ from .batch import GBatchData
 from .batch import GBatchInterpNodalSerendipity
 from .batch import GBatchInterpModalSerendipity
 from .batch import GBatchInterpModalMaxOrder
-

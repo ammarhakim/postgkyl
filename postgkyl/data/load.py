@@ -6,6 +6,7 @@ import numpy
 import os
 import glob
 
+
 class GData:
     """Provide interface to read output data.
 
@@ -56,14 +57,14 @@ class GData:
         self.lowerBounds = numpy.array(grid._v_attrs.vsLowerBounds)
         self.upperBounds = numpy.array(grid._v_attrs.vsUpperBounds)
         self.numCells = numpy.array(grid._v_attrs.vsNumCells)
-        self.numDims  = len(self.numCells)
+        self.numDims = len(self.numCells)
 
         # read in time data if it exists
         try:
             self.time = numpy.float(fh.root.timeData._v_attrs.vsTime)
         except:
             self.time = numpy.float(0.0)
-        
+
         # read in data
         self.q = numpy.array(fh.root.StructGridField)
 
@@ -96,7 +97,7 @@ class GData:
             self.time = numpy.float(adios.readvar(self.fName, 'time'))
         except:
             self.time = numpy.float(0.0)
-        
+
         # read in data
         self.q = adios.readvar(self.fName, 'CartGridField')
 
@@ -132,7 +133,7 @@ class GHistoryData:
         if self.files == []:
             raise NameError(
                 'GHistoryData: Files with root \'{}\' do not exist!'.
-                  format(self.fNameRoot))
+                format(self.fNameRoot))
 
         # Parse the file name and select the last part (extension)
         ext = self.files[start].split('.')[-1]
@@ -164,7 +165,6 @@ class GHistoryData:
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
-        #self.files = self.files[sortIdx]
         self.time = self.time[sortIdx]
         self.values = self.values[sortIdx]
 

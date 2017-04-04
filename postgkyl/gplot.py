@@ -11,110 +11,111 @@ from optparse import OptionParser
 # custom imports
 import postgkyl as pg
 
-#---------------------------------------------------------------------
+# --------------------------------------------------------------------
 # Parser -------------------------------------------------------------
 parser = OptionParser()
-# what to plot
-parser.add_option('-p', '--plot', action = 'store',
-                  dest = 'fName',
-                  help = 'G file to plot')
-parser.add_option('-y', '--history', action = 'store',
-                  dest = 'fNameRoot',
-                  help = 'G history file root to plot')
-parser.add_option('-c', '--component', action = 'store',
-                  dest = 'component', default = 0,
-                  help = 'Component to plot (default 0)')
-parser.add_option('-m', '--mask', action = 'store',
-                  dest = 'maskName',
-                  help = 'G file that serves as a mask')
-parser.add_option('--surf3D', action = 'store',
-                  dest = 'surf3D',
-                  help = 'Select isosurfae for 3D plotting')
+# What to plot
+parser.add_option('-p', '--plot', action='store',
+                  dest='fName',
+                  help='G file to plot')
+parser.add_option('-y', '--history', action='store',
+                  dest='fNameRoot',
+                  help='G history file root to plot')
+parser.add_option('-c', '--component', action='store',
+                  dest='component', default=0,
+                  help='Component to plot (default 0)')
+parser.add_option('-m', '--mask', action='store',
+                  dest='maskName',
+                  help='G file that serves as a mask')
+parser.add_option('--surf3D', action='store',
+                  dest='surf3D',
+                  help='Select isosurfae for 3D plotting')
 # projecting
-parser.add_option('--ns', action = 'store',
-                  dest = 'nodalSerendipity',
-                  help = 'Polynomial order of the nodal Serendipity basis')
-parser.add_option('--ms', action = 'store',
-                  dest = 'modalSerendipity',
-                  help = 'Polynomial order of the modal Serendipity basis')
-parser.add_option('--mo', action = 'store',
-                  dest = 'maxOrder',
-                  help = 'Polynomial order of the max order basis')
+parser.add_option('--ns', action='store',
+                  dest='nodalSerendipity',
+                  help='Polynomial order of the nodal Serendipity basis')
+parser.add_option('--ms', action='store',
+                  dest='modalSerendipity',
+                  help='Polynomial order of the modal Serendipity basis')
+parser.add_option('--mo', action='store',
+                  dest='maxOrder',
+                  help='Polynomial order of the max order basis')
 # saving plot
-parser.add_option('-s', '--save', action = 'store_true',
-                  dest = 'save',
-                  help = 'Save the displayed plot (png by default)')
-parser.add_option('-o', '--output', action = 'store',
-                  dest = 'outName',
-                  help = 'When saving figures, use this file name')
+parser.add_option('-s', '--save', action='store_true',
+                  dest='save',
+                  help='Save the displayed plot (png by default)')
+parser.add_option('-o', '--output', action='store',
+                  dest='outName',
+                  help='When saving figures, use this file name')
 # how to plot
-parser.add_option('--style', action = 'store',
-                  dest = 'style', default = '',
-                  help = 'Selects style file to use')
-parser.add_option('--xlabel', action = 'store',
-                  dest = 'xlabel', default = '',
-                  help = 'x-label to put on plots')
-parser.add_option('--ylabel', action = 'store',
-                  dest = 'ylabel', default = '',
-                  help = 'y-label to put on plots')
-parser.add_option('-t', '--title', action = 'store',
-                  dest = 'title',
-                  help = 'Set title to put on plots')
-parser.add_option('--no-title', action = 'store_false',
-                  dest = 'titleOn', default=True,
-                  help = 'Turn OFF title to put on plots')
-parser.add_option('-g', '--no-grid', action = 'store_false',
-                  dest = 'gridOn', default = True,
-                  help = 'Turn OFF the grid')
-parser.add_option('--cmap', action = 'store',
-                  dest = 'cmap', default = 'inferno',
-                  help = 'Color map to use for 2D plots (default \'inferno\')')
-parser.add_option('--axis-free', action = 'store_true',
-                  dest = 'freeAxis',
-                  help = "If set, 2D plots will no longer have equal axis",
-                  default = False)
-parser.add_option('--color', action = 'store',
-                  dest = 'color', default = 'RoyalBlue',
-                  help = "Color of 1D plots")
-parser.add_option('--contour', action = 'store_true',
-                  dest = 'contour', default = False,
-                  help = "Plot contour instead of a bitmat for 2D plots")
+parser.add_option('--style', action='store',
+                  dest='style', default='',
+                  help='Selects style file to use')
+parser.add_option('--xlabel', action='store',
+                  dest='xlabel', default='',
+                  help='x-label to put on plots')
+parser.add_option('--ylabel', action='store',
+                  dest='ylabel', default='',
+                  help='y-label to put on plots')
+parser.add_option('-t', '--title', action='store',
+                  dest='title',
+                  help='Set title to put on plots')
+parser.add_option('--no-title', action='store_false',
+                  dest='titleOn', default=True,
+                  help='Turn OFF title to put on plots')
+parser.add_option('-g', '--no-grid', action='store_false',
+                  dest='gridOn', default=True,
+                  help='Turn OFF the grid')
+parser.add_option('--cmap', action='store',
+                  dest='cmap', default='inferno',
+                  help='Color map to use for 2D plots (default \'inferno\')')
+parser.add_option('--axis-free', action='store_true',
+                  dest='freeAxis',
+                  help="If set, 2D plots will no longer have equal axis",
+                  default=False)
+parser.add_option('--color', action='store',
+                  dest='color', default='RoyalBlue',
+                  help="Color of 1D plots")
+parser.add_option('--contour', action='store_true',
+                  dest='contour', default=False,
+                  help="Plot contour instead of a bitmat for 2D plots")
 # misellaneous
-parser.add_option('-i', '--info', action = 'store_true',
-                  dest = 'info', default = False,
-                  help = 'Print information about the file')
-parser.add_option('--dont-show', action = 'store_true',
-                  dest = 'dontShow', default = False,
-                  help = 'Do not show plot')
-parser.add_option('-x', '--xkcd', action = 'store_true',
-                  dest = 'xkcd', default = False,
-                  help = 'Plot xkcd.com style plots!')
-parser.add_option('-w', '--write-history', action = 'store_true',
-                  dest = 'writeHistory', default = False,
-                  help = 'Write the loaded history to text a file')
+parser.add_option('-i', '--info', action='store_true',
+                  dest='info', default=False,
+                  help='Print information about the file')
+parser.add_option('--dont-show', action='store_true',
+                  dest='dontShow', default=False,
+                  help='Do not show plot')
+parser.add_option('-x', '--xkcd', action='store_true',
+                  dest='xkcd', default=False,
+                  help='Plot xkcd.com style plots!')
+parser.add_option('-w', '--write-history', action='store_true',
+                  dest='writeHistory', default=False,
+                  help='Write the loaded history to text a file')
 # Fixing components (slices)
-parser.add_option('--fix1', action = 'store',
-                  dest = 'fix1', default = None,
-                  help = 'Fix the first component on selected index')
-parser.add_option('--fix2', action = 'store',
-                  dest = 'fix2', default = None,
-                  help = 'Fix the second component on selected index')
-parser.add_option('--fix3', action = 'store',
-                  dest = 'fix3', default = None,
-                  help = 'Fix the third component on selected index')
-parser.add_option('--fix4', action = 'store',
-                  dest = 'fix4', default = None,
-                  help = 'Fix the fourth component on selected index')
-parser.add_option('--fix5', action = 'store',
-                  dest = 'fix5', default = None,
-                  help = 'Fix the fifth component on selected index')
-parser.add_option('--fix6', action = 'store',
-                  dest = 'fix6', default = None,
-                  help = 'Fix the sixth component on selected index')
+parser.add_option('--fix1', action='store',
+                  dest='fix1', default=None,
+                  help='Fix the first component on selected index')
+parser.add_option('--fix2', action='store',
+                  dest='fix2', default=None,
+                  help='Fix the second component on selected index')
+parser.add_option('--fix3', action='store',
+                  dest='fix3', default=None,
+                  help='Fix the third component on selected index')
+parser.add_option('--fix4', action='store',
+                  dest='fix4', default=None,
+                  help='Fix the fourth component on selected index')
+parser.add_option('--fix5', action='store',
+                  dest='fix5', default=None,
+                  help='Fix the fifth component on selected index')
+parser.add_option('--fix6', action='store',
+                  dest='fix6', default=None,
+                  help='Fix the sixth component on selected index')
 
 (options, args) = parser.parse_args()
 
-#---------------------------------------------------------------------
+
+# --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
 def _centeredLinspace(lower, upper, numElem):
     dx = (upper-lower)/numElem
@@ -157,10 +158,10 @@ else:
 
 # masking
 if options.maskName:
-    maskField = pg.GData(options.maskName).q[...,0]
+    maskField = pg.GData(options.maskName).q[..., 0]
     values = numpy.ma.masked_where(maskField < 0.0, values)
 
-#---------------------------------------------------------------------
+# --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
 if options.fName:
     name = options.fName
@@ -168,16 +169,16 @@ elif options.fNameRoot:
     name = options.fNameRoot
 
 if options.fName:
-    name = name.split('/')[-1] # get rid of the full path
-    name = ''.join(name.split('.')[: -1]) # get rid of the extension
+    name = name.split('/')[-1]  # get rid of the full path
+    name = ''.join(name.split('.')[: -1])  # get rid of the extension
     # This weird Python construct is here in case someone would like
     # to use '.' in name... I really dislike it but I don't know about
     # any better -pc
-    
+
     # add component number
     name = '{}_c{:d}'.format(name, int(options.component))
 else:
-   pass
+    pass
 
 if options.outName is None:
     outName = '{}/{}.png'.format(os.getcwd(), name)
@@ -210,26 +211,18 @@ if options.info:
 
     exit(0)
 
-#---------------------------------------------------------------------
+# --------------------------------------------------------------------
 # Plotting -----------------------------------------------------------
 
-# plotting parameters are based solely on the personal taste of Ammar...
+# plotting parameters are based solely on the personal taste of Ammar
 mpl.rcParams['lines.linewidth'] = 2
 mpl.rcParams['font.size'] = 16
-#mpl.rcParams['font.weight'] = 'bold'
 mpl.rcParams['axes.labelsize'] = 'large'
-#mpl.rcParams['xtick.major.size'] = 8 # default is 4
-#mpl.rcParams['xtick.major.width'] = 3 # default is 0.5
-#mpl.rcParams['ytick.major.size'] = 8 # default is 4
-#mpl.rcParams['ytick.major.width'] = 3 # default is 0.5
 mpl.rcParams['figure.facecolor'] = 'white'
-#mpl.rcParams['figure.subplot.bottom'] = 0.125
-#mpl.rcParams['figure.subplot.right'] = 0.85 # keep labels/ticks of
 mpl.rcParams['image.interpolation'] = 'none'
 mpl.rcParams['image.origin'] = 'lower'
 mpl.rcParams['contour.negative_linestyle'] = 'solid'
-#mpl.rcParams['savefig.bbox'] = 'tight'
-#mpl.rcParams['mathtext.default'] = 'regular'
+mpl.rcParams['savefig.bbox'] = 'tight'
 mpl.rcParams['grid.linewidth'] = 0.5
 mpl.rcParams['grid.linestyle'] = 'dotted'
 mpl.rcParams['axes.titlesize'] = 16
@@ -244,13 +237,13 @@ if options.xkcd:
     mpl.rcParams['mathtext.default'] = 'regular'
     mpl.xkcd()
 
-# plot 
+# plot
 fig, ax = mpl.subplots()
 if numDims == 1:
     if not options.xkcd:
         im = ax.plot(coords[0], values, color=options.color)
     else:
-        im = ax.plot(coords[0], values, color=options.color, 
+        im = ax.plot(coords[0], values, color=options.color,
                      clip_on=False, zorder=100)
 elif numDims == 2:
     if not options.contour:
@@ -266,7 +259,7 @@ elif numDims == 3:
         verts, faces = measure.marching_cubes(values, float(options.surf3D))
         fig = mpl.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2])
+        ax.plot_trisurf(verts[:, 0], verts[:, 1], faces, verts[:, 2])
     else:
         raise RuntimeError(
             "Isosurface value needs to be specified for 3D plotting.\nUse the flag --surf3D.")
@@ -274,6 +267,7 @@ elif numDims == 3:
 else:
     raise RuntimeError(
         "Plotting {}D plot? Seriously?".format(numDims))
+
 
 # format
 def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
@@ -286,8 +280,8 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
 
     _divider_ = make_axes_locatable(_ax)
     _cax_ = _divider_.append_axes("right", size="5%", pad=0.05)
-    _cbar_ =  fig.colorbar(obj, cax=_cax_, label=label)
-    if aspect != None:
+    _cbar_ = fig.colorbar(obj, cax=_cax_, label=label)
+    if aspect in not None:
         _ax.set_aspect(aspect)
     if redraw:
         _fig.canvas.draw()
@@ -300,7 +294,6 @@ ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
 if numDims == 1:
     mpl.autoscale(enable=True, axis='x', tight=True)
-    #ax.axis('tight')
 elif numDims == 2:
     _colorbar(im, ax, fig)
     if options.freeAxis:
@@ -323,7 +316,7 @@ if options.xkcd:
     ax.xaxis.set_ticks_position('bottom')
     # Turn OFF the grid
     ax.grid(False)
-    
+
 if options.save:
     fig.savefig(outName, bbox_inches='tight', dpi=200)
 

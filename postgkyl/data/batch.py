@@ -9,6 +9,7 @@ import sys
 from . import load
 from . import interp
 
+
 class GBatchData:
     """Convenience batch load of GData
 
@@ -28,7 +29,7 @@ class GBatchData:
         Notes:
         Load function is determined based on the extension
         """
-        
+
         self.fNameRoot = fNameRoot
         files = glob.glob('*{}*.??'.format(self.fNameRoot))
         if files == []:
@@ -43,6 +44,7 @@ class GBatchData:
         time = [temp.time for temp in self.array]
         sortIdx = numpy.argsort(time)
         self.array = self.array[sortIdx]
+
 
 class GBatchInterpNodalSerendipity:
     def __init__(self, data, polyOrder):
@@ -65,6 +67,7 @@ class GBatchInterpNodalSerendipity:
               format(100, '[==========]'))
         return numpy.array(coords), numpy.array(projection)
 
+
 class GBatchInterpModalSerendipity:
     def __init__(self, data, polyOrder):
         self.data = data
@@ -82,6 +85,7 @@ class GBatchInterpModalSerendipity:
                 format(percent))
             sys.stdout.flush()
         return coords, projection
+
 
 class GBatchInterpModalMaxOrder:
     def __init__(self, data, polyOrder):
