@@ -4,7 +4,7 @@ Postgkyl script to plot data directly from the terminal
 """
 # standart imports
 import numpy
-import matplotlib.pyplot as mpl
+import matplotlib.pyplot as plt
 import sys
 import os
 from optparse import OptionParser
@@ -117,11 +117,6 @@ parser.add_option('--fix6', action='store',
 
 # --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
-def _centeredLinspace(lower, upper, numElem):
-    dx = (upper-lower)/numElem
-    return numpy.linspace(lower+0.5*dx, upper-0.5*dx, numElem)
-
-# loading data to plot
 if options.fName:
     data = pg.GData(options.fName)
     if options.nodalSerendipity:
@@ -133,19 +128,15 @@ if options.fName:
     elif options.maxOrder:
         dg = pg.GInterpModalMaxOrder(data, int(options.maxOrder))
         coords, values = dg.project(int(options.component))
-    else:
-        c = [_centeredLinspace(data.lowerBounds[d],
-                               data.upperBounds[d],
-                               data.numCells[d])
-             for d in range(data.numDims)]
-        coords = numpy.array(c)
-        values = data.q[..., int(options.component)]
+    else:  # fake interpolator for finite volume data
+        dg = pg.data.GInterpZeroOrder(data)
+        coords, values = dg.project(int(options.component))
 
     # masking
     if options.maskName:
         maskField = pg.GData(options.maskName).q[..., 0]
         values = numpy.ma.masked_where(maskField < 0.0, values)
-
+    # slicing
     coords, values = pg.tools.fixCoordSlice(coords, values, 'value',
                                             options.fix1, options.fix2,
                                             options.fix3, options.fix4,
@@ -217,30 +208,30 @@ if options.info:
 # Plotting -----------------------------------------------------------
 
 # plotting parameters are based solely on the personal taste of Ammar
-mpl.rcParams['lines.linewidth'] = 2
-mpl.rcParams['font.size'] = 16
-mpl.rcParams['axes.labelsize'] = 'large'
-mpl.rcParams['figure.facecolor'] = 'white'
-mpl.rcParams['image.interpolation'] = 'none'
-mpl.rcParams['image.origin'] = 'lower'
-mpl.rcParams['contour.negative_linestyle'] = 'solid'
-mpl.rcParams['savefig.bbox'] = 'tight'
-mpl.rcParams['grid.linewidth'] = 0.5
-mpl.rcParams['grid.linestyle'] = 'dotted'
-mpl.rcParams['axes.titlesize'] = 16
-mpl.rcParams['image.cmap'] = str(options.cmap)
+plt.rcParams['lines.linewidth'] = 2
+plt.rcParams['font.size'] = 16
+plt.rcParams['axes.labelsize'] = 'large'
+plt.rcParams['figure.facecolor'] = 'white'
+plt.rcParams['image.interpolation'] = 'none'
+plt.rcParams['image.origin'] = 'lower'
+plt.rcParams['contour.negative_linestyle'] = 'solid'
+plt.rcParams['savefig.bbox'] = 'tight'
+plt.rcParams['grid.linewidth'] = 0.5
+plt.rcParams['grid.linestyle'] = 'dotted'
+plt.rcParams['axes.titlesize'] = 16
+plt.rcParams['image.cmap'] = str(options.cmap)
 
 # load personal Matplotlib style file
 if options.style:
-    mpl.style.use(str(options.style))
+    plt.style.use(str(options.style))
 
 # this needs to be set after the rest of rcParams
 if options.xkcd:
-    mpl.rcParams['mathtext.default'] = 'regular'
-    mpl.xkcd()
+    plt.rcParams['mathtext.default'] = 'regular'
+    plt.xkcd()
 
 # plot
-fig, ax = mpl.subplots()
+fig, ax = plt.subplots()
 if numDims == 1:
     if not options.xkcd:
         im = ax.plot(coords[0], values, color=options.color)
@@ -256,10 +247,10 @@ elif numDims == 3:
     if options.surf3D:
         from skimage import measure
         from mpl_toolkits.mplot3d import Axes3D
-        mpl.close(fig)
+        plt.close(fig)
 
         verts, faces = measure.marching_cubes(values, float(options.surf3D))
-        fig = mpl.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.plot_trisurf(verts[:, 0], verts[:, 1], faces, verts[:, 2])
     else:
@@ -295,7 +286,7 @@ ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
 if numDims == 1:
-    mpl.autoscale(enable=True, axis='x', tight=True)
+    plt.autoscale(enable=True, axis='x', tight=True)
 elif numDims == 2:
     _colorbar(im, ax, fig)
     if options.freeAxis:
@@ -303,7 +294,7 @@ elif numDims == 2:
     else:
         ax.axis('image')
 
-mpl.tight_layout()
+plt.tight_layout()
 
 # this should be last formatting option
 if options.xkcd:
@@ -326,6 +317,6 @@ if options.writeHistory:
     hist.save()
 
 if not options.dontShow:
-    mpl.show()
+    plt.show()
 else:
-    mpl.close(fig)
+    plt.close(fig)
