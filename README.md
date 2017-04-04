@@ -31,9 +31,9 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
          `numpy` array of 1D coordinate fields instead of
          meshgrids. Due to the matrix-like indexing of the `values`,
          transposition is necessary when plotting with
-         `pcolormes`. E.g.:
+         `pcolormesh`. E.g.:
 
-         `mpl.pcolormesh(coords[0], coords[1], values.transpose())`
+         `plt.pcolormesh(coords[0], coords[1], values.transpose())`
 
        - `fixCoordSlice()` now has a new keyword `mode` that allows to
          select the input (either directly index or the value)

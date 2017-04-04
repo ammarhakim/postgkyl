@@ -178,21 +178,18 @@ class GHistoryData:
         """Load the G2 ADIOS history data file"""
         import adios
 
-        # read the first history file
-        #fh = adios.file(self.files[start])                        
+        # read the first history file                     
         self.values = adios.readvar(self.files[start], 'Data')
         self.time = adios.readvar(self.files[start], 'TimeMesh')
     
         # read the rest of the files and append
         for file in self.files[start+1 :]:
-            #fh = tables.open_file(file, 'r')
             self.values = numpy.append(self.values,
                                        adios.readvar(file, 'Data'),
                                        axis=0)
             self.time = numpy.append(self.time,
                                      adios.readvar(file, 'TimeMesh'),
                                      axis=0)
-            #fh.close()
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
