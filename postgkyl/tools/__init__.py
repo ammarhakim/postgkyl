@@ -16,7 +16,3 @@ from .fields import fixCoordSlice
 from . import filters
 from .filters import fftFiltering
 from .filters import butterFiltering
-
-
-
-

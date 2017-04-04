@@ -11,5 +11,3 @@ from .fieldParticleCorrelation import Ce
 # import growth functions
 from . import growth
 from .growth import fitGrowth
-
-

@@ -5,6 +5,7 @@ Postgkyl sub-module for custom field manipulation
 import numpy
 import math
 
+
 def rotationMatrix(vector):
     """Calculate rotation matrix
 
@@ -16,38 +17,42 @@ def rotationMatrix(vector):
     """
     rot = numpy.zeros((3, 3))
     norm = numpy.abs(vector)
-    k = vector / norm # direction unit vector
+    k = vector / norm  # direction unit vector
 
     # normalization
     norm2 = numpy.sqrt(k[1]*k[1] + k[2]*k[2])
-    norm3 = numpy.sqrt((k[1]*k[1] + k[2]*k[2])**2 + 
-                       k[0]*k[0]*k[1]*k[1] + 
+    norm3 = numpy.sqrt((k[1]*k[1] + k[2]*k[2])**2 +
+                       k[0]*k[0]*k[1]*k[1] +
                        k[0]*k[0]*k[2]*k[2])
 
-    rot[0, :] =  k
-    rot[1, 0] =  0
+    rot[0, :] = k
+    rot[1, 0] = 0
     rot[1, 1] = -k[2]/norm2
-    rot[1, 2] =  k[1]/norm2
+    rot[1, 2] = k[1]/norm2
     rot[2, 0] = (k[1]*k[1] + k[2]*k[2])/norm3
     rot[2, 1] = -k[0]*k[1]/norm3
     rot[2, 2] = -k[0]*k[2]/norm3
 
     return rot
 
+
 def findNearest(array, value):
     idx = numpy.searchsorted(array, value)
-    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) 
-                    < math.fabs(value - array[idx])):
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) <
+                    math.fabs(value - array[idx])):
         return array[idx-1]
     else:
         return array[idx]
+
+
 def findNearestIdx(array, value):
     idx = numpy.searchsorted(array, value)
-    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) 
-                    < math.fabs(value - array[idx])):
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) <
+                    math.fabs(value - array[idx])):
         return idx-1
     else:
         return idx
+
 
 def fixCoordSlice(coords, values, mode='idx',
                   fix1=None, fix2=None, fix3=None,
@@ -57,8 +62,8 @@ def fixCoordSlice(coords, values, mode='idx',
     Parameters:
     coords -- array of coordinates
     values -- array of field values
-    mode -- changes input between direct index ('idx', default) 
-            and coordinate value ('value')
+    mode -- changes input between direct index ('idx', default) and
+            coordinate value ('value')
     fix1 -- fixes the first coordinate to provided index (default None)
     fix2 -- fixes the second coordinate to provided index (default None)
     fix3 -- fixes the third coordinate to provided index (default None)
@@ -96,4 +101,3 @@ def fixCoordSlice(coords, values, mode='idx',
             else:
                 idxCoords.append(int(i))
     return coords[idxCoords], values[idxValues]
-

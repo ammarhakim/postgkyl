@@ -6,24 +6,22 @@ import tables
 import numpy
 import os
 
-# obtain Postgkyl path
 postgkylPath = os.path.dirname(os.path.realpath(__file__))
 
-## Below are a set of helper functions used in the DG classes
 
 def _loadMatrix(dim, polyOrder, basis):
     """Load interpolation matrix from the pre-computed HDF5 file."""
-    varid ='xformMatrix%i%i' % (dim,polyOrder)
+    varid = 'xformMatrix%i%i' % (dim, polyOrder)
     if basis.lower() == 'nodal serendipity':
-        fh = tables.open_file(postgkylPath+
+        fh = tables.open_file(postgkylPath +
                               '/xformMatricesNodalSerendipity.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     elif basis.lower() == 'modal serendipity':
-        fh = tables.open_file(postgkylPath+
+        fh = tables.open_file(postgkylPath +
                               '/xformMatricesModalSerendipity.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     elif basis.lower() == 'modal maximal order':
-        fh = tables.open_file(postgkylPath+
+        fh = tables.open_file(postgkylPath +
                               '/xformMatricesModalMaximal.h5')
         mat = numpy.array(fh.root.matrices._v_children[varid].read())
     else:
@@ -31,20 +29,23 @@ def _loadMatrix(dim, polyOrder, basis):
             "GInterp: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".
             format(basis))
     fh.close()
-    return mat    
+    return mat
+
 
 def _decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
-    return numpy.mod(numpy.full(dim, n, dtype=numpy.int) / 
-                     (numInterp**numpy.arange(dim)), numInterp )
+    return numpy.mod(numpy.full(dim, n, dtype=numpy.int) /
+                     (numInterp**numpy.arange(dim)), numInterp)
+
 
 def _makeMesh(nInterp, Xc):
     dx = Xc[1] - Xc[0]
     nx = Xc.shape[0]
-    xlo = Xc[0]  - 0.5*dx
+    xlo = Xc[0] - 0.5*dx
     xup = Xc[-1] + 0.5*dx
     dx2 = dx/nInterp
     return numpy.linspace(xlo+0.5*dx2, xup-0.5*dx2, nInterp*nx)
+
 
 def _interpOnMesh(cMat, qIn):
     """Interpolate DG data on a uniform mesh.
@@ -66,7 +67,7 @@ def _interpOnMesh(cMat, qIn):
     # Main loop
     for n in range(numInterp ** numDims):
         # https://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
-        temp  = numpy.tensordot(cMat[n, :], qIn, axes=1)
+        temp = numpy.tensordot(cMat[n, :], qIn, axes=1)
         # decompose n to i,j,k,... indices based on the number of dimensions
         startIdx = _decompose(n, numDims, numInterp)
         # define multi-D qOut slices
@@ -74,6 +75,7 @@ def _interpOnMesh(cMat, qIn):
                 for i in range(numDims)]
         qOut[idxs] = temp
     return numpy.array(qOut)
+
 
 class GInterp:
     """Base class for DG interpolation.
@@ -118,9 +120,8 @@ class GInterp:
         lo = component*self.numNodes
         up = lo+self.numNodes
         rawData = q[..., lo:up]
-        return rawData    
+        return rawData
 
-#################
 
 class GInterpZeroOrder(GInterp):
     """This is provided to allow treating finite-volume data as DG
@@ -133,6 +134,7 @@ class GInterpZeroOrder(GInterp):
     def project(self, c):
         grids = numpy.meshgrid(*self.Xc, indexing='ij')
         return numpy.array(grids), numpy.squeeze(self._getRawNodal(c))
+
 
 class GInterpNodalSerendipity(GInterp):
     """Nodal Serendipity basis PUT MORE STUF HERE"""
@@ -157,6 +159,7 @@ class GInterpNodalSerendipity(GInterp):
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)
 
+
 class GInterpModalSerendipity(GInterp):
     """Modal Serendipity basis PUT MORE STUF HERE"""
 
@@ -179,6 +182,7 @@ class GInterpModalSerendipity(GInterp):
         coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)
+
 
 class GInterpModalMaxOrder(GInterp):
     """Modal Maximal Order basis PUT MORE STUF HERE"""

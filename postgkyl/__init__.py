@@ -19,7 +19,3 @@ from .data.interp import GInterpZeroOrder
 from .data.interp import GInterpNodalSerendipity
 from .data.interp import GInterpModalSerendipity
 from .data.interp import GInterpModalMaxOrder
-
-
-
-
