@@ -129,7 +129,7 @@ class GHistoryData:
         Load function is determined based on the extension
         """
         self.fNameRoot = fNameRoot
-        self.files = glob.glob('*{}*.??'.format(self.fNameRoot))
+        self.files = glob.glob('{}*.??'.format(self.fNameRoot))
         if self.files == []:
             raise NameError(
                 'GHistoryData: Files with root \'{}\' do not exist!'.
@@ -158,9 +158,11 @@ class GHistoryData:
         for file in self.files[start+1 :]:
             fh = tables.open_file(file, 'r')
             self.values = numpy.append(self.values,
-                                       fh.root.DataStruct.data.read())
+                                       fh.root.DataStruct.data.read(),
+                                       axis=0)
             self.time = numpy.append(self.time,
-                                     fh.root.DataStruct.timeMesh.read())
+                                     fh.root.DataStruct.timeMesh.read(),
+                                     axis=0)
             fh.close()
 
         # sort with scending time
@@ -173,7 +175,33 @@ class GHistoryData:
         self.time = numpy.array(self.time)
 
     def _loadG2bp(self, start):
-        print('ADIOS history data not yet suported')
+        """Load the G2 ADIOS history data file"""
+        import adios
+
+        # read the first history file
+        #fh = adios.file(self.files[start])                        
+        self.values = adios.readvar(self.files[start], 'Data')
+        self.time = adios.readvar(self.files[start], 'TimeMesh')
+    
+        # read the rest of the files and append
+        for file in self.files[start+1 :]:
+            #fh = tables.open_file(file, 'r')
+            self.values = numpy.append(self.values,
+                                       adios.readvar(file, 'Data'),
+                                       axis=0)
+            self.time = numpy.append(self.time,
+                                     adios.readvar(file, 'TimeMesh'),
+                                     axis=0)
+            #fh.close()
+
+        # sort with scending time
+        sortIdx = numpy.argsort(self.time)
+        self.time = self.time[sortIdx]
+        self.values = self.values[sortIdx]
+
+        # convert to numpy arrays
+        self.values = numpy.array(self.values)
+        self.time = numpy.array(self.time)
 
     def save(self, fName=None):
         """Write loaded history data to one text file
