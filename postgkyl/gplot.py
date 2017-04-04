@@ -10,7 +10,7 @@ import os
 from optparse import OptionParser
 # custom imports
 import postgkyl as pg
-# :)
+
 # --------------------------------------------------------------------
 # Parser -------------------------------------------------------------
 parser = OptionParser()
@@ -22,7 +22,7 @@ parser.add_option('-y', '--history', action='store',
                   dest='fNameRoot',
                   help='G history file root to plot')
 parser.add_option('-c', '--component', action='store',
-                  dest='component', default=0,
+                  dest='component', default='0',
                   help='Component to plot (default 0)')
 parser.add_option('-m', '--mask', action='store',
                   dest='maskName',
@@ -73,9 +73,9 @@ parser.add_option('--axis-free', action='store_true',
                   dest='freeAxis',
                   help="If set, 2D plots will no longer have equal axis",
                   default=False)
-parser.add_option('--color', action='store',
-                  dest='color', default='RoyalBlue',
-                  help="Color of 1D plots")
+#parser.add_option('--color', action='store',
+#                  dest='color', default='RoyalBlue',
+#                  help="Color of 1D plots")
 parser.add_option('--contour', action='store_true',
                   dest='contour', default=False,
                   help="Plot contour instead of a bitmat for 2D plots")
@@ -117,20 +117,20 @@ parser.add_option('--fix6', action='store',
 
 # --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
-if options.fName:
-    data = pg.GData(options.fName)
+def _loadFrame(fName, comp):
+    data = pg.GData(fName)
     if options.nodalSerendipity:
         dg = pg.GInterpNodalSerendipity(data, int(options.nodalSerendipity))
-        coords, values = dg.project(int(options.component))
+        coords, values = dg.project(int(comp))
     elif options.modalSerendipity:
         dg = pg.GInterpModalSerendipity(data, int(options.modalSerendipity))
-        coords, values = dg.project(int(options.component))
+        coords, values = dg.project(int(comp))
     elif options.maxOrder:
         dg = pg.GInterpModalMaxOrder(data, int(options.maxOrder))
-        coords, values = dg.project(int(options.component))
+        coords, values = dg.project(int(comp))
     else:  # fake interpolator for finite volume data
         dg = pg.data.GInterpZeroOrder(data)
-        coords, values = dg.project(int(options.component))
+        coords, values = dg.project(int(comp))
 
     # masking
     if options.maskName:
@@ -141,18 +141,38 @@ if options.fName:
                                             options.fix1, options.fix2,
                                             options.fix3, options.fix4,
                                             options.fix5, options.fix6)
-    numDims = len(values.shape)
+    return coords, values
 
-elif options.fNameRoot:
-    hist = pg.GHistoryData(options.fNameRoot)
+def _loadHistory(fNameRoot, comp):
+    hist = pg.GHistoryData(fNameRoot)
     coords = numpy.expand_dims(hist.time, axis=0)
     values = hist.values
     if len(values.shape) > 1:
-        values = values[:, int(options.component)]
-    numDims = 1
-else:
-    print(' *** No data specified for plotting')
-    sys.exit()
+        values = values[:, int(comp)]
+    return coords, values
+
+
+# --------------------------------------------------------------------
+# Info functions -----------------------------------------------------
+def _printInfoFrame(fName):
+    data = pg.GData(fName)
+    print('Printing file info:')
+    print(' * File name: {:s}'.format(data.fName))
+    print(' * Time: {:f}'.format(data.time))
+    print(' * Dimensions ({:d}):'.format(data.numDims))
+    for i in range(data.numDims):
+        print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
+              format(i+1, data.numCells[i],
+                     data.lowerBounds[i], data.upperBounds[i]))
+
+
+def _printInfoHistory(fNameRoot):
+    hist = pg.GHistoryData(fNameRoot)
+    print('Printing files info:')
+    print(' * File names: {:s} .. {:s} ({:d} files)'.
+          format(hist.files[0], hist.files[-1], len(hist.files)))
+    print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
+
 
 # --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
@@ -169,7 +189,7 @@ if options.fName:
     # any better -pc
 
     # add component number
-    name = '{}_c{:d}'.format(name, int(options.component))
+    #name = '{}_c{:d}'.format(name, int(options.component))
 else:
     pass
 
@@ -178,36 +198,17 @@ if options.outName is None:
 else:
     outName = str(options.outName)
 
-if options.title is None:
-    if options.fName:
-        title = '{}\nt={:1.2e}'.format(name, data.time)
-    else:
-        title = '{}\nhistory'.format(name)
-else:
-    title = str(options.title)
-
-if options.info:
-    if options.fName:
-        print('Printing file info:')
-        print(' * File name: {:s}'.format(data.fName))
-        print(' * Time: {:f}'.format(data.time))
-        print(' * Dimensions ({:d}):'.format(data.numDims))
-        for i in range(data.numDims):
-            print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
-                  format(i+1, data.numCells[i],
-                         data.lowerBounds[i], data.upperBounds[i]))
-    elif options.fNameRoot:
-        print('Printing files info:')
-        print(' * File names: {:s} .. {:s} ({:d} files)'.
-              format(hist.files[0], hist.files[-1], len(hist.files)))
-        print(' * Time: {:f} - {:f}'.format(hist.time[0], hist.time[-1]))
-
-    exit(0)
+#if options.title is None:
+#    if options.fName:
+#        title = '{}\nt={:1.2e}'.format(name, data.time)
+#    else:
+#        title = '{}\nhistory'.format(name)
+#else:
+#    title = str(options.title)
+title = 'test'
 
 # --------------------------------------------------------------------
-# Plotting -----------------------------------------------------------
-
-# plotting parameters are based solely on the personal taste of Ammar
+# Plotting setup -----------------------------------------------------
 plt.rcParams['lines.linewidth'] = 2
 plt.rcParams['font.size'] = 16
 plt.rcParams['axes.labelsize'] = 'large'
@@ -230,39 +231,77 @@ if options.xkcd:
     plt.rcParams['mathtext.default'] = 'regular'
     plt.xkcd()
 
-# plot
-fig, ax = plt.subplots()
-if numDims == 1:
-    if not options.xkcd:
-        im = ax.plot(coords[0], values, color=options.color)
-    else:
-        im = ax.plot(coords[0], values, color=options.color,
-                     clip_on=False, zorder=100)
-elif numDims == 2:
-    if not options.contour:
-        im = ax.pcolormesh(coords[0], coords[1], values.transpose())
-    else:
-        im = ax.contour(coords[0], coords[1], values.transpose())
-elif numDims == 3:
-    if options.surf3D:
-        from skimage import measure
-        from mpl_toolkits.mplot3d import Axes3D
-        plt.close(fig)
+# --------------------------------------------------------------------
+# Plotting -----------------------------------------------------------
+if not options.info:
+    fig, ax = plt.subplots()
 
-        verts, faces = measure.marching_cubes(values, float(options.surf3D))
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_trisurf(verts[:, 0], verts[:, 1], faces, verts[:, 2])
-    else:
-        raise RuntimeError(
-            "Isosurface value needs to be specified for 3D plotting.\nUse the flag --surf3D.")
-
+if options.fName:
+    files = options.fName.split(',')
 else:
-    raise RuntimeError(
-        "Plotting {}D plot? Seriously?".format(numDims))
+    files = options.fNameRoot.split(',')
+components = options.component.split(',')
 
+for i, fl in enumerate(files):
+    for j, comp in enumerate(components):
+        # first check if info option is on
+        if options.info:
+            if options.fName:
+                _printInfoFrame(fl.strip())
+            else:
+                _printInfoHistory(fl.strip())
+            continue  # do not continue (lol)
 
-# format
+        if options.fName:
+            coords, values = _loadFrame(fl.strip(), int(comp.strip()))
+            numDims = len(values.shape)
+        elif options.fNameRoot:
+            coords, values = _loadHistory(fl.strip(), int(comp.strip()))
+            numDims = 1
+        else:
+            print(' *** No data specified for plotting')
+            sys.exit()
+
+        if numDims == 1:
+            if not options.xkcd:
+                im = ax.plot(coords[0], values)
+            else:
+                im = ax.plot(coords[0], values,
+                             clip_on=False, zorder=100)
+        elif numDims == 2:
+            if i > 0 or j > 0:
+                print("Cannot plot more that one dataset for 2D. Skipping")
+                continue
+            if not options.contour:
+                im = ax.pcolormesh(coords[0], coords[1], values.transpose())
+            else:
+                im = ax.contour(coords[0], coords[1], values.transpose())
+        elif numDims == 3:
+            if i > 0 or j > 0:
+                print("Cannot plot more that one dataset for 3D. Skipping")
+                continue
+            if options.surf3D:
+                from skimage import measure
+                from mpl_toolkits.mplot3d import Axes3D
+                plt.close(fig)
+
+                verts, faces = measure.marching_cubes(values, float(options.surf3D))
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                ax.plot_trisurf(verts[:, 0], verts[:, 1], faces, verts[:, 2])
+            else:
+                raise RuntimeError(
+                    "Isosurface value needs to be specified for 3D plotting.\nUse the flag --surf3D.")
+
+        else:
+            raise RuntimeError(
+                "Plotting {}D plot? Seriously?".format(numDims))
+
+if options.info:
+    sys.exit()
+
+# --------------------------------------------------------------------
+# Formating ----------------------------------------------------------
 def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     """Add a colorbar adjacent to obj, with a matching height
 
