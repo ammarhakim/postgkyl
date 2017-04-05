@@ -16,21 +16,15 @@ import postgkyl as pg
 usage = "usage: %prog [options] file1 file2 ..."
 parser = OptionParser(usage=usage)
 # What to plot
-parser.add_option('-p', '--plot', action='append',
-                  dest='fName',
-                  help='G file(s) to plot')
-parser.add_option('-y', '--history', action='append',
-                  dest='fNameRoot',
-                  help='G history file root(s) to plot')
 parser.add_option('-c', '--component', action='append',
                   dest='component',
-                  help='Component to plot (default 0)')
+                  help='Component to plot (default 0; multiple -c calls are allowed)')
 parser.add_option('-m', '--mask', action='store',
                   dest='maskName',
                   help='G file that serves as a mask')
 parser.add_option('--surf3D', action='store',
                   dest='surf3D',
-                  help='Select isosurfae for 3D plotting')
+                  help='Select isosurface for 3D plotting')
 # projecting
 parser.add_option('--ns', action='store',
                   dest='nodalSerendipity',
@@ -51,19 +45,19 @@ parser.add_option('--saveAs', action='store',
 # how to plot
 parser.add_option('--style', action='store',
                   dest='style', default='',
-                  help='Selects style file to use')
+                  help='Selects MPL style file to use')
 parser.add_option('--xlabel', action='store',
                   dest='xlabel', default='',
-                  help='x-label to put on plots')
+                  help='Set x-label')
 parser.add_option('--ylabel', action='store',
                   dest='ylabel', default='',
-                  help='y-label to put on plots')
+                  help='Set y-label')
 parser.add_option('-t', '--title', action='store',
                   dest='title',
-                  help='Set title to put on plots')
+                  help='Set title')
 parser.add_option('--no-title', action='store_false',
                   dest='titleOn', default=True,
-                  help='Turn OFF title to put on plots')
+                  help='Turn OFF the title')
 parser.add_option('-g', '--no-grid', action='store_false',
                   dest='gridOn', default=True,
                   help='Turn OFF the grid')
@@ -72,46 +66,43 @@ parser.add_option('--cmap', action='store',
                   help='Color map to use for 2D plots (default \'inferno\')')
 parser.add_option('--axis-free', action='store_true',
                   dest='freeAxis',
-                  help="If set, 2D plots will no longer have equal axis",
+                  help="Turn OFF equal axis scalling",
                   default=False)
-#parser.add_option('--color', action='store',
-#                  dest='color', default='RoyalBlue',
-#                  help="Color of 1D plots")
 parser.add_option('--contour', action='store_true',
                   dest='contour', default=False,
                   help="Plot contour instead of a bitmat for 2D plots")
 # misellaneous
 parser.add_option('-i', '--info', action='store_true',
                   dest='info', default=False,
-                  help='Print information about the file')
+                  help='Print information about the file(s)')
 parser.add_option('--dont-show', action='store_true',
                   dest='dontShow', default=False,
-                  help='Do not show plot')
+                  help='Do NOT show the figure')
 parser.add_option('-x', '--xkcd', action='store_true',
                   dest='xkcd', default=False,
                   help='Plot xkcd.com style plots!')
 parser.add_option('-w', '--write-history', action='store_true',
                   dest='writeHistory', default=False,
-                  help='Write the loaded history to text a file')
+                  help='Write the loaded history to a text file')
 # Fixing components (slices)
 parser.add_option('--fix1', action='store',
                   dest='fix1', default=None,
-                  help='Fix the first component on selected index')
+                  help='Fix the first coordinate on set value')
 parser.add_option('--fix2', action='store',
                   dest='fix2', default=None,
-                  help='Fix the second component on selected index')
+                  help='Fix the second coordinate on set value')
 parser.add_option('--fix3', action='store',
                   dest='fix3', default=None,
-                  help='Fix the third component on selected index')
+                  help='Fix the third coordinate on set value')
 parser.add_option('--fix4', action='store',
                   dest='fix4', default=None,
-                  help='Fix the fourth component on selected index')
+                  help='Fix the fourth coordinate on set value')
 parser.add_option('--fix5', action='store',
                   dest='fix5', default=None,
-                  help='Fix the fifth component on selected index')
+                  help='Fix the fifth coordinate on set value')
 parser.add_option('--fix6', action='store',
                   dest='fix6', default=None,
-                  help='Fix the sixth component on selected index')
+                  help='Fix the sixth coordinate on set value')
 (options, args) = parser.parse_args()
 
 def _checkFileType(fName):
@@ -121,24 +112,13 @@ def _checkFileType(fName):
     else:
         return 'hist'
 
-if options.fName:
-    files = options.fName
-    files.extend(args)
-    numFiles = len(files)
-    mode = 'frame'
-elif options.fNameRoot:
-    files = options.fNameRoot
-    files.extend(args)
-    numFiles = len(files)
-    mode = 'hist'
-else:
-    files = args
-    if files == []:
-        print(' *** No data specified for plotting. Exiting')
-        sys.exit()
-    numFiles = len(files)
-    # determine the mode
-    mode = _checkFileType(files[0])
+files = args
+if files == []:
+    print(' *** No data files specified. Exiting')
+    sys.exit()
+numFiles = len(files)
+# determine the mode
+mode = _checkFileType(files[0])
 
 if numFiles > 1:
     for i in numpy.arange(numFiles - 1) + 1:
