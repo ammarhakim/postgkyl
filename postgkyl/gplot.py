@@ -177,9 +177,9 @@ def _printInfoHistory(fNameRoot):
 # --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
 if options.fName:
-    name = options.fName
+    name = options.fName.split(',')[0]
 elif options.fNameRoot:
-    name = options.fNameRoot
+    name = options.fNameRoot.split(',')[0]
 
 if options.fName:
     name = name.split('/')[-1]  # get rid of the full path
@@ -189,23 +189,21 @@ if options.fName:
     # any better -pc
 
     # add component number
-    #name = '{}_c{:d}'.format(name, int(options.component))
-else:
-    pass
+    name = '{}_c{:d}'.format(name, int(options.component.split(',')[0]))
 
 if options.outName is None:
     outName = '{}/{}.png'.format(os.getcwd(), name)
 else:
     outName = str(options.outName)
 
-#if options.title is None:
-#    if options.fName:
-#        title = '{}\nt={:1.2e}'.format(name, data.time)
-#    else:
-#        title = '{}\nhistory'.format(name)
-#else:
-#    title = str(options.title)
-title = 'placeholder title'
+if options.title is None:
+    if options.fName:
+        placeholder = 0
+        title = '{}\nt={:1.2e}'.format(name, placeholder)
+    else:
+        title = '{}\nhistory'.format(name)
+else:
+    title = str(options.title)
 
 # --------------------------------------------------------------------
 # Plotting setup -----------------------------------------------------
@@ -325,7 +323,8 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     return _cbar_
 
 if options.titleOn:
-    ax.set_title(title)
+    if len(files) == 1 or options.title is not None:
+        ax.set_title(title)
 ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
