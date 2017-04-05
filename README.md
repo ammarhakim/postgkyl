@@ -28,10 +28,11 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
 
 * 2017/04/05
        - Flags `-p` and `-y` have been deprecated.
+
        - Plotting of multiple files/components has been added. For
          example, the following command will produced 4 lines:
 
-	 `gplot file1 file2 -c1 -c2`
+         `gplot file1 file2 -c1 -c2`
 
        - Image output file is now set with the flag `--saveAs`. Flag
          `--save` is no longer necessary when the output file is set.
