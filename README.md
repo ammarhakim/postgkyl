@@ -31,7 +31,7 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
        - Plotting of multiple files/components has been added. For
          example, the following command will produced 4 lines:
 
-	 `gplot file1 file2 -c1 -c2
+	 `gplot file1 file2 -c1 -c2`
 
        - Image output file is now set with the flag `--saveAs`. Flag
          `--save` is no longer necessary when the output file is set.
