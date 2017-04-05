@@ -45,8 +45,8 @@ parser.add_option('--mo', action='store',
 parser.add_option('-s', '--save', action='store_true',
                   dest='save',
                   help='Save the displayed plot (png by default)')
-parser.add_option('-o', '--output', action='store',
-                  dest='outName',
+parser.add_option('--saveAs', action='store',
+                  dest='saveAs',
                   help='When saving figures, use this file name')
 # how to plot
 parser.add_option('--style', action='store',
@@ -112,18 +112,46 @@ parser.add_option('--fix5', action='store',
 parser.add_option('--fix6', action='store',
                   dest='fix6', default=None,
                   help='Fix the sixth component on selected index')
-
 (options, args) = parser.parse_args()
+
+def _checkFileType(fName):
+    ext = fName.split('.')[-1]
+    if ext == 'bp' or ext == 'h5':
+        return 'frame'
+    else:
+        return 'hist'
+
 if options.fName:
     files = options.fName
     files.extend(args)
-else:
+    numFiles = len(files)
+    mode = 'frame'
+elif options.fNameRoot:
     files = options.fNameRoot
     files.extend(args)
+    numFiles = len(files)
+    mode = 'hist'
+else:
+    files = args
+    if files == []:
+        print(' *** No data specified for plotting. Exiting')
+        sys.exit()
+    numFiles = len(files)
+    # determine the mode
+    mode = _checkFileType(files[0])
+
+if numFiles > 1:
+    for i in numpy.arange(numFiles - 1) + 1:
+        if mode != _checkFileType(files[i]):
+            print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
+            sys.exit()
+
 if options.component:
     components = options.component
 else:
     components = [0]
+numComps = len(components)
+numData = numFiles*numComps
 
 # --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
@@ -151,7 +179,7 @@ def _loadFrame(fName, comp):
                                             options.fix1, options.fix2,
                                             options.fix3, options.fix4,
                                             options.fix5, options.fix6)
-    return coords, values
+    return data.time, coords, values
 
 def _loadHistory(fNameRoot, comp):
     hist = pg.GHistoryData(fNameRoot)
@@ -159,7 +187,7 @@ def _loadHistory(fNameRoot, comp):
     values = hist.values
     if len(values.shape) > 1:
         values = values[:, int(comp)]
-    return coords, values
+    return hist.time, coords, values
 
 
 # --------------------------------------------------------------------
@@ -186,31 +214,42 @@ def _printInfoHistory(fNameRoot):
 
 # --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
-name = files[0]
-
-if options.fName:
+if numData == 1:
+    name = files[0]
     name = name.split('/')[-1]  # get rid of the full path
-    name = ''.join(name.split('.')[: -1])  # get rid of the extension
-    # This weird Python construct is here in case someone would like
-    # to use '.' in name... I really dislike it but I don't know about
-    # any better -pc
 
-    # add component number
-    name = '{}_c{:d}'.format(name, int(components[0]))
+    if mode == 'frame':
+        name = ''.join(name.split('.')[: -1])  # get rid of the extension
+        # This weird Python construct is here in case someone would
+        # like to use '.' in name... I really dislike it but I don't
+        # know about any better -pc
+    elif mode == 'hist':
+        name = name.strip('0')
+        name = name.strip('_')
 
-if options.outName is None:
-    outName = '{}/{}.png'.format(os.getcwd(), name)
-else:
-    outName = str(options.outName)
-
-if options.title is None:
-    if options.fName:
-        placeholder = 0
-        title = '{}\nt={:1.2e}'.format(name, placeholder)
+    if options.title is None:
+        if mode == 'frame':
+            title = name
+        elif mode == 'hist':
+            title = name + '*'
+        if options.component:
+            title = '{} C:{:d}'.format(title, int(components[0]))
     else:
-        title = '{}\nhistory'.format(name)
+        title = str(options.title)
+
+    if options.saveAs is None:
+        if options.component:
+            saveName = '{}_C{:d}'.format(name, int(components[0]))
+            saveName = '{}/{}.png'.format(os.getcwd(), saveName)
+    else:
+        saveName = str(options.saveAs)
 else:
-    title = str(options.title)
+    name = 'multi-plot'
+    title = 'multi-plot'
+    if options.saveAs is None:
+        saveName = '{}/multi-plot.png'.format(os.getcwd())
+    else:
+        saveName = str(options.saveAs)
 
 # --------------------------------------------------------------------
 # Plotting setup -----------------------------------------------------
@@ -245,22 +284,26 @@ for i, fl in enumerate(files):
     for j, comp in enumerate(components):
         # first check if info option is on
         if options.info:
-            if options.fName:
+            if mode == 'frame':
                 _printInfoFrame(fl)
-            else:
+            elif mode == 'hist':
                 _printInfoHistory(fl)
-            continue  # do not continue (lol)
+            continue
 
-        if options.fName:
-            coords, values = _loadFrame(fl, int(comp))
+        # loading
+        if mode == 'frame':
+            time, coords, values = _loadFrame(fl, int(comp))
             numDims = len(values.shape)
-        elif options.fNameRoot:
-            coords, values = _loadHistory(fl, int(comp))
+            if numData == 1:
+                title = title + '\nt: {:1.2e}'.format(time) 
+        elif mode == 'hist':
+            time, coords, values = _loadHistory(fl, int(comp))
             numDims = 1
-        else:
-            print(' *** No data specified for plotting')
-            sys.exit()
+            if numData == 1:
+                title = title + '\nt: {:1.2e} .. {:1.2e}'.format(time[0],
+                                                                 time[-1]) 
 
+        # plotting
         if numDims == 1:
             if not options.xkcd:
                 im = ax.plot(coords[0], values,
@@ -326,7 +369,7 @@ if options.titleOn:
 ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
-if len(files) > 1:
+if numFiles > 1:
     ax.legend(loc=0)
 if numDims == 1:
     plt.autoscale(enable=True, axis='x', tight=True)
@@ -353,8 +396,8 @@ if options.xkcd:
     # Turn OFF the grid
     ax.grid(False)
 
-if options.save:
-    fig.savefig(outName, bbox_inches='tight', dpi=200)
+if options.save or options.saveAs:
+    fig.savefig(saveName, bbox_inches='tight', dpi=200)
 
 if options.writeHistory:
     hist.save()
