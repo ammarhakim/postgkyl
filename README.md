@@ -26,6 +26,16 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
 
 # Changelog
 
+* 2017/04/05
+       - Flags `-p` and `-y` have been deprecated.
+       - Plotting of multiple files/components has been added. For
+         example, the following command will produced 4 lines:
+
+	 `gplot file1 file2 -c1 -c2
+
+       - Image output file is now set with the flag `--saveAs`. Flag
+         `--save` is no longer necessary when the output file is set.
+
 * 2017/04/04
        - `project` method of the Interp classes now returns only
          `numpy` array of 1D coordinate fields instead of
