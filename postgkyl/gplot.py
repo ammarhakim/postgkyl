@@ -205,7 +205,7 @@ else:
 #        title = '{}\nhistory'.format(name)
 #else:
 #    title = str(options.title)
-title = 'test'
+title = 'placeholder title'
 
 # --------------------------------------------------------------------
 # Plotting setup -----------------------------------------------------
@@ -244,19 +244,22 @@ components = options.component.split(',')
 
 for i, fl in enumerate(files):
     for j, comp in enumerate(components):
+        fl = fl.strip()
+        comp = comp.strip()
+
         # first check if info option is on
         if options.info:
             if options.fName:
-                _printInfoFrame(fl.strip())
+                _printInfoFrame(fl)
             else:
-                _printInfoHistory(fl.strip())
+                _printInfoHistory(fl)
             continue  # do not continue (lol)
 
         if options.fName:
-            coords, values = _loadFrame(fl.strip(), int(comp.strip()))
+            coords, values = _loadFrame(fl, int(comp))
             numDims = len(values.shape)
         elif options.fNameRoot:
-            coords, values = _loadHistory(fl.strip(), int(comp.strip()))
+            coords, values = _loadHistory(fl, int(comp))
             numDims = 1
         else:
             print(' *** No data specified for plotting')
@@ -264,9 +267,11 @@ for i, fl in enumerate(files):
 
         if numDims == 1:
             if not options.xkcd:
-                im = ax.plot(coords[0], values)
+                im = ax.plot(coords[0], values,
+                             label='{:s} (c: {:d})'.format(fl, int(comp)))
             else:
                 im = ax.plot(coords[0], values,
+                             label='{:s} (c: {:d})'.format(fl, int(comp)),
                              clip_on=False, zorder=100)
         elif numDims == 2:
             if i > 0 or j > 0:
@@ -324,6 +329,8 @@ if options.titleOn:
 ax.set_xlabel(str(options.xlabel))
 ax.set_ylabel(str(options.ylabel))
 ax.grid(options.gridOn)
+if len(files) > 1:
+    ax.legend(loc=0)
 if numDims == 1:
     plt.autoscale(enable=True, axis='x', tight=True)
 elif numDims == 2:
