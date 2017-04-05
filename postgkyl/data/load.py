@@ -158,11 +158,9 @@ class GHistoryData:
         for file in self.files[start+1 :]:
             fh = tables.open_file(file, 'r')
             self.values = numpy.append(self.values,
-                                       fh.root.DataStruct.data.read(),
-                                       axis=0)
+                                       fh.root.DataStruct.data.read())
             self.time = numpy.append(self.time,
-                                     fh.root.DataStruct.timeMesh.read(),
-                                     axis=0)
+                                     fh.root.DataStruct.timeMesh.read())
             fh.close()
 
         # sort with scending time
