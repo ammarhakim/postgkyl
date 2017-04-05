@@ -13,16 +13,17 @@ import postgkyl as pg
 
 # --------------------------------------------------------------------
 # Parser -------------------------------------------------------------
-parser = OptionParser()
+usage = "usage: %prog [options] file1 file2 ..."
+parser = OptionParser(usage=usage)
 # What to plot
-parser.add_option('-p', '--plot', action='store',
+parser.add_option('-p', '--plot', action='append',
                   dest='fName',
-                  help='G file to plot')
-parser.add_option('-y', '--history', action='store',
+                  help='G file(s) to plot')
+parser.add_option('-y', '--history', action='append',
                   dest='fNameRoot',
-                  help='G history file root to plot')
-parser.add_option('-c', '--component', action='store',
-                  dest='component', default='0',
+                  help='G history file root(s) to plot')
+parser.add_option('-c', '--component', action='append',
+                  dest='component',
                   help='Component to plot (default 0)')
 parser.add_option('-m', '--mask', action='store',
                   dest='maskName',
@@ -113,7 +114,16 @@ parser.add_option('--fix6', action='store',
                   help='Fix the sixth component on selected index')
 
 (options, args) = parser.parse_args()
-
+if options.fName:
+    files = options.fName
+    files.extend(args)
+else:
+    files = options.fNameRoot
+    files.extend(args)
+if options.component:
+    components = options.component
+else:
+    components = [0]
 
 # --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
@@ -176,10 +186,7 @@ def _printInfoHistory(fNameRoot):
 
 # --------------------------------------------------------------------
 # Creating Titles and Names ------------------------------------------
-if options.fName:
-    name = options.fName.split(',')[0]
-elif options.fNameRoot:
-    name = options.fNameRoot.split(',')[0]
+name = files[0]
 
 if options.fName:
     name = name.split('/')[-1]  # get rid of the full path
@@ -189,7 +196,7 @@ if options.fName:
     # any better -pc
 
     # add component number
-    name = '{}_c{:d}'.format(name, int(options.component.split(',')[0]))
+    name = '{}_c{:d}'.format(name, int(components[0]))
 
 if options.outName is None:
     outName = '{}/{}.png'.format(os.getcwd(), name)
@@ -234,17 +241,8 @@ if options.xkcd:
 if not options.info:
     fig, ax = plt.subplots()
 
-if options.fName:
-    files = options.fName.split(',')
-else:
-    files = options.fNameRoot.split(',')
-components = options.component.split(',')
-
 for i, fl in enumerate(files):
     for j, comp in enumerate(components):
-        fl = fl.strip()
-        comp = comp.strip()
-
         # first check if info option is on
         if options.info:
             if options.fName:
