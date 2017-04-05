@@ -266,10 +266,10 @@ for i, fl in enumerate(files):
         if numDims == 1:
             if not options.xkcd:
                 im = ax.plot(coords[0], values,
-                             label='{:s} (c: {:d})'.format(fl, int(comp)))
+                             label='{:d}:{:d}'.format(i+1, j))
             else:
                 im = ax.plot(coords[0], values,
-                             label='{:s} (c: {:d})'.format(fl, int(comp)),
+                             label='{:d}:{:d}'.format(i+1, j),
                              clip_on=False, zorder=100)
         elif numDims == 2:
             if i > 0 or j > 0:
