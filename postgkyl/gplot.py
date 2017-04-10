@@ -105,7 +105,7 @@ parser.add_option('--fix6', action='store',
                   help='Fix the sixth coordinate on set value')
 (options, args) = parser.parse_args()
 
-def _checkFileType(fName):
+def _guessFileType(fName):
     ext = fName.split('.')[-1]
     if ext == 'bp' or ext == 'h5':
         return 'frame'
@@ -118,13 +118,7 @@ if files == []:
     sys.exit()
 numFiles = len(files)
 # determine the mode
-mode = _checkFileType(files[0])
-
-if numFiles > 1:
-    for i in numpy.arange(numFiles - 1) + 1:
-        if mode != _checkFileType(files[i]):
-            print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
-            sys.exit()
+mode = _guessFileType(files[0])
 
 if options.component:
     components = options.component
@@ -135,7 +129,7 @@ numData = numFiles*numComps
 
 # --------------------------------------------------------------------
 # Data Loading -------------------------------------------------------
-def _loadFrame(fName, comp):
+def _loadFrame(fName, comp, numData, title):
     data = pg.GData(fName)
     if options.nodalSerendipity:
         dg = pg.GInterpNodalSerendipity(data, int(options.nodalSerendipity))
@@ -159,15 +153,21 @@ def _loadFrame(fName, comp):
                                             options.fix1, options.fix2,
                                             options.fix3, options.fix4,
                                             options.fix5, options.fix6)
-    return data.time, coords, values
+    if numData == 1:
+        title = title + '\nt: {:1.2e}'.format(data.time) 
+    return coords, values, len(values.shape), title
 
-def _loadHistory(fNameRoot, comp):
+def _loadHistory(fNameRoot, comp, numData, title):
     hist = pg.GHistoryData(fNameRoot)
     coords = numpy.expand_dims(hist.time, axis=0)
     values = hist.values
     if len(values.shape) > 1:
         values = values[:, int(comp)]
-    return hist.time, coords, values
+    values = numpy.squeeze(values)
+    if numData == 1:
+        title = title + '\nt: {:1.2e} .. {:1.2e}'.format(coords[0,0],
+                                                         coords[0,-1]) 
+    return coords, values, 1, title
 
 
 # --------------------------------------------------------------------
@@ -272,16 +272,38 @@ for i, fl in enumerate(files):
 
         # loading
         if mode == 'frame':
-            time, coords, values = _loadFrame(fl, int(comp))
-            numDims = len(values.shape)
-            if numData == 1:
-                title = title + '\nt: {:1.2e}'.format(time) 
+            try:
+                coords, values, numDims, title  = _loadFrame(fl,
+                                                             int(comp),
+                                                             numData,
+                                                             title)
+            except:
+                if i == 0:  # allow mode switch only for the first file
+                    coords, values, numDims, title = _loadHistory(fl,
+                                                                  int(comp),
+                                                                  numData,
+                                                                  title)
+                    mode = 'hist'
+                else:
+                    print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
+                    sys.exit()
+                
         elif mode == 'hist':
-            time, coords, values = _loadHistory(fl, int(comp))
-            numDims = 1
-            if numData == 1:
-                title = title + '\nt: {:1.2e} .. {:1.2e}'.format(time[0],
-                                                                 time[-1]) 
+            try:
+                coords, values, numDims, title = _loadHistory(fl,
+                                                              int(comp),
+                                                              numData,
+                                                              title)
+            except:
+                if i == 0:  # allow mode switch only for the first file
+                    coords, values, numDims, title  = _loadFrame(fl,
+                                                                 int(comp),
+                                                                 numData,
+                                                                 title)
+                    mode = 'frame'
+                else:
+                    print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
+                    sys.exit()               
 
         # plotting
         if numDims == 1:

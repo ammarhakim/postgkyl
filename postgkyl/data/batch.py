@@ -31,7 +31,7 @@ class GBatchData:
         """
 
         self.fNameRoot = fNameRoot
-        files = glob.glob('*{}*.??'.format(self.fNameRoot))
+        files = glob.glob('{}*.??'.format(self.fNameRoot))
         if files == []:
             raise NameError(
                 'GBatchData: Files with root \'{}\' do not exist!'.
@@ -44,6 +44,27 @@ class GBatchData:
         time = [temp.time for temp in self.array]
         sortIdx = numpy.argsort(time)
         self.array = self.array[sortIdx]
+
+
+class GBatchInterpZeroOrder:
+    def __init__(self, data):
+        self.data = data
+
+    def project(self, comp=0):
+        projection = []
+        for i, dat in enumerate(self.data.array):
+            projObj = interp.GInterpZeroOrder(dat)
+            coords, temp = projObj.project(comp)
+            projection.append(temp)
+            percent = float(i)/len(self.data.array)*100
+            progress = '[' + int(percent/10)*'=' + (10-int(percent/10))*' ' + ']'
+            sys.stdout.write(
+                '\rGBatchInterpZeroOrder projecting: {:6.2f}% done {}'.
+                format(percent, progress))
+            sys.stdout.flush()
+        print('\rGBatchInterpZeroOrder projecting: {:6.2f}% done {}'.
+              format(100, '[==========]'))
+        return numpy.array(coords), numpy.array(projection)
 
 
 class GBatchInterpNodalSerendipity:

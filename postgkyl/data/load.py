@@ -129,7 +129,7 @@ class GHistoryData:
         Load function is determined based on the extension
         """
         self.fNameRoot = fNameRoot
-        self.files = glob.glob('{}*.??'.format(self.fNameRoot))
+        self.files = glob.glob('{}*'.format(self.fNameRoot))
         if self.files == []:
             raise NameError(
                 'GHistoryData: Files with root \'{}\' do not exist!'.
@@ -151,8 +151,9 @@ class GHistoryData:
 
         # read the first history file
         fh = tables.open_file(self.files[start], 'r')
-        self.values = fh.root.DataStruct.data.read()
-        self.time = fh.root.DataStruct.timeMesh.read()
+        self.values = numpy.array(fh.root.DataStruct.data.read())
+        self.time = numpy.array(fh.root.DataStruct.timeMesh.read())
+        self.time = numpy.squeeze(self.time)
         fh.close()
         # read the rest of the files and append
         for file in self.files[start+1 :]:
