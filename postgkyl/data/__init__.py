@@ -20,6 +20,7 @@ from .interp import GInterpModalMaxOrder
 # import batch files
 from . import batch
 from .batch import GBatchData
+from .batch import GBatchInterpZeroOrder
 from .batch import GBatchInterpNodalSerendipity
 from .batch import GBatchInterpModalSerendipity
 from .batch import GBatchInterpModalMaxOrder

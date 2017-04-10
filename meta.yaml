@@ -1,9 +1,15 @@
 package:
   name: postgkyl
-  version: "0.1.1"
+  version: "0.2.0"
 
 source:
   path: ./
+
+build:
+  always_include_files:
+    - postgkyl/data/xformMatricesModalMaximal.h5
+    - postgkyl/data/xformMatricesModalSerendipity.h5
+    - postgkyl/data/xformMatricesNodalSerendipity.h5
 
 requirements:
   build:
@@ -14,7 +20,7 @@ requirements:
     - python
     - numpy >=1.11
     - scipy
-    - matplotlib
+    - matplotlib >=2.0
     - pytables
 
 test:
