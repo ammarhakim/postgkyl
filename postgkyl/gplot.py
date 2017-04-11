@@ -219,20 +219,31 @@ if numData == 1:
 
     if options.saveAs is None:
         if options.component:
-            saveName = '{}_C{:d}'.format(name, int(components[0]))
-            saveName = '{}/{}.png'.format(os.getcwd(), saveName)
+            saveName = '{:s}_C{:d}'.format(name, int(components[0]))
+            saveName = '{:s}/{:s}.png'.format(os.getcwd(), saveName)
         else:
-            saveName = '{}'.format(name)
-            saveName = '{}/{}.png'.format(os.getcwd(), saveName)
+            saveName = '{:s}'.format(name)
+            saveName = '{:s}/{:s}.png'.format(os.getcwd(), saveName)
     else:
         saveName = str(options.saveAs)
+
+    if options.writeHistory:
+        if options.component:
+            hstName = '{:s}_C{:d}'.format(name, int(components[0]))
+            hstName = '{:s}/{:s}.dat'.format(os.getcwd(), hstName)
+        else:
+            hstName = '{:s}'.format(name)
+            hstName = '{:s}/{:s}.dat'.format(os.getcwd(), hstName)
 else:
     name = 'multi-plot'
     title = 'multi-plot'
     if options.saveAs is None:
-        saveName = '{}/multi-plot.png'.format(os.getcwd())
+        saveName = '{:s}/{:s}.png'.format(os.getcwd(), name)
     else:
         saveName = str(options.saveAs)
+    if options.writeHistory:
+        hstName = '{:s}/{:s}.dat'.format(os.getcwd(), name)
+
 
 # --------------------------------------------------------------------
 # Plotting setup -----------------------------------------------------
@@ -405,7 +416,8 @@ if options.save or options.saveAs:
     fig.savefig(saveName, bbox_inches='tight', dpi=200)
 
 if options.writeHistory:
-    hist.save()
+    out = numpy.vstack([coords[0], values]).transpose()
+    numpy.savetxt(hstName, out)
 
 if not options.dontShow:
     plt.show()
