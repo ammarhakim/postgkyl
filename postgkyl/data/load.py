@@ -156,13 +156,15 @@ class GHistoryData:
         self.time = numpy.squeeze(self.time)
         fh.close()
         # read the rest of the files and append
-        for file in self.files[start+1 :]:
-            fh = tables.open_file(file, 'r')
-            self.values = numpy.append(self.values,
-                                       fh.root.DataStruct.data.read())
-            self.time = numpy.append(self.time,
-                                     fh.root.DataStruct.timeMesh.read())
-            fh.close()
+        for fl in self.files[start+1 :]:
+            ext = fl.split('.')[-1]
+            if ext == 'h5':
+                fh = tables.open_file(fl, 'r')
+                self.values = numpy.append(self.values,
+                                           fh.root.DataStruct.data.read())
+                self.time = numpy.append(self.time,
+                                         fh.root.DataStruct.timeMesh.read())
+                fh.close()
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
@@ -182,13 +184,15 @@ class GHistoryData:
         self.time = adios.readvar(self.files[start], 'TimeMesh')
     
         # read the rest of the files and append
-        for file in self.files[start+1 :]:
-            self.values = numpy.append(self.values,
-                                       adios.readvar(file, 'Data'),
-                                       axis=0)
-            self.time = numpy.append(self.time,
-                                     adios.readvar(file, 'TimeMesh'),
-                                     axis=0)
+        for fl in self.files[start+1 :]:
+            ext = fl.split('.')[-1]
+            if ext == 'bp':
+                self.values = numpy.append(self.values,
+                                           adios.readvar(fl, 'Data'),
+                                           axis=0)
+                self.time = numpy.append(self.time,
+                                         adios.readvar(fl, 'TimeMesh'),
+                                         axis=0)
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
