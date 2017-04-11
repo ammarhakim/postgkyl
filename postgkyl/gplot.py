@@ -221,6 +221,9 @@ if numData == 1:
         if options.component:
             saveName = '{}_C{:d}'.format(name, int(components[0]))
             saveName = '{}/{}.png'.format(os.getcwd(), saveName)
+        else:
+            saveName = '{}'.format(name)
+            saveName = '{}/{}.png'.format(os.getcwd(), saveName)
     else:
         saveName = str(options.saveAs)
 else:
