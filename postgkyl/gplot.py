@@ -236,7 +236,11 @@ if numData == 1:
             hstName = '{:s}/{:s}.dat'.format(os.getcwd(), hstName)
 else:
     name = 'multi-plot'
-    title = 'multi-plot'
+    if options.title is None:
+        title = name
+    else:
+        title = str(options.title)
+
     if options.saveAs is None:
         saveName = '{:s}/{:s}.png'.format(os.getcwd(), name)
     else:
