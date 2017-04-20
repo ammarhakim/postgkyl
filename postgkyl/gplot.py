@@ -290,21 +290,21 @@ for i, fl in enumerate(files):
 
         # loading
         if mode == 'frame':
-#            try:
-            coords, values, numDims, title  = _loadFrame(fl,
-                                                         int(comp),
-                                                         numData,
-                                                         title)
-#            except:
-#                if i == 0:  # allow mode switch only for the first file
-#                    coords, values, numDims, title = _loadHistory(fl,
-#                                                                  int(comp),
-#                                                                  numData,
-#                                                                  title)
-#                    mode = 'hist'
-#                else:
-#                    print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
-#                    sys.exit()
+            try:
+                coords, values, numDims, title  = _loadFrame(fl,
+                                                            int(comp),
+                                                             numData,
+                                                             title)
+            except:
+                if i == 0:  # allow mode switch only for the first file
+                    coords, values, numDims, title = _loadHistory(fl,
+                                                                  int(comp),
+                                                                  numData,
+                                                                  title)
+                    mode = 'hist'
+                else:
+                    print(' *** Mixed \'frame\' and \'history\' data on input. Exiting')
+                    sys.exit()
                 
         elif mode == 'hist':
             try:
