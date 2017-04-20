@@ -292,7 +292,7 @@ for i, fl in enumerate(files):
         if mode == 'frame':
             try:
                 coords, values, numDims, title  = _loadFrame(fl,
-                                                            int(comp),
+                                                             int(comp),
                                                              numData,
                                                              title)
             except:
