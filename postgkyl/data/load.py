@@ -161,7 +161,7 @@ class GHistoryData:
             if ext == 'h5':
                 fh = tables.open_file(fl, 'r')
                 self.values = numpy.append(self.values,
-                                           fh.root.DataStruct.data.read())
+                                           fh.root.DataStruct.data.read(), axis=0)
                 self.time = numpy.append(self.time,
                                          fh.root.DataStruct.timeMesh.read())
                 fh.close()
