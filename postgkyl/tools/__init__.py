@@ -14,5 +14,6 @@ from .fields import findNearestIdx
 from .fields import fixCoordSlice
 # import filters.py functions
 from . import filters
+from .filters import fftData
 from .filters import fftFiltering
 from .filters import butterFiltering

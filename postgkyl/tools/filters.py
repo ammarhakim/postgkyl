@@ -12,6 +12,23 @@ def _clickCoords(event):
     ix, iy = event.xdata, event.ydata
     plt.close()
 
+def fftData(data, dt=1):
+    """Filter data using numpy FFT.
+
+    Parameters:
+    data -- numpy array of data
+    dt -- set spacing of data (default: 1)
+    cutoff -- set high frequency cut-off (default: None)
+
+    Note:
+    If the cutoff is not selected, and interactive figure will pop out
+    that allows for the cut-off selection
+    """
+    N = len(data)
+    freq = numpy.fft.fftfreq(N, dt)
+    FT = numpy.fft.fft(data)
+
+    return freq, FT
 
 def fftFiltering(data, dt=1, cutoff=None):
     """Filter data using numpy FFT.
@@ -60,7 +77,7 @@ def _butterLowpass(cutoff, fs, order=5):
 
 
 def _butterLowpassFilter(data, cutoff, fs, order=5):
-    b, a = butterLowpass(cutoff, fs, order=order)
+    b, a = _butterLowpass(cutoff, fs, order=order)
     y = lfilter(b, a, data)
     return y
 
@@ -75,4 +92,4 @@ def butterFiltering(data, dt, cutoff):
     """
     order = 6
     fs = 1/dt  # sample rate
-    return butterLowpassFilter(data, cutoff, fs, order)
+    return _butterLowpassFilter(data, cutoff, fs, order)
