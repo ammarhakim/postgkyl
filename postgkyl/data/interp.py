@@ -148,7 +148,7 @@ class GInterpNodalSerendipity(GInterp):
         self.numDims = data.numDims
         self.polyOrder = polyOrder
         GInterp.__init__(self, data,
-                         self.numNodes[self.numDims-1, polyOrder-1])
+                         self.numNodes[self.numDims-1, self.polyOrder-1])
         self.cMat = _loadMatrix(self.numDims, self.polyOrder,
                                 'nodal Serendipity')
 
