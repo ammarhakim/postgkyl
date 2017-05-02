@@ -68,6 +68,11 @@ class GData:
         # read in data
         self.q = numpy.array(fh.root.StructGridField)
 
+        if len(self.q.shape) > self.numDims:
+            self.numComponents = self.q.shape[-1]
+        else:
+            self.numComponents = 1
+
         # close the opened file
         fh.close()
 
@@ -101,6 +106,11 @@ class GData:
         # read in data
         self.q = adios.readvar(self.fName, 'CartGridField')
 
+        if len(self.q.shape) > self.numDims:
+            self.numComponents = self.q.shape[-1]
+        else:
+            self.numComponents = 1
+
 
 class GHistoryData:
     """Provide interface to read history data.
@@ -130,6 +140,10 @@ class GHistoryData:
         """
         self.fNameRoot = fNameRoot
         self.files = glob.glob('{}*'.format(self.fNameRoot))
+        for fl in self.files:
+            ext = fl.split('.')[-1]
+            if ext != 'h5' and ext != 'bp':
+                self.files.remove(fl)
         if self.files == []:
             raise NameError(
                 'GHistoryData: Files with root \'{}\' do not exist!'.

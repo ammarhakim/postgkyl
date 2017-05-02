@@ -174,9 +174,19 @@ def _loadHistory(fNameRoot, comp, numData, title):
 # Info functions -----------------------------------------------------
 def _printInfoFrame(fName):
     data = pg.GData(fName)
+    if options.nodalSerendipity:
+        numNodes = pg.GInterpNodalSerendipity.numNodes[data.numDims-1, int(options.nodalSerendipity)-1]
+    elif options.modalSerendipity:
+        numNodes = pg.GInterpModalSerendipity.numNodes[data.numDims-1, int(options.modalSerendipity)-1]
+    elif options.maxOrder:
+        numNodes = pg.GInterpModalMaxOrder.numNodes[data.numDims-1, int(options.maxOrder)-1]
+    else:
+        numNodes = 1
+
     print('Printing file info:')
     print(' * File name: {:s}'.format(data.fName))
     print(' * Time: {:f}'.format(data.time))
+    print(' * Number of components: {:d}'.format(int(data.numComponents/numNodes)))
     print(' * Dimensions ({:d}):'.format(data.numDims))
     for i in range(data.numDims):
         print('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
