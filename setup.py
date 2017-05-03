@@ -8,7 +8,7 @@ except (IOError, ImportError):
    long_description = ''
 
 setup(name='postgkyl',
-      version='0.2.0',
+      version='0.2.2',
       description='Postrocessing utilities for Gkyl simulation framework',
       long_description=long_description,
       url='https://bitbucket.org/ammarhakim/postgkyl',
@@ -17,4 +17,5 @@ setup(name='postgkyl',
                 'postgkyl.diagnostics',
                 'postgkyl.tools'],
       include_package_data=True,
+      data_files=[('data', ['postgkyl/data/xformMatricesModalMaximal.h5', 'postgkyl/data/xformMatricesModalSerendipity.h5', 'postgkyl/data/xformMatricesNodalSerendipity.h5'])],
      )
