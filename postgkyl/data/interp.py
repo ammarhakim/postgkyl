@@ -13,21 +13,26 @@ def _loadMatrix(dim, polyOrder, basis):
     """Load interpolation matrix from the pre-computed HDF5 file."""
     varid = 'xformMatrix%i%i' % (dim, polyOrder)
     if basis.lower() == 'nodal serendipity':
-        fh = tables.open_file(postgkylPath +
-                              '/xformMatricesNodalSerendipity.h5')
-        mat = numpy.array(fh.root.matrices._v_children[varid].read())
+        fileName = postgkylPath + '/xformMatricesNodalSerendipity.h5'
+        if not os.path.isfile(fileName):
+            fileName = postgkylPath + \
+                       '/../../../../../data/xformMatricesNodalSerendipity.h5'
     elif basis.lower() == 'modal serendipity':
-        fh = tables.open_file(postgkylPath +
-                              '/xformMatricesModalSerendipity.h5')
-        mat = numpy.array(fh.root.matrices._v_children[varid].read())
+        fileName = postgkylPath + '/xformMatricesModalSerendipity.h5'
+        if not os.path.isfile(fileName):
+            fileName = postgkylPath + \
+                       '/../../../../../data/xformMatricesModalSerendipity.h5'
     elif basis.lower() == 'modal maximal order':
-        fh = tables.open_file(postgkylPath +
-                              '/xformMatricesModalMaximal.h5')
-        mat = numpy.array(fh.root.matrices._v_children[varid].read())
+        fileName = postgkylPath + '/xformMatricesModalMaximal.h5'
+        if not os.path.isfile(fileName):
+            fileName = postgkylPath + \
+                       '/../../../../../data/xformMatricesModalMaximal.h5'
     else:
         raise NameError(
             "GInterp: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".
             format(basis))
+    fh = tables.open_file(fileName)
+    mat = numpy.array(fh.root.matrices._v_children[varid].read())
     fh.close()
     return mat
 
