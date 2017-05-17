@@ -18,7 +18,7 @@ class GData:
     _loadG2bp -- Load G2 Adios binary file
     """
 
-    def __init__(self, fName):
+    def __init__(self, fName, load=True):
         """Determine the data type and call the appropriate load
         function
 
@@ -39,19 +39,29 @@ class GData:
         # Parse the file name and select the last part (extension)
         ext = self.fName.split('.')[-1]
         if ext == 'h5':
-            self._loadG1h5()
+            self._loadHeaderH5()
+            if load:
+                self.loadDataH5()
         elif ext == 'bp':
-            self._loadG2bp()
+            self._loadHeaderBP()
+            if load:
+                self.loadDataBP()
         else:
             raise NameError(
                 "GData: File extension {} is not supported.".format(ext))
 
-    def _loadG1h5(self):
-        """Load the G1 HDF5 file"""
+    def __del__(self):
+        ext = self.fName.split('.')[-1]
+        if ext == 'h5':
+            # close the opened file
+            self.fh.close()
+
+    def _loadHeaderH5(self):
+        """Load a header of a HDF5 file"""
         import tables
 
-        fh = tables.open_file(self.fName, 'r')
-        grid = fh.root.StructGrid
+        self.fh = tables.open_file(self.fName, 'r')
+        grid = self.fh.root.StructGrid
 
         # read in information about grid
         self.lowerBounds = numpy.array(grid._v_attrs.vsLowerBounds)
@@ -65,19 +75,19 @@ class GData:
         except:
             self.time = numpy.float(0.0)
 
-        # read in data
-        self.q = numpy.array(fh.root.StructGridField)
+    def loadDataH5(self):
+        """Load data from a HDF5 file"""
+        import tables
+
+        self.q = numpy.array(self.fh.root.StructGridField)
 
         if len(self.q.shape) > self.numDims:
             self.numComponents = self.q.shape[-1]
         else:
             self.numComponents = 1
 
-        # close the opened file
-        fh.close()
-
     def _loadG2bp(self):
-        """Load the G2 Adios binary file"""
+        """Load a header of an ADIOS file"""
         import adios
 
         fh = adios.file(self.fName)
@@ -103,14 +113,16 @@ class GData:
         except:
             self.time = numpy.float(0.0)
 
-        # read in data
+    def loadDataBP(self):
+        """Load data from an ADIOS file"""
+        import adios
+
         self.q = adios.readvar(self.fName, 'CartGridField')
 
         if len(self.q.shape) > self.numDims:
             self.numComponents = self.q.shape[-1]
         else:
             self.numComponents = 1
-
 
 class GHistoryData:
     """Provide interface to read history data.
