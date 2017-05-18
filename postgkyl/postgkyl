@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 import click
 
 import postgkyl.commands as cmd
@@ -28,9 +28,11 @@ def cli(ctx, filename):
 
 cli.add_command(cmd.info.info)
 cli.add_command(cmd.output.plot)
-cli.add_command(cmd.project.project)
+cli.add_command(cmd.transform.project)
+cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
+cli.add_command(cmd.transform.fix)
 
 if __name__ == '__main__':
     cli(obj={})

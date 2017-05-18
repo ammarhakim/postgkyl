@@ -22,11 +22,18 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
         _fig.canvas.draw()
     return _cbar_
 
-@click.command()
-@click.option('--show/--no-show', default=True)
-@click.option('--style', default=dirPath+'/postgkyl.mplstyle')
+@click.command(help='Plot the data')
+@click.option('--show/--no-show', default=True,
+              help='Turn showing of the plot ON and OFF (default: ON)')
+@click.option('--style', default=dirPath+'/postgkyl.mplstyle',
+              help='Specify Matplotlib style file (default: Postgkyl style)')
+@click.option('--fixed-axis', 'axismode', flag_value='image',
+             default=True)
+@click.option('--free-axis', 'axismode', flag_value='tight')
+@click.option('--save/--no-save', '-s', default=False,
+              help='Save figure as png')
 @click.pass_context
-def plot(ctx, show, style):
+def plot(ctx, show, style, axismode, save):
     fig, ax = plt.subplots()
     plt.style.use(style)
     numPlots = len(ctx.obj['values'])
@@ -39,5 +46,11 @@ def plot(ctx, show, style):
                               ctx.obj['values'][i].transpose())
            _colorbar(im, ax, fig)
 
+    # format
+    ax.axis(axismode)
+
     if show:
         plt.show()
+
+    if save:
+        fig.savefig('placeholder.png')

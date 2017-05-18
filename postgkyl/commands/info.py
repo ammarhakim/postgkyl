@@ -1,6 +1,6 @@
 import click
 
-@click.command()
+@click.command(help='Print data info')
 @click.pass_context
 def info(ctx):
     numData = len(ctx.obj['values'])
