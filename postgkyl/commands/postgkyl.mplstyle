@@ -1,0 +1,10 @@
+figure.facecolor : white
+lines.linewidth : 3
+font.size : 16
+axes.labelsize : large
+axes.titlesize : 14
+image.interpolation : none
+image.cmap : inferno
+image.origin : lower
+grid.linewidth : 0.5
+grid.linestyle : :
