@@ -47,10 +47,11 @@ def plot(ctx, show, style, axismode, save):
                                ctx.obj['coords'][i][1],
                                np.squeeze(ctx.obj['values'][i]).transpose())
             _colorbar(im, ax, fig)
+            # format
+            ax.axis(axismode)
 
-    # format
-    ax.axis(axismode)
-
+    ax.grid()            
+            
     if show:
         plt.show()
 
