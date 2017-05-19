@@ -38,13 +38,15 @@ def plot(ctx, show, style, axismode, save):
     plt.style.use(style)
     numPlots = len(ctx.obj['values'])
     for i in range(numPlots):
-       numDims = len(ctx.obj['values'][i].shape)
-       if numDims == 1:
-           im = ax.plot(ctx.obj['coords'][i][0], ctx.obj['values'][i])
-       elif numDims == 2:
-           im = ax.pcolormesh(ctx.obj['coords'][i][0], ctx.obj['coords'][i][1],
-                              ctx.obj['values'][i].transpose())
-           _colorbar(im, ax, fig)
+        numDims = len(np.squeeze(ctx.obj['values'][i]).shape)
+        if numDims == 1:
+            im = ax.plot(ctx.obj['coords'][i][0],
+                         np.squeeze(ctx.obj['values'][i]))
+        elif numDims == 2:
+            im = ax.pcolormesh(ctx.obj['coords'][i][0],
+                               ctx.obj['coords'][i][1],
+                               np.squeeze(ctx.obj['values'][i]).transpose())
+            _colorbar(im, ax, fig)
 
     # format
     ax.axis(axismode)
