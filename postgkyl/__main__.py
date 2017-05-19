@@ -1,5 +1,6 @@
 
 import click
+import numpy
 
 import postgkyl.commands as cmd
 from postgkyl.data.load import GData
@@ -15,16 +16,30 @@ def cli(ctx, filename):
         ctx.exit()
     
     ctx.obj['files'] = filename
-    ctx.obj['numFiles'] = len(filename)
+    numFiles = len(filename)
+    ctx.obj['numFiles'] = numFiles
     ctx.obj['data'] = []
+    ctx.obj['numComps'] = []
     ctx.obj['coords'] = []
     ctx.obj['values'] = []
-    for i, fl in enumerate(filename):
-        ctx.obj['data'].append(GData(fl))
-        dg = GInterpZeroOrder(ctx.obj['data'][i])
+    for f in range(numFiles):
+        ctx.obj['data'].append(GData(filename[f]))
+        numComps = ctx.obj['data'][f].q.shape[-1]
+        ctx.obj['numComps'].append(numComps)
+        
+        dg = GInterpZeroOrder(ctx.obj['data'][f])
         coords, values = dg.project(0)
+        if numComps > 1:
+            values = numpy.extend_dims(values,
+                                       axis=ctx.obj['data'][f].numDims)
+            for c in numpy.arange(numComps-1)+1:
+                coords, v = dg.project(c)
+                v = numpy.extend_dims(v, axis=ctx.obj['data'][f].numDims)
+                values = numpy.append(values, v,
+                                      axis=ctx.obj['data'][f].numDims)
         ctx.obj['coords'].append(coords)
         ctx.obj['values'].append(values)
+        print(ctx.obj['values'].shape)
 
 cli.add_command(cmd.info.info)
 cli.add_command(cmd.output.plot)

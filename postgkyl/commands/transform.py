@@ -16,16 +16,32 @@ from postgkyl.tools.fields import fixCoordSlice
               help='Specify polynomial order')
 @click.pass_context
 def project(ctx, basis, polyorder):
-    for i in range(ctx.obj['numFiles']):
+    for f in range(ctx.obj['numFiles']):
+        data = ctx.obj['data'][f]
         if basis == 'ns':
-            dg = GInterpNodalSerendipity(ctx.obj['data'][i], polyorder)
+            dg = GInterpNodalSerendipity(data, polyorder)
+            numNodes = GInterpNodalSerendipity.numNodes[data.numDims-1,
+                                                        polyorder-1]
         elif basis == 'ms':
-            dg = GInterpModalSerendipity(ctx.obj['data'][i], polyorder)
+            dg = GInterpModalSerendipity(data, polyorder)
+            numNodes = GInterpModalSerendipity.numNodes[data.numDims-1,
+                                                        polyorder-1]
         elif basis == 'mo':
-            dg = GInterpModalMaxOrder(ctx.obj['data'][i], polyorder)
+            dg = GInterpModalMaxOrder(data, polyorder)
+            numNodes = GInterpModalMaxOrder.numNodes[data.numDims-1,
+                                                     polyorder-1]
         coords, values = dg.project(0)
-        ctx.obj['coords'][i] = coords
-        ctx.obj['values'][i] = values
+        values = numpy.expand_dims(values,
+                                   axis=ctx.obj['data'][f].numDims)
+        numComps = ctx.obj['data'][f].q.shape[-1]/numNodes
+        if numComps > 1:
+            for c in numpy.arange(numComps-1)+1:
+                coords, v = dg.project(c)
+                v = numpy.expand_dims(v, axis=ctx.obj['data'][f].numDims)
+                values = numpy.append(values, v,
+                                      axis=ctx.obj['data'][f].numDims)
+        ctx.obj['coords'][f] = coords
+        ctx.obj['values'][f] = values
 
 @click.command(help='Multiply data by a factor')
 @click.argument('factor', nargs=1, type=click.FLOAT)
@@ -72,3 +88,15 @@ def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
                                        c1, c2, c3, c4, c5, c6)
         ctx.obj['coords'][i] = coords
         ctx.obj['values'][i] = values
+
+@click.command(help='Select component(s)')
+@click.argument('component', type=click.STRING)
+@click.pass_context
+def comp(ctx, component):
+    component = component.split(',')
+    for i in range(len(ctx.obj['values'])):
+        if len(component) == 1:
+            idx = int(component[0])
+        else:
+            idx = slice(int(component[0]), int(component[1])+1)
+        ctx.obj['values'][i] = ctx.obj['values'][i][..., idx]
