@@ -34,23 +34,29 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
               help='Save figure as png')
 @click.pass_context
 def plot(ctx, show, style, axismode, save):
-    fig, ax = plt.subplots()
     plt.style.use(style)
+    fig, ax = plt.subplots()
     numPlots = len(ctx.obj['values'])
     for i in range(numPlots):
-        numDims = len(np.squeeze(ctx.obj['values'][i]).shape)
+        if ctx.obj['values'][i].shape[-1] != 1:
+            temp = ctx.obj['values'][i][..., 0]
+            click.echo(' ** WARNING: Multi-component data, plotting comp 0')
+        else:
+            temp = ctx.obj['values'][i]
+        numDims = len(np.squeeze(temp).shape)
         if numDims == 1:
             im = ax.plot(ctx.obj['coords'][i][0],
-                         np.squeeze(ctx.obj['values'][i]))
+                         np.squeeze(temp))
         elif numDims == 2:
             im = ax.pcolormesh(ctx.obj['coords'][i][0],
                                ctx.obj['coords'][i][1],
-                               np.squeeze(ctx.obj['values'][i]).transpose())
+                               np.squeeze(temp).transpose())
             _colorbar(im, ax, fig)
             # format
             ax.axis(axismode)
 
-    ax.grid()            
+    ax.grid()
+    plt.tight_layout()
             
     if show:
         plt.show()

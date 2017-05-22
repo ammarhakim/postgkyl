@@ -20,6 +20,7 @@ def cli(ctx, filename):
     ctx.obj['numFiles'] = numFiles
     ctx.obj['numComps'] = []
     ctx.obj['data'] = []
+    ctx.obj['label'] = []
     ctx.obj['coords'] = []
     ctx.obj['values'] = []
     for f in range(numFiles):
