@@ -86,7 +86,7 @@ class GData:
         else:
             self.numComponents = 1
 
-    def _loadG2bp(self):
+    def _loadHeaderBP(self):
         """Load a header of an ADIOS file"""
         import adios
 

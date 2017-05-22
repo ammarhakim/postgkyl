@@ -84,12 +84,12 @@ def fixCoordSlice(coords, values, mode='idx',
     """
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
 
-    numDims = len(values.shape)
+    numDims = len(values.shape)-1
     idxCoords = []
     # create an index array that covers the whole 'values' array but is
     # convenient for the fixing of some dimensions
     idxValues = [slice(0, values.shape[d]) for d in range(numDims)]
-
+    
     coordsOut = numpy.copy(coords)
     valuesOut = numpy.copy(values)
     for i, idx in enumerate(fix):
