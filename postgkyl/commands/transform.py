@@ -16,32 +16,35 @@ from postgkyl.tools.fields import fixCoordSlice
               help='Specify polynomial order')
 @click.pass_context
 def project(ctx, basis, polyorder):
-    for f in range(ctx.obj['numFiles']):
-        data = ctx.obj['data'][f]
+    for s in range(ctx.obj['numSets']):
+        data = ctx.obj['data'][s]
+        numDims = data.numDims
         if basis == 'ns':
             dg = GInterpNodalSerendipity(data, polyorder)
-            numNodes = GInterpNodalSerendipity.numNodes[data.numDims-1,
+            numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
                                                         polyorder-1]
         elif basis == 'ms':
             dg = GInterpModalSerendipity(data, polyorder)
-            numNodes = GInterpModalSerendipity.numNodes[data.numDims-1,
+            numNodes = GInterpModalSerendipity.numNodes[numDims-1,
                                                         polyorder-1]
         elif basis == 'mo':
             dg = GInterpModalMaxOrder(data, polyorder)
-            numNodes = GInterpModalMaxOrder.numNodes[data.numDims-1,
+            numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
                                                      polyorder-1]
         coords, values = dg.project(0)
-        values = numpy.expand_dims(values,
-                                   axis=ctx.obj['data'][f].numDims)
-        numComps = ctx.obj['data'][f].q.shape[-1]/numNodes
+        values = numpy.expand_dims(values, axis=numDims)
+        numComps = int(data.q.shape[-1]/numNodes)
+        ctx.obj['numComps'][s] = numComps
         if numComps > 1:
-            for c in numpy.arange(numComps-1)+1:
-                coords, v = dg.project(c)
-                v = numpy.expand_dims(v, axis=ctx.obj['data'][f].numDims)
-                values = numpy.append(values, v,
-                                      axis=ctx.obj['data'][f].numDims)
-        ctx.obj['coords'][f] = coords
-        ctx.obj['values'][f] = values
+            for comp in numpy.arange(numComps-1)+1:
+                coords, tmp = dg.project(comp)
+                tmp = numpy.expand_dims(tmp, axis=numDims)
+                values = numpy.append(values, tmp, axis=numDims)
+        ctx.obj['coords'][s] = coords
+        ctx.obj['values'][s] = values
+        mapValues = [slice(0, values.shape[d]) for d in range(numDims)]
+        ctx.obj['mapValues'][s] = mapValues
+        ctx.obj['mapComps'][s] = slice(0, numComps)
 
 @click.command(help='Multiply data by a factor')
 @click.argument('factor', nargs=1, type=click.FLOAT)
@@ -67,36 +70,3 @@ def mask(ctx, maskfile):
     maskField = GData(maskfile).q[..., 0]
     for i, values in enumerate(ctx.obj['values']):
         ctx.obj['values'][i] = numpy.ma.masked_where(maskField < 0.0, values)
-
-@click.command(help='Fix a coordinate')
-@click.option('-c1', type=click.FLOAT, help='Fix 1st coordinate')
-@click.option('-c2', type=click.FLOAT, help='Fix 2nd coordinate')
-@click.option('-c3', type=click.FLOAT, help='Fix 3rd coordinate')
-@click.option('-c4', type=click.FLOAT, help='Fix 4th coordinate')
-@click.option('-c5', type=click.FLOAT, help='Fix 5th coordinate')
-@click.option('-c6', type=click.FLOAT, help='Fix 6th coordinate')
-@click.option('--value', 'mode', flag_value='value',
-              default=True, help='Fix coordinates based on a value')
-@click.option('--index', 'mode', flag_value='idx',
-              help='Fix coordinates based on an index')
-@click.pass_context
-def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
-    for i, values in enumerate(ctx.obj['values']):
-        coords, values = fixCoordSlice(ctx.obj['coords'][i],
-                                       ctx.obj['values'][i],
-                                       mode,
-                                       c1, c2, c3, c4, c5, c6)
-        ctx.obj['coords'][i] = coords
-        ctx.obj['values'][i] = values
-
-@click.command(help='Select component(s)')
-@click.argument('component', type=click.STRING)
-@click.pass_context
-def comp(ctx, component):
-    component = component.split(',')
-    for i in range(len(ctx.obj['values'])):
-        if len(component) == 1:
-            idx = int(component[0])
-        else:
-            idx = slice(int(component[0]), int(component[1])+1)
-        ctx.obj['values'][i] = ctx.obj['values'][i][..., idx]

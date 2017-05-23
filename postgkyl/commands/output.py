@@ -34,30 +34,35 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
               help='Save figure as png')
 @click.pass_context
 def plot(ctx, show, style, axismode, save):
-    plt.style.use(style)
-    fig, ax = plt.subplots()
-    numPlots = len(ctx.obj['values'])
-    for i in range(numPlots):
-        if ctx.obj['values'][i].shape[-1] != 1:
-            temp = ctx.obj['values'][i][..., 0]
-            click.echo(' ** WARNING: Multi-component data, plotting comp 0')
-        else:
-            temp = ctx.obj['values'][i]
-        numDims = len(np.squeeze(temp).shape)
-        if numDims == 1:
-            im = ax.plot(ctx.obj['coords'][i][0],
-                         np.squeeze(temp))
-        elif numDims == 2:
-            im = ax.pcolormesh(ctx.obj['coords'][i][0],
-                               ctx.obj['coords'][i][1],
-                               np.squeeze(temp).transpose())
-            _colorbar(im, ax, fig)
-            # format
-            ax.axis(axismode)
 
-    ax.grid()
-    plt.tight_layout()
-            
+    plt.style.use(style)
+    #fig, ax = plt.subplots()
+    numSets = ctx.obj['numSets']
+    for s in range(numSets):
+        coords = ctx.obj['coords'][s][ ctx.obj['mapCoords'][s] ]
+        values = ctx.obj['values'][s][ ctx.obj['mapValues'][s] ]
+        comps = range(ctx.obj['mapComps'][s].start,
+                      ctx.obj['mapComps'][s].stop)
+        numDims = len(coords)
+
+        for i, comp in enumerate(comps):
+            fig, ax = plt.subplots()
+            if numDims == 1:
+                im = ax.plot(coords[0], values[..., comp])
+                plt.autoscale(enable=True, axis='x', tight=True)
+            elif numDims == 2:
+                im = ax.pcolormesh(coords[0], coords[1],
+                                   values[..., comp].transpose())
+                _colorbar(im, ax, fig)
+                ax.axis(axismode)
+            else:
+                click.echo('{:d}D plots currently not supported'.
+                           format(numDims))
+                ctx.exit()
+
+            ax.grid()
+            plt.tight_layout()
+
     if show:
         plt.show()
 

@@ -122,8 +122,8 @@ class GInterp:
         shp = [q.shape[i] for i in range(self.numDims)]
         shp.append(self.numNodes)
         rawData = numpy.zeros(shp, numpy.float)
-        lo = component*self.numNodes
-        up = lo+self.numNodes
+        lo = int(component*self.numNodes)
+        up = int(lo+self.numNodes)
         rawData = q[..., lo:up]
         return rawData
 
