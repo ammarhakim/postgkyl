@@ -7,7 +7,7 @@ def info(ctx):
 
     click.echo('\nPrinting info:')
     for f in range(numData):
-        click.echo(' * Datastream #{:d}'.format(f))
+        click.echo(' * Dataset #{:d}'.format(f))
         click.echo('  * Time: {:f}'.format(ctx.obj['data'][f].time))
         click.echo('  * Dumber of components: {:d}'.
                    format(ctx.obj['values'][f].shape[-1]))
