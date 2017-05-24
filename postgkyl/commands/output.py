@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from postgkyl.tools.stack import pushStack, pullStack, popStack
+
 dirPath = os.path.dirname(os.path.realpath(__file__))
 
 def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
@@ -22,6 +24,16 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
         _fig.canvas.draw()
     return _cbar_
 
+def _getFig(ctx):
+    if ctx.obj['hold'] == True and ctx.obj['fig'] != '':
+        fig = ctx.obj['fig']
+        ax = ctx.obj['ax']
+    else:
+        fig, ax = plt.subplots()
+        ctx.obj['fig'] = fig
+        ctx.obj['ax'] = ax
+    return fig, ax
+
 @click.command(help='Plot the data')
 @click.option('--show/--no-show', default=True,
               help='Turn showing of the plot ON and OFF (default: ON)')
@@ -36,17 +48,15 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
 def plot(ctx, show, style, axismode, save):
 
     plt.style.use(style)
-    #fig, ax = plt.subplots()
     numSets = ctx.obj['numSets']
     for s in range(numSets):
-        coords = ctx.obj['coords'][s][ ctx.obj['mapCoords'][s] ]
-        values = ctx.obj['values'][s][ ctx.obj['mapValues'][s] ]
-        comps = range(ctx.obj['mapComps'][s].start,
-                      ctx.obj['mapComps'][s].stop)
-        numDims = len(coords)
+        coords, values = pullStack(ctx, s)
 
-        for i, comp in enumerate(comps):
-            fig, ax = plt.subplots()
+        numDims = len(coords)
+        numComps = values.shape[-1]
+
+        for comp in range(numComps):
+            fig, ax = _getFig(ctx)
             if numDims == 1:
                 im = ax.plot(coords[0], values[..., comp])
                 plt.autoscale(enable=True, axis='x', tight=True)
@@ -60,7 +70,7 @@ def plot(ctx, show, style, axismode, save):
                            format(numDims))
                 ctx.exit()
 
-            ax.grid()
+            ax.grid(True)
             plt.tight_layout()
 
     if show:
@@ -68,3 +78,12 @@ def plot(ctx, show, style, axismode, save):
 
     if save:
         fig.savefig('placeholder.png')
+
+@click.command(help='Hold the plotting')
+@click.option('--on', 'hld', flag_value=True, default=True,
+              help='Turn plot hold ON')
+@click.option('--off', 'hld', flag_value=False,
+              help='Turn plot holf OFF')
+@click.pass_context
+def hold(ctx, hld):
+    ctx.obj['hold'] = hld

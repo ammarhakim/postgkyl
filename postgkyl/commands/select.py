@@ -1,6 +1,9 @@
 import click
 import numpy
 
+from postgkyl.tools.fields import fixCoordSlice
+from postgkyl.tools.stack import pushStack, pullStack, popStack
+
 @click.command(help='Fix a coordinate')
 @click.option('--c1', type=click.FLOAT, help='Fix 1st coordinate')
 @click.option('--c2', type=click.FLOAT, help='Fix 2nd coordinate')
@@ -14,24 +17,31 @@ import numpy
               help='Fix coordinates based on an index')
 @click.pass_context
 def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
-    for i, values in enumerate(ctx.obj['values']):
-        coords, values = fixCoordSlice(ctx.obj['coords'][i],
-                                       ctx.obj['values'][i],
-                                       mode,
-                                       c1, c2, c3, c4, c5, c6)
-        ctx.obj['coords'][i] = coords
-        ctx.obj['values'][i] = values
+    for s in range(ctx.obj['numSets']):
+        coords, values = pullStack(ctx, s)
+        coordsOut, valuesOut = fixCoordSlice(coords, values, mode,
+                                             c1, c2, c3, c4, c5, c6)
+        pushStack(ctx, s, coordsOut, valuesOut)
 
 @click.command(help='Select component(s)')
 @click.argument('component', type=click.STRING)
 @click.pass_context
 def comp(ctx, component):
-    components = component.split(',')
-    numSets = ctx.obj['numSets']
-    for s in range(numSets):
-        if len(components) == 1:
-            comps = slice(int(components[0]), int(components[0])+1)
+    component = component.split(',')
+    for s in range(ctx.obj['numSets']):
+        coords, values = pullStack(ctx, s)
+
+        if len(component) == 1:
+            comps = int(component[0])
+            values = values[..., comps, numpy.newaxis]
         else:
-            comps = slice(int(components[0]), int(components[1])+1)
-        ctx.obj['mapComps'][s] = comps
-        ctx.obj['numComps'][s] = len(components)
+            comps = slice(int(component[0]), int(component[1])+1)
+            values = values[..., comps]
+
+        pushStack(ctx, s, coords, values)
+
+@click.command(help='Pop the data stack')
+@click.pass_context
+def pop(ctx):
+    for s in range(ctx.obj['numSets']):
+        popStack(ctx, s)

@@ -71,7 +71,7 @@ class GData:
 
         # read in time data if it exists
         try:
-            self.time = numpy.float(fh.root.timeData._v_attrs.vsTime)
+            self.time = numpy.float(self.fh.root.timeData._v_attrs.vsTime)
         except:
             self.time = numpy.float(0.0)
 

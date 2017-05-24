@@ -17,3 +17,5 @@ from . import filters
 from .filters import fftData
 from .filters import fftFiltering
 from .filters import butterFiltering
+
+from . import stack

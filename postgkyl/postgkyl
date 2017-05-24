@@ -3,79 +3,47 @@ import click
 import numpy
 
 import postgkyl.commands as cmd
-from postgkyl.data.load import GData, GHistoryData
-from postgkyl.data.interp import GInterpZeroOrder
-
-def _loadFrame(ctx, dataSetIdx, fileName):
-    ctx.obj['data'].append(GData(fileName))
-    numComps = int(ctx.obj['data'][dataSetIdx].q.shape[-1])
-    ctx.obj['numComps'].append(numComps)
-    ctx.obj['mapComps'].append(slice(0, numComps))
-
-    dg = GInterpZeroOrder(ctx.obj['data'][dataSetIdx])
-    coords, values = dg.project(0)
-    numDims = ctx.obj['data'][dataSetIdx].numDims
-    values = numpy.expand_dims(values, axis=numDims)
-
-    if numComps > 1:
-        for c in numpy.arange(numComps-1)+1:
-            coords, tmp = dg.project(c)
-            tmp = numpy.expand_dims(tmp, axis=numDims)
-            values = numpy.append(values, tmp, axis=numDims)
-
-    ctx.obj['coords'].append(coords)
-    ctx.obj['mapCoords'].append(slice(0, numDims))
-
-    ctx.obj['values'].append(values)
-    mapValues = [slice(0, values.shape[d]) for d in range(numDims)]
-    ctx.obj['mapValues'].append(mapValues)
-
-def _loadHist(ctx, dataSetIdx, fileName):
-    ctx.obj['data'].append('')
-    hist = GHistoryData(fileName)
-    coords = numpy.expand_dims(hist.time, 0)
-    ctx.obj['coords'].append(coords)
-    values = numpy.expand_dims(hist.values, 0)
-    ctx.obj['values'].append(values)
-    ctx.obj['numComps'].append(0)
+from postgkyl.tools.stack import pushStack, pullStack, popStack
+from postgkyl.tools.stack import loadFrame, loadHist
 
 @click.group(chain=True)
 @click.option('--filename', '-f', multiple=True,
               help='Specify one or more file(s) to work with.')
 @click.pass_context
-def cli(ctx, filename):
-    #if filename == ():
-    #    click.echo('No data file given. Specify file(s) with \'-f\'')
-    #    ctx.exit()
-    
+def entry(ctx, filename):
     ctx.obj['files'] = filename
     numSets = len(filename)
     ctx.obj['numSets'] = numSets
     ctx.obj['mapSets'] = slice(numSets)
-    ctx.obj['numComps'] = []
-    ctx.obj['mapComps'] = []
+
     ctx.obj['data'] = []
     ctx.obj['labels'] = []
-    ctx.obj['coords'] = []
-    ctx.obj['mapCoords'] = []
-    ctx.obj['values'] = []
-    ctx.obj['mapValues'] = []
+
+    ctx.obj['coords'] = [[]]
+    ctx.obj['values'] = [[]]
 
     for s in range(numSets):
         if filename[s][-2:] == 'h5' or filename[s][-2:] == 'bp':
-            _loadFrame(ctx, s, str(filename[s]))
+            loadFrame(ctx, s, str(filename[s]))
         else:
-            _loadHist(ctx, s, str(filename[s]))
+            loadHist(ctx, s, str(filename[s]))
 
-cli.add_command(cmd.info.info)
-cli.add_command(cmd.output.plot)
-cli.add_command(cmd.transform.project)
-cli.add_command(cmd.transform.mask)
-cli.add_command(cmd.transform.mult)
-cli.add_command(cmd.transform.norm)
-cli.add_command(cmd.select.fix)
-cli.add_command(cmd.select.comp)
-cli.add_command(cmd.euler.euler)
+    ctx.obj['hold'] = False
+    ctx.obj['fig'] = ''
+    ctx.obj['ax'] = ''
+
+entry.add_command(cmd.info.info)
+entry.add_command(cmd.output.plot)
+entry.add_command(cmd.output.hold)
+entry.add_command(cmd.transform.project)
+entry.add_command(cmd.transform.mask)
+entry.add_command(cmd.transform.mult)
+entry.add_command(cmd.transform.norm)
+entry.add_command(cmd.select.fix)
+entry.add_command(cmd.select.comp)
+entry.add_command(cmd.select.pop)
+entry.add_command(cmd.euler.euler)
 
 if __name__ == '__main__':
-    cli(obj={})
+    entry(obj={})
+
