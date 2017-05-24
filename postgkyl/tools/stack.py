@@ -36,8 +36,6 @@ def loadFrame(ctx, dataSet, fileName):
 def loadHist(ctx, dataSet, fileName):
     ctx.obj['data'].append('')
     hist = GHistoryData(fileName)
-    coords = numpy.expand_dims(hist.time, 0)
-    ctx.obj['coords'].append(coords)
-    values = numpy.expand_dims(hist.values, 0)
-    ctx.obj['values'].append(values)
-    ctx.obj['numComps'].append(0)
+
+    pushStack(ctx, dataSet,
+              hist.time[ numpy.newaxis, ...], hist.values[..., numpy.newaxis])
