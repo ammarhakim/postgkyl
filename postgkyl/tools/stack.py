@@ -31,6 +31,8 @@ def loadFrame(ctx, dataSet, fileName):
             values = numpy.append(values, tmp[..., numpy.newaxis],
                                   axis=numDims)
 
+    ctx.obj['coords'].append([])
+    ctx.obj['values'].append([])
     pushStack(ctx, dataSet, coords, values)
 
 def loadHist(ctx, dataSet, fileName):

@@ -25,7 +25,7 @@ def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     return _cbar_
 
 def _getFig(ctx):
-    if ctx.obj['hold'] == True and ctx.obj['fig'] != '':
+    if ctx.obj['hold'] == 'on' and ctx.obj['fig'] != '':
         fig = ctx.obj['fig']
         ax = ctx.obj['ax']
     else:
@@ -80,9 +80,9 @@ def plot(ctx, show, style, axismode, save):
         fig.savefig('placeholder.png')
 
 @click.command(help='Hold the plotting')
-@click.option('--on', 'hld', flag_value=True, default=True,
+@click.option('--on', 'hld', flag_value='on', default=True,
               help='Turn plot hold ON')
-@click.option('--off', 'hld', flag_value=False,
+@click.option('--off', 'hld', flag_value='off',
               help='Turn plot holf OFF')
 @click.pass_context
 def hold(ctx, hld):
