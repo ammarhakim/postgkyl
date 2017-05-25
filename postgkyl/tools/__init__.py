@@ -1,9 +1,9 @@
-#!/usr/bin/env python
 """G&H project miscellaneous useful tools
 
 Files:
-  *  fields.py -- custom field manipulation tools
-  *  filters.py -- various filtering methods
+ * fields.py -- custom field manipulation tools
+ * filters.py -- various filtering methods
+ * stack.py -- postgkyl cli stack manipulation
 """
 
 # import fields.py functions
@@ -17,5 +17,5 @@ from . import filters
 from .filters import fftData
 from .filters import fftFiltering
 from .filters import butterFiltering
-
+# import cli stack control
 from . import stack

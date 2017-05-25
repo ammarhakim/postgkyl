@@ -7,6 +7,8 @@ from postgkyl.tools.stack import pushStack, pullStack, popStack
 
 dirPath = os.path.dirname(os.path.realpath(__file__))
 
+#---------------------------------------------------------------------
+#-- Plotting ---------------------------------------------------------
 def _colorbar(obj, _ax, _fig, redraw=False, aspect=None, label=''):
     """Add a colorbar adjacent to obj, with a matching height
 
@@ -87,3 +89,25 @@ def plot(ctx, show, style, axismode, save):
 @click.pass_context
 def hold(ctx, hld):
     ctx.obj['hold'] = hld
+
+
+#---------------------------------------------------------------------
+#-- Info -------------------------------------------------------------
+@click.command(help='Print the current top of stack info')
+@click.pass_context
+def info(ctx):                                    
+    click.echo('\nPrinting the current top of stack info:')
+    for s in range(ctx.obj['numSets']):
+        coords, values = pullStack(ctx, s)
+        click.echo(' * Dataset #{:d}'.format(s))
+        click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
+        click.echo('  * Dumber of components: {:d}'.format(values.shape[-1]))
+        numDims = len(values.shape)-1
+        click.echo('  * Dimensions ({:d}):'.format(numDims))
+        for d in range(numDims):
+            click.echo('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
+                       format(d+1, len(coords[d]), coords[d][0], coords[d][-1]))
+
+
+#---------------------------------------------------------------------
+#-- Writing ----------------------------------------------------------

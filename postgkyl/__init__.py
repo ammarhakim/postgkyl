@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 """G&H project postprocessing package
 
 Sub-modules:
-  *  data -- G1 and G2 data loading and handling
-  *  diagnostics -- various diagnostics library
-  *  tools -- miscellaneous useful tools
+ * data -- G1 and G2 data loading and handling
+ * diagnostics -- various diagnostics library
+ * tools -- miscellaneous useful tools
 """
 
 # import submodules
