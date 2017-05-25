@@ -15,4 +15,4 @@ def info(ctx):
         click.echo('  * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
             click.echo('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
-                       format(d, len(coords[d]), coords[d][0], coords[d][-1]))
+                       format(d+1, len(coords[d]), coords[d][0], coords[d][-1]))
