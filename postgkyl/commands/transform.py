@@ -71,19 +71,18 @@ def norm(ctx, shift):
 @click.argument('maskfile', nargs=1, type=click.STRING)
 @click.pass_context
 def mask(ctx, maskfile):
-    maskField = GData(maskfile).q[..., 0]
+    maskField = GData(maskfile).q[..., 0, numpy.newaxis]
     for s in range(ctx.obj['numSets']):
         coords, values = pullStack(ctx, s)
 
         numComps = values.shape[-1]
         numDims = len(values.shape) - 1
 
-        maskField = numpy.expand_dims(maskField, axis=numDims)
         tmp = numpy.copy(maskField)
         if numComps > 1:
             for comp in numpy.arange(numComps-1)+1:
-                maskField = numpy.append(maskField, tmp, axis=numDims)
+                tmp = numpy.append(tmp, maskField, axis=numDims)
 
-        valuesOut = numpy.ma.masked_where(maskField < 0.0, values)
+        valuesOut = numpy.ma.masked_where(tmp < 0.0, values)
 
         pushStack(ctx, s, coords, valuesOut)

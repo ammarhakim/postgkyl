@@ -1,15 +1,16 @@
-#!/usr/bin/env python
 """G&H command line handling
 
 Files:
-  *  data.py -- data files loading and saving
+ * euler.py -- fluid variables manipulations
+ * output.py -- data and info printing, plotting
+ * select.py -- data subselection, comonent selection, ...
+ * trasform.py -- DG projection, data values manipulations
 """
 
-from . import output
-from . import info
-from . import transform
-from . import select
 from . import euler
+from . import output
+from . import select
+from . import transform
 
 
 

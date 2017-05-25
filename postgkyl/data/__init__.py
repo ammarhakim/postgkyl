@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 """G&H data loading and handling
 
 Files:
-  *  data.py -- data files loading and saving
-  *  interp.py -- DG interpolation
-  *  batch.py -- convenience time-series loaging
+ * data.py -- data files loading and saving
+ * interp.py -- DG interpolation
+ * batch.py -- convenience time-series loaging
 """
 
 # import basic data handling classes
