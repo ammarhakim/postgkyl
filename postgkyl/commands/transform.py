@@ -62,9 +62,14 @@ def mult(ctx, factor):
 def norm(ctx, shift):
     for s in range(ctx.obj['numSets']):
         coords, values = pullStack(ctx, s)
-        if shift:
-            valuesOut -= values.min() 
-        valuesOut /= valuesOut.max()
+        
+        numComps = values.shape[-1]
+        valuesOut = values.copy()
+        for comp in range(numComps):
+            if shift:
+                valuesOut.data[..., comp] -= valuesOut.data[..., comp].min() 
+            valuesOut.data[..., comp] /= numpy.abs(valuesOut.data[..., comp]).max()  
+
         pushStack(ctx, s, coords, valuesOut)
 
 @click.command(help='Mask data')
