@@ -1,7 +1,7 @@
 import click
 import numpy
 
-from postgkyl.tools.stack import pushStack, pullStack, popStack
+from postgkyl.tools.stack import pushStack, peakStack, popStack
 
 def pressure(gasGamma, q):
     return (gasGamma-1)*(q[...,4] -
@@ -17,7 +17,7 @@ def pressure(gasGamma, q):
 def euler(ctx, gas_gamma, variable_name):
     v = variable_name
     for s in range(ctx.obj['numSets']):
-        coords, q = pullStack(ctx, s)
+        coords, q = peakStack(ctx, s)
 
         if v == "density":
             tmp = q[...,0]
@@ -31,6 +31,6 @@ def euler(ctx, gas_gamma, variable_name):
             tmp = pressure(gas_gamma, q)
         tmp = tmp[..., numpy.newaxis]
 
-        pushStack(ctx, s, coords, tmp)
+        pushStack(ctx, s, coords, tmp, v)
 
     

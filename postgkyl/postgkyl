@@ -3,7 +3,7 @@ import click
 import numpy
 
 import postgkyl.commands as cmd
-from postgkyl.tools.stack import pushStack, pullStack, popStack
+from postgkyl.tools.stack import pushStack, peakStack, popStack
 from postgkyl.tools.stack import loadFrame, loadHist
 
 @click.group(chain=True)
@@ -28,7 +28,7 @@ def cli(ctx, filename):
         else:
             loadHist(ctx, s, str(filename[s]))
 
-    ctx.obj['hold'] = False
+    ctx.obj['hold'] = 'off'
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
 

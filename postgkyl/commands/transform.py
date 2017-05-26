@@ -6,7 +6,7 @@ from postgkyl.data.interp import GInterpNodalSerendipity
 from postgkyl.data.interp import GInterpModalSerendipity
 from postgkyl.data.interp import GInterpModalMaxOrder
 
-from postgkyl.tools.stack import pushStack, pullStack, popStack
+from postgkyl.tools.stack import pushStack, peakStack, popStack
 
 @click.command(help='Project DG data on a uniform mesh')
 @click.option('--basis', '-b', prompt=True,
@@ -43,15 +43,16 @@ def project(ctx, basis, polyorder):
                 values = numpy.append(values, tmp[..., numpy.newaxis],
                                       axis=numDims)
  
-        popStack(ctx, s)
-        pushStack(ctx, s, coords, values)
+        #popStack(ctx, s)
+        label = 'proj_{:s}_{:d}'.format(basis, polyorder)
+        pushStack(ctx, s, coords, values, label)
 
 @click.command(help='Multiply data by a factor')
 @click.argument('factor', nargs=1, type=click.FLOAT)
 @click.pass_context
 def mult(ctx, factor):
     for s in range(ctx.obj['numSets']):
-        coords, values = pullStack(ctx, s)
+        coords, values = peakStack(ctx, s)
         valuesOut = values * factor
         pushStack(ctx, s, coords, valuesOut)
 
@@ -61,14 +62,14 @@ def mult(ctx, factor):
 @click.pass_context
 def norm(ctx, shift):
     for s in range(ctx.obj['numSets']):
-        coords, values = pullStack(ctx, s)
+        coords, values = peakStack(ctx, s)
         
         numComps = values.shape[-1]
         valuesOut = values.copy()
         for comp in range(numComps):
             if shift:
-                valuesOut.data[..., comp] -= valuesOut.data[..., comp].min() 
-            valuesOut.data[..., comp] /= numpy.abs(valuesOut.data[..., comp]).max()  
+                valuesOut[..., comp] -= valuesOut[..., comp].min() 
+            valuesOut[..., comp] /= numpy.abs(valuesOut[..., comp]).max()  
 
         pushStack(ctx, s, coords, valuesOut)
 
@@ -78,7 +79,7 @@ def norm(ctx, shift):
 def mask(ctx, maskfile):
     maskField = GData(maskfile).q[..., 0, numpy.newaxis]
     for s in range(ctx.obj['numSets']):
-        coords, values = pullStack(ctx, s)
+        coords, values = peakStack(ctx, s)
 
         numComps = values.shape[-1]
         numDims = len(values.shape) - 1
