@@ -35,12 +35,23 @@ def getFullLabel(ctx, dataSet, joinStr='_'):
             labels.remove('')
     return  joinStr.join(labels)
 
+def antiSqueeze(coords, values):
+    numDims = len(coords)
+    for d in range(numDims):
+        if len(coords[d]) == 1:
+            values = numpy.expand_dims(values, axis=d)
+
+    if len(values.shape) == numDims:
+        values = values[..., numpy.newaxis]
+
+    return values
+
 def loadFrame(ctx, dataSet, fileName):
     ctx.obj['data'].append(GData(fileName))
 
     dg = GInterpZeroOrder(ctx.obj['data'][dataSet])
     coords, values = dg.project(0)
-    values = values[..., numpy.newaxis]
+    values = antiSqueeze(coords, values)
 
     numDims = ctx.obj['data'][dataSet].numDims
     numComps = int(ctx.obj['data'][dataSet].q.shape[-1])
@@ -48,7 +59,7 @@ def loadFrame(ctx, dataSet, fileName):
     if numComps > 1:
         for c in numpy.arange(numComps-1)+1:
             coords, tmp = dg.project(c)
-            values = numpy.append(values, tmp[..., numpy.newaxis],
+            values = numpy.append(values, antiSqueeze(coords, tmp),
                                   axis=numDims)
 
     name = fileName.split('/')[-1]  # get rid of the full path
