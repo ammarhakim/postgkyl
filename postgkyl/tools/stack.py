@@ -29,7 +29,7 @@ def peakLabel(ctx, dataSet, idx=None):
             cnt -= 1
 
 def getFullLabel(ctx, dataSet, joinStr='_'):
-    labels = ctx.obj['labels'][dataSet].copy()
+    labels = ctx.obj['labels'][dataSet][:]
     for label in labels:
         if label == '':
             labels.remove('')
