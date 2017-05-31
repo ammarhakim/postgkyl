@@ -2,6 +2,7 @@ import click
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import tables
 
 from postgkyl.tools.stack import peakStack, peakLabel, getFullLabel
 
@@ -89,7 +90,7 @@ def plot(ctx, show, style, axismode, save):
                 ax.set_title('{:s}'.format(title))
                 ax.legend(loc=0)
             else:
-                ax.set_title('{:s} {:s}\n{:f}'.format(title, labelComp))
+                ax.set_title('{:s} {:s}'.format(title, labelComp))
 
             ax.grid(True)
             plt.tight_layout()
@@ -128,7 +129,7 @@ def info(ctx):
         click.echo(' * Dataset #{:d}'.format(s))
         click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
         click.echo('  * Dumber of components: {:d}'.format(values.shape[-1]))
-        numDims = len(values.shape)-1
+        numDims = len(coords)
         click.echo('  * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
             click.echo('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
@@ -137,3 +138,71 @@ def info(ctx):
 
 #---------------------------------------------------------------------
 #-- Writing ----------------------------------------------------------
+def flatten(coords, values):
+    numDims = int(len(coords))
+    numComps = int(values.shape[-1]) 
+    numRows = int(len(values.flatten())/numComps)
+    dataOut = np.zeros((numRows, numDims+numComps))
+
+    numCells = np.zeros(numDims)
+    for d in range(numDims):
+        numCells[d] = values.shape[d]
+    basis = np.full(numDims, 1.0)
+    for d in range(numDims-1):
+        basis[d] = numCells[(d+1):].prod()
+
+    idxs = np.zeros(numDims)
+    for i in range(numRows):
+        idx = i
+        for d in range(numDims):
+            idxs[d] = int(idx // basis[d])
+            idx = idx % basis[d]
+            
+        for d in range(numDims):
+            dataOut[i, d] = coords[d][idxs[d]]
+        for c in range(numComps):
+            dataOut[i, numDims+c] = values[tuple(idxs)][c]
+
+    return dataOut
+
+@click.command(help='Save the current top of stack into ASCII or H5 file')
+@click.option('--filename', '-f', type=click.STRING)
+@click.option('--dataset', '-d', type=click.INT, default=0)
+@click.option('--mode', '-m', type=click.Choice(['h5', 'txt']),
+              default='h5')
+@click.pass_context
+def write(ctx, dataset, filename, mode):
+    coords, values = peakStack(ctx, dataset)
+
+    numDims = int(len(coords))
+    numComps = int(values.shape[-1])
+
+    if filename is None:
+        filename = '{:s}.{:s}'.format(getFullLabel(ctx, dataset), mode)
+
+    if mode == 'h5':
+        fh = tables.open_file(filename, 'w')
+
+        lowerBounds = np.zeros(numDims)
+        upperBounds = np.zeros(numDims)
+        numCells = np.zeros(numDims)
+        for d in range(numDims):
+            lowerBounds[d] = coords[d].min()
+            upperBounds[d] = coords[d].max()
+            numCells[d] = values.shape[d]
+        grid = fh.create_group('/', 'StructGrid')
+        grid._v_attrs.vsLowerBounds = lowerBounds
+        grid._v_attrs.vsUpperBounds = upperBounds
+        grid._v_attrs.vsNumCells = numCells
+
+        timeData = fh.create_group('/', 'timeData')
+        timeData._v_attrs.vsTime = ctx.obj['data'][dataset].time
+
+        fh.create_array('/', 'StructGridField', values)
+
+        fh.close()
+
+    elif mode == 'txt':
+        np.savetxt(filename, flatten(coords, values))
+        
+            
