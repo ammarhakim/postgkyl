@@ -21,13 +21,28 @@ def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
         coords, values = peakStack(ctx, s)
         coordsOut, valuesOut = fixCoordSlice(coords, values, mode,
                                              c1, c2, c3, c4, c5, c6)
-        pushStack(ctx, s, coordsOut, valuesOut)
+        label = 'fix'
+        if c1 is not None:
+            label = '{:s}_c1_{:f}'.format(label, c1)
+        if c2 is not None:
+            label = '{:s}_c2_{:f}'.format(label, c2)
+        if c3 is not None:
+            label = '{:s}_c3_{:f}'.format(label, c3)
+        if c4 is not None:
+            label = '{:s}_c4_{:f}'.format(label, c4)
+        if c5 is not None:
+            label = '{:s}_c5_{:f}'.format(label, c5)
+        if c6 is not None:
+            label = '{:s}_c6_{:f}'.format(label, c6)
+
+        pushStack(ctx, s, coordsOut, valuesOut, label)
 
 @click.command(help='Select component(s)')
 @click.argument('component', type=click.STRING)
 @click.pass_context
 def comp(ctx, component):
     component = component.split(',')
+    label = 'c_{:s}'.format('-'.join(component))
     for s in range(ctx.obj['numSets']):
         coords, values = peakStack(ctx, s)
 
@@ -38,7 +53,7 @@ def comp(ctx, component):
             comps = slice(int(component[0]), int(component[1])+1)
             values = values[..., comps]
 
-        pushStack(ctx, s, coords, values)
+        pushStack(ctx, s, coords, values, label)
 
 @click.command(help='Pop the data stack')
 @click.pass_context

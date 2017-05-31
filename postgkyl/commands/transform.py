@@ -6,7 +6,7 @@ from postgkyl.data.interp import GInterpNodalSerendipity
 from postgkyl.data.interp import GInterpModalSerendipity
 from postgkyl.data.interp import GInterpModalMaxOrder
 
-from postgkyl.tools.stack import pushStack, peakStack, popStack
+from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 
 @click.command(help='Project DG data on a uniform mesh')
 @click.option('--basis', '-b', prompt=True,
@@ -34,16 +34,15 @@ def project(ctx, basis, polyorder):
                                                      polyorder-1]
 
         coords, values = dg.project(0)
-        values = values[..., numpy.newaxis]
+        values = antiSqueeze(coords, values)
 
         numComps = int(data.q.shape[-1]/numNodes)
         if numComps > 1:
             for comp in numpy.arange(numComps-1)+1:
                 coords, tmp = dg.project(comp)
-                values = numpy.append(values, tmp[..., numpy.newaxis],
+                values = numpy.append(values, antiSqueeze(coords, tmp),
                                       axis=numDims)
  
-        #popStack(ctx, s)
         label = 'proj_{:s}_{:d}'.format(basis, polyorder)
         pushStack(ctx, s, coords, values, label)
 
