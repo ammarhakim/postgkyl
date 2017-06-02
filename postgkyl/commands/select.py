@@ -41,17 +41,23 @@ def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
 @click.argument('component', type=click.STRING)
 @click.pass_context
 def comp(ctx, component):
-    component = component.split(',')
-    label = 'c_{:s}'.format('-'.join(component))
     for s in range(ctx.obj['numSets']):
         coords, values = peakStack(ctx, s)
 
-        if len(component) == 1:
-            comps = int(component[0])
-            values = values[..., comps, numpy.newaxis]
-        else:
-            comps = slice(int(component[0]), int(component[1])+1)
+        if len(component.split(',')) > 1:
+            components = component.split(',')
+            label = 'c_{:s}'.format('_'.join(components)) 
+            idx = [int(c) for c in components]
+            values = values[..., tuple(idx)]
+        elif len(component.split(':')) == 2:
+            components = component.split(':')
+            label = 'c_{:s}'.format('-'.join(components))
+            comps = slice(int(components[0]), int(components[1]))
             values = values[..., comps]
+        else:
+            comp = int(component)
+            label = 'c_{:d}'.format(comp)
+            values = values[..., comp, numpy.newaxis]
 
         pushStack(ctx, s, coords, values, label)
 

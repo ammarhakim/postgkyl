@@ -70,7 +70,8 @@ def norm(ctx, shift):
                 valuesOut[..., comp] -= valuesOut[..., comp].min() 
             valuesOut[..., comp] /= numpy.abs(valuesOut[..., comp]).max()  
 
-        pushStack(ctx, s, coords, valuesOut)
+        label = 'norm'
+        pushStack(ctx, s, coords, valuesOut, label)
 
 @click.command(help='Mask data')
 @click.argument('maskfile', nargs=1, type=click.STRING)
@@ -91,3 +92,30 @@ def mask(ctx, maskfile):
         valuesOut = numpy.ma.masked_where(tmp < 0.0, values)
 
         pushStack(ctx, s, coords, valuesOut)
+
+@click.command(help='Integrate over axies')
+@click.argument('axies', nargs=1, type=click.STRING)
+@click.pass_context
+def integrate(ctx, axies):
+    for s in range(ctx.obj['numSets']):
+        coords, values = peakStack(ctx, s)
+
+        axies = axies.split(',')
+        label = 'int_{:s}'.format('_'.join(axies)) 
+        axies = [int(axis) for axis in axies]
+
+        valuesOut = numpy.sum(values, axis=tuple(axies))
+        for axis in axies:
+            valuesOut *= (coords[axis][1] - coords[axis][0])
+
+        numDims = len(coords)
+        idxCoords = []
+        for d in range(numDims):
+            if not d in axies:
+                idxCoords.append(d)
+        if len(axies) == numDims-1:
+             coordsOut = coords[numpy.newaxis, idxCoords]
+        else:
+            coordsOut = coords[idxCoords]
+
+        pushStack(ctx, s, coordsOut, valuesOut, label)

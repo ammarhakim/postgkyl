@@ -44,6 +44,7 @@ cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
 cli.add_command(cmd.transform.project)
+cli.add_command(cmd.transform.integrate)
 
 if __name__ == '__main__':
     cli(obj={})
