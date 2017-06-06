@@ -235,7 +235,17 @@ class GInterpGeneral(GInterp):
 
 class GInterpGeneralRead(GInterp):
     """General interpolation routine - reads interpMatrix.h5 which contains an interpolation matrix for arbitrary level of refinement"""
-
+    numNodesSerendipity = numpy.array([[ 2,   3,   4,   5],
+                                       [ 4,   8,  12,  17],
+                                       [ 8,  20,  32,  50],
+                                       [16,  48,  80, 136],
+                                       [32, 112, 192, 352]])
+    numNodesModal = numpy.array([[2,  3,  4,   5],
+                                 [3,  6, 10,  15],
+                                 [4, 10, 20,  35],
+                                 [5, 15, 35,  70],
+                                 [6, 21, 56, 126]])    
+    
     def __init__(self, data, polyOrder, basis):
         self.numDims = data.numDims
         self.polyOrder = polyOrder
@@ -243,8 +253,13 @@ class GInterpGeneralRead(GInterp):
         fh = tables.open_file(postgkylPath + \
                        '/interpMatrix.h5', mode = 'r')
         self.cMat = fh.root.interpolation_matrix[:]
-        GInterp.__init__(self, data,
-                         self.cMat.shape[1])
+        if basis == 'mo' and self.cMat.shape[1] != self.numNodesModal[self.numDims-1, self.polyOrder-1]:
+            raise NameError("interp: interpMatrix from file is not the right size to interpolate the given data")
+        elif (basis == 'ms' or basis == 'ns') and self.cMat.shape[1] != self.numNodesSerendipity[self.numDims-1, self.polyOrder-1]:
+            raise NameError("interp: interpMatrix from file is not the right size to interpolate the given data")
+        else:
+            GInterp.__init__(self, data,
+                             self.cMat.shape[1])
 
     def project(self, comp=0):
         if self.basis == 'ns':
