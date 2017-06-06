@@ -559,7 +559,7 @@ if __name__ == '__main__':
 
     dim = int(options.dim)
     order = int(options.order)
-    basis = int(options.basis)
+    basis = options.basis
     interp = int(options.interp)
 
     interpMatrix = createInterpMatrix(dim, order, basis, interp)
