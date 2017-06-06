@@ -5,32 +5,48 @@ from postgkyl.data.load import GData
 from postgkyl.data.interp import GInterpNodalSerendipity
 from postgkyl.data.interp import GInterpModalSerendipity
 from postgkyl.data.interp import GInterpModalMaxOrder
+from postgkyl.data.interp import GInterpGeneral
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 
-@click.command(help='Project DG data on a uniform mesh')
+@click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True,), help='Project DG data on a uniform mesh')
 @click.option('--basis', '-b', prompt=True,
               type=click.Choice(['ns', 'ms', 'mo']),
               help='Specify DG basis')
 @click.option('--polyorder', '-p', prompt=True, type=click.INT,
               help='Specify polynomial order')
+@click.option('--general', '-g', type=click.INT,
+              help='Interpolation onto a general mesh of specified amount')
 @click.pass_context
-def project(ctx, basis, polyorder):
+def project(ctx, basis, polyorder, general):
     for s in range(ctx.obj['numSets']):
         data = ctx.obj['data'][s]
         numDims = data.numDims
 
-        if basis == 'ns':
-            dg = GInterpNodalSerendipity(data, polyorder)
-            numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
+        if general is not None:
+            interp = general
+            dg = GInterpGeneral(data, polyorder, basis, interp)
+            if basis == 'ns':
+                numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
                                                         polyorder-1]
-        elif basis == 'ms':
-            dg = GInterpModalSerendipity(data, polyorder)
-            numNodes = GInterpModalSerendipity.numNodes[numDims-1,
+            elif basis == 'ms':
+                numNodes = GInterpModalSerendipity.numNodes[numDims-1,
                                                         polyorder-1]
-        elif basis == 'mo':
-            dg = GInterpModalMaxOrder(data, polyorder)
-            numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
+            elif basis == 'mo':
+                numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
+                                                     polyorder-1]                 
+        else:
+            if basis == 'ns':
+                dg = GInterpNodalSerendipity(data, polyorder)
+                numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
+                                                        polyorder-1]
+            elif basis == 'ms':
+                dg = GInterpModalSerendipity(data, polyorder)
+                numNodes = GInterpModalSerendipity.numNodes[numDims-1,
+                                                        polyorder-1]
+            elif basis == 'mo':
+                dg = GInterpModalMaxOrder(data, polyorder)
+                numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
                                                      polyorder-1]
 
         coords, values = dg.project(0)

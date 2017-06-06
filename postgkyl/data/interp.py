@@ -5,6 +5,7 @@ Postgkyl sub-module to interpolate G* data
 import tables
 import numpy
 import os
+from computeInterpolationMatrices import createInterpMatrix
 
 postgkylPath = os.path.dirname(os.path.realpath(__file__))
 
@@ -210,3 +211,21 @@ class GInterpModalMaxOrder(GInterp):
         coords = [_makeMesh(self.polyOrder+1, self.Xc[d])
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(self.cMat.transpose(), q)
+
+class GInterpGeneral(GInterp):
+    """General interpolation routine - calls createInterpMatrix to generate an interpolation matrix for arbitrary level of refinement"""
+
+    def __init__(self, data, polyOrder, basis, numInterp):
+        self.numDims = data.numDims
+        self.polyOrder = polyOrder
+        self.basis = basis
+        self.numInterp = numInterp
+        self.cMat = createInterpMatrix(self.numDims, self.polyOrder, self.basis, self.numInterp)
+        GInterp.__init__(self, data,
+                         self.cMat.shape[1])
+
+    def project(self, comp=0):
+        q = self._getRawNodal(comp)
+        coords = [_makeMesh(self.numInterp, self.Xc[d])
+                  for d in range(self.numDims)]
+        return numpy.array(coords), _interpOnMesh(self.cMat, q)
