@@ -1,11 +1,10 @@
-#!/usr/bin/env python
 """
 Postgkyl sub-module to interpolate G* data
 """
 import tables
 import numpy
 import os
-from computeInterpolationMatrices import createInterpMatrix
+from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 
 postgkylPath = os.path.dirname(os.path.realpath(__file__))
 
