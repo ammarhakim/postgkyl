@@ -225,7 +225,33 @@ class GInterpGeneral(GInterp):
                          self.cMat.shape[1])
 
     def project(self, comp=0):
-        q = self._getRawNodal(comp)
+        if self.basis == 'ns':
+            q = self._getRawNodal(comp)
+        else:
+            q = self._getRawModal(comp)
         coords = [_makeMesh(self.numInterp, self.Xc[d])
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(self.cMat, q)
+
+class GInterpGeneralRead(GInterp):
+    """General interpolation routine - reads interpMatrix.h5 which contains an interpolation matrix for arbitrary level of refinement"""
+
+    def __init__(self, data, polyOrder, basis):
+        self.numDims = data.numDims
+        self.polyOrder = polyOrder
+        self.basis = basis
+        fh = tables.open_file(postgkylPath + \
+                       '/interpMatrix.h5', mode = 'r')
+        self.cMat = fh.root.interpolation_matrix[:]
+        GInterp.__init__(self, data,
+                         self.cMat.shape[1])
+
+    def project(self, comp=0):
+        if self.basis == 'ns':
+            q = self._getRawNodal(comp)
+        else:
+            q = self._getRawModal(comp)
+        numInterp = int(round(self.cMat.shape[0] ** (1.0/self.numDims)))
+        coords = [_makeMesh(numInterp, self.Xc[d])
+                  for d in range(self.numDims)]
+        return numpy.array(coords), _interpOnMesh(self.cMat, q)    
