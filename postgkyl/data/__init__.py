@@ -23,3 +23,5 @@ from .batch import GBatchInterpZeroOrder
 from .batch import GBatchInterpNodalSerendipity
 from .batch import GBatchInterpModalSerendipity
 from .batch import GBatchInterpModalMaxOrder
+# import interpolation matrices computation
+from . import computeInterpolationMatrices

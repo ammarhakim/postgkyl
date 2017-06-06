@@ -8,16 +8,19 @@ def createInterpMatrix(dim, order, basis, interp):
     interpList = numpy.zeros(interp)
 
     for i in range(0, interpList.shape[0]):
-        interpList[i] = -1.0*(interpFloat-1)/interpFloat + float(i)*2.0/interpFloat
+        interpList[i] = -1.0*(interpFloat-1)/interpFloat + \
+                        float(i)*2.0/interpFloat
 
     if dim == 1:
         x = Symbol('x')
         if basis == 'mo' or basis == 'ms':
             if order == 1:
 
-                functionVector = Matrix([[0.7071067811865468], [1.224744871391589*x]])
+                functionVector = Matrix([[0.7071067811865468],
+                                         [1.224744871391589*x]])
 
-                interpMatrix = numpy.zeros((interpList.shape[0], functionVector.shape[0]))
+                interpMatrix = numpy.zeros((interpList.shape[0],
+                                            functionVector.shape[0]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  functionVector.shape[0]):
@@ -25,9 +28,12 @@ def createInterpMatrix(dim, order, basis, interp):
 
             elif order == 2:
 
-                functionVector =  Matrix([[0.7071067811865468], [1.224744871391589*x], [2.371708245126285*x**2-0.7905694150420951]]) 
+                functionVector =  Matrix([[0.7071067811865468],
+                                          [1.224744871391589*x],
+                                          [2.371708245126285*x**2-0.7905694150420951]]) 
 
-                interpMatrix = numpy.zeros((interpList.shape[0], functionVector.shape[0]))
+                interpMatrix = numpy.zeros((interpList.shape[0],
+                                            functionVector.shape[0]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  functionVector.shape[0]):
