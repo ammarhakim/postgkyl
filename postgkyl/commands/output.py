@@ -131,6 +131,8 @@ def info(ctx):
         click.echo(' * Dataset #{:d}'.format(s))
         click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
         click.echo('  * Number of components: {:d}'.format(values.shape[-1]))
+        click.echo('  * Minimum: {:f}'.format(values.min()))
+        click.echo('  * Maximum: {:f}'.format(values.max()))        
         numDims = len(coords)
         click.echo('  * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
