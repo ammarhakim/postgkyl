@@ -11,6 +11,8 @@ from postgkyl.tools.stack import loadFrame, loadHist
               help='Specify one or more file(s) to work with.')
 @click.pass_context
 def cli(ctx, filename):
+    ctx.obj = {}
+
     ctx.obj['files'] = filename
     numSets = len(filename)
     ctx.obj['numSets'] = numSets
@@ -47,5 +49,6 @@ cli.add_command(cmd.transform.project)
 cli.add_command(cmd.transform.integrate)
 
 if __name__ == '__main__':
-    cli(obj={})
+    #cli(obj={})
+    cli()
 
