@@ -18,3 +18,7 @@ from .data.interp import GInterpZeroOrder
 from .data.interp import GInterpNodalSerendipity
 from .data.interp import GInterpModalSerendipity
 from .data.interp import GInterpModalMaxOrder
+
+# link the command line executable to the system
+from . import commands
+from . import pgkyl
