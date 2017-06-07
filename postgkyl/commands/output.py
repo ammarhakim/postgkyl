@@ -49,8 +49,10 @@ def _getFig(ctx):
               help='Save figure as png')
 @click.pass_context
 def plot(ctx, show, style, axismode, save):
-
+    if not os.path.isfile(style): # conda distribution path
+        style = dirPath + '/../../../../../data/postgkyl.mplstyle'
     plt.style.use(style)
+
     numSets = ctx.obj['numSets']
     for s in range(numSets):
         coords, values = peakStack(ctx, s)
@@ -128,12 +130,16 @@ def info(ctx):
         coords, values = peakStack(ctx, s)
         click.echo(' * Dataset #{:d}'.format(s))
         click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
-        click.echo('  * Dumber of components: {:d}'.format(values.shape[-1]))
+        click.echo('  * Number of components: {:d}'.format(values.shape[-1]))
         numDims = len(coords)
         click.echo('  * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
+            dx2 = 0.5*(coords[d][1] - coords[d][0])
             click.echo('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
-                       format(d+1, len(coords[d]), coords[d][0], coords[d][-1]))
+                       format(d+1,
+                              len(coords[d]),
+                              coords[d][0]-dx2,
+                              coords[d][-1]+dx2))
 
 
 #---------------------------------------------------------------------

@@ -1,6 +1,6 @@
 package:
   name: postgkyl
-  version: "0.5.0"
+  version: "0.9.1"
 
 source:
   path: ./
@@ -10,6 +10,9 @@ build:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
     - postgkyl/data/xformMatricesNodalSerendipity.h5
+    - postgkyl/commands/postgkyl.mplstyle
+  entry_points:
+    - pgkyl = postgkyl.pgkyl:cli
 
 requirements:
   build:
@@ -23,6 +26,7 @@ requirements:
     - matplotlib >=2.0
     - pytables
     - click
+    - sympy
 
 test:
   imports:
