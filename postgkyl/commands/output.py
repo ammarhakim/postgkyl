@@ -132,7 +132,11 @@ def info(ctx):
         click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
         click.echo('  * Number of components: {:d}'.format(values.shape[-1]))
         click.echo('  * Minimum: {:f}'.format(values.min()))
-        click.echo('  * Maximum: {:f}'.format(values.max()))        
+        amin = np.unravel_index(np.argmin(values), values.shape)
+        click.echo('     * Minimum Index: {:s}'.format(str(amin)))
+        click.echo('  * Maximum: {:f}'.format(values.max()))
+        amax = np.unravel_index(np.argmax(values), values.shape)
+        click.echo('     * Maximum Index: {:s}'.format(str(amax)))
         numDims = len(coords)
         click.echo('  * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
