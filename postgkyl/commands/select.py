@@ -17,7 +17,7 @@ from postgkyl.tools.stack import pushStack, peakStack, popStack
               help='Fix coordinates based on an index')
 @click.pass_context
 def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         coordsOut, valuesOut = fixCoordSlice(coords, values, mode,
                                              c1, c2, c3, c4, c5, c6)
@@ -41,7 +41,7 @@ def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
 @click.argument('component', type=click.STRING)
 @click.pass_context
 def comp(ctx, component):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         if len(component.split(',')) > 1:
@@ -59,10 +59,29 @@ def comp(ctx, component):
             label = 'c_{:d}'.format(comp)
             values = values[..., comp, numpy.newaxis]
 
-        pushStack(ctx, s, coords, values, label)
+        pushStack(ctx, s, coords, values, label)       
+
+@click.command(help='Select data sets(s)')
+@click.option('-i', '--idx', type=click.STRING,
+              help='Data set indices')
+@click.option('-a', '--allsets', is_flag=True,
+              help='All data sets')
+@click.pass_context
+def dataset(ctx, idx, allsets):
+    if allsets is False:
+        if len(idx.split(',')) > 1:
+            sets = idx.split(',')
+            ctx.obj['sets'] = [int(s) for s in sets]            
+        elif len(idx.split(':')) == 2:
+            sets = idx.split(':')
+            ctx.obj['sets'] = range(int(sets[0]), int(sets[1]))
+        else:
+            ctx.obj['sets'] = [int(idx)]
+    else:
+        ctx.obj['sets'] = range(ctx.obj['numSets'])
 
 @click.command(help='Pop the data stack')
 @click.pass_context
 def pop(ctx):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         popStack(ctx, s)

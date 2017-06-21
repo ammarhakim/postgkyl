@@ -16,6 +16,13 @@ def popStack(ctx, dataSet):
     values = ctx.obj['values'][dataSet].pop()
     ctx.obj['labels'][dataSet].pop()
     return coords, values
+def addStack(ctx):
+    numCurrentSets = len(ctx.obj['values'])
+    ctx.obj['coords'].append([])
+    ctx.obj['values'].append([])
+    ctx.obj['labels'].append([])
+    ctx.obj['setIds'].append(numCurrentSets)
+    return numCurrentSets
 
 def peakLabel(ctx, dataSet, idx=None):
     if idx is not None:
@@ -48,6 +55,7 @@ def antiSqueeze(coords, values):
 
 def loadFrame(ctx, dataSet, fileName):
     ctx.obj['data'].append(GData(fileName))
+    ctx.obj['type'].append('frame')
 
     dg = GInterpZeroOrder(ctx.obj['data'][dataSet])
     coords, values = dg.project(0)
@@ -68,22 +76,26 @@ def loadFrame(ctx, dataSet, fileName):
     # like to use '.' in name... I really dislike it but I don't
     # know about any better -pc
 
-    ctx.obj['coords'].append([])
-    ctx.obj['values'].append([])
-    ctx.obj['labels'].append([])
+    addStack(ctx)
     pushStack(ctx, dataSet, coords, values, name)
 
 def loadHist(ctx, dataSet, fileName):
-    ctx.obj['data'].append('')
     hist = GHistoryData(fileName)
+    ctx.obj['data'].append(hist)
+    ctx.obj['type'].append('hist')
 
     name = fileName.split('/')[-1]  # get rid of the full path
     name = name.strip('0')
     name = name.strip('_')
 
-    ctx.obj['coords'].append([])
-    ctx.obj['values'].append([])
-    ctx.obj['labels'].append([])
-    pushStack(ctx, dataSet,
-              hist.time[numpy.newaxis, ...], hist.values[..., numpy.newaxis],
-              name)
+    addStack(ctx)
+    if len(hist.values.shape) == 1:
+        pushStack(ctx, dataSet,
+                  hist.time[numpy.newaxis, ...],
+                  hist.values[..., numpy.newaxis],
+                  name)
+    else:
+        pushStack(ctx, dataSet,
+                  hist.time[numpy.newaxis, ...],
+                  hist.values,
+                  name)

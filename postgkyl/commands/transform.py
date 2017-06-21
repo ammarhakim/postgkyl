@@ -22,7 +22,7 @@ from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
               help='Interpolation onto a general mesh of specified amount')
 @click.pass_context
 def project(ctx, basis, polyorder, general, read_general):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         data = ctx.obj['data'][s]
         numDims = data.numDims
 
@@ -80,7 +80,7 @@ def project(ctx, basis, polyorder, general, read_general):
 @click.argument('factor', nargs=1, type=click.FLOAT)
 @click.pass_context
 def mult(ctx, factor):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         valuesOut = values * factor
         pushStack(ctx, s, coords, valuesOut)
@@ -90,7 +90,7 @@ def mult(ctx, factor):
               help='Shift minimal value to zero (default: False).')
 @click.pass_context
 def norm(ctx, shift):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         
         numComps = values.shape[-1]
@@ -108,7 +108,7 @@ def norm(ctx, shift):
 @click.pass_context
 def mask(ctx, maskfile):
     maskField = GData(maskfile).q[..., 0, numpy.newaxis]
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         numComps = values.shape[-1]
@@ -127,7 +127,7 @@ def mask(ctx, maskfile):
 @click.argument('axies', nargs=1, type=click.STRING)
 @click.pass_context
 def integrate(ctx, axies):
-    for s in range(ctx.obj['numSets']):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         axies = axies.split(',')

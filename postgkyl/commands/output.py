@@ -53,8 +53,7 @@ def plot(ctx, show, style, axismode, save):
         style = dirPath + '/../../../../../data/postgkyl.mplstyle'
     plt.style.use(style)
 
-    numSets = ctx.obj['numSets']
-    for s in range(numSets):
+    for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         label = peakLabel(ctx, s)
@@ -123,29 +122,43 @@ def hold(ctx, hld):
 #---------------------------------------------------------------------
 #-- Info -------------------------------------------------------------
 @click.command(help='Print the current top of stack info')
+@click.option('-a', '--allsets', is_flag=True,
+              help='All data sets')
 @click.pass_context
-def info(ctx):                                    
-    click.echo('\nPrinting the current top of stack info:')
-    for s in range(ctx.obj['numSets']):
+def info(ctx, allsets): 
+    if allsets is True:
+        click.echo('\nPrinting the current top of stack information (all data sets):')
+        sets = range(ctx.obj['numSets'])
+    else:
+        click.echo('\nPrinting the current top of stack information (active data sets):')
+        sets = ctx.obj['sets']
+        
+    for s in sets:
         coords, values = peakStack(ctx, s)
-        click.echo(' * Dataset #{:d}'.format(s))
-        click.echo('  * Time: {:f}'.format(ctx.obj['data'][s].time))
-        click.echo('  * Number of components: {:d}'.format(values.shape[-1]))
-        click.echo('  * Minimum: {:f}'.format(values.min()))
+        click.echo(' * Dataset #{:d}'.format(ctx.obj['setIds'][s]))
+        if ctx.obj['type'][s] == 'frame':
+            click.echo('   * Time: {:f}'.format(ctx.obj['data'][s].time))
+        else:
+            click.echo('   * Time: {:f} - {:f}'.format(ctx.obj['data'][s].time[0],
+                                                      ctx.obj['data'][s].time[-1]))
+        click.echo('   * Number of components: {:d}'.format(values.shape[-1]))
+        click.echo('   * Minimum: {:f}'.format(values.min()))
         amin = np.unravel_index(np.argmin(values), values.shape)
         click.echo('     * Minimum Index: {:s}'.format(str(amin)))
-        click.echo('  * Maximum: {:f}'.format(values.max()))
+        click.echo('   * Maximum: {:f}'.format(values.max()))
         amax = np.unravel_index(np.argmax(values), values.shape)
         click.echo('     * Maximum Index: {:s}'.format(str(amax)))
         numDims = len(coords)
-        click.echo('  * Dimensions ({:d}):'.format(numDims))
+        click.echo('   * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
-            dx2 = 0.5*(coords[d][1] - coords[d][0])
-            click.echo('   * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.
-                       format(d+1,
-                              len(coords[d]),
-                              coords[d][0]-dx2,
-                              coords[d][-1]+dx2))
+            if ctx.obj['type'][s] == 'frame':
+                dx2 = 0.5*(coords[d][1] - coords[d][0])
+                minC = coords[d][0]-dx2
+                maxC = coords[d][-1]+dx2
+            else:
+                minC = coords[d][0]
+                maxC = coords[d][-1]
+            click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.format(d+1, len(coords[d]), minC, maxC))
 
 
 #---------------------------------------------------------------------
@@ -179,42 +192,42 @@ def flatten(coords, values):
 
 @click.command(help='Save the current top of stack into ASCII or H5 file')
 @click.option('--filename', '-f', type=click.STRING)
-@click.option('--dataset', '-d', type=click.INT, default=0)
 @click.option('--mode', '-m', type=click.Choice(['h5', 'txt']),
               default='h5')
 @click.pass_context
-def write(ctx, dataset, filename, mode):
-    coords, values = peakStack(ctx, dataset)
+def write(ctx, filename, mode):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, dataset)
 
-    numDims = int(len(coords))
-    numComps = int(values.shape[-1])
+        numDims = int(len(coords))
+        numComps = int(values.shape[-1])
 
-    if filename is None:
-        filename = '{:s}.{:s}'.format(getFullLabel(ctx, dataset), mode)
+        if filename is None:
+            filename = '{:s}.{:s}'.format(getFullLabel(ctx, dataset), mode)
 
-    if mode == 'h5':
-        fh = tables.open_file(filename, 'w')
+        if mode == 'h5':
+            fh = tables.open_file(filename, 'w')
 
-        lowerBounds = np.zeros(numDims)
-        upperBounds = np.zeros(numDims)
-        numCells = np.zeros(numDims)
-        for d in range(numDims):
-            lowerBounds[d] = coords[d].min()
-            upperBounds[d] = coords[d].max()
-            numCells[d] = values.shape[d]
-        grid = fh.create_group('/', 'StructGrid')
-        grid._v_attrs.vsLowerBounds = lowerBounds
-        grid._v_attrs.vsUpperBounds = upperBounds
-        grid._v_attrs.vsNumCells = numCells
+            lowerBounds = np.zeros(numDims)
+            upperBounds = np.zeros(numDims)
+            numCells = np.zeros(numDims)
+            for d in range(numDims):
+                lowerBounds[d] = coords[d].min()
+                upperBounds[d] = coords[d].max()
+                numCells[d] = values.shape[d]
+            grid = fh.create_group('/', 'StructGrid')
+            grid._v_attrs.vsLowerBounds = lowerBounds
+            grid._v_attrs.vsUpperBounds = upperBounds
+            grid._v_attrs.vsNumCells = numCells
 
-        timeData = fh.create_group('/', 'timeData')
-        timeData._v_attrs.vsTime = ctx.obj['data'][dataset].time
+            timeData = fh.create_group('/', 'timeData')
+            timeData._v_attrs.vsTime = ctx.obj['data'][dataset].time
 
-        fh.create_array('/', 'StructGridField', values)
+            fh.create_array('/', 'StructGridField', values)
 
-        fh.close()
+            fh.close()
 
-    elif mode == 'txt':
-        np.savetxt(filename, flatten(coords, values))
+        elif mode == 'txt':
+            np.savetxt(filename, flatten(coords, values))
         
             
