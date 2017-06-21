@@ -143,9 +143,9 @@ def integrate(ctx, axies):
         for d in range(numDims):
             if not d in axies:
                 idxCoords.append(d)
-        if len(axies) == numDims-1:
-             coordsOut = coords[numpy.newaxis, idxCoords]
-        else:
-            coordsOut = coords[idxCoords]
+        coordsOut = coords[idxCoords]
+
+        print(coordsOut.shape)
+        print(valuesOut.shape)
 
         pushStack(ctx, s, coordsOut, valuesOut, label)
