@@ -145,7 +145,4 @@ def integrate(ctx, axies):
                 idxCoords.append(d)
         coordsOut = coords[idxCoords]
 
-        print(coordsOut.shape)
-        print(valuesOut.shape)
-
         pushStack(ctx, s, coordsOut, valuesOut, label)
