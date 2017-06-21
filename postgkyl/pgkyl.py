@@ -16,15 +16,17 @@ def cli(ctx, filename):
     ctx.obj['files'] = filename
     numSets = len(filename)
     ctx.obj['numSets'] = numSets
-    ctx.obj['mapSets'] = slice(numSets)
+    ctx.obj['sets'] = range(numSets)
+    ctx.obj['setIds'] = []
 
     ctx.obj['data'] = []
     ctx.obj['labels'] = []
 
     ctx.obj['coords'] = []
     ctx.obj['values'] = []
+    ctx.obj['type'] = []
 
-    for s in range(numSets):
+    for s in ctx.obj['sets']:
         if filename[s][-2:] == 'h5' or filename[s][-2:] == 'bp':
             loadFrame(ctx, s, str(filename[s]))
         else:
@@ -42,6 +44,7 @@ cli.add_command(cmd.output.write)
 cli.add_command(cmd.select.comp)
 cli.add_command(cmd.select.fix)
 cli.add_command(cmd.select.pop)
+cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
@@ -49,6 +52,5 @@ cli.add_command(cmd.transform.project)
 cli.add_command(cmd.transform.integrate)
 
 if __name__ == '__main__':
-    #cli(obj={})
     cli()
 
