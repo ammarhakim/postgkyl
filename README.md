@@ -12,12 +12,14 @@ Postgkyl requires the following packages:
  * scipy
  * matplotlib (2.0+)
  * pytables
+ * click
+ * adios
 
 You can install postgkyl directly through Conda (all dependencies will
 be downloaded and installed automatically):
 
 ~~~~~~~
-conda install -c pcagas postgkyl
+conda install -c gkyl postgkyl
 ~~~~~~~
 
 Conda package manager can be obtained ether through the full
@@ -25,6 +27,17 @@ Conda package manager can be obtained ether through the full
 lightweight [Miniconda](https://conda.io/miniconda.html)
 
 # Changelog
+
+* 2017/06/22
+       - Switching to 0-indexig for all commands
+
+* 2017/05/18
+       - `gplot`has been depracated. It was replaced by `pgkyl.py`
+         that uses very different modular design. See the
+         documentation for more details. Alternativelly, available
+         commands can be listed with:
+
+ 	 `pgkyl --help`
 
 * 2017/04/05
        - Flags `-p` and `-y` have been deprecated.
@@ -51,5 +64,20 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
 
 # License
 
-Postgkyl uses the BSD license. The full license is available [here](LICENSE).
+PostGkyl uses the BSD license. The full license is available [here](LICENSE).
+
+# Developer guidelines
+
+* Since Python 3 has now all the vital parts (Python 3.6 is generally
+  considered the first improved version over Python 2.7), an effort
+  has been made to make PostGkyl Python 2/3 compatible. Please test
+  your code against both versions (see conda
+  [documentation](https://conda.io/docs/py2or3.html) how to maintain
+  both versions). Checking `print a` to the code will result in
+  revoking the repo access.
+
+* PostGkyl loosely follow the Python style conventions in PEP
+  8. Python package `pep8` provides a useful
+  [tool](https://pypi.python.org/pypi/pep8) to check the code. One
+  exceptions the usage of camelNames instead of underscore_names.
 
