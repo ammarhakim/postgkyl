@@ -79,16 +79,16 @@ def plot(ctx, show, style, axismode, save,
             else:
                 labelComp = label
 
-
             if contour is True:
                 im = ax.contour(coords[0], coords[1],
                                 values[..., comp].transpose(),
                                 label=labelComp)
                 _colorbar(im, ax, fig)
             elif quiver is True:
-                im = ax.quiver(coords[0], coords[1],
-                               values[..., 0].transpose(),
-                               values[..., 1].transpose())
+                skip = int(np.max((len(coords[0]), len(coords[1])))//15)
+                im = ax.quiver(coords[0][::skip], coords[1][::skip],
+                               values[::skip, ::skip, 0].transpose(),
+                               values[::skip, ::skip, 1].transpose())
             elif streamline is True:
                 magnitude = np.sqrt(values[..., 0]**2 + values[..., 1]**2)
                 im = ax.streamplot(coords[0], coords[1],
@@ -111,11 +111,15 @@ def plot(ctx, show, style, axismode, save,
                     ctx.exit()
 
             if ctx.obj['hold'] == 'on':
-                ax.set_title('{:s}'.format(title))
+                ax.text(0.5, 1.08, '{:s}'.format(title),
+                        horizontalalignment='center',
+                        transform=ax.transAxes)
                 ax.legend(loc=0)
             else:
-                ax.set_title('{:s} {:s}'.format(title, labelComp))
-
+                ax.text(0.5, 1.08, '{:s} {:s}'.format(title, labelComp),
+                        horizontalalignment='center',
+                        transform=ax.transAxes)
+                
             # formating
             if numDims == 1:
                 plt.autoscale(enable=True, axis='x', tight=True)
