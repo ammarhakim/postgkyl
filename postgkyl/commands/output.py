@@ -43,7 +43,7 @@ def _getFig(ctx):
 @click.option('--style', default=dirPath+'/postgkyl.mplstyle',
               help='Specify Matplotlib style file (default: Postgkyl style)')
 @click.option('--fixed-axis', 'axismode', flag_value='image',
-             default=True)
+              default=True)
 @click.option('--free-axis', 'axismode', flag_value='tight')
 @click.option('--save/--no-save', '-s', default=False,
               help='Save figure as png')
@@ -70,33 +70,40 @@ def plot(ctx, show, style, axismode, save,
 
         numDims = len(coords)
         numComps = values.shape[-1]
-
-        for comp in range(numComps):
+        if streamline or quiver:
+            skip = 2
+        else:
+            skip = 1
+        idxComps = range(0, numComps, skip)
+        for comp in idxComps:
             fig, ax = _getFig(ctx)
 
-            if numComps > 1:
+            if len(idxComps) > 1:
                 labelComp = '{:s} c{:d}'.format(label, comp)
             else:
                 labelComp = label
 
-            if contour is True:
+            # Specialized plotting
+            if contour:
                 im = ax.contour(coords[0], coords[1],
                                 values[..., comp].transpose(),
                                 label=labelComp)
                 _colorbar(im, ax, fig)
-            elif quiver is True:
+            elif quiver:
                 skip = int(np.max((len(coords[0]), len(coords[1])))//15)
                 im = ax.quiver(coords[0][::skip], coords[1][::skip],
-                               values[::skip, ::skip, 0].transpose(),
-                               values[::skip, ::skip, 1].transpose())
-            elif streamline is True:
-                magnitude = np.sqrt(values[..., 0]**2 + values[..., 1]**2)
+                               values[::skip, ::skip, comp].transpose(),
+                               values[::skip, ::skip, comp+1].transpose())
+            elif streamline:
+                magnitude = np.sqrt(values[..., comp]**2 + 
+                                    values[..., comp+1]**2)
                 im = ax.streamplot(coords[0], coords[1],
-                                   values[..., 0].transpose(),
-                                   values[..., 1].transpose(),
+                                   values[..., comp].transpose(),
+                                   values[..., comp+1].transpose(),
                                    color=magnitude.transpose())
                 _colorbar(im.lines, ax, fig)
-            else:  # Default plotting
+            # Default plotting
+            else:
                 if numDims == 1:
                     im = ax.plot(coords[0], values[..., comp],
                                  label=labelComp)
@@ -120,7 +127,7 @@ def plot(ctx, show, style, axismode, save,
                         horizontalalignment='center',
                         transform=ax.transAxes)
                 
-            # formating
+            # Formating
             if numDims == 1:
                 plt.autoscale(enable=True, axis='x', tight=True)
             elif numDims == 2:

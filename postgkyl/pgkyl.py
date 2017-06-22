@@ -50,6 +50,9 @@ cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
 cli.add_command(cmd.transform.project)
 cli.add_command(cmd.transform.integrate)
+cli.add_command(cmd.transform.grad)
+cli.add_command(cmd.transform.div)
+cli.add_command(cmd.transform.curl)
 
 if __name__ == '__main__':
     cli()
