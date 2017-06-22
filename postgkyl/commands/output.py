@@ -47,8 +47,15 @@ def _getFig(ctx):
 @click.option('--free-axis', 'axismode', flag_value='tight')
 @click.option('--save/--no-save', '-s', default=False,
               help='Save figure as png')
+@click.option('-q', '--quiver', is_flag=True,
+              help='Switch to quiver mode')
+@click.option('-l', '--streamline', is_flag=True,
+              help='Switch to streamline mode')
+@click.option('-c', '--contour', is_flag=True,
+              help='Switch to contour mode')
 @click.pass_context
-def plot(ctx, show, style, axismode, save):
+def plot(ctx, show, style, axismode, save,
+         quiver, contour, streamline):
     if not os.path.isfile(style): # conda distribution path
         style = dirPath + '/../../../../../data/postgkyl.mplstyle'
     plt.style.use(style)
@@ -72,20 +79,36 @@ def plot(ctx, show, style, axismode, save):
             else:
                 labelComp = label
 
-            if numDims == 1:
-                im = ax.plot(coords[0], values[..., comp],
-                             label=labelComp)
-                plt.autoscale(enable=True, axis='x', tight=True)
-            elif numDims == 2:
-                im = ax.pcolormesh(coords[0], coords[1],
-                                   values[..., comp].transpose(),
-                                   label=labelComp)
+
+            if contour is True:
+                im = ax.contour(coords[0], coords[1],
+                                values[..., comp].transpose(),
+                                label=labelComp)
                 _colorbar(im, ax, fig)
-                ax.axis(axismode)
-            else:
-                click.echo('{:d}D plots currently not supported'.
-                           format(numDims))
-                ctx.exit()
+            elif quiver is True:
+                im = ax.quiver(coords[0], coords[1],
+                               values[..., 0].transpose(),
+                               values[..., 1].transpose())
+            elif streamline is True:
+                magnitude = np.sqrt(values[..., 0]**2 + values[..., 1]**2)
+                im = ax.streamplot(coords[0], coords[1],
+                                   values[..., 0].transpose(),
+                                   values[..., 1].transpose(),
+                                   color=magnitude.transpose())
+                _colorbar(im.lines, ax, fig)
+            else:  # Default plotting
+                if numDims == 1:
+                    im = ax.plot(coords[0], values[..., comp],
+                                 label=labelComp)
+                elif numDims == 2:
+                    im = ax.pcolormesh(coords[0], coords[1],
+                                       values[..., comp].transpose(),
+                                       label=labelComp)
+                    _colorbar(im, ax, fig)
+                else:
+                    click.echo('{:d}D plots currently not supported'.
+                               format(numDims))
+                    ctx.exit()
 
             if ctx.obj['hold'] == 'on':
                 ax.set_title('{:s}'.format(title))
@@ -93,6 +116,11 @@ def plot(ctx, show, style, axismode, save):
             else:
                 ax.set_title('{:s} {:s}'.format(title, labelComp))
 
+            # formating
+            if numDims == 1:
+                plt.autoscale(enable=True, axis='x', tight=True)
+            elif numDims == 2:
+                ax.axis(axismode)
             ax.grid(True)
             plt.tight_layout()
 
