@@ -1,5 +1,5 @@
 import click
-import numpy
+import numpy as np
 
 from postgkyl.data.load import GData
 from postgkyl.data.interp import GInterpNodalSerendipity
@@ -68,9 +68,9 @@ def project(ctx, basis, polyorder, general, read_general):
 
         numComps = int(data.q.shape[-1]/numNodes)
         if numComps > 1:
-            for comp in numpy.arange(numComps-1)+1:
+            for comp in np.arange(numComps-1)+1:
                 coords, tmp = dg.project(comp)
-                values = numpy.append(values, antiSqueeze(coords, tmp),
+                values = np.append(values, antiSqueeze(coords, tmp),
                                       axis=numDims)
  
         label = 'proj_{:s}_{:d}'.format(basis, polyorder)
@@ -98,7 +98,7 @@ def norm(ctx, shift):
         for comp in range(numComps):
             if shift:
                 valuesOut[..., comp] -= valuesOut[..., comp].min() 
-            valuesOut[..., comp] /= numpy.abs(valuesOut[..., comp]).max()  
+            valuesOut[..., comp] /= np.abs(valuesOut[..., comp]).max()  
 
         label = 'norm'
         pushStack(ctx, s, coords, valuesOut, label)
@@ -107,22 +107,24 @@ def norm(ctx, shift):
 @click.argument('maskfile', nargs=1, type=click.STRING)
 @click.pass_context
 def mask(ctx, maskfile):
-    maskField = GData(maskfile).q[..., 0, numpy.newaxis]
+    maskField = GData(maskfile).q[..., 0, np.newaxis]
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         numComps = values.shape[-1]
         numDims = len(values.shape) - 1
 
-        tmp = numpy.copy(maskField)
+        tmp = np.copy(maskField)
         if numComps > 1:
-            for comp in numpy.arange(numComps-1)+1:
-                tmp = numpy.append(tmp, maskField, axis=numDims)
+            for comp in np.arange(numComps-1)+1:
+                tmp = np.append(tmp, maskField, axis=numDims)
 
-        valuesOut = numpy.ma.masked_where(tmp < 0.0, values)
+        valuesOut = np.ma.masked_where(tmp < 0.0, values)
 
         pushStack(ctx, s, coords, valuesOut)
 
+#---------------------------------------------------------------------
+#-- Calculus ---------------------------------------------------------
 @click.command(help='Integrate over axies')
 @click.argument('axies', nargs=1, type=click.STRING)
 @click.pass_context
@@ -134,7 +136,7 @@ def integrate(ctx, axies):
         label = 'int_{:s}'.format('_'.join(axies)) 
         axies = [int(axis) for axis in axies]
 
-        valuesOut = numpy.sum(values, axis=tuple(axies))
+        valuesOut = np.sum(values, axis=tuple(axies))
         for axis in axies:
             valuesOut *= (coords[axis][1] - coords[axis][0])
 
@@ -146,3 +148,78 @@ def integrate(ctx, axies):
         coordsOut = coords[idxCoords]
 
         pushStack(ctx, s, coordsOut, valuesOut, label)
+
+@click.command(help='Calculate gradient')
+@click.pass_context
+def grad(ctx):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+
+        numDims = len(coords)
+        numComps = values.shape[-1]
+        if numComps > 1:
+            click.echo('Warning - grad: scalar value expecded, only the first component is taken into the account')
+
+        valuesOut = np.gradient(values[..., 0], edge_order=2)
+        valuesOut = np.moveaxis(valuesOut, 0, -1)
+        for d in range(numDims):
+            valuesOut[..., d] /= (coords[d][1]-coords[d][0])
+
+        pushStack(ctx, s, coords, valuesOut, 'grad')
+
+@click.command(help='Calculate divergence')
+@click.pass_context
+def div(ctx):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+
+        numDims = len(coords)
+        numComps = values.shape[-1]
+        if numDims != numComps:
+            raise ValueError(
+                "div: number of dimensions is not corresponding to the number of components")
+
+        dx = coords[0][1]-coords[0][0]
+        valuesOut = antiSqueeze(coords, np.gradient(values[..., 0], dx,
+                                                    axis=0, edge_order=2))
+        for d in np.arange(numDims-1)+1:
+            d = int(d)
+            dx = coords[d][1]-coords[d][0]
+            temp = antiSqueeze(coords, np.gradient(values[..., d], dx,
+                                                   axis=d, edge_order=2))
+            valuesOut += temp
+
+        pushStack(ctx, s, coords, valuesOut, 'div')
+
+@click.command(help='Calculate curl')
+@click.pass_context
+def curl(ctx):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+
+        numDims = len(coords)
+        numComps = values.shape[-1]
+        if numComps != 3:
+            raise ValueError(
+                "curl: 3 componets (3D vector) are required for curl")
+
+        dx = coords[0][1]-coords[0][0]
+        dy = coords[1][1]-coords[1][0]
+        dudy = np.gradient(values[..., 0], dy, axis=1, edge_order=2)
+        dvdx = np.gradient(values[..., 1], dx, axis=0, edge_order=2)
+        dwdx = np.gradient(values[..., 2], dx, axis=0, edge_order=2)
+        dwdy = np.gradient(values[..., 2], dy, axis=1, edge_order=2)
+        if numDims == 3:
+            dz = coords[2][1]-coords[2][0]
+            dudz = np.gradient(values[..., 0], dz, axis=2, edge_order=2)
+            dvdz = np.gradient(values[..., 1], dz, axis=2, edge_order=2)
+        else:
+            dudz = 0
+            dvdz = 0
+
+        valuesOut = np.zeros(values.shape)
+        valuesOut[..., 0] = dwdy - dvdz
+        valuesOut[..., 1] = dudz - dwdx
+        valuesOut[..., 2] = dvdx - dudy
+        
+        pushStack(ctx, s, coords, valuesOut, 'curl')
