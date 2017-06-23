@@ -118,14 +118,16 @@ def plot(ctx, show, style, axismode, save,
                     ctx.exit()
 
             if ctx.obj['hold'] == 'on':
-                ax.text(0.5, 1.08, '{:s}'.format(title),
-                        horizontalalignment='center',
-                        transform=ax.transAxes)
+                ax.set_title('{:s}'.format(title), y=1.08)
+                #ax.text(0.5, 1.08, '{:s}'.format(title),
+                #        horizontalalignment='center',
+                #        transform=ax.transAxes)
                 ax.legend(loc=0)
             else:
-                ax.text(0.5, 1.08, '{:s} {:s}'.format(title, labelComp),
-                        horizontalalignment='center',
-                        transform=ax.transAxes)
+                ax.set_title('{:s} {:s}'.format(title, labelComp), y=1.08)
+                #ax.text(0.5, 1.08, '{:s} {:s}'.format(title, labelComp),
+                #        horizontalalignment='center',
+                #        transform=ax.transAxes)
                 
             # Formating
             if numDims == 1:
@@ -197,7 +199,7 @@ def info(ctx, allsets):
             else:
                 minC = coords[d][0]
                 maxC = coords[d][-1]
-            click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.format(d+1, len(coords[d]), minC, maxC))
+            click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.format(d, len(coords[d]), minC, maxC))
 
 
 #---------------------------------------------------------------------
