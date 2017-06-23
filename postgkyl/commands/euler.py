@@ -1,5 +1,5 @@
 import click
-import numpy
+import numpy as np
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack
 
@@ -11,8 +11,8 @@ def pressure(gasGamma, q):
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
-              type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "pressure"]))
+              multiple=True, type=click.Choice(["density", "xvel", "yvel",
+                                                "zvel", "pressure"]))
 @click.pass_context
 def euler(ctx, gas_gamma, variable_name):
     v = variable_name
@@ -29,7 +29,7 @@ def euler(ctx, gas_gamma, variable_name):
             tmp = q[...,3]/q[...,0]
         elif v == "pressure":
             tmp = pressure(gas_gamma, q)
-        tmp = tmp[..., numpy.newaxis]
+        tmp = tmp[..., np.newaxis]
 
         pushStack(ctx, s, coords, tmp, v)
 

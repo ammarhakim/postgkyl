@@ -238,13 +238,13 @@ def flatten(coords, values):
 @click.pass_context
 def write(ctx, filename, mode):
     for s in ctx.obj['sets']:
-        coords, values = peakStack(ctx, dataset)
+        coords, values = peakStack(ctx, s)
 
         numDims = int(len(coords))
         numComps = int(values.shape[-1])
 
         if filename is None:
-            filename = '{:s}.{:s}'.format(getFullLabel(ctx, dataset), mode)
+            filename = '{:s}.{:s}'.format(getFullLabel(ctx, s), mode)
 
         if mode == 'h5':
             fh = tables.open_file(filename, 'w')
@@ -262,7 +262,7 @@ def write(ctx, filename, mode):
             grid._v_attrs.vsNumCells = numCells
 
             timeData = fh.create_group('/', 'timeData')
-            timeData._v_attrs.vsTime = ctx.obj['data'][dataset].time
+            timeData._v_attrs.vsTime = ctx.obj['data'][s].time
 
             fh.create_array('/', 'StructGridField', values)
 
