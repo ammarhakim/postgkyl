@@ -5,23 +5,25 @@ from postgkyl.tools.fields import fixCoordSlice
 from postgkyl.tools.stack import pushStack, peakStack, popStack
 
 @click.command(help='Fix a coordinate')
-@click.option('--c1', type=click.FLOAT, help='Fix 1st coordinate')
-@click.option('--c2', type=click.FLOAT, help='Fix 2nd coordinate')
-@click.option('--c3', type=click.FLOAT, help='Fix 3rd coordinate')
-@click.option('--c4', type=click.FLOAT, help='Fix 4th coordinate')
-@click.option('--c5', type=click.FLOAT, help='Fix 5th coordinate')
-@click.option('--c6', type=click.FLOAT, help='Fix 6th coordinate')
+@click.option('--c0', type=click.FLOAT, help='Fix 1st coordinate')
+@click.option('--c1', type=click.FLOAT, help='Fix 2nd coordinate')
+@click.option('--c2', type=click.FLOAT, help='Fix 3rd coordinate')
+@click.option('--c3', type=click.FLOAT, help='Fix 4th coordinate')
+@click.option('--c4', type=click.FLOAT, help='Fix 5th coordinate')
+@click.option('--c5', type=click.FLOAT, help='Fix 6th coordinate')
 @click.option('--value', 'mode', flag_value='value',
               default=True, help='Fix coordinates based on a value')
 @click.option('--index', 'mode', flag_value='idx',
               help='Fix coordinates based on an index')
 @click.pass_context
-def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
+def fix(ctx, c0, c1, c2, c3, c4, c5, mode):
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         coordsOut, valuesOut = fixCoordSlice(coords, values, mode,
-                                             c1, c2, c3, c4, c5, c6)
+                                             c0, c1, c2, c3, c4, c5)
         label = 'fix'
+        if c0 is not None:
+            label = '{:s}_c0_{:f}'.format(label, c0)
         if c1 is not None:
             label = '{:s}_c1_{:f}'.format(label, c1)
         if c2 is not None:
@@ -32,8 +34,6 @@ def fix(ctx, c1, c2, c3, c4, c5, c6, mode):
             label = '{:s}_c4_{:f}'.format(label, c4)
         if c5 is not None:
             label = '{:s}_c5_{:f}'.format(label, c5)
-        if c6 is not None:
-            label = '{:s}_c6_{:f}'.format(label, c6)
 
         pushStack(ctx, s, coordsOut, valuesOut, label)
 
