@@ -217,11 +217,11 @@ def flatten(coords, values):
     for d in range(numDims-1):
         basis[d] = numCells[(d+1):].prod()
 
-    idxs = np.zeros(numDims)
     for i in range(numRows):
         idx = i
+        idxs = []
         for d in range(numDims):
-            idxs[d] = int(idx // basis[d])
+            idxs.append(int(idx // basis[d]))
             idx = idx % basis[d]
             
         for d in range(numDims):
@@ -262,8 +262,10 @@ def write(ctx, filename, mode):
             grid._v_attrs.vsNumCells = numCells
 
             timeData = fh.create_group('/', 'timeData')
-            timeData._v_attrs.vsTime = ctx.obj['data'][s].time
-
+            if ctx.obj['type'][s] == 'frame':
+                timeData._v_attrs.vsTime = ctx.obj['data'][s].time
+            else:
+                timeData._v_attrs.vsTime = 0
             fh.create_array('/', 'StructGridField', values)
 
             fh.close()
