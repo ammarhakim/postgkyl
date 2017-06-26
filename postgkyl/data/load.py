@@ -184,12 +184,14 @@ class GHistoryData:
         # read the rest of the files and append
         for fl in self.files[start+1 :]:
             ext = fl.split('.')[-1]
-            if ext == 'h5':
+            try:
                 fh = tables.open_file(fl, 'r')
                 self.values = numpy.append(self.values,
                                            fh.root.DataStruct.data.read(), axis=0)
                 self.time = numpy.append(self.time,
                                          fh.root.DataStruct.timeMesh.read())
+                fh.close()
+            except:
                 fh.close()
 
         # sort with scending time
@@ -212,13 +214,15 @@ class GHistoryData:
         # read the rest of the files and append
         for fl in self.files[start+1 :]:
             ext = fl.split('.')[-1]
-            if ext == 'bp':
+            try:
                 self.values = numpy.append(self.values,
                                            adios.readvar(fl, 'Data'),
                                            axis=0)
                 self.time = numpy.append(self.time,
                                          adios.readvar(fl, 'TimeMesh'),
                                          axis=0)
+            except:
+                fh.close()
 
         # sort with scending time
         sortIdx = numpy.argsort(self.time)
