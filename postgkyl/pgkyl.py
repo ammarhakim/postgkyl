@@ -53,6 +53,7 @@ cli.add_command(cmd.transform.integrate)
 cli.add_command(cmd.transform.grad)
 cli.add_command(cmd.transform.div)
 cli.add_command(cmd.transform.curl)
+cli.add_command(cmd.transform.transpose)
 
 if __name__ == '__main__':
     cli()

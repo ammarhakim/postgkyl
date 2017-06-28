@@ -10,6 +10,8 @@ from postgkyl.data.interp import GInterpGeneralRead
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 
+#---------------------------------------------------------------------
+#-- DG projection ----------------------------------------------------
 @click.command(help='Project DG data on a uniform mesh')
 @click.option('--basis', '-b', prompt=True,
               type=click.Choice(['ns', 'ms', 'mo']),
@@ -76,6 +78,9 @@ def project(ctx, basis, polyorder, general, read_general):
         label = 'proj_{:s}_{:d}'.format(basis, polyorder)
         pushStack(ctx, s, coords, values, label)
 
+
+#---------------------------------------------------------------------
+#-- Math -------------------------------------------------------------
 @click.command(help='Multiply data by a factor')
 @click.argument('factor', nargs=1, type=click.FLOAT)
 @click.pass_context
@@ -103,47 +108,47 @@ def norm(ctx, shift):
         label = 'norm'
         pushStack(ctx, s, coords, valuesOut, label)
 
-@click.command(help='Mask data')
-@click.argument('maskfile', nargs=1, type=click.STRING)
+@click.command(help='Transpose data')
 @click.pass_context
-def mask(ctx, maskfile):
-    maskField = GData(maskfile).q[..., 0, np.newaxis]
+def transpose(ctx):
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
-
+        numDims = len(coords)
         numComps = values.shape[-1]
-        numDims = len(values.shape) - 1
 
-        tmp = np.copy(maskField)
-        if numComps > 1:
-            for comp in np.arange(numComps-1)+1:
-                tmp = np.append(tmp, maskField, axis=numDims)
+        if numDims == 2:
+            coordsOut = np.array([coords[1], coords[0]])
+            valuesOut = np.zeros((values.shape[1],
+                                  values.shape[0],
+                                  values.shape[2]))
+            for comp in range(numComps):
+                valuesOut[..., comp] = values[..., comp].transpose()
 
-        valuesOut = np.ma.masked_where(tmp < 0.0, values)
-
-        pushStack(ctx, s, coords, valuesOut)
+            pushStack(ctx, s, coordsOut, valuesOut, 'trans')
+        else:
+            click.echo('Warning - transpose: transpose only available for 2D data; ignoring')
 
 #---------------------------------------------------------------------
 #-- Calculus ---------------------------------------------------------
-@click.command(help='Integrate over axies')
-@click.argument('axies', nargs=1, type=click.STRING)
+@click.command(help='Integrate over axes')
+@click.argument('axes', nargs=1, type=click.STRING)
 @click.pass_context
-def integrate(ctx, axies):
+def integrate(ctx, axes):
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
-        axies = axies.split(',')
-        label = 'int_{:s}'.format('_'.join(axies)) 
-        axies = [int(axis) for axis in axies]
+        axes = axes.split(',')
+        label = 'int_{:s}'.format('_'.join(axes)) 
+        axes = [int(axis) for axis in axes]
 
-        valuesOut = np.sum(values, axis=tuple(axies))
-        for axis in axies:
+        valuesOut = np.sum(values, axis=tuple(axes))
+        for axis in axes:
             valuesOut *= (coords[axis][1] - coords[axis][0])
 
         numDims = len(coords)
         idxCoords = []
         for d in range(numDims):
-            if not d in axies:
+            if not d in axes:
                 idxCoords.append(d)
         coordsOut = coords[idxCoords]
 
@@ -207,19 +212,44 @@ def curl(ctx):
         dy = coords[1][1]-coords[1][0]
         dudy = np.gradient(values[..., 0], dy, axis=1, edge_order=2)
         dvdx = np.gradient(values[..., 1], dx, axis=0, edge_order=2)
-        dwdx = np.gradient(values[..., 2], dx, axis=0, edge_order=2)
-        dwdy = np.gradient(values[..., 2], dy, axis=1, edge_order=2)
         if numDims == 3:
+            dwdx = np.gradient(values[..., 2], dx, axis=0, edge_order=2)
+            dwdy = np.gradient(values[..., 2], dy, axis=1, edge_order=2)
             dz = coords[2][1]-coords[2][0]
             dudz = np.gradient(values[..., 0], dz, axis=2, edge_order=2)
             dvdz = np.gradient(values[..., 1], dz, axis=2, edge_order=2)
-        else:
-            dudz = 0
-            dvdz = 0
 
-        valuesOut = np.zeros(values.shape)
-        valuesOut[..., 0] = dwdy - dvdz
-        valuesOut[..., 1] = dudz - dwdx
-        valuesOut[..., 2] = dvdx - dudy
+        if numDims == 2:
+            valuesOut = np.zeros(values.shape[:-1])
+            valuesOut = dvdx - dudy
+            valuesOut = valuesOut[..., np.newaxis]
+        else: 
+            valuesOut = np.zeros(values.shape)
+            valuesOut[..., 0] = dwdy - dvdz
+            valuesOut[..., 1] = dudz - dwdx
+            valuesOut[..., 2] = dvdx - dudy
         
         pushStack(ctx, s, coords, valuesOut, 'curl')
+
+
+#---------------------------------------------------------------------
+#-- Miscellaneous ----------------------------------------------------
+@click.command(help='Mask data')
+@click.argument('maskfile', nargs=1, type=click.STRING)
+@click.pass_context
+def mask(ctx, maskfile):
+    maskField = GData(maskfile).q[..., 0, np.newaxis]
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+
+        numComps = values.shape[-1]
+        numDims = len(values.shape) - 1
+
+        tmp = np.copy(maskField)
+        if numComps > 1:
+            for comp in np.arange(numComps-1)+1:
+                tmp = np.append(tmp, maskField, axis=numDims)
+
+        valuesOut = np.ma.masked_where(tmp < 0.0, values)
+
+        pushStack(ctx, s, coords, valuesOut)

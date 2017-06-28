@@ -53,9 +53,12 @@ def _getFig(ctx):
               help='Switch to streamline mode')
 @click.option('-c', '--contour', is_flag=True,
               help='Switch to contour mode')
+@click.option('--color', type=click.STRING,
+              help='Set color for some plots')
 @click.pass_context
 def plot(ctx, show, style, axismode, save,
-         quiver, contour, streamline):
+         quiver, contour, streamline,
+         color):
     if not os.path.isfile(style): # conda distribution path
         style = dirPath + '/../../../../../data/postgkyl.mplstyle'
     plt.style.use(style)
@@ -85,28 +88,51 @@ def plot(ctx, show, style, axismode, save,
 
             # Specialized plotting
             if contour:
-                im = ax.contour(coords[0], coords[1],
-                                values[..., comp].transpose(),
-                                label=labelComp)
-                _colorbar(im, ax, fig)
+                if color is None:
+                    im = ax.contour(coords[0], coords[1],
+                                    values[..., comp].transpose(),
+                                    label=labelComp)
+                    _colorbar(im, ax, fig)
+                else:
+                    im = ax.contour(coords[0], coords[1],
+                                    values[..., comp].transpose(),
+                                    label=labelComp, colors=color)
             elif quiver:
                 skip = int(np.max((len(coords[0]), len(coords[1])))//15)
-                im = ax.quiver(coords[0][::skip], coords[1][::skip],
-                               values[::skip, ::skip, comp].transpose(),
-                               values[::skip, ::skip, comp+1].transpose())
+                skip2 = int(skip//2)
+                if color is None:
+                    color = 'black'
+                im = ax.quiver(coords[0][skip2::skip], coords[1][skip2::skip],
+                               values[skip2::skip,
+                                      skip2::skip,
+                                      comp].transpose(),
+                               values[skip2::skip,
+                                      skip2::skip,
+                                      comp+1].transpose(),
+                               color=color)
             elif streamline:
                 magnitude = np.sqrt(values[..., comp]**2 + 
                                     values[..., comp+1]**2)
-                im = ax.streamplot(coords[0], coords[1],
-                                   values[..., comp].transpose(),
-                                   values[..., comp+1].transpose(),
-                                   color=magnitude.transpose())
-                _colorbar(im.lines, ax, fig)
+                if color is None:
+                    im = ax.streamplot(coords[0], coords[1],
+                                       values[..., comp].transpose(),
+                                       values[..., comp+1].transpose(),
+                                       color=magnitude.transpose())
+                    _colorbar(im.lines, ax, fig)
+                else:
+                    im = ax.streamplot(coords[0], coords[1],
+                                       values[..., comp].transpose(),
+                                       values[..., comp+1].transpose(),
+                                       color=color)
             # Default plotting
             else:
                 if numDims == 1:
-                    im = ax.plot(coords[0], values[..., comp],
-                                 label=labelComp)
+                    if color is None:
+                        im = ax.plot(coords[0], values[..., comp],
+                                     label=labelComp)
+                    else:
+                        im = ax.plot(coords[0], values[..., comp],
+                                     label=labelComp, color=color)
                 elif numDims == 2:
                     im = ax.pcolormesh(coords[0], coords[1],
                                        values[..., comp].transpose(),
@@ -119,15 +145,9 @@ def plot(ctx, show, style, axismode, save,
 
             if ctx.obj['hold'] == 'on':
                 ax.set_title('{:s}'.format(title), y=1.08)
-                #ax.text(0.5, 1.08, '{:s}'.format(title),
-                #        horizontalalignment='center',
-                #        transform=ax.transAxes)
                 ax.legend(loc=0)
             else:
                 ax.set_title('{:s} {:s}'.format(title, labelComp), y=1.08)
-                #ax.text(0.5, 1.08, '{:s} {:s}'.format(title, labelComp),
-                #        horizontalalignment='center',
-                #        transform=ax.transAxes)
                 
             # Formating
             if numDims == 1:
@@ -143,7 +163,7 @@ def plot(ctx, show, style, axismode, save,
             else:
                 saveName = '{:s}.png'.format(getFullLabel(ctx, s))
             if save and ctx.obj['hold'] == 'off':
-                fig.savefig(saveName)
+                fig.savefig(saveName, dpi=150)
 
     if save and ctx.obj['hold'] == 'on':
         fig.savefig(saveName)
@@ -154,7 +174,7 @@ def plot(ctx, show, style, axismode, save,
 @click.option('--on', 'hld', flag_value='on', default=True,
               help='Turn plot hold ON')
 @click.option('--off', 'hld', flag_value='off',
-              help='Turn plot holf OFF')
+              help='Turn plot hold OFF')
 @click.pass_context
 def hold(ctx, hld):
     ctx.obj['hold'] = hld
@@ -183,10 +203,10 @@ def info(ctx, allsets):
             click.echo('   * Time: {:f} - {:f}'.format(ctx.obj['data'][s].time[0],
                                                       ctx.obj['data'][s].time[-1]))
         click.echo('   * Number of components: {:d}'.format(values.shape[-1]))
-        click.echo('   * Minimum: {:f}'.format(values.min()))
+        click.echo('   * Minimum: {:e}'.format(values.min()))
         amin = np.unravel_index(np.argmin(values), values.shape)
         click.echo('     * Minimum Index: {:s}'.format(str(amin)))
-        click.echo('   * Maximum: {:f}'.format(values.max()))
+        click.echo('   * Maximum: {:e}'.format(values.max()))
         amax = np.unravel_index(np.argmax(values), values.shape)
         click.echo('     * Maximum Index: {:s}'.format(str(amax)))
         numDims = len(coords)
@@ -253,8 +273,13 @@ def write(ctx, filename, mode):
             upperBounds = np.zeros(numDims)
             numCells = np.zeros(numDims)
             for d in range(numDims):
-                lowerBounds[d] = coords[d].min()
-                upperBounds[d] = coords[d].max()
+                if ctx.obj['type'][s] == 'frame':
+                    dx2 = 0.5*(coords[d][1] - coords[d][0])
+                    lowerBounds[d] = coords[d][0]-dx2
+                    upperBounds[d] = coords[d][-1]+dx2
+                else:
+                    lowerBounds[d] = coords[d][0]
+                    upperBounds[d] = coords[d][-1]
                 numCells[d] = values.shape[d]
             grid = fh.create_group('/', 'StructGrid')
             grid._v_attrs.vsLowerBounds = lowerBounds
