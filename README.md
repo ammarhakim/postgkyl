@@ -6,7 +6,7 @@ analytical tools.
 
 # Documentation
 
-Documentation is available at [ReadTheDocs](https://postgkyl.rtfd.io).
+Documentation is available at [ReadTheDocs](http://postgkyl.rtfd.io).
 
 # Dependencies and Installation
 
