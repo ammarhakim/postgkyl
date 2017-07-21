@@ -70,13 +70,13 @@ PostGkyl uses the BSD license. The full license is available [here](LICENSE).
 
 * Since Python 3 has now all the vital parts (Python 3.6 is generally
   considered the first improved version over Python 2.7), an effort
-  has been made to make PostGkyl Python 2/3 compatible. Please test
+  has been made to make postpkyl Python 2/3 compatible. Please test
   your code against both versions (see conda
   [documentation](https://conda.io/docs/py2or3.html) how to maintain
   both versions). Checking `print a` to the code will result in
   revoking the repo access.
 
-* PostGkyl loosely follow the Python style conventions in PEP
+* postpkyl loosely follow the Python style conventions in PEP
   8. Python package `pep8` provides a useful
   [tool](https://pypi.python.org/pypi/pep8) to check the code. One
   exceptions the usage of camelNames instead of underscore_names.
