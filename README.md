@@ -4,6 +4,10 @@ This is the PostGkyl project. It is the Python module to provide a
 unified access to Gkeyll and Gkyl data together with a broad variety of
 analytical tools.
 
+# Documentation
+
+Documentation is available at [ReadTheDocs](https://postgkyl.rtfd.io).
+
 # Dependencies and Installation
 
 Postgkyl requires the following packages:
