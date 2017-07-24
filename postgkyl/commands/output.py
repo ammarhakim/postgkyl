@@ -55,10 +55,14 @@ def _getFig(ctx):
               help='Switch to contour mode')
 @click.option('--color', type=click.STRING,
               help='Set color for some plots')
+@click.option('--logx', is_flag=True,
+              help='Set x-axis to log scale')
+@click.option('--logy', is_flag=True,
+              help='Set y-axis to log scale')
 @click.pass_context
 def plot(ctx, show, style, axismode, save,
          quiver, contour, streamline,
-         color):
+         color, logx, logy):
     if style is None:
         plt.style.use(ctx.obj['mplstyle'])
     else:
@@ -82,67 +86,64 @@ def plot(ctx, show, style, axismode, save,
         for comp in idxComps:
             fig, ax = _getFig(ctx)
 
-            if len(idxComps) > 1:
-                labelComp = '{:s} c{:d}'.format(label, comp)
-            else:
-                labelComp = label
-
             # Specialized plotting
             if contour:
-                if color is None:
-                    im = ax.contour(coords[0], coords[1],
-                                    values[..., comp].transpose(),
-                                    label=labelComp)
-                    _colorbar(im, ax, fig)
-                else:
-                    im = ax.contour(coords[0], coords[1],
-                                    values[..., comp].transpose(),
-                                    label=labelComp, colors=color)
+                im = ax.contour(coords[0], coords[1],
+                                values[..., comp].transpose())
+                cb =  _colorbar(im, ax, fig)
             elif quiver:
                 skip = int(np.max((len(coords[0]), len(coords[1])))//15)
                 skip2 = int(skip//2)
-                if color is None:
-                    color = 'black'
                 im = ax.quiver(coords[0][skip2::skip], coords[1][skip2::skip],
                                values[skip2::skip,
                                       skip2::skip,
                                       comp].transpose(),
                                values[skip2::skip,
                                       skip2::skip,
-                                      comp+1].transpose(),
-                               color=color)
+                                      comp+1].transpose())
             elif streamline:
                 magnitude = np.sqrt(values[..., comp]**2 + 
                                     values[..., comp+1]**2)
-                if color is None:
-                    im = ax.streamplot(coords[0], coords[1],
-                                       values[..., comp].transpose(),
-                                       values[..., comp+1].transpose(),
-                                       color=magnitude.transpose())
-                    _colorbar(im.lines, ax, fig)
-                else:
-                    im = ax.streamplot(coords[0], coords[1],
-                                       values[..., comp].transpose(),
-                                       values[..., comp+1].transpose(),
-                                       color=color)
+                im = ax.streamplot(coords[0], coords[1],
+                                   values[..., comp].transpose(),
+                                   values[..., comp+1].transpose(),
+                                   color=magnitude.transpose())
+                cb = _colorbar(im.lines, ax, fig)
             # Default plotting
             else:
                 if numDims == 1:
-                    if color is None:
-                        im = ax.plot(coords[0], values[..., comp],
-                                     label=labelComp)
-                    else:
-                        im = ax.plot(coords[0], values[..., comp],
-                                     label=labelComp, color=color)
+                    im, = ax.plot(coords[0], values[..., comp])
                 elif numDims == 2:
                     im = ax.pcolormesh(coords[0], coords[1],
-                                       values[..., comp].transpose(),
-                                       label=labelComp)
-                    _colorbar(im, ax, fig)
+                                       values[..., comp].transpose())
+                    cb = _colorbar(im, ax, fig)
                 else:
                     click.echo('{:d}D plots currently not supported'.
                                format(numDims))
                     ctx.exit()
+
+            # Formating
+            if len(idxComps) > 1:
+                labelComp = '{:s} c{:d}'.format(label, comp)
+            else:
+                labelComp = label
+
+            if color is not None:
+                try:
+                    im.set_color(color)
+                except:
+                    im.lines.set_color(color)
+                    im.arrows.set_color(color)
+
+            if logx:
+                ax.set_xscale('log')
+            if logy:
+                ax.set_yscale('log')
+
+            try:
+                im.set_label(labelComp)
+            except:
+                im.lines.set_label(labelComp)
 
             if ctx.obj['hold'] == 'on':
                 ax.set_title('{:s}'.format(title), y=1.08)
@@ -150,7 +151,6 @@ def plot(ctx, show, style, axismode, save,
             else:
                 ax.set_title('{:s} {:s}'.format(title, labelComp), y=1.08)
                 
-            # Formating
             if numDims == 1:
                 plt.autoscale(enable=True, axis='x', tight=True)
             elif numDims == 2:
