@@ -7,6 +7,7 @@ Files:
  * trasform.py -- DG projection, data values manipulations
 """
 
+from . import diagnostics
 from . import euler
 from . import output
 from . import select

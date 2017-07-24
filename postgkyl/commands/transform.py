@@ -90,6 +90,15 @@ def mult(ctx, factor):
         valuesOut = values * factor
         pushStack(ctx, s, coords, valuesOut)
 
+@click.command(help='Calculate power of data')
+@click.argument('power', nargs=1, type=click.FLOAT)
+@click.pass_context
+def pow(ctx, power):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+        valuesOut = values**power
+        pushStack(ctx, s, coords, valuesOut)
+
 @click.command(help='Normalize data')
 @click.option('--shift/--no-shift', default=False,
               help='Shift minimal value to zero (default: False).')
@@ -131,19 +140,19 @@ def transpose(ctx):
 #---------------------------------------------------------------------
 #-- Calculus ---------------------------------------------------------
 @click.command(help='Integrate over axes')
-@click.argument('axes', nargs=1, type=click.STRING)
+@click.argument('axis', nargs=1, type=click.STRING)
 @click.pass_context
-def integrate(ctx, axes):
+def integrate(ctx, axis):
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
-        axes = axes.split(',')
+        axes = axis.split(',')
         label = 'int_{:s}'.format('_'.join(axes)) 
-        axes = [int(axis) for axis in axes]
+        axes = [int(a) for a in axes]
 
         valuesOut = np.sum(values, axis=tuple(axes))
-        for axis in axes:
-            valuesOut *= (coords[axis][1] - coords[axis][0])
+        for a in axes:
+            valuesOut *= (coords[a][1] - coords[a][0])
 
         numDims = len(coords)
         idxCoords = []

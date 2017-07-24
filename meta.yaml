@@ -10,7 +10,7 @@ build:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
     - postgkyl/data/xformMatricesNodalSerendipity.h5
-    - postgkyl/commands/postgkyl.mplstyle
+    - postgkyl/postgkyl.mplstyle
   entry_points:
     - pgkyl = postgkyl.pgkyl:cli
 

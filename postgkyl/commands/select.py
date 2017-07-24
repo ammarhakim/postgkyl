@@ -1,8 +1,8 @@
 import click
-import numpy
+import numpy as np
 
 from postgkyl.tools.fields import fixCoordSlice
-from postgkyl.tools.stack import pushStack, peakStack, popStack
+from postgkyl.tools.stack import addStack, pushStack, peakStack, popStack
 
 @click.command(help='Fix a coordinate')
 @click.option('--c0', type=click.FLOAT, help='Fix 1st coordinate')
@@ -57,7 +57,7 @@ def comp(ctx, component):
         else:
             comp = int(component)
             label = 'c_{:d}'.format(comp)
-            values = values[..., comp, numpy.newaxis]
+            values = values[..., comp, np.newaxis]
 
         pushStack(ctx, s, coords, values, label)       
 
@@ -85,3 +85,32 @@ def dataset(ctx, idx, allsets):
 def pop(ctx):
     for s in ctx.obj['sets']:
         popStack(ctx, s)
+
+@click.command(help='Collect data from the active datasets')
+@click.option('-s', '--sumdata', is_flag=True,
+              help='Sum data in collected datasets')
+@click.pass_context
+def collect(ctx, sumdata):
+    coordsOut = []
+    valuesOut = []
+
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+        coordsOut.append(ctx.obj['data'][s].time)
+        if sumdata:
+            valuesOut.append(values.sum())
+        else:
+            valuesOut.append(values)
+    coordsOut = np.array(coordsOut)
+    valuesOut = np.array(valuesOut)
+    if sumdata:
+        coordsOut = np.expand_dims(coordsOut, axis=0)
+        valuesOut = np.expand_dims(valuesOut, axis=1)
+    else:
+        coordsOut = np.array([coordsOut, *coords])
+
+
+    dataSet = addStack(ctx)
+    ctx.obj['type'].append('hist')
+    pushStack(ctx, dataSet, coordsOut, valuesOut, 'collect')
+    ctx.obj['sets'] = [dataSet]
