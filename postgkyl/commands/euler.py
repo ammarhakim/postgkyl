@@ -4,8 +4,9 @@ import numpy as np
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 
 def pressure(gasGamma, q):
-    return (gasGamma-1)*(q[...,4] -
-                         0.5*(q[...,1]**2+q[...,2]**2+q[...,3]**2)/q[...,0])
+    return (gasGamma-1)*(q[..., 4] -
+                         0.5*(q[..., 1]**2 + q[..., 2]**2 +
+                              q[..., 3]**2)/q[..., 0])
 
 @click.command(help='Extract Euler (five-moment) primitive variables from fluid simulation')
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",

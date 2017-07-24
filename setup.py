@@ -18,7 +18,7 @@ setup(name='postgkyl',
                 'postgkyl.tools',
                 'postgkyl.commands'],
       include_package_data=True,
-      data_files=[('data', ['postgkyl/data/xformMatricesModalMaximal.h5', 'postgkyl/data/xformMatricesModalSerendipity.h5', 'postgkyl/data/xformMatricesNodalSerendipity.h5', 'postgkyl/commands/postgkyl.mplstyle'])],
+      data_files=[('data', ['postgkyl/data/xformMatricesModalMaximal.h5', 'postgkyl/data/xformMatricesModalSerendipity.h5', 'postgkyl/data/xformMatricesNodalSerendipity.h5', 'postgkyl/postgkyl.mplstyle'])],
       entry_points='''
         [console_scripts]
         pgkyl=postgkyl.pgkyl:cli
