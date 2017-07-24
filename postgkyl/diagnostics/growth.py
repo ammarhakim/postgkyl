@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import sys
 
-
 # --------------------------------------------------------------------
 # Growth rate fitting stuff ------------------------------------------
 def exp2(x, a, b):
@@ -24,7 +23,6 @@ def exp2(x, a, b):
     therefore the factor 2
     """
     return a*numpy.exp(2*b*x)
-
 
 def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
     """Fit function to continuously increasing region of data

@@ -40,8 +40,8 @@ def _getFig(ctx):
 @click.command(help='Plot the data')
 @click.option('--show/--no-show', default=True,
               help='Turn showing of the plot ON and OFF (default: ON)')
-@click.option('--style', default=dirPath+'/postgkyl.mplstyle',
-              help='Specify Matplotlib style file (default: Postgkyl style)')
+@click.option('--style',
+              help='Specify Matplotlib style file (default: postgkyl style)')
 @click.option('--fixed-axis', 'axismode', flag_value='image',
               default=True)
 @click.option('--free-axis', 'axismode', flag_value='tight')
@@ -59,9 +59,10 @@ def _getFig(ctx):
 def plot(ctx, show, style, axismode, save,
          quiver, contour, streamline,
          color):
-    if not os.path.isfile(style): # conda distribution path
-        style = dirPath + '/../../../../../data/postgkyl.mplstyle'
-    plt.style.use(style)
+    if style is None:
+        plt.style.use(ctx.obj['mplstyle'])
+    else:
+        plt.style.use(style)
 
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
@@ -198,10 +199,10 @@ def info(ctx, allsets):
         coords, values = peakStack(ctx, s)
         click.echo(' * Dataset #{:d}'.format(ctx.obj['setIds'][s]))
         if ctx.obj['type'][s] == 'frame':
-            click.echo('   * Time: {:f}'.format(ctx.obj['data'][s].time))
-        else:
-            click.echo('   * Time: {:f} - {:f}'.format(ctx.obj['data'][s].time[0],
-                                                      ctx.obj['data'][s].time[-1]))
+            click.echo('   * Time: {:e}'.format(ctx.obj['data'][s].time))
+#        else:
+#            click.echo('   * Time: {:e} - {:e}'.format(ctx.obj['data'][s].time[0],
+#                                                      ctx.obj['data'][s].time[-1]))
         click.echo('   * Number of components: {:d}'.format(values.shape[-1]))
         click.echo('   * Minimum: {:e}'.format(values.min()))
         amin = np.unravel_index(np.argmin(values), values.shape)
@@ -219,7 +220,7 @@ def info(ctx, allsets):
             else:
                 minC = coords[d][0]
                 maxC = coords[d][-1]
-            click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:f}; Upper: {:f}'.format(d, len(coords[d]), minC, maxC))
+            click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:e}; Upper: {:e}'.format(d, len(coords[d]), minC, maxC))
 
 
 #---------------------------------------------------------------------
@@ -290,7 +291,7 @@ def write(ctx, filename, mode):
             if ctx.obj['type'][s] == 'frame':
                 timeData._v_attrs.vsTime = ctx.obj['data'][s].time
             else:
-                timeData._v_attrs.vsTime = 0
+                timeData._v_attrs.vsTime = -1.0
             fh.create_array('/', 'StructGridField', values)
 
             fh.close()
