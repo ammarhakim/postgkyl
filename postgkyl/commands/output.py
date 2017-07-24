@@ -1,6 +1,7 @@
 import click
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import os
 import tables
 
@@ -118,7 +119,7 @@ def plot(ctx, show, style, axismode, save,
                                        values[..., comp].transpose())
                     cb = _colorbar(im, ax, fig)
                 else:
-                    click.echo('{:d}D plots currently not supported'.
+                    click.echo('plot: {:d}D plots currently not supported'.
                                format(numDims))
                     ctx.exit()
 
@@ -129,11 +130,15 @@ def plot(ctx, show, style, axismode, save,
                 labelComp = label
 
             if color is not None:
+                if color == 'seq':
+                    cl = cm.inferno(s/len(ctx.obj['sets']))
+                else:
+                    cl = color
                 try:
-                    im.set_color(color)
+                    im.set_color(cl)
                 except:
-                    im.lines.set_color(color)
-                    im.arrows.set_color(color)
+                    im.lines.set_color(cl)
+                    im.arrows.set_color(cl)
 
             if logx:
                 ax.set_xscale('log')

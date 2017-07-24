@@ -99,6 +99,22 @@ def pow(ctx, power):
         valuesOut = values**power
         pushStack(ctx, s, coords, valuesOut)
 
+@click.command(help='Calculate natural log of data')
+@click.pass_context
+def log(ctx):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+        valuesOut = np.log(values)
+        pushStack(ctx, s, coords, valuesOut)
+
+@click.command(help='Calculate absolute values of data')
+@click.pass_context
+def abs(ctx):
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s)
+        valuesOut = np.abs(values)
+        pushStack(ctx, s, coords, valuesOut)
+
 @click.command(help='Normalize data')
 @click.option('--shift/--no-shift', default=False,
               help='Shift minimal value to zero (default: False).')
@@ -262,3 +278,37 @@ def mask(ctx, maskfile):
         valuesOut = np.ma.masked_where(tmp < 0.0, values)
 
         pushStack(ctx, s, coords, valuesOut)
+
+#---------------------------------------------------------------------
+#-- Transformations --------------------------------------------------
+@click.command(help="Calculate Fast Fourier Transform")
+@click.option('-p', '--psd', is_flag=True,
+              help='Return real power density rather that complex FFT')
+@click.pass_context
+def fft(ctx, psd):
+    from scipy import fftpack
+    for s in ctx.obj['sets']:
+        coords, values = peakStack(ctx, s) 
+        
+        numComps = values.shape[-1]
+        numDims = values.ndim - 1
+        if numDims > 1:
+            click.echo('fft: 1D data required for FFT')
+            ctx.exit()
+        N = len(coords[0])
+
+        dx = coords[0][1] - coords[0][0]
+        coordsOut = fftpack.fftfreq(N, dx)
+        valuesOut = np.zeros(values.shape, 'complex')
+        for comp in np.arange(numComps):
+            valuesOut[..., comp] = fftpack.fft(values[..., comp])
+
+        if psd:
+            coordsOut = coordsOut[:N//2]
+            valuesOut = np.abs(valuesOut[:N//2, :])**2
+
+        coordsOut = np.expand_dims(coordsOut, axis=0)
+        pushStack(ctx, s, coordsOut, valuesOut, 'fft')
+
+#---------------------------------------------------------------------
+#-- Filters ----------------------------------------------------------
