@@ -9,6 +9,7 @@ from postgkyl.data.interp import GInterpGeneral
 from postgkyl.data.interp import GInterpGeneralRead
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
+from postgkyl.commands.output import vlog
 
 #---------------------------------------------------------------------
 #-- DG projection ----------------------------------------------------
@@ -24,6 +25,7 @@ from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
               help='Interpolation onto a general mesh of specified amount')
 @click.pass_context
 def project(ctx, basis, polyorder, general, read_general):
+    vlog(ctx, 'Starting project')
     for s in ctx.obj['sets']:
         data = ctx.obj['data'][s]
         numDims = data.numDims
@@ -55,16 +57,17 @@ def project(ctx, basis, polyorder, general, read_general):
             if basis == 'ns':
                 dg = GInterpNodalSerendipity(data, polyorder)
                 numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
+                                                            polyorder-1]
             elif basis == 'ms':
                 dg = GInterpModalSerendipity(data, polyorder)
                 numNodes = GInterpModalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
+                                                            polyorder-1]
             elif basis == 'mo':
                 dg = GInterpModalMaxOrder(data, polyorder)
                 numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
-                                                     polyorder-1]
+                                                         polyorder-1]
 
+        vlog(ctx, 'project: interpolating dataset #{:d}'.format(s))
         coords, values = dg.project(0)
         values = antiSqueeze(coords, values)
 
@@ -77,7 +80,7 @@ def project(ctx, basis, polyorder, general, read_general):
  
         label = 'proj_{:s}_{:d}'.format(basis, polyorder)
         pushStack(ctx, s, coords, values, label)
-
+    vlog(ctx, 'Finishing project')
 
 #---------------------------------------------------------------------
 #-- Math -------------------------------------------------------------
@@ -85,6 +88,7 @@ def project(ctx, basis, polyorder, general, read_general):
 @click.argument('factor', nargs=1, type=click.FLOAT)
 @click.pass_context
 def mult(ctx, factor):
+    vlog(ctx, 'Multiplying by {:f}'.format(factor))
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         valuesOut = values * factor
@@ -94,6 +98,7 @@ def mult(ctx, factor):
 @click.argument('power', nargs=1, type=click.FLOAT)
 @click.pass_context
 def pow(ctx, power):
+    vlog(ctx, 'Calculating the power of {:f}'.format(power))
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         valuesOut = values**power
@@ -102,6 +107,7 @@ def pow(ctx, power):
 @click.command(help='Calculate natural log of data')
 @click.pass_context
 def log(ctx):
+    vlog(ctx, 'Calculating the natural log')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         valuesOut = np.log(values)
@@ -110,6 +116,7 @@ def log(ctx):
 @click.command(help='Calculate absolute values of data')
 @click.pass_context
 def abs(ctx):
+    vlog(ctx, 'Calculating the absolute value')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         valuesOut = np.abs(values)
@@ -120,6 +127,7 @@ def abs(ctx):
               help='Shift minimal value to zero (default: False).')
 @click.pass_context
 def norm(ctx, shift):
+    vlog(ctx, 'Normalizing data')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         
@@ -136,6 +144,7 @@ def norm(ctx, shift):
 @click.command(help='Transpose data')
 @click.pass_context
 def transpose(ctx):
+    vlog(ctx, 'Transposing data')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         numDims = len(coords)
@@ -159,6 +168,7 @@ def transpose(ctx):
 @click.argument('axis', nargs=1, type=click.STRING)
 @click.pass_context
 def integrate(ctx, axis):
+    vlog(ctx, 'Starting integrate over the axes {:s}'.format(axis))
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -182,6 +192,7 @@ def integrate(ctx, axis):
 @click.command(help='Calculate gradient')
 @click.pass_context
 def grad(ctx):
+    vlog(ctx, 'Calculating gradient')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -200,6 +211,7 @@ def grad(ctx):
 @click.command(help='Calculate divergence')
 @click.pass_context
 def div(ctx):
+    vlog(ctx, 'Calculating divergence')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -224,6 +236,7 @@ def div(ctx):
 @click.command(help='Calculate curl')
 @click.pass_context
 def curl(ctx):
+    vlog(ctx, 'Calculating curl')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -263,6 +276,7 @@ def curl(ctx):
 @click.argument('maskfile', nargs=1, type=click.STRING)
 @click.pass_context
 def mask(ctx, maskfile):
+    vlog(ctx, 'Masking data with {:s}'.format(maskField))
     maskField = GData(maskfile).q[..., 0, np.newaxis]
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
@@ -286,6 +300,7 @@ def mask(ctx, maskfile):
               help='Return real power density rather that complex FFT')
 @click.pass_context
 def fft(ctx, psd):
+    vlog(ctx, 'Starting Fast Fourier Transform')
     from scipy import fftpack
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s) 
@@ -304,6 +319,7 @@ def fft(ctx, psd):
             valuesOut[..., comp] = fftpack.fft(values[..., comp])
 
         if psd:
+            vlog(ctx, 'fft: Getting the spectral density for set #{:d}'.format(s))
             coordsOut = coordsOut[:N//2]
             valuesOut = np.abs(valuesOut[:N//2, :])**2
 

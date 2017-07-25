@@ -3,17 +3,30 @@ import click
 import numpy
 import os
 from glob import glob
+from time import time
 
 import postgkyl.commands as cmd
 from postgkyl.tools.stack import pushStack, peakStack, popStack
 from postgkyl.tools.stack import loadFrame, loadHist
+from postgkyl.commands.output import vlog
 
 @click.group(chain=True)
+@click.option('-v', '--verbose', is_flag=True,
+              help='Turn on verbosity')
 @click.option('--filename', '-f', multiple=True,
               help='Specify one or more file(s) to work with.')
 @click.pass_context
-def cli(ctx, filename):
+def cli(ctx, filename, verbose):
     ctx.obj = {}
+
+    if verbose:
+        ctx.obj['verbose'] = True
+        ctx.obj['startTime'] = time()
+        vlog(ctx, 'This is postgkyl running in verbose mode!')
+        vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
+        vlog(ctx, 'And now for something completelly different...')
+    else:
+        ctx.obj['verbose'] = False
 
     ctx.obj['files'] = filename
     numSets = len(filename)
@@ -31,9 +44,12 @@ def cli(ctx, filename):
         if filename[s][-2:] == 'h5' or filename[s][-2:] == 'bp':
             files = glob(str(filename[s]))
             for i in range(len(files)):
+                vlog(ctx, 'Loading frame \'{:s}\' as data set #{:d}'.format(files[i], cnt))
                 loadFrame(ctx, cnt, files[i])
                 cnt += 1
         else:
+            if ctx.obj['verbose']:
+                click.echo(click.style('Loading history \'{:s}\' as data set #{:d}'.format(filename[s], cnt), fg='green'))
             loadHist(ctx, cnt, str(filename[s]))
             cnt += 1
     ctx.obj['numSets'] = cnt
@@ -56,22 +72,22 @@ cli.add_command(cmd.output.hold)
 cli.add_command(cmd.output.info)
 cli.add_command(cmd.output.plot)
 cli.add_command(cmd.output.write)
+cli.add_command(cmd.select.collect)
 cli.add_command(cmd.select.comp)
 cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.select.fix)
 cli.add_command(cmd.select.pop)
-cli.add_command(cmd.select.collect)
-cli.add_command(cmd.transform.log)
 cli.add_command(cmd.transform.abs)
 cli.add_command(cmd.transform.curl)
 cli.add_command(cmd.transform.div)
+cli.add_command(cmd.transform.fft)
 cli.add_command(cmd.transform.grad)
 cli.add_command(cmd.transform.integrate)
+cli.add_command(cmd.transform.log)
 cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
-cli.add_command(cmd.transform.pow)
-cli.add_command(cmd.transform.fft)
 cli.add_command(cmd.transform.norm)
+cli.add_command(cmd.transform.pow)
 cli.add_command(cmd.transform.project)
 cli.add_command(cmd.transform.transpose)
 
