@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import os
 import tables
+from time import time
 
 from postgkyl.tools.stack import peakStack, peakLabel, getFullLabel
 
@@ -64,6 +65,7 @@ def _getFig(ctx):
 def plot(ctx, show, style, axismode, save,
          quiver, contour, streamline,
          color, logx, logy):
+    vlog(ctx, 'Starting plot')
     if style is None:
         plt.style.use(ctx.obj['mplstyle'])
     else:
@@ -85,6 +87,7 @@ def plot(ctx, show, style, axismode, save,
             skip = 1
         idxComps = range(0, numComps, skip)
         for comp in idxComps:
+            vlog(ctx, 'Plotting set #{:d} component #{:d}'.format(s, comp))  
             fig, ax = _getFig(ctx)
 
             # Specialized plotting
@@ -172,9 +175,12 @@ def plot(ctx, show, style, axismode, save,
                 fig.savefig(saveName, dpi=150)
 
     if save and ctx.obj['hold'] == 'on':
+        vlog(ctx, 'plot: Saving figure as {:s}'.format(saveName))
         fig.savefig(saveName)
     if show:
+        vlog(ctx, 'plot: Showing figure')
         plt.show()
+    vlog(cxt, 'Finishing plot')
 
 @click.command(help='Hold the plotting')
 @click.option('--on', 'hld', flag_value='on', default=True,
@@ -183,6 +189,7 @@ def plot(ctx, show, style, axismode, save,
               help='Turn plot hold OFF')
 @click.pass_context
 def hold(ctx, hld):
+    vlog(ctx, 'Hold set to {}'.format(hld))
     ctx.obj['hold'] = hld
 
 
@@ -192,7 +199,8 @@ def hold(ctx, hld):
 @click.option('-a', '--allsets', is_flag=True,
               help='All data sets')
 @click.pass_context
-def info(ctx, allsets): 
+def info(ctx, allsets):
+    vlog(ctx, 'Starting info')
     if allsets is True:
         click.echo('\nPrinting the current top of stack information (all data sets):')
         sets = range(ctx.obj['numSets'])
@@ -226,6 +234,7 @@ def info(ctx, allsets):
                 minC = coords[d][0]
                 maxC = coords[d][-1]
             click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:e}; Upper: {:e}'.format(d, len(coords[d]), minC, maxC))
+    vlog(ctx, 'Finishing info')
 
 
 #---------------------------------------------------------------------
@@ -263,6 +272,7 @@ def flatten(coords, values):
               default='h5')
 @click.pass_context
 def write(ctx, filename, mode):
+    vlog(ctx, 'Starting write in {:s} mode'.format(mode))
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -303,5 +313,12 @@ def write(ctx, filename, mode):
 
         elif mode == 'txt':
             np.savetxt(filename, flatten(coords, values))
+    vlog(ctx, 'Finishing write')
+
+def vlog(ctx, message):
+    if ctx.obj['verbose']:
+        elapsedTime = time() - ctx.obj['startTime']
+        click.echo(click.style('[{:f}] {:s}'.format(elapsedTime, message), fg='green'))
+    
         
             

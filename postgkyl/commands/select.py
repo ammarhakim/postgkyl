@@ -3,6 +3,7 @@ import numpy as np
 
 from postgkyl.tools.fields import fixCoordSlice
 from postgkyl.tools.stack import addStack, pushStack, peakStack, popStack
+from postgkyl.commands.output import vlog
 
 @click.command(help='Fix a coordinate')
 @click.option('--c0', type=click.FLOAT, help='Fix 1st coordinate')
@@ -17,6 +18,7 @@ from postgkyl.tools.stack import addStack, pushStack, peakStack, popStack
               help='Fix coordinates based on an index')
 @click.pass_context
 def fix(ctx, c0, c1, c2, c3, c4, c5, mode):
+    vlog(ctx, 'Starting fix')
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
         coordsOut, valuesOut = fixCoordSlice(coords, values, mode,
@@ -41,6 +43,7 @@ def fix(ctx, c0, c1, c2, c3, c4, c5, mode):
 @click.argument('component', type=click.STRING)
 @click.pass_context
 def comp(ctx, component):
+    vlog(ctx, 'Selecting components(s): {:s}'.format(component))
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
@@ -69,6 +72,7 @@ def comp(ctx, component):
 @click.pass_context
 def dataset(ctx, idx, allsets):
     if allsets is False:
+        vlog(ctx, 'Selecting data set(s): {:s}'.format(idx))
         if len(idx.split(',')) > 1:
             sets = idx.split(',')
             ctx.obj['sets'] = [int(s) for s in sets]            
@@ -78,11 +82,13 @@ def dataset(ctx, idx, allsets):
         else:
             ctx.obj['sets'] = [int(idx)]
     else:
+        vlog(ctx, 'Selecting all data sets'.format(idx))
         ctx.obj['sets'] = range(ctx.obj['numSets'])
 
 @click.command(help='Pop the data stack')
 @click.pass_context
 def pop(ctx):
+    vlog(ctx, 'Poping the stack')
     for s in ctx.obj['sets']:
         popStack(ctx, s)
 
@@ -91,6 +97,7 @@ def pop(ctx):
               help='Sum data in collected datasets')
 @click.pass_context
 def collect(ctx, sumdata):
+    vlog(ctx, 'Starting collect')
     coordsOut = []
     valuesOut = []
 
@@ -109,7 +116,8 @@ def collect(ctx, sumdata):
     else:
         coordsOut = np.array([coordsOut, *coords])
 
-
+    vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(coordsOut), valuesOut.shape))
+    vlog(ctx, 'collect: Active data set switched to #{:d}'.format(ctx.obj['numSets']))
     dataSet = addStack(ctx)
     ctx.obj['type'].append('hist')
     pushStack(ctx, dataSet, coordsOut, valuesOut, 'collect')
