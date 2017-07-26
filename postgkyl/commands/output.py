@@ -180,7 +180,7 @@ def plot(ctx, show, style, axismode, save,
     if show:
         vlog(ctx, 'plot: Showing figure')
         plt.show()
-    vlog(cxt, 'Finishing plot')
+    vlog(ctx, 'Finishing plot')
 
 @click.command(help='Hold the plotting')
 @click.option('--on', 'hld', flag_value='on', default=True,
