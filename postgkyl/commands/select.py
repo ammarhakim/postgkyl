@@ -114,7 +114,13 @@ def collect(ctx, sumdata):
         coordsOut = np.expand_dims(coordsOut, axis=0)
         valuesOut = np.expand_dims(valuesOut, axis=1)
     else:
-        coordsOut = np.array([coordsOut, *coords])
+        # Python 3:
+        # coordsOut = np.array([coordsOut, *coords])
+        temp = []
+        temp.append(coordsOut)
+        for c in coords:
+            temp.append(c)
+        coordsOut = np.array(temp)
 
     vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(coordsOut), valuesOut.shape))
     vlog(ctx, 'collect: Active data set switched to #{:d}'.format(ctx.obj['numSets']))
