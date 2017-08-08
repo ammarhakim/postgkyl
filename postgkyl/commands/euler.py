@@ -17,7 +17,7 @@ def pressure(gasGamma, q):
                                  "zvel", "vel", "pressure"]))
 @click.pass_context
 def euler(ctx, gas_gamma, variable_name):
-    vlog(cxt, 'Starting euler')
+    vlog(ctx, 'Starting euler')
     v = variable_name
     for s in ctx.obj['sets']:
         coords, q = peakStack(ctx, s)
