@@ -88,7 +88,7 @@ cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
 cli.add_command(cmd.transform.pow)
-cli.add_command(cmd.transform.project)
+cli.add_command(cmd.transform.interpolate)
 cli.add_command(cmd.transform.transpose)
 
 if __name__ == '__main__':

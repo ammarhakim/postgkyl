@@ -2,11 +2,8 @@ import click
 import numpy as np
 
 from postgkyl.data.load import GData
-from postgkyl.data.interp import GInterpNodalSerendipity
-from postgkyl.data.interp import GInterpModalSerendipity
-from postgkyl.data.interp import GInterpModalMaxOrder
-from postgkyl.data.interp import GInterpGeneral
-from postgkyl.data.interp import GInterpGeneralRead
+from postgkyl.data.dg import GInterpNodal
+from postgkyl.data.dg import GInterpModal
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 from postgkyl.commands.output import vlog
@@ -19,62 +16,31 @@ from postgkyl.commands.output import vlog
               help='Specify DG basis')
 @click.option('--polyorder', '-p', prompt=True, type=click.INT,
               help='Specify polynomial order')
-@click.option('--general', '-g', type=click.INT,
+@click.option('--interp', '-i', type=click.INT,
               help='Interpolation onto a general mesh of specified amount')
-@click.option('--read-general', '-r', type=click.BOOL,
-              help='Interpolation onto a general mesh of specified amount')
+@click.option('--read', '-r', type=click.BOOL,
+              help='Read from general interpolation file')
 @click.pass_context
-def project(ctx, basis, polyorder, general, read_general):
+def interpolate(ctx, basis, polyorder, interp, read):
     vlog(ctx, 'Starting project')
     for s in ctx.obj['sets']:
         data = ctx.obj['data'][s]
         numDims = data.numDims
-
-        if general is not None:
-            interp = general
-            dg = GInterpGeneral(data, polyorder, basis, interp)
-            if basis == 'ns':
-                numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
-            elif basis == 'ms':
-                numNodes = GInterpModalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
-            elif basis == 'mo':
-                numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
-                                                     polyorder-1] 
-        elif read_general is not None:
-            dg = GInterpGeneralRead(data, polyorder, basis)
-            if basis == 'ns':
-                numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
-            elif basis == 'ms':
-                numNodes = GInterpModalSerendipity.numNodes[numDims-1,
-                                                        polyorder-1]
-            elif basis == 'mo':
-                numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
-                                                     polyorder-1] 
-        else:
-            if basis == 'ns':
-                dg = GInterpNodalSerendipity(data, polyorder)
-                numNodes = GInterpNodalSerendipity.numNodes[numDims-1,
-                                                            polyorder-1]
-            elif basis == 'ms':
-                dg = GInterpModalSerendipity(data, polyorder)
-                numNodes = GInterpModalSerendipity.numNodes[numDims-1,
-                                                            polyorder-1]
-            elif basis == 'mo':
-                dg = GInterpModalMaxOrder(data, polyorder)
-                numNodes = GInterpModalMaxOrder.numNodes[numDims-1,
-                                                         polyorder-1]
+        if basis == 'ms' or basis == 'mo':
+            dg = GInterpModal(data, polyorder, basis, interp, read)
+            numNodes = dg.numNodes
+        elif basis == 'ns':
+            dg = GInterpNodal(data, polyorder, basis, interp, read)
+            numNodes = dg.numNodes
 
         vlog(ctx, 'project: interpolating dataset #{:d}'.format(s))
-        coords, values = dg.project(0)
+        coords, values = dg.interpolate(0)
         values = antiSqueeze(coords, values)
 
         numComps = int(data.q.shape[-1]/numNodes)
         if numComps > 1:
             for comp in np.arange(numComps-1)+1:
-                coords, tmp = dg.project(comp)
+                coords, tmp = dg.interpolate(comp)
                 values = np.append(values, antiSqueeze(coords, tmp),
                                       axis=numDims)
  

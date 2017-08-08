@@ -1,7 +1,7 @@
 import numpy
 
 from postgkyl.data.load import GData, GHistoryData
-from postgkyl.data.interp import GInterpZeroOrder
+from postgkyl.data.dg import GInterpZeroOrder
 
 def pushStack(ctx, dataSet, coords, values, label=''):
     ctx.obj['coords'][dataSet].append(coords)
@@ -58,7 +58,7 @@ def loadFrame(ctx, dataSet, fileName):
     ctx.obj['type'].append('frame')
 
     dg = GInterpZeroOrder(ctx.obj['data'][dataSet])
-    coords, values = dg.project(0)
+    coords, values = dg.interpolate(0)
     values = antiSqueeze(coords, values)
 
     numDims = ctx.obj['data'][dataSet].numDims
@@ -66,7 +66,7 @@ def loadFrame(ctx, dataSet, fileName):
 
     if numComps > 1:
         for c in numpy.arange(numComps-1)+1:
-            coords, tmp = dg.project(c)
+            coords, tmp = dg.interpolate(c)
             values = numpy.append(values, antiSqueeze(coords, tmp),
                                   axis=numDims)
 
