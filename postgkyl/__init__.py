@@ -14,10 +14,9 @@ from . import tools
 # import selectrd classes to the root
 from .data.load import GData
 from .data.load import GHistoryData
-from .data.interp import GInterpZeroOrder
-from .data.interp import GInterpNodalSerendipity
-from .data.interp import GInterpModalSerendipity
-from .data.interp import GInterpModalMaxOrder
+from .data.dg import GInterpZeroOrder
+from .data.dg import GInterpNodal
+from .data.dg import GInterpModal
 
 # link the command line executable to the system
 from . import commands
