@@ -9,8 +9,8 @@ from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 from postgkyl.commands.output import vlog
 
 #---------------------------------------------------------------------
-#-- DG projection ----------------------------------------------------
-@click.command(help='Project DG data on a uniform mesh')
+#-- DG interpolation -------------------------------------------------
+@click.command(help='Interpolate DG data on a uniform mesh')
 @click.option('--basis', '-b', prompt=True,
               type=click.Choice(['ns', 'ms', 'mo']),
               help='Specify DG basis')
@@ -22,7 +22,7 @@ from postgkyl.commands.output import vlog
               help='Read from general interpolation file')
 @click.pass_context
 def interpolate(ctx, basis, polyorder, interp, read):
-    vlog(ctx, 'Starting project')
+    vlog(ctx, 'Starting interpolate')
     for s in ctx.obj['sets']:
         data = ctx.obj['data'][s]
         numDims = data.numDims
@@ -33,7 +33,7 @@ def interpolate(ctx, basis, polyorder, interp, read):
             dg = GInterpNodal(data, polyorder, basis, interp, read)
             numNodes = dg.numNodes
 
-        vlog(ctx, 'project: interpolating dataset #{:d}'.format(s))
+        vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
         coords, values = dg.interpolate(0)
         values = antiSqueeze(coords, values)
 
@@ -46,7 +46,7 @@ def interpolate(ctx, basis, polyorder, interp, read):
  
         label = 'proj_{:s}_{:d}'.format(basis, polyorder)
         pushStack(ctx, s, coords, values, label)
-    vlog(ctx, 'Finishing project')
+    vlog(ctx, 'Finishing interpolate')
 
 #---------------------------------------------------------------------
 #-- Math -------------------------------------------------------------
