@@ -80,6 +80,17 @@ def plot(ctx, show, style, axismode, save,
             label = ''
 
         numDims = len(coords)
+        # Sometimes an array will have only one cell in some dimension,
+        # get rid of them
+        idx = []
+        for d in range(numDims):
+            if len(coords[d]) == 1:
+                idx.append(d)
+        if len(idx) > 0:
+            coords = np.delete(coords, idx)
+            values = np.squeeze(values, tuple(idx))
+
+        numDims = len(coords)
         numComps = values.shape[-1]
         if streamline or quiver:
             skip = 2
@@ -227,7 +238,10 @@ def info(ctx, allsets):
         click.echo('   * Dimensions ({:d}):'.format(numDims))
         for d in range(numDims):
             if ctx.obj['type'][s] == 'frame':
-                dx2 = 0.5*(coords[d][1] - coords[d][0])
+                if len(coords[d]) > 1:
+                    dx2 = 0.5*(coords[d][1] - coords[d][0])
+                else:
+                    dx2 = 0.0
                 minC = coords[d][0]-dx2
                 maxC = coords[d][-1]+dx2
             else:
