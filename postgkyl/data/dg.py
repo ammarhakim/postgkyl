@@ -273,7 +273,7 @@ class GInterpZeroOrder(GInterp):
     def interpolate(self, c):
         return numpy.array(self.Xc), numpy.squeeze(self._getRawNodal(c))
     
-    def differentiate(self, comp=0, direction):
+    def differentiate(self, direction, comp=0):
         q = numpy.squeeze(self._getRawNodal(comp))
         coords = numpy.array(self.Xc)
         if direction is not None:
@@ -306,7 +306,7 @@ class GInterpNodal(GInterp):
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(cMat, q)
 
-    def differentiate(self, comp=0, direction):
+    def differentiate(self, direction, comp=0):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder, self.basis, self.numInterp, self.read)
         coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), self.Xc[d])
@@ -341,7 +341,7 @@ class GInterpModal(GInterp):
                   for d in range(self.numDims)]
         return numpy.array(coords), _interpOnMesh(cMat, q)
 
-    def differentiate(self, comp=0, direction):
+    def differentiate(self, direction, comp=0):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder, self.basis, self.numInterp, self.read)
         coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), self.Xc[d])
