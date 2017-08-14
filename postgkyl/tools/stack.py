@@ -1,4 +1,5 @@
 import numpy
+import click
 
 from postgkyl.data.load import GData, GHistoryData
 from postgkyl.data.dg import GInterpZeroOrder
@@ -54,7 +55,12 @@ def antiSqueeze(coords, values):
     return values
 
 def loadFrame(ctx, dataSet, fileName):
-    ctx.obj['data'].append(GData(fileName))
+    try:
+        ctx.obj['data'].append(GData(fileName))
+    except Exception as e:
+        print(e)
+        click.echo('postgkyl is exiting')
+        ctx.exit()
     ctx.obj['type'].append('frame')
 
     dg = GInterpZeroOrder(ctx.obj['data'][dataSet])

@@ -19,9 +19,9 @@ from postgkyl.commands.output import vlog
 def cli(ctx, filename, verbose):
     ctx.obj = {}
 
+    ctx.obj['startTime'] = time()
     if verbose:
         ctx.obj['verbose'] = True
-        ctx.obj['startTime'] = time()
         vlog(ctx, 'This is postgkyl running in verbose mode!')
         vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
         vlog(ctx, 'And now for something completelly different...')
@@ -45,6 +45,7 @@ def cli(ctx, filename, verbose):
             files = glob(str(filename[s]))
             for i in range(len(files)):
                 vlog(ctx, 'Loading frame \'{:s}\' as data set #{:d}'.format(files[i], cnt))
+                click.echo('test')
                 loadFrame(ctx, cnt, files[i])
                 cnt += 1
         else:
