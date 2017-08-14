@@ -174,6 +174,8 @@ def plot(ctx, show, style, axismode, save,
                 plt.autoscale(enable=True, axis='x', tight=True)
             elif numDims == 2:
                 ax.axis(axismode)
+                ax.set_xlim((coords[0][0], coords[0][-1]))
+                ax.set_ylim((coords[1][0], coords[1][-1]))
             ax.grid(True)
             plt.tight_layout()
 
