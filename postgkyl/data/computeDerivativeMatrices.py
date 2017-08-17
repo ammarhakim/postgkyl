@@ -25,7 +25,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                     derivativeVector[i] = diff(functionVector[i],x)  
                 
                 derivativeMatrix = numpy.zeros((interpList.shape[0],
-                                            derivativeVector.shape[0]))
+                                            derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -43,7 +43,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
                 derivativeMatrix = numpy.zeros((interpList.shape[0],
-                                            derivativeVector.shape[0]))
+                                            derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -57,7 +57,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -72,7 +72,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -91,7 +91,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -106,7 +106,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -120,7 +120,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
@@ -135,7 +135,7 @@ def createDerivativeMatrix(dim, order, basis, interp):
                 for i in range(0, functionVector.shape[0]):
                     derivativeVector[i] = diff(functionVector[i],x) 
                 
-                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0]))
+                derivativeMatrix = numpy.zeros((interpList.shape[0], derivativeVector.shape[0], derivativeVector.shape[1]))
 
                 for i in range(0, interpList.shape[0]):
                     for j in range(0,  derivativeVector.shape[0]):
