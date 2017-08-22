@@ -3,6 +3,8 @@ postgkyl sub-module to load and save gkeyll/gkyl data
 """
 import numpy
 import os
+import tables
+import adios
 from glob import glob
 
 
@@ -55,8 +57,6 @@ class GData:
             except:
                 self.time = numpy.float(-1.0)
         elif self.extension == 'bp':
-            import adios
-
             fh = adios.file(self.fName)
 
             # Note: When atribute is a scalar, ADIOS only returns standart
@@ -157,7 +157,6 @@ class GHistoryData:
 
     def _loadG1h5(self, start):
         """Load the G1 HDF5 history data file"""
-        import tables
 
         # read the first history file
         fh = tables.open_file(self.files[start], 'r')
@@ -189,7 +188,6 @@ class GHistoryData:
 
     def _loadG2bp(self, start):
         """Load the G2 ADIOS history data file"""
-        import adios
 
         # read the first history file                     
         self.values = adios.readvar(self.files[start], 'Data')
