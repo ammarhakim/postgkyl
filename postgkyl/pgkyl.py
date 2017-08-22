@@ -45,7 +45,6 @@ def cli(ctx, filename, verbose):
             files = glob(str(filename[s]))
             for i in range(len(files)):
                 vlog(ctx, 'Loading frame \'{:s}\' as data set #{:d}'.format(files[i], cnt))
-                click.echo('test')
                 loadFrame(ctx, cnt, files[i])
                 cnt += 1
         else:
