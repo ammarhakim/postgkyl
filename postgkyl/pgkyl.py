@@ -50,6 +50,11 @@ def cli(ctx, filename, histname, verbose):
                 vlog(ctx, 'Loading frame \'{:s}\' as data set #{:d}'.format(files[i], cnt))
                 loadFrame(ctx, cnt, files[i])
                 cnt += 1
+        else:
+            if ctx.obj['verbose']:
+                click.echo(click.style('Loading history \'{:s}\' as data set #{:d}'.format(filename[s], cnt), fg='green'))
+            loadHist(ctx, cnt, str(filename[s]))
+            cnt += 1            
 
     for s in range(numHistSets):
         if histname[s][-2:] == 'h5' or histname[s][-2:] == 'bp':
@@ -73,6 +78,7 @@ def cli(ctx, filename, histname, verbose):
 
 cli.add_command(cmd.diagnostics.growth)
 cli.add_command(cmd.euler.euler)
+cli.add_command(cmd.tenmoment.tenmoment)
 cli.add_command(cmd.output.hold)
 cli.add_command(cmd.output.info)
 cli.add_command(cmd.output.plot)
