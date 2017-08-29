@@ -15,8 +15,10 @@ from postgkyl.commands.output import vlog
               help='Turn on verbosity')
 @click.option('--filename', '-f', multiple=True,
               help='Specify one or more file(s) to work with.')
+@click.option('--histname', '-h', multiple=True,
+              help='Specify one or more history file(s) to work with.')
 @click.pass_context
-def cli(ctx, filename, verbose):
+def cli(ctx, filename, histname, verbose):
     ctx.obj = {}
 
     ctx.obj['startTime'] = time()
@@ -29,7 +31,8 @@ def cli(ctx, filename, verbose):
         ctx.obj['verbose'] = False
 
     ctx.obj['files'] = filename
-    numSets = len(filename)
+    numFileSets = len(filename)
+    numHistSets = len(histname)
     ctx.obj['type'] = []
     ctx.obj['setIds'] = []
 
@@ -40,21 +43,23 @@ def cli(ctx, filename, verbose):
     ctx.obj['values'] = []
 
     cnt = 0
-    for s in range(numSets):
+    for s in range(numFileSets):
         if filename[s][-2:] == 'h5' or filename[s][-2:] == 'bp':
             files = glob(str(filename[s]))
             for i in range(len(files)):
                 vlog(ctx, 'Loading frame \'{:s}\' as data set #{:d}'.format(files[i], cnt))
                 loadFrame(ctx, cnt, files[i])
                 cnt += 1
-        else:
+
+    for s in range(numHistSets):
+        if histname[s][-2:] == 'h5' or histname[s][-2:] == 'bp':
             if ctx.obj['verbose']:
-                click.echo(click.style('Loading history \'{:s}\' as data set #{:d}'.format(filename[s], cnt), fg='green'))
-            loadHist(ctx, cnt, str(filename[s]))
+                click.echo(click.style('Loading history \'{:s}\' as data set #{:d}'.format(histname[s], cnt), fg='green'))
+            loadHist(ctx, cnt, str(histname[s]))
             cnt += 1
+            
     ctx.obj['numSets'] = cnt
     ctx.obj['sets'] = range(cnt)
-    
 
     ctx.obj['hold'] = 'off'
     ctx.obj['fig'] = ''
