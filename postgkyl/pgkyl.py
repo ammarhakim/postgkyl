@@ -76,9 +76,9 @@ def cli(ctx, filename, histname, verbose):
     else:
         ctx.obj['mplstyle']  = dirPath + '/../../../../data/postgkyl.mplstyle'
 
+cli.add_command(cmd.cglpressure.cglpressure)
 cli.add_command(cmd.diagnostics.growth)
 cli.add_command(cmd.euler.euler)
-cli.add_command(cmd.tenmoment.tenmoment)
 cli.add_command(cmd.output.hold)
 cli.add_command(cmd.output.info)
 cli.add_command(cmd.output.plot)
@@ -88,18 +88,19 @@ cli.add_command(cmd.select.comp)
 cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.select.fix)
 cli.add_command(cmd.select.pop)
+cli.add_command(cmd.tenmoment.tenmoment)
 cli.add_command(cmd.transform.abs)
 cli.add_command(cmd.transform.curl)
 cli.add_command(cmd.transform.div)
 cli.add_command(cmd.transform.fft)
 cli.add_command(cmd.transform.grad)
 cli.add_command(cmd.transform.integrate)
+cli.add_command(cmd.transform.interpolate)
 cli.add_command(cmd.transform.log)
 cli.add_command(cmd.transform.mask)
 cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
 cli.add_command(cmd.transform.pow)
-cli.add_command(cmd.transform.interpolate)
 cli.add_command(cmd.transform.transpose)
 
 if __name__ == '__main__':
