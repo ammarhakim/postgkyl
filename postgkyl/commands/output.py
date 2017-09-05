@@ -44,9 +44,9 @@ def _getFig(ctx):
               help='Turn showing of the plot ON and OFF (default: ON)')
 @click.option('--style',
               help='Specify Matplotlib style file (default: postgkyl style)')
-@click.option('--fixed-axis', 'axismode', flag_value='image',
+@click.option('--fixed-axis', 'axismode', flag_value='image')
+@click.option('--free-axis', 'axismode', flag_value='tight',
               default=True)
-@click.option('--free-axis', 'axismode', flag_value='tight')
 @click.option('--save/--no-save', '-s', default=False,
               help='Save figure as png')
 @click.option('-q', '--quiver', is_flag=True,
@@ -61,10 +61,12 @@ def _getFig(ctx):
               help='Set x-axis to log scale')
 @click.option('--logy', is_flag=True,
               help='Set y-axis to log scale')
+@click.option('--legend/--no-legend', default=True,
+              help='Show legend')
 @click.pass_context
 def plot(ctx, show, style, axismode, save,
          quiver, contour, streamline,
-         color, logx, logy):
+         color, logx, logy, legend):
     vlog(ctx, 'Starting plot')
     if style is None:
         plt.style.use(ctx.obj['mplstyle'])
@@ -166,7 +168,8 @@ def plot(ctx, show, style, axismode, save,
 
             if ctx.obj['hold'] == 'on':
                 ax.set_title('{:s}'.format(title), y=1.08)
-                ax.legend(loc=0)
+                if legend:
+                    ax.legend(loc=0)
             else:
                 ax.set_title('{:s} {:s}'.format(title, labelComp), y=1.08)
                 
