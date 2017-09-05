@@ -46,13 +46,30 @@ def getPzz(q):
     w = getW(q)
     return q[...,9] - r*w*w
 
+def getVel(q):
+    tmp = np.copy(q[..., 1:4])
+    tmp[..., 0] = getU(q)
+    tmp[..., 1] = getV(q)
+    tmp[..., 2] = getW(q)
+    return tmp
+
+def getPressureTensor(q):
+    tmp = np.copy(q[..., 4:10])
+    tmp[..., 0] = getPxx(q)
+    tmp[..., 1] = getPxy(q)
+    tmp[..., 2] = getPxz(q)
+    tmp[..., 3] = getPyy(q)
+    tmp[..., 4] = getPyz(q)
+    tmp[..., 5] = getPzz(q)
+    return tmp
+
 def getPressure(q):
     return (getPxx(q)+getPyy(q)+getPzz(q))/3.0
 
 @click.command(help='Extract ten-moment primitive variables from fluid simulation')
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel",
+                                 "zvel", "vel", "pressureTensor",
                                  "pxx", "pxy", "pxz", "pyy", "pyz", "pzz",
                                  "pressure"
               ]))
@@ -73,10 +90,7 @@ def tenmoment(ctx, variable_name):
         elif v == "zvel":
             tmp = getW(q)
         elif v == "vel":
-            tmp = np.copy(q[..., 1:4])
-            tmp[..., 0] = getU(q)
-            tmp[..., 1] = getV(q)
-            tmp[..., 2] = getW(q)
+            tmp = getVel(q)
         elif v == "pxx":
             tmp = getPxx(q)
         elif v == "pxy":
@@ -90,6 +104,8 @@ def tenmoment(ctx, variable_name):
         elif v == "pzz":
             tmp = getPzz(q)
         elif v == "pressure":
+            tmp = getPressure(q)
+        elif v == "pressureTensor":
             tmp = getPressure(q)
         else:
             vlog(ctx, 'No such variable %s' % v)
