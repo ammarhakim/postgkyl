@@ -76,6 +76,7 @@ def cli(ctx, filename, histname, verbose):
     else:
         ctx.obj['mplstyle']  = dirPath + '/../../../../data/postgkyl.mplstyle'
 
+cli.add_command(cmd.agyro.agyro)
 cli.add_command(cmd.cglpressure.cglpressure)
 cli.add_command(cmd.diagnostics.growth)
 cli.add_command(cmd.euler.euler)

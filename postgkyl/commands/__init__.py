@@ -11,6 +11,7 @@ from . import diagnostics
 from . import euler
 from . import tenmoment
 from . import cglpressure
+from . import agyro
 from . import output
 from . import select
 from . import transform
