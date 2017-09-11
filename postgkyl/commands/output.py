@@ -78,8 +78,6 @@ def plot(ctx, show, style, axismode, save,
 
         label = peakLabel(ctx, s)
         title = peakLabel(ctx, s, 0)
-        if label == title:
-            label = ''
 
         numDims = len(coords)
         # Sometimes an array will have only one cell in some dimension,
