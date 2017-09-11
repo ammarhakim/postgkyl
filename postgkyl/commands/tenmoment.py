@@ -1,7 +1,7 @@
 import click
 import numpy as np
-import tm
 
+from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
 from postgkyl.commands.output import vlog
 
