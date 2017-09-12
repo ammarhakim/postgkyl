@@ -50,7 +50,7 @@ def getForb(pij, B):
     piyz = pyz - (ppar*by*bz+pper*(0-by*bz)) # yz
     pizz = pzz - (ppar*bz*bz+pper*(1-bz*bz)) # zz
     
-    return np.sqrt(pixx**2+2*pixy**2+2*pixz**2+piyy**2+2*piyz**2+pizz**2)/np.sqrt(ppar**2+4*pper**2+4*ppar*pper)
+    return np.sqrt(pixx**2+2*pixy**2+2*pixz**2+piyy**2+2*piyz**2+pizz**2)/np.sqrt(2*pper**2+4*ppar*pper)
 
 @click.command(help=r'Compute a measure of agyrotropy. Default measure is taken from Swisdak 2015. Optionally computes agyrotropy as Frobenius norm of agyrotropic pressure tensor. Pressure-tensor must be the first dataset and magnetic field the second dataset.')
 @click.option('--forb', is_flag=True, default=False, help='Compute agyrotropy using Forbenius norm.')

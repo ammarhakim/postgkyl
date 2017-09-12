@@ -324,7 +324,7 @@ class GInterpModal(GInterp):
     """Class for manipulating modal DG data
     """
 
-    def __init__(self, data, polyOrder, basis, numInterp, read):
+    def __init__(self, data, polyOrder, basis, numInterp=None, read=None):
         self.numDims = data.numDims
         self.polyOrder = polyOrder
         self.basis = basis
