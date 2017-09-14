@@ -63,10 +63,11 @@ def _getFig(ctx):
               help='Set y-axis to log scale')
 @click.option('--legend/--no-legend', default=True,
               help='Show legend')
+@click.option('--saveas', type=click.STRING, help='Name of PNG file to save')
 @click.pass_context
 def plot(ctx, show, style, axismode, save,
          quiver, contour, streamline,
-         color, logx, logy, legend):
+         color, logx, logy, legend, saveas=None):
     vlog(ctx, 'Starting plot')
     if style is None:
         plt.style.use(ctx.obj['mplstyle'])
@@ -180,12 +181,15 @@ def plot(ctx, show, style, axismode, save,
             ax.grid(True)
             plt.tight_layout()
 
-            if numComps > 1 and ctx.obj['hold'] == 'off':
-                saveName = '{:s}_c{:d}.png'.format(getFullLabel(ctx, s),
-                                                   comp)
+            if saveas:
+                saveName = saveas
             else:
-                saveName = '{:s}.png'.format(getFullLabel(ctx, s))
-            if save and ctx.obj['hold'] == 'off':
+                if numComps > 1 and ctx.obj['hold'] == 'off':
+                    saveName = '{:s}_c{:d}.png'.format(getFullLabel(ctx, s),
+                                                   comp)
+                else:
+                    saveName = '{:s}.png'.format(getFullLabel(ctx, s))
+            if (save or saveas) and ctx.obj['hold'] == 'off':
                 fig.savefig(saveName, dpi=150)
 
     if save and ctx.obj['hold'] == 'on':
