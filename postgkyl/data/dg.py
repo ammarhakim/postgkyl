@@ -170,6 +170,10 @@ def _loadDerivativeMatrix(dim, polyOrder, basis, interp, read):
                 return mat
 
         return mat
+    else:
+        interp = polyOrder+1
+        mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
+        return mat
         
 def _decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
