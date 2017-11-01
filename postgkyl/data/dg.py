@@ -182,8 +182,8 @@ def _decompose(n, dim, numInterp):
 
 
 def _makeMesh(nInterp, Xc):
-    dx = Xc[1] - Xc[0]
     nx = Xc.shape[0]
+    dx = (Xc[-1] - Xc[0])/nx    # dx = Xc[1] - Xc[0] didn't work for numCells=1
     xlo = Xc[0] - 0.5*dx
     xup = Xc[-1] + 0.5*dx
     dx2 = dx/nInterp
