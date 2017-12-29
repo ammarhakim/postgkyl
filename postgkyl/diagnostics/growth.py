@@ -62,11 +62,11 @@ def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
             percent = float(n-minN)/(maxN-minN)*100
             progress = '[' + int(percent/10)*'=' + (10-int(percent/10))*' ' + ']'
             sys.stdout.write(
-                '\rgamma = {:+5.3f} (best {:+5.3f}) R^2 = {:6.4f}   {:6.2f}% done {}'.format(params[1], bestParams[1], R2, percent, progress))
+                '\rgamma = {:+.4e} (best {:+.5e}) R^2 = {:.3e}   {:6.2f}% done {}'.format(params[1], bestParams[1], R2, percent, progress))
             sys.stdout.flush()
         except RuntimeError:
             print('fitGrowth: curve_fit failed for N = {}'.format(n))
 
-    print('\rgamma = {:+5.3f} (best {:+5.3f}) R^2 = {:6.4f}   {:6.2f}% done {}'.
+    print('\rgamma = {:+.4e} (best {:+.5e}) R^2 = {:.3e}   {:6.2f}% done {}'.
           format(params[1], bestParams[1], R2, 100, '[==========]'))
     return bestParams, bestR2, bestN

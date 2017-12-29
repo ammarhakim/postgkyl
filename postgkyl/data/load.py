@@ -94,8 +94,10 @@ class GData:
 
         if len(self.q.shape) > self.numDims:
             self.numComponents = self.q.shape[-1]
+            self.numCells = self.q.shape[:-1]
         else:
             self.numComponents = 1
+            self.numCells = self.q.shape
 
 
     def loadDataBP(self):
