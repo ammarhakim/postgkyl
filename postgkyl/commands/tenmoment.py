@@ -15,7 +15,7 @@ from postgkyl.commands.output import vlog, pushChain
 @click.pass_context
 def tenmoment(ctx, **inputs):
     vlog(ctx, 'Starting tenmoment')
-    pushChain(ctx, inputs)
+    pushChain(ctx, **inputs)
 
     v = inputs['variable_name']
     for s in ctx.obj['sets']:
