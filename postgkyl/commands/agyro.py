@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
-from postgkyl.commands.output import vlog
+from postgkyl.commands.output import vlog, pushChain
 
 def getSwisdak(pij, B):
     tmp = np.copy(pij[..., 0:2])
@@ -53,15 +53,17 @@ def getForb(pij, B):
     return np.sqrt(pixx**2+2*pixy**2+2*pixz**2+piyy**2+2*piyz**2+pizz**2)/np.sqrt(2*pper**2+4*ppar*pper)
 
 @click.command(help=r'Compute a measure of agyrotropy. Default measure is taken from Swisdak 2015. Optionally computes agyrotropy as Frobenius norm of agyrotropic pressure tensor. Pressure-tensor must be the first dataset and magnetic field the second dataset.')
-@click.option('--forb', is_flag=True, default=False, help='Compute agyrotropy using Forbenius norm.')
+@click.option('--forb', is_flag=True, default=False,
+              help='Compute agyrotropy using Forbenius norm.')
 @click.pass_context
-def agyro(ctx, forb):
+def agyro(ctx, **inputs):
     vlog(ctx, 'Starting agyro')
+    pushChain(ctx, 'agyro.agyro', inputs)
 
     coords, pij = peakStack(ctx, ctx.obj['sets'][0])
     coords, B = peakStack(ctx, ctx.obj['sets'][1])
 
-    if forb:
+    if inputs['forb']:
         tmp = getForb(pij, B)
     else:
         tmp = getSwisdak(pij, B)

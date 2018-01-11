@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
-from postgkyl.commands.output import vlog
+from postgkyl.commands.output import vlog, pushChain
 
 def getParPerp(pij, B):
     tmp = np.copy(pij[..., 0:2])
@@ -53,15 +53,17 @@ def getAgyro(pij, B):
     return tmp
 
 @click.command(help=r'Extract parallel and perpendicular pressures from pressure-tensor and magnetic field. Pressure-tensor must be the first dataset and magnetic field the second dataset. A two component field (parallel, perpendicular) is returned. Optionally, the command can extract the six components of the agyrotropic part of the pressure tensor.')
-@click.option('--agyro', is_flag=True, default=False, help='Compute the agyrotropic part of pressure tensor instead')
+@click.option('--agyro', is_flag=True, default=False,
+              help='Compute the agyrotropic part of pressure tensor instead')
 @click.pass_context
-def cglpressure(ctx, agyro):
+def cglpressure(ctx, **inputs):
     vlog(ctx, 'Starting CGL pressure')
+    pushChain(ctx, 'cglpressure.cglpressure', inputs)
 
     coords, pij = peakStack(ctx, ctx.obj['sets'][0])
     coords, B = peakStack(ctx, ctx.obj['sets'][1])
 
-    if agyro:
+    if inputs['agyro']:
         tmp = getAgyro(pij, B)
     else:
         tmp = getParPerp(pij, B)

@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog
+from postgkyl.commands.output import vlog, pushChain
 
 def pressure(gasGamma, q):
     return (gasGamma-1)*(q[..., 4] -
@@ -16,9 +16,11 @@ def pressure(gasGamma, q):
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "pressure"]))
 @click.pass_context
-def euler(ctx, gas_gamma, variable_name):
+def euler(ctx, **inputs):
     vlog(ctx, 'Starting euler')
-    v = variable_name
+    pushChain(ctx, 'euler.euler', inputs)
+
+    v = inputs['variable_name']
     for s in ctx.obj['sets']:
         coords, q = peakStack(ctx, s)
 
@@ -37,7 +39,7 @@ def euler(ctx, gas_gamma, variable_name):
             tmp[..., 1] = tmp[..., 1] / q[..., 0]
             tmp[..., 2] = tmp[..., 2] / q[..., 0]
         elif v == "pressure":
-            tmp = pressure(gas_gamma, q)
+            tmp = pressure(inputs['gas_gamma'], q)
         tmp = antiSqueeze(coords, tmp)
 
         pushStack(ctx, s, coords, tmp, v)
