@@ -359,6 +359,7 @@ def pushChain(ctx, command, **inputs):
             if type(value) == str:
                 value = "'" + value + "'"
             s = s + ', {:s}={}'.format(key, value)
+        print(s)
         if sys.version_info[0] == 3:
             fh.write(base64.b64encode(s.encode()).decode())
         else:
