@@ -2,6 +2,7 @@
 import click
 import numpy
 import os
+import base64
 from glob import glob
 from time import time
 
@@ -17,8 +18,10 @@ from postgkyl.commands.output import vlog
               help='Specify one or more file(s) to work with.')
 @click.option('--histname', '-h', multiple=True,
               help='Specify one or more history file(s) to work with.')
+@click.option('--savechain', '-c', is_flag=True,
+              help='Save command chain for quick repetition')
 @click.pass_context
-def cli(ctx, filename, histname, verbose):
+def cli(ctx, filename, histname, verbose, savechain):
     ctx.obj = {}
 
     ctx.obj['startTime'] = time()
@@ -29,6 +32,13 @@ def cli(ctx, filename, histname, verbose):
         vlog(ctx, 'And now for something completelly different...')
     else:
         ctx.obj['verbose'] = False
+
+    if savechain:
+        ctx.obj['savechain'] = True
+        fh = open('pgkylchain.dat', 'w')
+        fh.close()
+    else:
+        ctx.obj['savechain'] = False
 
     ctx.obj['files'] = filename
     numFileSets = len(filename)
@@ -76,6 +86,19 @@ def cli(ctx, filename, histname, verbose):
     else:
         ctx.obj['mplstyle']  = dirPath + '/../../../../data/postgkyl.mplstyle'
 
+@click.command(help='Run save command chain')
+@click.pass_context
+def rc(ctx):
+    if os.path.isfile('pgkylchain.dat'):
+        fh = open('pgkylchain.dat', 'r')
+        lines = fh.readlines()
+        for line in lines:
+            s = str(base64.b64decode(line.encode()))[2 : -1]
+            eval('ctx.invoke(cmd.{:s})'.format(s))
+        fh.close()
+    else:
+        click.echo('runchain: "pgkylchain.dat" does not exist; command chain needs to be saved first with the pgkyl flag -c')
+
 cli.add_command(cmd.agyro.agyro)
 cli.add_command(cmd.cglpressure.cglpressure)
 cli.add_command(cmd.diagnostics.growth)
@@ -103,6 +126,7 @@ cli.add_command(cmd.transform.mult)
 cli.add_command(cmd.transform.norm)
 cli.add_command(cmd.transform.pow)
 cli.add_command(cmd.transform.transpose)
+cli.add_command(rc)
 
 if __name__ == '__main__':
     cli()

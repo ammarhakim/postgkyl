@@ -2,13 +2,11 @@ import click
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import os
 import tables
+import base64
 from time import time
 
 from postgkyl.tools.stack import peakStack, peakLabel, getFullLabel
-
-dirPath = os.path.dirname(os.path.realpath(__file__))
 
 #---------------------------------------------------------------------
 #-- Plotting ---------------------------------------------------------
@@ -63,16 +61,17 @@ def _getFig(ctx):
               help='Set y-axis to log scale')
 @click.option('--legend/--no-legend', default=True,
               help='Show legend')
-@click.option('--saveas', type=click.STRING, help='Name of PNG file to save')
+@click.option('--saveas', type=click.STRING, default=None,
+              help='Name of PNG file to save')
 @click.pass_context
-def plot(ctx, show, style, axismode, save,
-         quiver, contour, streamline,
-         color, logx, logy, legend, saveas=None):
+def plot(ctx, **inputs):
     vlog(ctx, 'Starting plot')
-    if style is None:
+    pushChain(ctx, 'output.plot', **inputs)
+
+    if inputs['style'] is None:
         plt.style.use(ctx.obj['mplstyle'])
     else:
-        plt.style.use(style)
+        plt.style.use(inputs['style'])
 
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
@@ -93,7 +92,7 @@ def plot(ctx, show, style, axismode, save,
 
         numDims = len(coords)
         numComps = values.shape[-1]
-        if streamline or quiver:
+        if inputs['streamline'] or inputs['quiver']:
             skip = 2
         else:
             skip = 1
@@ -103,11 +102,11 @@ def plot(ctx, show, style, axismode, save,
             fig, ax = _getFig(ctx)
 
             # Specialized plotting
-            if contour:
+            if inputs['contour']:
                 im = ax.contour(coords[0], coords[1],
                                 values[..., comp].transpose())
                 cb =  _colorbar(im, ax, fig)
-            elif quiver:
+            elif inputs['quiver']:
                 skip = int(np.max((len(coords[0]), len(coords[1])))//15)
                 skip2 = int(skip//2)
                 im = ax.quiver(coords[0][skip2::skip], coords[1][skip2::skip],
@@ -117,7 +116,7 @@ def plot(ctx, show, style, axismode, save,
                                values[skip2::skip,
                                       skip2::skip,
                                       comp+1].transpose())
-            elif streamline:
+            elif inputs['streamline']:
                 magnitude = np.sqrt(values[..., comp]**2 + 
                                     values[..., comp+1]**2)
                 im = ax.streamplot(coords[0], coords[1],
@@ -144,20 +143,20 @@ def plot(ctx, show, style, axismode, save,
             else:
                 labelComp = label
 
-            if color is not None:
-                if color == 'seq':
+            if inputs['color'] is not None:
+                if inputs['color'] == 'seq':
                     cl = cm.inferno(s/len(ctx.obj['sets']))
                 else:
-                    cl = color
+                    cl = inputs['color']
                 try:
                     im.set_color(cl)
                 except:
                     im.lines.set_color(cl)
                     im.arrows.set_color(cl)
 
-            if logx:
+            if inputs['logx']:
                 ax.set_xscale('log')
-            if logy:
+            if inputs['logy']:
                 ax.set_yscale('log')
 
             try:
@@ -167,7 +166,7 @@ def plot(ctx, show, style, axismode, save,
 
             if ctx.obj['hold'] == 'on':
                 ax.set_title('{:s}'.format(title), y=1.08)
-                if legend:
+                if inputs['legend']:
                     ax.legend(loc=0)
             else:
                 ax.set_title('{:s} {:s}'.format(title, labelComp), y=1.08)
@@ -175,27 +174,27 @@ def plot(ctx, show, style, axismode, save,
             if numDims == 1:
                 plt.autoscale(enable=True, axis='x', tight=True)
             elif numDims == 2:
-                ax.axis(axismode)
+                ax.axis(inputs['axismode'])
                 ax.set_xlim((coords[0][0], coords[0][-1]))
                 ax.set_ylim((coords[1][0], coords[1][-1]))
             ax.grid(True)
             plt.tight_layout()
 
-            if saveas:
-                saveName = saveas
+            if inputs['saveas']:
+                saveName = inputs['saveas']
             else:
                 if numComps > 1 and ctx.obj['hold'] == 'off':
                     saveName = '{:s}_c{:d}.png'.format(getFullLabel(ctx, s),
                                                    comp)
                 else:
                     saveName = '{:s}.png'.format(getFullLabel(ctx, s))
-            if (save or saveas) and ctx.obj['hold'] == 'off':
+            if (inputs['save'] or inputs['saveas']) and ctx.obj['hold'] == 'off':
                 fig.savefig(saveName, dpi=150)
 
-    if save and ctx.obj['hold'] == 'on':
+    if inputs['save'] and ctx.obj['hold'] == 'on':
         vlog(ctx, 'plot: Saving figure as {:s}'.format(saveName))
         fig.savefig(saveName)
-    if show:
+    if inputs['show']:
         vlog(ctx, 'plot: Showing figure')
         plt.show()
     vlog(ctx, 'Finishing plot')
@@ -206,9 +205,10 @@ def plot(ctx, show, style, axismode, save,
 @click.option('--off', 'hld', flag_value='off',
               help='Turn plot hold OFF')
 @click.pass_context
-def hold(ctx, hld):
-    vlog(ctx, 'Hold set to {}'.format(hld))
-    ctx.obj['hold'] = hld
+def hold(ctx, **inputs):
+    vlog(ctx, 'Hold set to {}'.format(inputs['hld']))
+    pushChain(ctx, 'output.hold', **inputs)
+    ctx.obj['hold'] = inputs['hld']
 
 
 #---------------------------------------------------------------------
@@ -217,9 +217,11 @@ def hold(ctx, hld):
 @click.option('-a', '--allsets', is_flag=True,
               help='All data sets')
 @click.pass_context
-def info(ctx, allsets):
+def info(ctx, **inputs):
     vlog(ctx, 'Starting info')
-    if allsets is True:
+    pushChain(ctx, 'output.info', **inputs)
+
+    if inputs['allsets'] is True:
         click.echo('\nPrinting the current top of stack information (all data sets):')
         sets = range(ctx.obj['numSets'])
     else:
@@ -255,6 +257,7 @@ def info(ctx, allsets):
                 minC = coords[d][0]
                 maxC = coords[d][-1]
             click.echo('     * Dim {:d}: Num. Cells: {:d}; Lower: {:e}; Upper: {:e}'.format(d, len(coords[d]), minC, maxC))
+
     vlog(ctx, 'Finishing info')
 
 
@@ -292,19 +295,21 @@ def flatten(coords, values):
 @click.option('--mode', '-m', type=click.Choice(['h5', 'txt']),
               default='h5')
 @click.pass_context
-def write(ctx, filename, mode):
-    vlog(ctx, 'Starting write in {:s} mode'.format(mode))
+def write(ctx, **inputs):
+    vlog(ctx, 'Starting write in {:s} mode'.format(inputs['mode']))
+    pushChain(ctx, 'output.write', **inputs)
+
     for s in ctx.obj['sets']:
         coords, values = peakStack(ctx, s)
 
         numDims = int(len(coords))
         numComps = int(values.shape[-1])
 
-        if filename is None:
-            filename = '{:s}.{:s}'.format(getFullLabel(ctx, s), mode)
+        if inputs['filename'] is None:
+            inputs['filename'] = '{:s}.{:s}'.format(getFullLabel(ctx, s), mode)
 
-        if mode == 'h5':
-            fh = tables.open_file(filename, 'w')
+        if inputs['mode'] == 'h5':
+            fh = tables.open_file(inputs['filename'], 'w')
 
             lowerBounds = np.zeros(numDims)
             upperBounds = np.zeros(numDims)
@@ -332,14 +337,30 @@ def write(ctx, filename, mode):
 
             fh.close()
 
-        elif mode == 'txt':
+        elif inputs['mode'] == 'txt':
             np.savetxt(filename, flatten(coords, values))
     vlog(ctx, 'Finishing write')
+
+#---------------------------------------------------------------------
+#-- Utilities --------------------------------------------------------
 
 def vlog(ctx, message):
     if ctx.obj['verbose']:
         elapsedTime = time() - ctx.obj['startTime']
         click.echo(click.style('[{:f}] {:s}'.format(elapsedTime, message), fg='green'))
+
+def pushChain(ctx, command, **inputs):
+    if ctx.obj['savechain'] == True:
+        fh = open('pgkylchain.dat', 'a')
+        s = '{:s}'.format(command)
+
+        for key, value in inputs.items():
+            if type(value) == str:
+                value = "'" + value + "'"
+            s = s + ', {:s}={}'.format(key, value)
+        fh.write(str(base64.b64encode(s.encode()))[2 : -1])
+        fh.write('\n')
+        fh.close()
     
         
             

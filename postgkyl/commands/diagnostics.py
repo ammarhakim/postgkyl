@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog
+from postgkyl.commands.output import vlog, pushChain
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
@@ -17,8 +17,10 @@ from postgkyl.commands.output import vlog
 @click.option('--maxn', type=click.INT,
               help='Set maximal number of points to fit')
 @click.pass_context
-def growth(ctx, guess, plot, minn, maxn):
+def growth(ctx, **inputs):
     vlog(ctx, 'Starting growth')
+    pushChain( ctx, 'diagnostics.growth', inputs) 
+
     from postgkyl.diagnostics.growth import fitGrowth, exp2
 
     for s in ctx.obj['sets']:
@@ -28,10 +30,11 @@ def growth(ctx, guess, plot, minn, maxn):
         
         vlog(ctx, 'growth: Starting fit for data set #{:d}'.format(s))
         bestParams, bestR2, bestN = fitGrowth(coords[0], values[..., 0],
-                                              minN=minn, maxN=maxn,
-                                              p0=guess)
+                                              minN=inputs['minn'],
+                                              maxN=inputs['maxn'],
+                                              p0=inputs['guess'])
 
-        if plot is True:
+        if inputs['plot'] is True:
             vlog(ctx, 'growth: Plotting data and fit')
             plt.style.use(ctx.obj['mplstyle'])
             fig, ax = plt.subplots()

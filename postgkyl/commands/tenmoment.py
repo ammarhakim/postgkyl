@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog
+from postgkyl.commands.output import vlog, pushChain
 
 @click.command(help='Extract ten-moment primitive variables from fluid simulation')
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
@@ -13,9 +13,11 @@ from postgkyl.commands.output import vlog
                                  "pressure"
               ]))
 @click.pass_context
-def tenmoment(ctx, variable_name):
+def tenmoment(ctx, **inputs):
     vlog(ctx, 'Starting tenmoment')
-    v = variable_name
+    pushChain(ctx, inputs)
+
+    v = inputs['variable_name']
     for s in ctx.obj['sets']:
         coords, q = peakStack(ctx, s)
 
@@ -52,6 +54,7 @@ def tenmoment(ctx, variable_name):
         tmp = antiSqueeze(coords, tmp)
 
         pushStack(ctx, s, coords, tmp, v)
+
     vlog(ctx, 'Finishing tenmoment')
 
     
