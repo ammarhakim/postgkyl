@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import tables
 import base64
+import sys
 from time import time
 
 from postgkyl.tools.stack import peakStack, peakLabel, getFullLabel
@@ -358,7 +359,10 @@ def pushChain(ctx, command, **inputs):
             if type(value) == str:
                 value = "'" + value + "'"
             s = s + ', {:s}={}'.format(key, value)
-        fh.write(str(base64.b64encode(s.encode()))[2 : -1])
+        if sys.version_info[0] == 3:
+            fh.write(base64.b64encode(s.encode()).decode())
+        else:
+            fh.write(base64.b64encode(s.encode()))
         fh.write('\n')
         fh.close()
     

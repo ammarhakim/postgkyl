@@ -3,6 +3,7 @@ import click
 import numpy
 import os
 import base64
+import sys
 from glob import glob
 from time import time
 
@@ -93,7 +94,10 @@ def rc(ctx):
         fh = open('pgkylchain.dat', 'r')
         lines = fh.readlines()
         for line in lines:
-            s = str(base64.b64decode(line.encode()))[2 : -1]
+            if sys.version_info[0] == 3:
+                s = base64.b64decode(line).decode()
+            else:
+                s = base64.b64decode(line)
             eval('ctx.invoke(cmd.{:s})'.format(s))
         fh.close()
     else:
