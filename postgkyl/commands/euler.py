@@ -18,7 +18,7 @@ def pressure(gasGamma, q):
 @click.pass_context
 def euler(ctx, **inputs):
     vlog(ctx, 'Starting euler')
-    pushChain(ctx, 'euler.euler', inputs)
+    pushChain(ctx, 'euler.euler', **inputs)
 
     v = inputs['variable_name']
     for s in ctx.obj['sets']:

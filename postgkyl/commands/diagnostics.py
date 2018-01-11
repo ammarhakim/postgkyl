@@ -19,7 +19,7 @@ from postgkyl.commands.output import vlog, pushChain
 @click.pass_context
 def growth(ctx, **inputs):
     vlog(ctx, 'Starting growth')
-    pushChain( ctx, 'diagnostics.growth', inputs) 
+    pushChain( ctx, 'diagnostics.growth', **inputs) 
 
     from postgkyl.diagnostics.growth import fitGrowth, exp2
 

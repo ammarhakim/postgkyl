@@ -58,7 +58,7 @@ def getForb(pij, B):
 @click.pass_context
 def agyro(ctx, **inputs):
     vlog(ctx, 'Starting agyro')
-    pushChain(ctx, 'agyro.agyro', inputs)
+    pushChain(ctx, 'agyro.agyro', **inputs)
 
     coords, pij = peakStack(ctx, ctx.obj['sets'][0])
     coords, B = peakStack(ctx, ctx.obj['sets'][1])

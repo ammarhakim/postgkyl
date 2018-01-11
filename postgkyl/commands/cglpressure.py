@@ -58,7 +58,7 @@ def getAgyro(pij, B):
 @click.pass_context
 def cglpressure(ctx, **inputs):
     vlog(ctx, 'Starting CGL pressure')
-    pushChain(ctx, 'cglpressure.cglpressure', inputs)
+    pushChain(ctx, 'cglpressure.cglpressure', **inputs)
 
     coords, pij = peakStack(ctx, ctx.obj['sets'][0])
     coords, B = peakStack(ctx, ctx.obj['sets'][1])
