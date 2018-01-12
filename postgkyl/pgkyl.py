@@ -94,6 +94,7 @@ def rc(ctx):
         fh = open('pgkylchain.dat', 'r')
         lines = fh.readlines()
         for line in lines:
+            print(s)
             if sys.version_info[0] == 3:
                 s = base64.b64decode(line).decode()
             else:
