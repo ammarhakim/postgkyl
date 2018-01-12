@@ -43,9 +43,8 @@ def _getFig(ctx):
               help='Turn showing of the plot ON and OFF (default: ON)')
 @click.option('--style',
               help='Specify Matplotlib style file (default: postgkyl style)')
+@click.option('--free-axis', 'axismode', flag_value='tight', default=True)
 @click.option('--fixed-axis', 'axismode', flag_value='image')
-@click.option('--free-axis', 'axismode', flag_value='tight',
-              default=True)
 @click.option('--save/--no-save', '-s', default=False,
               help='Save figure as png')
 @click.option('-q', '--quiver', is_flag=True,
