@@ -355,6 +355,8 @@ def pushChain(ctx, command, **inputs):
         s = '{:s}'.format(command)
 
         for key, value in inputs.items():
+            if type(value) == unicode:
+                value = str(value)
             if type(value) == str:
                 value = "'" + value + "'"
             s = s + ', {:s}={}'.format(key, value)

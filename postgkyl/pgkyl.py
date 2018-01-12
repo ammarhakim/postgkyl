@@ -98,7 +98,6 @@ def rc(ctx):
                 s = base64.b64decode(line).decode()
             else:
                 s = base64.b64decode(line)
-            #print("Evaluating %s" % s)
             eval('ctx.invoke(cmd.{:s})'.format(s))
         fh.close()
     else:
