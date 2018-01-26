@@ -306,7 +306,8 @@ def write(ctx, **inputs):
         numComps = int(values.shape[-1])
 
         if inputs['filename'] is None:
-            inputs['filename'] = '{:s}.{:s}'.format(getFullLabel(ctx, s), mode)
+            inputs['filename'] = '{:s}.{:s}'.format(getFullLabel(ctx, s),
+                                                    inputs['mode'])
 
         if inputs['mode'] == 'h5':
             fh = tables.open_file(inputs['filename'], 'w')
