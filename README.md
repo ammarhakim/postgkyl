@@ -6,7 +6,7 @@ analytical tools.
 
 # Documentation
 
-Documentation is available at [ReadTheDocs](http://postgkyl.rtfd.io).
+Documentation is available at [ReadTheDocs](http://gkyl.rtfd.io).
 
 # Dependencies and Installation
 
@@ -68,7 +68,7 @@ lightweight [Miniconda](https://conda.io/miniconda.html)
 
 # License
 
-PostGkyl uses the BSD license. The full license is available [here](LICENSE).
+See [Gkyl License](http://gkyl.readthedocs.io/en/latest/license.html) for usage conditions.
 
 # Developer guidelines
 
