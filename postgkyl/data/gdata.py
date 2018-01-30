@@ -1,9 +1,10 @@
-import tables.open_file
-import adios
-import numpy as np
 import logging as log
 from os.path import isfile
 from glob import glob
+
+import numpy as np
+import tables
+import adios
 
 
 class GData(object):
@@ -20,225 +21,215 @@ class GData(object):
 
     def __init__(self, fName: str, verbose=False) -> None:
         if verbose:
-            log.basicConfig(format="%(levelname)s: %(message)s", 
+            log.basicConfig(format="%(levelname)s: %(message)s",
                             level=log.INFO)
         else:
             log.basicConfig(format="%(levelname)s: %(message)s")
 
-        self._fName = fName
-        if isfile(self._fName):
-            log.info(("GData.__init__ "
-                      "Loading file '{:s}'".format(self._fName)))
-            self._loadFrame()
-        else:
-            log.info(("GData.__init__ "
-                      "Loading sequence '{:s}'".format(self._fName)))
-            self._loadSequence()
-
-
-    def _loadFrame(self) -> None:
         self._lowerBounds = []
         self._upperBounds = []
         self._numCells = []
         self._grid = []
         self._values = []
 
+        self._fName = fName
+        if isfile(self._fName):
+            self._loadFrame()
+        else:
+            self._loadSequence()
+
+    def _loadFrame(self) -> None:
+        log.info(("GData.__init__ "
+                  "Loading frame '{:s}'".format(self._fName)))
+
         extension = self._fName.split('.')[-1]
         if extension == 'h5':
             with tables.open_file(self._fName, 'r') as fh:
                 try:
                     self._values.append(fh.root.StructGridField.read())
-                    lb = fh.root.structGrid._v_attrs.vsLowerBounds
-                    ub = fh.root.structGrid._v_attrs.vsUpperBounds
-                    nc = fh.root.structGrid._v_attrs.vsNumCells
-                    self._lowerBounds.append(lb)
-                    self._upperBounds.append(ub)
-                    self._numCells.append(nc)
-                    dr = (ub - lb) / nc
-                    self._grid = [np.linspace(lb + 0.5*dr[d],
-                                              ub - 0.5*dr[d],
-                                              nc[d])
-                                  for d in xrange(len(nc))]
+                except NoSuchNodeError:
+                    log.info(("GData.__init__ "
+                              "'{:s}' is not a Gkeyll frame".
+                              format(self._fName)))
+                    fh.close()
+                    self._loadSequence()
+                    return
+                lower = fh.root.StructGrid._v_attrs.vsLowerBounds
+                upper = fh.root.StructGrid._v_attrs.vsUpperBounds
+                cells = fh.root.StructGrid._v_attrs.vsNumCells
+                try:
                     self._time = fh.root.timeData._v_attrs.vsTime
-                except:
-                    self._values.append(fh.root.DataStruct.data.read())
-                    self._grid.append(fh.root.DataStruct.timeMesh.read())
-                    self._lowerBounds.append(np.array(self._grid[0]))
-                    self._upperBounds.append(np.array(self._grid[-1]))
-                    self._numCells.append(np.array(self._grid.shape[0]))
+                except AttributeError:
                     self._time = None
         elif extension == 'bp':
-            with adios.file(self.fName) as fh:
-                # When atribute is a scalar, ADIOS only returns
-                # standart Python float; for consistency, those are
-                # turned into 1D numpy arrays
-                self._lowerBounds.append(
-                    numpy.array(adios.attr(fh, 'lowerBounds').value))
-                if self.lowerBounds.ndim == 0:
-                    self.lowerBounds = numpy.expand_dims(self.lowerBounds, 0)
-                self.upperBounds = numpy.array(adios.attr(fh, 'upperBounds').value)
-                if self.upperBounds.ndim == 0:
-                    self.upperBounds = numpy.expand_dims(self.upperBounds, 0)
-                self.numCells = numpy.array(adios.attr(fh, 'numCells').value)
-                if self.numCells.ndim == 0:
-                    self.numCells = numpy.expand_dims(self.numCells, 0)
-                self.numDims = len(self.numCells)
+            with adios.file(self._fName) as fh:
                 try:
-                    self.time = numpy.float(adios.readvar(self.fName, 'time'))
-                except:
-                    self.time = np.float64(-1.0)
+                    self._values.append(adios.readvar(self._fName,
+                                                      'CartGridField'))
+                except KeyError:
+                    log.info(("GData.__init__ "
+                              "'{:s}' is not a Gkeyll frame".
+                              format(self._fName)))
+                    self._loadSequence()
+                    return
+                lower = adios.attr(fh, 'lowerBounds').value
+                upper = adios.attr(fh, 'upperBounds').value
+                cells = adios.attr(fh, 'numCells').value
+                if not isinstance(cells, np.ndarray):
+                    # ADIOS returns 1D data as float
+                    lower = np.expand_dims(np.array(lower), 0)
+                    upper = np.expand_dims(np.array(upper), 0)
+                    cells = np.expand_dims(np.array(cells), 0)
+                try:
+                    self._time \
+                        = adios.readvar(self._fName, 'time')
+                except KeyError:
+                    self._time = None
+
         else:
             raise NameError((
                 "GData.__init__"
-                "File extension {:s} isnot supported.".format(extension)))
+                "File extension '{:s}' is not supported".
+                format(extension)))
 
+        self._lowerBounds.append(lower)
+        self._upperBounds.append(upper)
+        self._numCells.append(cells)
+        dr = (upper - lower) / cells
+        grid = [np.linspace(lower[d] + 0.5*dr[d], upper[d] - 0.5*dr[d], cells[d])
+                for d in range(len(cells))]
+        self._grid.append(grid)
 
     def _loadSequence(self) -> None:
-        pass
+        log.info(("GData.__init__ "
+                  "Loading sequence '{:s}'".format(self._fName)))
+        files = glob('{:s}*'.format(self._fName))
+        if not files:
+            raise NameError((
+                "GData.__init__"
+                "No data files with the root '{:s}'".
+                format(self._fName)))
 
-
-    def loadDataH5(self, fh):
-        """Load data from a HDF5 file"""
-
-        self.q = numpy.array(fh.root.StructGridField)
-
-        if len(self.q.shape) > self.numDims:
-            self.numComponents = self.q.shape[-1]
-            self.numCells = self.q.shape[:-1]
-        else:
-            self.numComponents = 1
-            self.numCells = self.q.shape
-
-
-    def loadDataBP(self):
-        """Load data from an ADIOS file"""
-
-        self.q = adios.readvar(self.fName, 'CartGridField')
-
-        if len(self.q.shape) > self.numDims:
-            self.numComponents = self.q.shape[-1]
-        else:
-            self.numComponents = 1
-
-class GHistoryData:
-    """Provide interface to read history data.
-
-    __init__(fNameRoot : string)
-    Determine the data type and call the appropriate load function
-
-    Methods:
-    _loadG1h5 -- Load G1 HDF5 files
-    _loadG2bp -- Load G2 Adios binary files
-    save      -- Save loaded data to a text file
-    """
-
-    def __init__(self, fNameRoot, start=0):
-        """Determine the data type and call the appropriate load
-        function
-
-        Inputs:
-        fNameRoot -- file name root
-
-        Raises:
-        NameError -- when files with root don't exis
-        NameError -- when file extension is neither h5 or bp
-
-        Notes:
-        Load function is determined based on the extension
-        """
-        self.fNameRoot = fNameRoot
-        self.files = glob('{}*'.format(self.fNameRoot))
-        for fl in self.files:
-            ext = fl.split('.')[-1]
-            if ext != 'h5' and ext != 'bp':
-                self.files.remove(fl)
-        if self.files == []:
-            raise NameError(
-                'GHistoryData: Files with root \'{}\' do not exist!'.
-                format(self.fNameRoot))
-
-        # Parse the file name and select the last part (extension)
-        ext = self.files[start].split('.')[-1]
-        if ext == 'h5':
-            self._loadG1h5(start)
-        elif ext == 'bp':
-            self._loadG2bp(start)
-        else:
-            raise NameError(
-                "GData: File extension {} is not supported.".format(ext))
-
-    def _loadG1h5(self, start):
-        """Load the G1 HDF5 history data file"""
-
-        # read the first history file
-        fh = tables.open_file(self.files[start], 'r')
-        self.values = numpy.array(fh.root.DataStruct.data.read())
-        self.time = numpy.array(fh.root.DataStruct.timeMesh.read())
-        self.time = numpy.squeeze(self.time)
-        fh.close()
-        # read the rest of the files and append
-        for fl in self.files[start+1 :]:
-            ext = fl.split('.')[-1]
+        numFilesLoaded = 0
+        extension = files[0].split('.')[-1]
+        if extension == 'h5':
+            with tables.open_file(files[0], 'r') as fh:
+                try:
+                    self._values.append(fh.root.DataStruct.data.read())
+                    self._grid.append(fh.root.DataStruct.timeMesh.read())
+                    numFilesLoaded += 1
+                except NoSuchNodeError:
+                    pass
+        elif extension == 'bp':
             try:
-                fh = tables.open_file(fl, 'r')
-                self.values = numpy.append(self.values,
-                                           fh.root.DataStruct.data.read(), axis=0)
-                self.time = numpy.append(self.time,
-                                         fh.root.DataStruct.timeMesh.read())
-                fh.close()
-            except:
-                fh.close()
+                self._values.append(adios.readvar(files[0], 'Data'))
+                self._grid.append(adios.readvar(files[0], 'TimeMesh'))
+                numFilesLoaded += 1
+            except KeyError:
+                pass
 
-        # sort with scending time
-        sortIdx = numpy.argsort(self.time)
-        self.time = self.time[sortIdx]
-        self.values = self.values[sortIdx]
+        for fName in files[1:]:
+            extension = fName.split('.')[-1]
+            if extension == 'h5':
+                with tables.open_file(fName, 'r') as fh:
+                    try:
+                        self._values[0] \
+                            = np.append(self._values[0],
+                                        fh.root.DataStruct.data.read(),
+                                        axis=0)
+                        self._grid[0] \
+                            = np.append(self._grid[0],
+                                        fh.root.DataStruct.timeMesh.read(),
+                                        axis=0)
+                        numFilesLoaded += 1
+                    except NoSuchNodeError:
+                        pass
+            elif extension == 'bp':
+                try:
+                    self._values[0] \
+                        = np.append(self._values[0],
+                                    adios.readvar(fName, 'Data'),
+                                    axis=0)
+                    self._grid[0] \
+                        = np.append(self._grid[0],
+                                    adios.readvar(fName, 'TimeMesh'),
+                                    axis=0)
+                    numFilesLoaded += 1
+                except KeyError:
+                    pass
 
-        # convert to numpy arrays
-        self.values = numpy.array(self.values)
-        self.time = numpy.array(self.time)
+        if numFilesLoaded == 0:
+            raise NameError((
+                "GData.__init__"
+                "No data files with the root '{:s}'".
+                format(self._fName)))
 
-    def _loadG2bp(self, start):
-        """Load the G2 ADIOS history data file"""
+        self._grid[0] = [self._grid[0]]   # following Postgkyl
+                                          # convention and making
+                                          # 'grid' a list of numpy
+                                          # arrays for each dimension
+        # enforcing boundaries are arrays even for 1D data
+        lower = np.expand_dims(np.array(self._grid[0][0][0]), 0)
+        upper = np.expand_dims(np.array(self._grid[0][0][-1]), 0)
+        cells = np.expand_dims(np.array(self._grid[0][0].shape[0]), 0)
+        self._lowerBounds.append(lower)
+        self._upperBounds.append(upper)
+        self._numCells.append(cells)
+        self._time = None
 
-        # read the first history file                     
-        self.values = adios.readvar(self.files[start], 'Data')
-        self.time = adios.readvar(self.files[start], 'TimeMesh')
-    
-        # read the rest of the files and append
-        for fl in self.files[start+1 :]:
-            ext = fl.split('.')[-1]
-            try:
-                self.values = numpy.append(self.values,
-                                           adios.readvar(fl, 'Data'),
-                                           axis=0)
-                self.time = numpy.append(self.time,
-                                         adios.readvar(fl, 'TimeMesh'),
-                                         axis=0)
-            except:
-                fh.close()
+        # glob() doesn't guarantee the right order
+        sortIdx = np.argsort(self._grid[0][0])
+        self._grid[0][0] = self._grid[0][0][sortIdx]
+        self._values[0] = self._values[0][sortIdx]
 
-        # sort with scending time
-        sortIdx = numpy.argsort(self.time)
-        self.time = self.time[sortIdx]
-        self.values = self.values[sortIdx]
+    def pushStack(self, grid: list, values: np.ndarray) -> None:
+        """Pushes the input on to the grid and values stacks.
 
-        # convert to numpy arrays
-        self.values = numpy.array(self.values)
-        self.time = numpy.array(self.time)
+        Args:
+            grid (list): A list of numpy arrays with grid coordinates
+                for each dimension.
+            values (ndarray): A numpy array with the values; has N+1
+                dimensions since the last index is corresponding to a
+                component.
 
-    def save(self, fName=None):
-        """Write loaded history data to one text file
-
-        Parameters:
-        fName (optional) -- specify the output file name
-
-        Note:
-        If the 'fName' is not specified, 'fNameRoot' is used instead
-        to construct a file name
+        Returns:
+            None
         """
-        if fName is None:
-            fName = '{:s}/{:s}.dat'.format(os.getcwd(), self.fNameRoot)
+        self._grid.append(grid)
+        self._values.append(values)
 
-        out = numpy.vstack([self.time, self.values]).transpose()
-        numpy.savetxt(fName, out)
+    def peakStack(self) -> (list, np.ndarray):
+        """Peaks the grid and values stacks.
+
+        Args:
+            None
+
+        Returns:
+            (grid, list)
+            grid (list): A list of numpy arrays with grid coordinates
+                for each dimension.
+            values (ndarray): A numpy array with the values; has N+1
+                dimensions since the last index is corresponding to a
+                component.
+        """
+        grid = self._grid[-1]
+        values = self._values[-1]
+        return grid, values
+
+    def popStack(self) -> (list, np.ndarray):
+        """Pops the grid and values stacks.
+
+        Args:
+            None
+
+        Returns:
+            (grid, list)
+            grid (list): A list of numpy arrays with grid coordinates
+                for each dimension.
+            values (ndarray): A numpy array with the values; has N+1
+                dimensions since the last index is corresponding to a
+                component.
+        """
+        grid = self._grid.pop()
+        values = self._values.pop()
+        return grid, values

@@ -1,26 +1,9 @@
-"""G&H data loading and handling
-
-Files:
- * data.py -- data files loading and saving
- * dg.py -- DG interpolation
- * batch.py -- convenience time-series loaging
-"""
-
-# import basic data handling classes
-#from .gdata import GData 
-from .load import GData
+# import data handler
+from postgkyl.data.gdata import GData 
 # import interpolators
-from . import dg
-from .dg import GInterpZeroOrder
-from .dg import GInterpNodal
-from .dg import GInterpModal
-# import batch files
-#from . import batch
-#from .batch import GBatchData
-#from .batch import GBatchInterpZeroOrder
-#from .batch import GBatchInterpNodalSerendipity
-#from .batch import GBatchInterpModalSerendipity
-#from .batch import GBatchInterpModalMaxOrder
+from postgkyl.data.dg import GInterpZeroOrder
+from postgkyl.data.dg import GInterpNodal
+from postgkyl.data.dg import GInterpModal
 # import interpolation matrices computation
-from . import computeInterpolationMatrices
-from . import computeDerivativeMatrices
+from postgkyl.data import computeInterpolationMatrices
+from postgkyl.data import computeDerivativeMatrices
