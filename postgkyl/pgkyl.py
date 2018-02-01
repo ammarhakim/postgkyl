@@ -26,7 +26,7 @@ def cli(ctx, filename, verbose, savechain):
     ctx.obj['startTime'] = time()
     if verbose:
         ctx.obj['verbose'] = True
-        vlog(ctx, 'This is postgkyl running in verbose mode!')
+        vlog(ctx, 'This is Postgkyl running in verbose mode!')
         vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
         vlog(ctx, 'And now for something completelly different...')
     else:
@@ -42,21 +42,24 @@ def cli(ctx, filename, verbose, savechain):
     ctx.obj['files'] = filename
     numFiles = len(filename)
     ctx.obj['dataSets'] = []
+    ctx.obj['setIds'] = []
 
     cnt = 0
     for s in range(numFiles):
         if "*" not in filename[s]:
-            ctx.obj['dataSets'].append(GData(filename[s]))
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
-                 format(fh, cnt))
+                 format(filename[s], cnt))
+            ctx.obj['dataSets'].append(GData(filename[s]))
+            ctx.obj['setIds'].append(cnt)
             cnt += 1
         else:
             files = glob(str(filename[s]))
-            for fh in files:
+            for fn in files:
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
-                         format(fh, cnt))
-                    ctx.obj['dataSets'].append(GData(fh))
+                         format(fn, cnt))
+                    ctx.obj['dataSets'].append(GData(fn))
+                    ctx.obj['setIds'].append(cnt)
                     cnt += 1
                 except:
                     pass
@@ -64,6 +67,7 @@ def cli(ctx, filename, verbose, savechain):
     if numFiles > 0 and cnt == 0:
         raise NameError("no files loaded")
     ctx.obj['numSets'] = cnt
+    ctx.obj['sets'] = range(cnt)
 
     ctx.obj['hold'] = 'off'
     ctx.obj['fig'] = ''
@@ -76,14 +80,15 @@ def cli(ctx, filename, verbose, savechain):
         ctx.obj['mplstyle']  = dirPath + '/../../../../data/postgkyl.mplstyle'
 
 cli.add_command(cmd.util.rc)
-
+cli.add_command(cmd.info.info)
+cli.add_command(cmd.dg.interpolate)
+cli.add_command(cmd.plot.plot)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)
 #cli.add_command(cmd.diagnostics.growth)
 #cli.add_command(cmd.euler.euler)
 #cli.add_command(cmd.output.hold)
-#cli.add_command(cmd.output.info)
 #cli.add_command(cmd.output.plot)
 #cli.add_command(cmd.output.write)
 #cli.add_command(cmd.select.collect)
@@ -105,7 +110,6 @@ cli.add_command(cmd.util.rc)
 #cli.add_command(cmd.transform.norm)
 #cli.add_command(cmd.transform.pow)
 #cli.add_command(cmd.transform.transpose)
-#cli.add_command(rc)
 
 if __name__ == '__main__':
     cli()
