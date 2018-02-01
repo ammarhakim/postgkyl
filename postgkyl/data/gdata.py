@@ -46,7 +46,7 @@ class GData(object):
             with tables.open_file(self._fName, 'r') as fh:
                 try:
                     self._values.append(fh.root.StructGridField.read())
-                except NoSuchNodeError:
+                except:
                     log.info(("'{:s}' is not a Gkeyll frame".
                               format(self._fName)))
                     fh.close()
@@ -78,10 +78,10 @@ class GData(object):
                     upper = np.expand_dims(np.array(upper), 0)
                     cells = np.expand_dims(np.array(cells), 0)
                 try:
-                    self._time \
+                    self.time \
                         = adios.readvar(self._fName, 'time')
                 except KeyError:
-                    self._time = None
+                    self.time = None
 
         else:
             raise NameError((
@@ -113,7 +113,7 @@ class GData(object):
                     self._values.append(fh.root.DataStruct.data.read())
                     self._grid.append(fh.root.DataStruct.timeMesh.read())
                     numFilesLoaded += 1
-                except NoSuchNodeError:
+                except:
                     pass
         elif extension == 'bp':
             try:
@@ -137,7 +137,7 @@ class GData(object):
                                         fh.root.DataStruct.timeMesh.read(),
                                         axis=0)
                         numFilesLoaded += 1
-                    except NoSuchNodeError:
+                    except:
                         pass
             elif extension == 'bp':
                 try:
@@ -158,10 +158,18 @@ class GData(object):
                 "No data files with the root '{:s}'".
                 format(self._fName)))
 
+        if len(self._grid[0].shape) > 1:
+            self._grid[0] = np.squeeze(self._grid[0])
         self._grid[0] = [self._grid[0]]  # following Postgkyl
                                          # convention and making
                                          # 'grid' a list of numpy
                                          # arrays for each dimension
+
+        # glob() doesn't guarantee the right order
+        sortIdx = np.argsort(self._grid[0][0])
+        self._grid[0][0] = self._grid[0][0][sortIdx]
+        self._values[0] = self._values[0][sortIdx, ...]
+
         # enforcing boundaries are arrays even for 1D data
         lower = np.expand_dims(np.array(self._grid[0][0][0]), 0)
         upper = np.expand_dims(np.array(self._grid[0][0][-1]), 0)
@@ -170,11 +178,6 @@ class GData(object):
         self._upperBounds.append(upper)
         self._numCells.append(cells)
         self.time = None
-
-        # glob() doesn't guarantee the right order
-        sortIdx = np.argsort(self._grid[0][0])
-        self._grid[0][0] = self._grid[0][0][sortIdx]
-        self._values[0] = self._values[0][sortIdx]
 
     def pushStack(self, grid: list, values: np.ndarray) -> None:
         """Pushes the input on to the grid and values stacks.
@@ -273,3 +276,45 @@ class GData(object):
         """
         return self._lowerBounds[-1], self._upperBounds[-1]
 
+    def info(self) -> str:
+        """Prints GData object information.
+
+        Prints time (only when available), number of components, dimension
+        spans, extremes for a GData object. Only the top of the stack is
+        printed.
+        
+        Args:
+        
+        Returns:
+            output (str): A list of strings with the informations
+        """
+        grid, values = self.peakStack()
+        numComps = self.getNumComps()
+        numDims = self.getNumDims()
+        numCells = self.getNumCells()
+        lower, upper = self.getBounds()
+
+        maximum = values.max()
+        maxIdx = np.unravel_index(np.argmax(values), values.shape)
+        minimum = values.min()
+        minIdx = np.unravel_index(np.argmin(values), values.shape)
+        
+        output = ""
+        if self.time is not None:
+            output += "- Time: {:e}\n".format(self.time)
+        output += "- Number of components: {:d}\n".format(numComps)
+        output += "- Number of dimensions: {:d}\n".format(numDims)
+        for d in range(numDims):
+            output += "  - Dim {:d}: Num. cells: {:d};".format(d, numCells[d])
+            output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
+        output += "- Maximum: {:e} at {:s}".format(maximum,
+                                                   str(maxIdx[:numDims]))
+        if numComps > 1:
+            output += " component {:d}\n".format(maxIdx[-1])
+        else:
+            output += "\n"
+        output += "- Minimum: {:e} at {:s}".format(minimum,
+                                                   str(minIdx[:numDims]))
+        if numComps > 1:
+            output += " component {:d}".format(minIdx[-1])
+        return output

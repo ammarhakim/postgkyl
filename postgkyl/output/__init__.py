@@ -1,2 +1,2 @@
 # info
-from postgkyl.output.info import info
+from postgkyl.output.plot import plot

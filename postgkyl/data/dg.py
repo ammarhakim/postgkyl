@@ -298,7 +298,8 @@ class GInterpZeroOrder(GInterp):
         GInterp.__init__(self, data, 1)
 
     def interpolate(self, c):
-        return np.array(self.Xc), np.squeeze(self._getRawNodal(c))
+        return np.array(self.Xc),
+        np.squeeze(self._getRawNodal(c))[..., np.newaxis]
     
     def differentiate(self, direction, comp=0):
         q = np.squeeze(self._getRawNodal(comp))
@@ -310,7 +311,7 @@ class GInterpZeroOrder(GInterp):
             for i in range(0,self.numDims):
                 derivativeData[:,i] = np.gradient(q, coords[i][1] - coords[i][0], axis=i, edge_order=2)
                 derivativeData[:,i] /= (coords[i][1] - coords[i][0])
-            return coords, derivativeData
+            return coords, derivativeData[..., np.newaxis]
         
 class GInterpNodal(GInterp):
     """Class for manipulating nodal DG data
@@ -334,7 +335,7 @@ class GInterpNodal(GInterp):
         coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
                             self.Xc[d])
                   for d in range(self.numDims)]
-        return np.array(coords), _interpOnMesh(cMat, q)
+        return coords, _interpOnMesh(cMat, q)[..., np.newaxis]
 
     def differentiate(self, direction: int, comp=0):
         q = self._getRawNodal(comp)
@@ -351,7 +352,7 @@ class GInterpNodal(GInterp):
             for i in range(0,self.numDims):
                 derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return np.array(coords), derivativeData
+            return coords, derivativeData[..., np.newaxis]
 
 class GInterpModal(GInterp):
     """Class for manipulating modal DG data
@@ -374,7 +375,7 @@ class GInterpModal(GInterp):
         coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
                             self.Xc[d])
                   for d in range(self.numDims)]
-        return np.array(coords), _interpOnMesh(cMat, q)
+        return coords, _interpOnMesh(cMat, q)[..., np.newaxis]
 
     def differentiate(self, direction, comp=0):
         q = self._getRawModal(comp)
@@ -390,4 +391,4 @@ class GInterpModal(GInterp):
             for i in range(0,self.numDims):
                 derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return np.array(coords), derivativeData
+            return coords, derivativeData[..., np.newaxis]
