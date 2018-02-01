@@ -31,6 +31,7 @@ __version__ = '1.0'
 from postgkyl import data
 from postgkyl import diagnostics
 from postgkyl import tools
+from postgkyl import output
 
 # import selected classes to the root
 from postgkyl.data.gdata import GData

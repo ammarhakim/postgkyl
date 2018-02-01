@@ -39,8 +39,7 @@ class GData(object):
             self._loadSequence()
 
     def _loadFrame(self) -> None:
-        log.info(("GData.__init__ "
-                  "Loading frame '{:s}'".format(self._fName)))
+        log.info(("Loading frame '{:s}'".format(self._fName)))
 
         extension = self._fName.split('.')[-1]
         if extension == 'h5':
@@ -48,8 +47,7 @@ class GData(object):
                 try:
                     self._values.append(fh.root.StructGridField.read())
                 except NoSuchNodeError:
-                    log.info(("GData.__init__ "
-                              "'{:s}' is not a Gkeyll frame".
+                    log.info(("'{:s}' is not a Gkeyll frame".
                               format(self._fName)))
                     fh.close()
                     self._loadSequence()
@@ -58,17 +56,16 @@ class GData(object):
                 upper = fh.root.StructGrid._v_attrs.vsUpperBounds
                 cells = fh.root.StructGrid._v_attrs.vsNumCells
                 try:
-                    self._time = fh.root.timeData._v_attrs.vsTime
+                    self.time = fh.root.timeData._v_attrs.vsTime
                 except AttributeError:
-                    self._time = None
+                    self.time = None
         elif extension == 'bp':
             with adios.file(self._fName) as fh:
                 try:
                     self._values.append(adios.readvar(self._fName,
                                                       'CartGridField'))
                 except KeyError:
-                    log.info(("GData.__init__ "
-                              "'{:s}' is not a Gkeyll frame".
+                    log.info(("'{:s}' is not a Gkeyll frame".
                               format(self._fName)))
                     self._loadSequence()
                     return
@@ -88,7 +85,6 @@ class GData(object):
 
         else:
             raise NameError((
-                "GData.__init__"
                 "File extension '{:s}' is not supported".
                 format(extension)))
 
@@ -96,17 +92,16 @@ class GData(object):
         self._upperBounds.append(upper)
         self._numCells.append(cells)
         dr = (upper - lower) / cells
-        grid = [np.linspace(lower[d] + 0.5*dr[d], upper[d] - 0.5*dr[d], cells[d])
+        grid = [np.linspace(lower[d] + 0.5*dr[d], upper[d] - 0.5*dr[d],
+                            cells[d])
                 for d in range(len(cells))]
         self._grid.append(grid)
 
     def _loadSequence(self) -> None:
-        log.info(("GData.__init__ "
-                  "Loading sequence '{:s}'".format(self._fName)))
+        log.info(("Loading sequence '{:s}'".format(self._fName)))
         files = glob('{:s}*'.format(self._fName))
         if not files:
             raise NameError((
-                "GData.__init__"
                 "No data files with the root '{:s}'".
                 format(self._fName)))
 
@@ -160,14 +155,13 @@ class GData(object):
 
         if numFilesLoaded == 0:
             raise NameError((
-                "GData.__init__"
                 "No data files with the root '{:s}'".
                 format(self._fName)))
 
-        self._grid[0] = [self._grid[0]]   # following Postgkyl
-                                          # convention and making
-                                          # 'grid' a list of numpy
-                                          # arrays for each dimension
+        self._grid[0] = [self._grid[0]]  # following Postgkyl
+                                         # convention and making
+                                         # 'grid' a list of numpy
+                                         # arrays for each dimension
         # enforcing boundaries are arrays even for 1D data
         lower = np.expand_dims(np.array(self._grid[0][0][0]), 0)
         upper = np.expand_dims(np.array(self._grid[0][0][-1]), 0)
@@ -175,7 +169,7 @@ class GData(object):
         self._lowerBounds.append(lower)
         self._upperBounds.append(upper)
         self._numCells.append(cells)
-        self._time = None
+        self.time = None
 
         # glob() doesn't guarantee the right order
         sortIdx = np.argsort(self._grid[0][0])
@@ -233,3 +227,49 @@ class GData(object):
         grid = self._grid.pop()
         values = self._values.pop()
         return grid, values
+
+    def getNumDims(self) -> int:
+        """Gets the number of dimension for the top of the stack.
+
+        Args:
+            None
+
+        Returns:
+            numDims (int): number of dimensions
+        """
+        return len(self._numCells[0])
+
+    def getNumCells(self) -> np.ndarray:
+        """Gets the number of cells for the top of the stack.
+
+        Args:
+            None
+
+        Returns:
+            numCells (np.ndarray): number of cells
+        """
+        return self._numCells[-1]
+
+    def getNumComps(self) -> int:
+        """Gets the number of components for the top of the stack.
+
+        Args:
+            None
+
+        Returns:
+            numCells (np.ndarray): number of cells
+        """
+        return self._values[-1].shape[-1]
+
+    def getBounds(self) -> (np.ndarray, np.ndarray):
+        """Gets the touple of lower and upper boundaries.
+
+        Args:
+            None
+
+        Returns:
+            lowerBounds (np.ndarray): lower boundaries
+            upperBounds (np.ndarray): upper boundaries
+        """
+        return self._lowerBounds[-1], self._upperBounds[-1]
+

@@ -1,7 +1,7 @@
 import numpy
 import click
 
-from postgkyl.data.load import GData, GHistoryData
+from postgkyl.data.gdata import GData
 from postgkyl.data.dg import GInterpZeroOrder
 
 def pushStack(ctx, dataSet, coords, values, label=''):
@@ -86,7 +86,7 @@ def loadFrame(ctx, dataSet, fileName):
     pushStack(ctx, dataSet, coords, values, name)
 
 def loadHist(ctx, dataSet, fileName):
-    hist = GHistoryData(fileName)
+    hist = GData(fileName)
     ctx.obj['data'].append(hist)
     ctx.obj['type'].append('hist')
 
