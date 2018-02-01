@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data.load import GData
+from postgkyl.data.gdata import GData
 from postgkyl.data.dg import GInterpNodal
 from postgkyl.data.dg import GInterpModal
 
