@@ -1,6 +1,6 @@
 figure.facecolor : white
 lines.linewidth : 2
-font.size : 16
+font.size : 12
 axes.labelsize : large
 axes.titlesize : 14
 image.interpolation : none

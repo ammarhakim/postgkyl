@@ -1,9 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.tools.fields import fixCoordSlice
-from postgkyl.tools.stack import addStack, pushStack, peakStack, popStack
-from postgkyl.commands.output import vlog, pushChain
+from postgkyl.tools.fields import fixGridSlice
+from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Fix a coordinate')
 @click.option('--c0', type=click.FLOAT, help='Fix 1st coordinate')
@@ -17,43 +16,44 @@ from postgkyl.commands.output import vlog, pushChain
 @click.option('--index', 'mode', flag_value='idx',
               help='Fix coordinates based on an index')
 @click.pass_context
-def fix(ctx, **inputs):
+def fix(ctx, **kwargs):
     vlog(ctx, 'Starting fix')
-    pushChain(ctx, 'select.fix', **inputs)
+    pushChain(ctx, 'select.fix', **kwargs)
 
     for s in ctx.obj['sets']:
-        coords, values = peakStack(ctx, s)
-        coordsOut, valuesOut = fixCoordSlice(coords, values, inputs['mode'],
-                                             inputs['c0'], inputs['c1'],
-                                             inputs['c2'], inputs['c3'],
-                                             inputs['c4'], inputs['c5'])
+        grid, values = ctx.obj['dataSets'][s].peakStack()
+        gridOut, valuesOut = fixGridSlice(grid, values, kwargs['mode'],
+                                          kwargs['c0'], kwargs['c1'],
+                                          kwargs['c2'], kwargs['c3'],
+                                          kwargs['c4'], kwargs['c5'])
         label = 'fix'
-        if inputs['c0'] is not None:
-            label = '{:s}_c0_{:f}'.format(label, inputs['c0'])
-        if inputs['c1'] is not None:
-            label = '{:s}_c1_{:f}'.format(label, inputs['c1'])
-        if inputs['c2'] is not None:
-            label = '{:s}_c2_{:f}'.format(label, inputs['c2'])
-        if inputs['c3'] is not None:
-            label = '{:s}_c3_{:f}'.format(label, inputs['c3'])
-        if inputs['c4'] is not None:
-            label = '{:s}_c4_{:f}'.format(label, inputs['c4'])
-        if inputs['c5'] is not None:
-            label = '{:s}_c5_{:f}'.format(label, inputs['c5'])
+        if kwargs['c0'] is not None:
+            label = '{:s}_c0_{:f}'.format(label, kwargs['c0'])
+        if kwargs['c1'] is not None:
+            label = '{:s}_c1_{:f}'.format(label, kwargs['c1'])
+        if kwargs['c2'] is not None:
+            label = '{:s}_c2_{:f}'.format(label, kwargs['c2'])
+        if kwargs['c3'] is not None:
+            label = '{:s}_c3_{:f}'.format(label, kwargs['c3'])
+        if kwargs['c4'] is not None:
+            label = '{:s}_c4_{:f}'.format(label, kwargs['c4'])
+        if kwargs['c5'] is not None:
+            label = '{:s}_c5_{:f}'.format(label, kwargs['c5'])
 
-        pushStack(ctx, s, coordsOut, valuesOut, label)
+        #pushStack(ctx, s, gridOut, valuesOut, label)
+        ctx.obj['dataSets'][s].pushStack(gridOut, valuesOut)
 
 @click.command(help='Select component(s)')
 @click.argument('component', type=click.STRING)
 @click.pass_context
-def comp(ctx, **inputs):
-    vlog(ctx, 'Selecting component(s): {:s}'.format(inputs['component']))
-    pushChain(ctx, 'select.comp', **inputs)
+def comp(ctx, **kwargs):
+    vlog(ctx, 'Selecting component(s): {:s}'.format(kwargs['component']))
+    pushChain(ctx, 'select.comp', **kwargs)
 
     for s in ctx.obj['sets']:
-        coords, values = peakStack(ctx, s)
+        grid, values = ctx.obj['dataSets'][s].peakStack()
 
-        component = inputs['component']
+        component = kwargs['component']
         if len(component.split(',')) > 1:
             components = component.split(',')
             label = 'c_{:s}'.format('_'.join(components)) 
@@ -69,7 +69,8 @@ def comp(ctx, **inputs):
             label = 'c_{:d}'.format(comp)
             values = values[..., comp, np.newaxis]
 
-        pushStack(ctx, s, coords, values, label)       
+        #pushStack(ctx, s, grid, values, label)
+        ctx.obj['dataSets'][s].pushStack(grid, values)
 
 @click.command(help='Select data sets(s)')
 @click.option('-i', '--idx', type=click.STRING,
@@ -77,15 +78,15 @@ def comp(ctx, **inputs):
 @click.option('-a', '--allsets', is_flag=True,
               help='All data sets')
 @click.pass_context
-def dataset(ctx, **inputs):
-    if inputs['allsets']:
+def dataset(ctx, **kwargs):
+    if kwargs['allsets']:
         vlog(ctx, 'Selecting all datasets')
     else:
         vlog(ctx, 'Selecting data set(s): {:s}'.format(idx))
-    pushChain(ctx, 'select.dataset', **inputs)
+    pushChain(ctx, 'select.dataset', **kwargs)
 
-    idx = inputs['idx']
-    if inputs['allsets'] is False:
+    idx = kwargs['idx']
+    if kwargs['allsets'] is False:
         vlog(ctx, 'Selecting data set(s): {:s}'.format(idx))
         if len(idx.split(',')) > 1:
             sets = idx.split(',')
@@ -111,41 +112,41 @@ def pop(ctx):
 @click.option('-s', '--sumdata', is_flag=True,
               help='Sum data in collected datasets')
 @click.pass_context
-def collect(ctx, **inputs):
+def collect(ctx, **kwargs):
     vlog(ctx, 'Starting collect')
-    pushChain(ctx, 'select.collect', **inputs)
-    coordsOut = []
+    pushChain(ctx, 'select.collect', **kwargs)
+    gridOut = []
     valuesOut = []
 
     for s in ctx.obj['sets']:
-        coords, values = peakStack(ctx, s)
-        coordsOut.append(ctx.obj['data'][s].time)
+        grid, values = peakStack(ctx, s)
+        gridOut.append(ctx.obj['data'][s].time)
         if sumdata:
             valuesOut.append(values.sum())
         else:
             valuesOut.append(values)
-    coordsOut = np.array(coordsOut)
+    gridOut = np.array(gridOut)
     valuesOut = np.array(valuesOut)
-    if inputs['sumdata']:
-        coordsOut = np.expand_dims(coordsOut, axis=0)
+    if kwargs['sumdata']:
+        gridOut = np.expand_dims(gridOut, axis=0)
         valuesOut = np.expand_dims(valuesOut, axis=1)
     else:
         # Python 3:
-        # coordsOut = np.array([coordsOut, *coords])
+        # gridOut = np.array([gridOut, *grid])
         temp = []
-        temp.append(coordsOut)
-        for c in coords:
+        temp.append(gridOut)
+        for c in grid:
             temp.append(c)
-        coordsOut = np.array(temp)
+        gridOut = np.array(temp)
 
     vlog(ctx, 
-         'collect: Creating {:d}D data with shape {}'.format(len(coordsOut), 
+         'collect: Creating {:d}D data with shape {}'.format(len(gridOut), 
                                                              valuesOut.shape))
     vlog(ctx, 
          'collect: Active data set switched to #{:d}'.format(ctx.obj['numSets']))
     dataSet = addStack(ctx)
     ctx.obj['type'].append('hist')
-    pushStack(ctx, dataSet, coordsOut, valuesOut, 'collect')
+    pushStack(ctx, dataSet, gridOut, valuesOut, 'collect')
     ctx.obj['sets'] = [dataSet]
 
     vlog(ctx, 'Finishing collect')

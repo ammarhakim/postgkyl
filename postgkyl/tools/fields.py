@@ -54,13 +54,13 @@ def findNearestIdx(array, value):
         return idx
 
 
-def fixCoordSlice(coords, values, mode='idx',
-                  fix1=None, fix2=None, fix3=None,
-                  fix4=None, fix5=None, fix6=None):
+def fixGridSlice(grid, values, mode='idx',
+                 fix1=None, fix2=None, fix3=None,
+                 fix4=None, fix5=None, fix6=None):
     """Fix specified coordinates and decrease dimensionality
 
     Parameters:
-    coords -- array of coordinates
+    grid -- array of coordinates
     values -- array of field values
     mode -- changes input between direct index ('idx', default) and
             coordinate value ('value')
@@ -72,7 +72,7 @@ def fixCoordSlice(coords, values, mode='idx',
     fix6 -- fixes the sixth coordinate to provided index (default None)
 
     Returns:
-    coordsOut -- coordinates with decreased number of dimensions
+    gridOut -- coordinates with decreased number of dimensions
     valuesOut -- field values with decreased number of dimensions
 
     Example:
@@ -85,15 +85,15 @@ def fixCoordSlice(coords, values, mode='idx',
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
 
     numDims = len(values.shape)-1
-    idxCoords = []
+    idxGrid = []
     idxValues = [slice(0, values.shape[d]) for d in range(numDims)]
     
     for i, idx in enumerate(fix):
         if i < numDims:
             if idx is not None:
                 if mode == 'value':
-                    idx = findNearestIdx(coords[i], float(idx))
+                    idx = findNearestIdx(grid[i], float(idx))
                 idxValues[i] = int(idx)
             else:
-                idxCoords.append(int(i))
-    return coords[idxCoords], values[idxValues]
+                idxGrid.append(int(i))
+    return grid[idxGrid], values[idxValues]
