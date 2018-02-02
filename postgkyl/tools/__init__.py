@@ -1,21 +1,11 @@
-"""G&H project miscellaneous useful tools
-
-Files:
- * fields.py -- custom field manipulation tools
- * filters.py -- various filtering methods
- * stack.py -- postgkyl cli stack manipulation
-"""
-
 # import fields.py functions
-from . import fields
-from .fields import rotationMatrix
 from .fields import findNearest
 from .fields import findNearestIdx
-from .fields import fixCoordSlice
+from .fields import fixGridSlice
 # import filters.py functions
 from . import filters
 from .filters import fftData
 from .filters import fftFiltering
 from .filters import butterFiltering
 # import cli stack control
-from . import stack
+#from . import stack

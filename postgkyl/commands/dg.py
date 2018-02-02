@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import GData, GInterpModal, GInterpNodal
+from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Interpolate DG data on a uniform mesh')
@@ -17,7 +17,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def interpolate(ctx, **inputs):
     vlog(ctx, 'Starting interpolate')
-    pushChain(ctx, 'transform.interpolate', **inputs)
+    pushChain(ctx, 'dg.interpolate', **inputs)
 
     for s in ctx.obj['sets']:
         if inputs['basis'] == 'ms' or inputs['basis'] == 'mo':

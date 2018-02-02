@@ -1,54 +1,54 @@
 import numpy as np
 
-def getDensity(values: np.ndarray) -> np.ndarray:
+def getDensity(values):
     return values[..., 0, np.newaxis]
 
-def getVx(values: np.ndarray) -> np.ndarray:
+def getVx(values):
     return values[..., 1, np.newaxis] / values[..., 0, np.newaxis]
 
-def getVy(values: np.ndarray) -> np.ndarray:
+def getVy(values):
     return values[..., 2, np.newaxis] / values[..., 0, np.newaxis]
 
-def getVz(values: np.ndarray) -> np.ndarray:
+def getVz(values):
     return values[..., 3, np.newaxis] / values[..., 0, np.newaxis]
 
-def getV(values: np.ndarray) -> np.ndarray:
+def getV(values):
     return values[..., 1:4] / values[..., 0, np.newaxis]
 
-def getPxx(values: np.ndarray) -> np.ndarray:
+def getPxx(values):
     r = getDensity(values)
     vx = getVx(values)
     return q[..., 4, np.newaxis] - r*vx*vx
 
-def getPxy(values: np.ndarray) -> np.ndarray:
+def getPxy(values):
     r = getDensity(values)
     vx = getVx(values)
     vy = getVy(values)
     return values[..., 5, np.newaxis] - r*vx*vy
 
-def getPxz(values: np.ndarray) -> np.ndarray:
+def getPxz(values):
     r = getDensity(values)
     vx = getVx(values)
     vz = getVz(values)
     return values[..., 6, np.newaxis] - r*vx*vz
 
-def getPyy(values: np.ndarray) -> np.ndarray:
+def getPyy(values):
     r = getDensity(values)
     vy = getVy(values)
     return values[..., 7, np.newaxis] - r*vy*vy
 
-def getPyz(values: np.ndarray) -> np.ndarray:
+def getPyz(values):
     r = getDensity(values)
     vy = getVy(values)
     vz = getVz(values)
     return values[..., 8, np.newaxis] - r*vy*vz
 
-def getPzz(values: np.ndarray) -> np.ndarray:
+def getPzz(values):
     r = getDensity(values)
     vz = getVz(values)
     return values[..., 9, np.newaxis] - r*vz*vz
 
-def getPij(values: np.ndarray) -> np.ndarray:
+def getPij(values):
     tmp = np.copy(values[..., 4:10])
     tmp[..., 0] = getPxx(values)
     tmp[..., 1] = getPxy(values)
@@ -58,7 +58,7 @@ def getPij(values: np.ndarray) -> np.ndarray:
     tmp[..., 5] = getPzz(values)
     return tmp
 
-def getPii(values: np.ndarray, gasGamma=5.0/3, numMom=None) -> np.ndarray:
+def getPii(values, gasGamma=5.0/3, numMom=None):
     if numMom is None:
         if values.shape[-1] == 5:
             numMom = 5

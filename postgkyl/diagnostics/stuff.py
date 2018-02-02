@@ -1,10 +1,10 @@
 from scipy import constants
 import numpy as np
 
-def calcPlasmaFreq(ne: np.ndarray,
+def calcPlasmaFreq(ne,
                    e=constants.elementary_charge,
                    epsilon=constants.epsilon_0,
-                   me=constants.electron_mass) -> np.ndarray:
+                   me=constants.electron_mass):
     """Calculates the plasma frequency.
 
     Args:
@@ -18,7 +18,7 @@ def calcPlasmaFreq(ne: np.ndarray,
     """
     return np.sqrt(ne*e**2/(epsilon*me))
 
-def calcPressureParPer(Pij: np.ndarray, B: np.ndarray) -> np.ndarray:
+def calcPressureParPer(Pij, B):
     """Calculates parallel and perpendicular pressure.
     
     Args:
@@ -49,8 +49,8 @@ def calcPressureParPer(Pij: np.ndarray, B: np.ndarray) -> np.ndarray:
     Ppp[..., 1] = (Pxx + Pyy + Pzz - Ppar) / 2.0 # perpendicular
     return Ppp
 
-def calcAgyrotropy(Pij: np.ndarray, B: np.ndarray,
-                   measure=None) -> np.ndarray:
+def calcAgyrotropy(Pij, B,
+                   measure=None):
     """Calculates agyrotropy
 
     The result is a 6-component field, unless the measure is

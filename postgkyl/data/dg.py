@@ -10,7 +10,7 @@ from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
 postgkylPath = os.path.dirname(os.path.realpath(__file__))
 
-def _getNumNodes(dim: int, polyOrder: int, basis: str) -> int:
+def _getNumNodes(dim, polyOrder, basis):
     if basis.lower() == 'ns' or basis.lower() == 'ms':
         numNodesSerendipity = np.array([[ 2,   3,   4,   5],
                                         [ 4,   8,  12,  17],
@@ -34,7 +34,7 @@ def _getNumNodes(dim: int, polyOrder: int, basis: str) -> int:
     return numNodes
 
 # FIX THISSSSSSS!!!!!!!
-def _getDataPath() -> str:
+def _getDataPath():
     path = os.path.dirname(os.path.realpath(__file__))
     # test if path contains h5 files
     test = glob(path + "/*.h5")
@@ -42,8 +42,7 @@ def _getDataPath() -> str:
         path = path + "/../../../../../data" #Conda path
     return path
 
-def _loadInterpMatrix(dim: int, polyOrder: int, basis: str,
-                      interp: int, read: str) -> np.ndarray:
+def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
     if interp is not None and read is None:
         mat = createInterpMatrix(dim, polyOrder, basis, interp)
         return mat
@@ -159,8 +158,7 @@ def _loadInterpMatrix(dim: int, polyOrder: int, basis: str,
         fh.close()
         return mat.transpose()
 
-def _loadDerivativeMatrix(dim: int, polyOrder: int, basis: str,
-                          interp: int, read: str) -> np.ndarray:
+def _loadDerivativeMatrix(dim, polyOrder, basis, interp, read):
     if interp is not None and read is None:
         mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
         return mat
@@ -255,7 +253,7 @@ class GInterp(object):
     - GInterpModal
     """
 
-    def __init__(self, dat: GData, numNodes: int) -> None:
+    def __init__(self, dat, numNodes):
         grid, values = dat.peakStack()
         self.q = values
         self.numNodes = numNodes
@@ -293,7 +291,7 @@ class GInterpZeroOrder(GInterp):
     with piecewise constant basis.
     """
 
-    def __init__(self, data: GData):
+    def __init__(self, data):
         self.numDims = data.getNumDims()
         GInterp.__init__(self, data, 1)
 
@@ -317,7 +315,7 @@ class GInterpNodal(GInterp):
     """Class for manipulating nodal DG data
     """
 
-    def __init__(self, data: GData, polyOrder:int, basis: str,
+    def __init__(self, data, polyOrder, basis,
                  numInterp=None, read=None):
         self.numDims = data.getNumDims()
         self.polyOrder = polyOrder
@@ -337,7 +335,7 @@ class GInterpNodal(GInterp):
                   for d in range(self.numDims)]
         return coords, _interpOnMesh(cMat, q)[..., np.newaxis]
 
-    def differentiate(self, direction: int, comp=0):
+    def differentiate(self, direction, comp=0):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
@@ -358,7 +356,7 @@ class GInterpModal(GInterp):
     """Class for manipulating modal DG data
     """
 
-    def __init__(self, data: GData, polyOrder: int, basis: str,
+    def __init__(self, data, polyOrder, basis,
                  numInterp=None, read=None):
         self.numDims = data.getNumDims()
         self.polyOrder = polyOrder
@@ -385,7 +383,8 @@ class GInterpModal(GInterp):
                             self.Xc[d])
                   for d in range(self.numDims)]
         if direction is not None:
-            return np.array(coords), _interpOnMesh(cMat[:,:,direction], q)/(self.Xc[direction][1]-self.Xc[direction][0])
+            return np.array(coords), _interpOnMesh(cMat[:, :, direction], q) \
+                / (self.Xc[direction][1] - self.Xc[direction][0])
         else:
             derivativeData = np.zeros(q.shape, self.numDims)
             for i in range(0,self.numDims):

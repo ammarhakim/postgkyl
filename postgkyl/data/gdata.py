@@ -19,7 +19,7 @@ class GData(object):
 
     """
 
-    def __init__(self, fName: str, verbose=False) -> None:
+    def __init__(self, fName, verbose=False):
         if verbose:
             log.basicConfig(format="%(levelname)s: %(message)s",
                             level=log.INFO)
@@ -38,7 +38,7 @@ class GData(object):
         else:
             self._loadSequence()
 
-    def _loadFrame(self) -> None:
+    def _loadFrame(self):
         log.info(("Loading frame '{:s}'".format(self._fName)))
 
         extension = self._fName.split('.')[-1]
@@ -97,7 +97,7 @@ class GData(object):
                 for d in range(len(cells))]
         self._grid.append(grid)
 
-    def _loadSequence(self) -> None:
+    def _loadSequence(self):
         log.info(("Loading sequence '{:s}'".format(self._fName)))
         files = glob('{:s}*'.format(self._fName))
         if not files:
@@ -179,7 +179,7 @@ class GData(object):
         self._numCells.append(cells)
         self.time = None
 
-    def pushStack(self, grid: list, values: np.ndarray) -> None:
+    def pushStack(self, grid, values):
         """Pushes the input on to the grid and values stacks.
 
         Args:
@@ -195,7 +195,7 @@ class GData(object):
         self._grid.append(grid)
         self._values.append(values)
 
-    def peakStack(self) -> (list, np.ndarray):
+    def peakStack(self):
         """Peaks the grid and values stacks.
 
         Args:
@@ -213,7 +213,7 @@ class GData(object):
         values = self._values[-1]
         return grid, values
 
-    def popStack(self) -> (list, np.ndarray):
+    def popStack(self):
         """Pops the grid and values stacks.
 
         Args:
@@ -231,7 +231,7 @@ class GData(object):
         values = self._values.pop()
         return grid, values
 
-    def getNumDims(self) -> int:
+    def getNumDims(self):
         """Gets the number of dimension for the top of the stack.
 
         Args:
@@ -242,7 +242,7 @@ class GData(object):
         """
         return len(self._numCells[0])
 
-    def getNumCells(self) -> np.ndarray:
+    def getNumCells(self):
         """Gets the number of cells for the top of the stack.
 
         Args:
@@ -253,7 +253,7 @@ class GData(object):
         """
         return self._numCells[-1]
 
-    def getNumComps(self) -> int:
+    def getNumComps(self):
         """Gets the number of components for the top of the stack.
 
         Args:
@@ -264,7 +264,7 @@ class GData(object):
         """
         return self._values[-1].shape[-1]
 
-    def getBounds(self) -> (np.ndarray, np.ndarray):
+    def getBounds(self):
         """Gets the touple of lower and upper boundaries.
 
         Args:
@@ -276,7 +276,7 @@ class GData(object):
         """
         return self._lowerBounds[-1], self._upperBounds[-1]
 
-    def info(self) -> str:
+    def info(self):
         """Prints GData object information.
 
         Prints time (only when available), number of components, dimension
@@ -305,7 +305,7 @@ class GData(object):
         output += "- Number of components: {:d}\n".format(numComps)
         output += "- Number of dimensions: {:d}\n".format(numDims)
         for d in range(numDims):
-            output += "  - Dim {:d}: Num. cells: {:d};".format(d, numCells[d])
+            output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
             output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
         output += "- Maximum: {:e} at {:s}".format(maximum,
                                                    str(maxIdx[:numDims]))

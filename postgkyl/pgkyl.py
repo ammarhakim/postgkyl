@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import os
 import base64
 import sys
 from glob import glob
 from time import time
+from os.path import isfile
 
 import click
 import numpy as np
@@ -73,16 +73,30 @@ def cli(ctx, filename, verbose, savechain):
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
 
-    dirPath = os.path.dirname(os.path.realpath(__file__))
-    if os.path.isfile(dirPath+'/output/postgkyl.mplstyle'): 
-        ctx.obj['mplstyle'] = dirPath + '/output/postgkyl.mplstyle'
+@click.command(help='Run the saved command chain')
+@click.pass_context
+def rc(ctx):
+    if isfile('pgkylchain.dat'):
+        fh = open('pgkylchain.dat', 'r')
+        for line in fh.readlines():
+            if sys.version_info[0] == 3:
+                s = base64.b64decode(line).decode()
+            else:
+                s = base64.b64decode(line)
+            eval('ctx.invoke(cmd.{:s})'.format(s))
+        fh.close()
     else:
-        ctx.obj['mplstyle']  = dirPath + '/../../../../data/postgkyl.mplstyle'
+        click.echo("WARNING: 'pgkylchain.dat' does not exist; "
+                   "command chain needs to be saved first with "
+                   "the pgkyl flag -c")
 
-cli.add_command(cmd.util.rc)
+
+cli.add_command(rc)
 cli.add_command(cmd.info.info)
 cli.add_command(cmd.dg.interpolate)
 cli.add_command(cmd.plot.plot)
+cli.add_command(cmd.select.fix)
+cli.add_command(cmd.select.comp)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)

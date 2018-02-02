@@ -28,16 +28,16 @@ Sub-modules:
 __version__ = '1.0'
 
 # import submodules
-from postgkyl import data
-from postgkyl import diagnostics
-from postgkyl import tools
-from postgkyl import output
+from . import data
+from . import diagnostics
+from . import tools
+from . import output
 
 # import selected classes to the root
-from postgkyl.data.gdata import GData
-from postgkyl.data.dg import GInterpZeroOrder
-from postgkyl.data.dg import GInterpNodal
-from postgkyl.data.dg import GInterpModal
+from .data.gdata import GData
+from .data.dg import GInterpZeroOrder
+from .data.dg import GInterpNodal
+from .data.dg import GInterpModal
 
 # link the command line executable to the system
 from . import pgkyl
