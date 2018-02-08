@@ -7,3 +7,5 @@ from .dg import GInterpModal
 # import interpolation matrices computation
 from . import computeInterpolationMatrices
 from . import computeDerivativeMatrices
+# import select
+from .select import select
