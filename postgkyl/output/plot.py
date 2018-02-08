@@ -10,9 +10,9 @@ def _colorbar(obj, fig, ax, label=""):
     cax = divider.append_axes("right", size="3%", pad=0.05)
     return fig.colorbar(obj, cax=cax, label=label)
 
-def plot(grid, values, figure=None, squeeze=False,
+def plot(grid, values, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
-         style=None, *args, **kwargs):
+         style=None, **kwargs):
     """Plots Gkyl data
 
     Unifies the plotting across a wide range of Gkyl applications. Can
@@ -34,7 +34,7 @@ def plot(grid, values, figure=None, squeeze=False,
             if len(grid[d]) == 1:
                 idx.append(d)
         if idx:
-            grid = np.delete(coords, idx)
+            grid = np.delete(grid, idx)
             values = np.squeeze(values, tuple(idx)) 
             numDims = len(grid)
     else:
@@ -120,7 +120,7 @@ def plot(grid, values, figure=None, squeeze=False,
         else:
             if numDims == 1:
                 im, = cax.plot(grid[0], values[..., comp],
-                               *args, **kwargs)
+                               *args)
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),

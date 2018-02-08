@@ -41,7 +41,8 @@ def interpolate(ctx, **inputs):
                 values = np.append(values, tmp, axis=numDims)
  
         #label = 'proj_{:s}_{:d}'.format(inputs['basis'], inputs['polyorder'])
-        ctx.obj['dataSets'][s].pushStack(grid, values)
+        ctx.obj['dataSets'][s].pushGrid(grid)
+        ctx.obj['dataSets'][s].pushValues(values)
     vlog(ctx, 'Finishing interpolate')
 
 @click.command(help='Calculate the derivative of DG data on a uniform mesh')

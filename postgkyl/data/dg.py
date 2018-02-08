@@ -254,14 +254,14 @@ class GInterp(object):
     """
 
     def __init__(self, dat, numNodes):
-        grid, values = dat.peakStack()
-        self.q = values
+        self.q = dat.peakValues()
         self.numNodes = numNodes
         self.numEqns = self.q.shape[-1]/numNodes
         self.numDims = dat.getNumDims()
         lower, upper = dat.getBounds()
         cells = dat.getNumCells()
         self.dx = (upper - lower)/cells
+        grid, _, _ = dat.peakGrid()
         self.Xc = grid
 
     def _getRawNodal(self, component):

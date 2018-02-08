@@ -26,9 +26,8 @@ class GData(object):
         else:
             log.basicConfig(format="%(levelname)s: %(message)s")
 
-        self._lowerBounds = []
-        self._upperBounds = []
-        self._numCells = []
+        self._lower = []
+        self._upper = []
         self._grid = []
         self._values = []
 
@@ -69,14 +68,12 @@ class GData(object):
                               format(self._fName)))
                     self._loadSequence()
                     return
-                lower = adios.attr(fh, 'lowerBounds').value
-                upper = adios.attr(fh, 'upperBounds').value
-                cells = adios.attr(fh, 'numCells').value
-                if not isinstance(cells, np.ndarray):
-                    # ADIOS returns 1D data as float
-                    lower = np.expand_dims(np.array(lower), 0)
-                    upper = np.expand_dims(np.array(upper), 0)
-                    cells = np.expand_dims(np.array(cells), 0)
+                lower = np.atleast_1d(
+                    adios.attr(fh, 'lowerBounds').value)
+                upper = np.atleast_1d(
+                    adios.attr(fh, 'upperBounds').value)
+                cells = np.atleast_1d(
+                    adios.attr(fh, 'numCells').value)
                 try:
                     self.time \
                         = adios.readvar(self._fName, 'time')
@@ -88,9 +85,8 @@ class GData(object):
                 "File extension '{:s}' is not supported".
                 format(extension)))
 
-        self._lowerBounds.append(lower)
-        self._upperBounds.append(upper)
-        self._numCells.append(cells)
+        self._lower.append(lower)
+        self._upper.append(upper)
         dr = (upper - lower) / cells
         grid = [np.linspace(lower[d] + 0.5*dr[d], upper[d] - 0.5*dr[d],
                             cells[d])
@@ -173,108 +169,51 @@ class GData(object):
         # enforcing boundaries are arrays even for 1D data
         lower = np.expand_dims(np.array(self._grid[0][0][0]), 0)
         upper = np.expand_dims(np.array(self._grid[0][0][-1]), 0)
-        cells = np.expand_dims(np.array(self._grid[0][0].shape[0]), 0)
-        self._lowerBounds.append(lower)
-        self._upperBounds.append(upper)
-        self._numCells.append(cells)
+        self._lower.append(lower)
+        self._upper.append(upper)
         self.time = None
 
-    def pushStack(self, grid, values):
-        """Pushes the input on to the grid and values stacks.
-
-        Args:
-            grid (list): A list of numpy arrays with grid coordinates
-                for each dimension.
-            values (ndarray): A numpy array with the values; has N+1
-                dimensions since the last index is corresponding to a
-                component.
-
-        Returns:
-            None
-        """
+    def peakGrid(self):
+        return self._grid[-1], self._lower[-1], self._upper[-1]
+    
+    def popGrid(self):
+        return self._grid.pop(), self._lower.pop(), self._upper.pop()
+    
+    def pushGrid(self, grid, lower=None, upper=None):
         self._grid.append(grid)
+        if lower is not None:
+            self._lower.append(lower)
+        else:
+            self._lower.append(self._lower[-1])
+        if upper is not None:
+            self._upper.append(upper)
+        else:
+            self._upper.append(self._upper[-1])
+
+    def peakValues(self):
+        return self._values[-1]
+    
+    def popValues(self):
+        return self._grid.pop()
+    
+    def pushValues(self, values):
         self._values.append(values)
-
-    def peakStack(self):
-        """Peaks the grid and values stacks.
-
-        Args:
-            None
-
-        Returns:
-            (grid, list)
-            grid (list): A list of numpy arrays with grid coordinates
-                for each dimension.
-            values (ndarray): A numpy array with the values; has N+1
-                dimensions since the last index is corresponding to a
-                component.
-        """
-        grid = self._grid[-1]
-        values = self._values[-1]
-        return grid, values
-
-    def popStack(self):
-        """Pops the grid and values stacks.
-
-        Args:
-            None
-
-        Returns:
-            (grid, list)
-            grid (list): A list of numpy arrays with grid coordinates
-                for each dimension.
-            values (ndarray): A numpy array with the values; has N+1
-                dimensions since the last index is corresponding to a
-                component.
-        """
-        grid = self._grid.pop()
-        values = self._values.pop()
-        return grid, values
-
+        
     def getNumDims(self):
-        """Gets the number of dimension for the top of the stack.
-
-        Args:
-            None
-
-        Returns:
-            numDims (int): number of dimensions
-        """
-        return len(self._numCells[0])
+        return len(self._grid[0])
 
     def getNumCells(self):
-        """Gets the number of cells for the top of the stack.
-
-        Args:
-            None
-
-        Returns:
-            numCells (np.ndarray): number of cells
-        """
-        return self._numCells[-1]
+        numDims = self.getNumDims()
+        cells = np.zeros(numDims, dtype=np.int)
+        for d in range(numDims):
+            cells[d] = len(self._grid[-1][d])
+        return cells
 
     def getNumComps(self):
-        """Gets the number of components for the top of the stack.
-
-        Args:
-            None
-
-        Returns:
-            numCells (np.ndarray): number of cells
-        """
         return self._values[-1].shape[-1]
 
     def getBounds(self):
-        """Gets the touple of lower and upper boundaries.
-
-        Args:
-            None
-
-        Returns:
-            lowerBounds (np.ndarray): lower boundaries
-            upperBounds (np.ndarray): upper boundaries
-        """
-        return self._lowerBounds[-1], self._upperBounds[-1]
+        return self._lower[-1], self._upper[-1]
 
     def info(self):
         """Prints GData object information.
@@ -288,7 +227,7 @@ class GData(object):
         Returns:
             output (str): A list of strings with the informations
         """
-        grid, values = self.peakStack()
+        values = self.peakValues()
         numComps = self.getNumComps()
         numDims = self.getNumDims()
         numCells = self.getNumCells()
