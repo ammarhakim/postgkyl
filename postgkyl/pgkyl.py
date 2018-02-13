@@ -12,13 +12,48 @@ from postgkyl.data import GData
 import postgkyl.commands as cmd
 from postgkyl.commands.util import vlog
 
+
+def _getGData(fName):
+    spl = fName.split('(')
+    if len(spl) == 1:
+        return GData(fName)
+    elif len(spl) == 2:
+        count = spl[1].strip(')')
+        counts = count.split(',')
+        count = [int(s) for s in counts]
+        return GData(spl[0], count=tuple(count))
+    elif len(spl) == 3:
+        offset = spl[1].strip(')')
+        offsets = offset.split(',')
+        offset = [int(s) for s in offsets]
+        count = spl[2].strip(')')
+        counts = count.split(',')
+        count = [int(s) for s in counts]
+        return GData(spl[0], offset=tuple(offset), count=tuple(count))
+    else:
+        raise NameError("{:s} is not in the supported format".format(fName))
+
+def _printVersion(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo('Postgkyl 1.0 2018-02 ({:s})'.format(sys.platform))
+    click.echo(sys.version)
+    click.echo('Copyright 2016-2018 Gkyl Team')
+    click.echo('Gkyl can be used freely for research at universities,')
+    click.echo('national laboratories and other non-profit institutions.')
+    click.echo('There is NO warranty.\n')
+    ctx.exit()
+
 @click.group(chain=True)
-@click.option('-v', '--verbose', is_flag=True,
-              help='Turn on verbosity')
 @click.option('--filename', '-f', multiple=True,
-              help='Specify one or more file(s) to work with.')
+              help='Specify one or more files to work with.')
 @click.option('--savechain', '-c', is_flag=True,
-              help='Save command chain for quick repetition')
+              help='Save command chain for quick repetition.')
+@click.option('-v', '--verbose', is_flag=True,
+              help='Turn on verbosity.')
+@click.option('--version', is_flag=True, callback=_printVersion,
+              expose_value=False, is_eager=True,
+              help='Print the version information.')
 @click.pass_context
 def cli(ctx, filename, verbose, savechain):
     ctx.obj = {}
@@ -49,7 +84,7 @@ def cli(ctx, filename, verbose, savechain):
         if "*" not in filename[s]:
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
-            ctx.obj['dataSets'].append(GData(filename[s]))
+            ctx.obj['dataSets'].append(_getGData(filename[s]))
             ctx.obj['setIds'].append(cnt)
             cnt += 1
         else:
@@ -58,7 +93,7 @@ def cli(ctx, filename, verbose, savechain):
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
-                    ctx.obj['dataSets'].append(GData(fn))
+                    ctx.obj['dataSets'].append(_getGData(fn))
                     ctx.obj['setIds'].append(cnt)
                     cnt += 1
                 except:
@@ -91,12 +126,12 @@ def rc(ctx):
                    "the pgkyl flag -c")
 
 
-cli.add_command(rc)
-cli.add_command(cmd.info.info)
 cli.add_command(cmd.dg.interpolate)
+cli.add_command(cmd.info.info)
 cli.add_command(cmd.plot.plot)
-cli.add_command(cmd.select.select)
 cli.add_command(cmd.select.dataset)
+cli.add_command(cmd.select.select)
+cli.add_command(rc)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)

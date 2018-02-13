@@ -19,7 +19,7 @@ class GData(object):
 
     """
 
-    def __init__(self, fName, verbose=False):
+    def __init__(self, fName, offset=(), count=(), verbose=False):
         if verbose:
             log.basicConfig(format="%(levelname)s: %(message)s",
                             level=log.INFO)
@@ -33,11 +33,11 @@ class GData(object):
 
         self._fName = fName
         if isfile(self._fName):
-            self._loadFrame()
+            self._loadFrame(offset, count)
         else:
             self._loadSequence()
 
-    def _loadFrame(self):
+    def _loadFrame(self, offset=(), count=()):
         log.info(("Loading frame '{:s}'".format(self._fName)))
 
         extension = self._fName.split('.')[-1]
@@ -61,13 +61,14 @@ class GData(object):
         elif extension == 'bp':
             with adios.file(self._fName) as fh:
                 try:
-                    self._values.append(adios.readvar(self._fName,
-                                                      'CartGridField'))
-                except KeyError:
+                    var = adios.var(fh, 'CartGridField')
+                    self._values.append(var.read(offset=offset, count=count))
+                except AssertionError:
                     log.info(("'{:s}' is not a Gkeyll frame".
                               format(self._fName)))
                     self._loadSequence()
                     return
+
                 lower = np.atleast_1d(
                     adios.attr(fh, 'lowerBounds').value)
                 upper = np.atleast_1d(
@@ -79,18 +80,28 @@ class GData(object):
                         = adios.readvar(self._fName, 'time')
                 except KeyError:
                     self.time = None
-
         else:
             raise NameError((
                 "File extension '{:s}' is not supported".
                 format(extension)))
 
+        numDims = len(cells)
+        dz = (upper - lower) / cells
+        if offset:
+            for d in range(numDims):
+                lower[d] = lower[d] + offset[d]*dz[d]
+                cells[d] = cells[d] - np.int(offset[d])
+        if count:
+            for d in range(numDims):
+                upper[d] = lower[d] + count[d]*dz[d]
+                cells[d] = np.int(count[d])
+
         self._lower.append(lower)
         self._upper.append(upper)
-        dr = (upper - lower) / cells
-        grid = [np.linspace(lower[d] + 0.5*dr[d], upper[d] - 0.5*dr[d],
+        dz = (upper - lower) / cells
+        grid = [np.linspace(lower[d] + 0.5*dz[d], upper[d] - 0.5*dz[d],
                             cells[d])
-                for d in range(len(cells))]
+                for d in range(numDims)]
         self._grid.append(grid)
 
     def _loadSequence(self):
