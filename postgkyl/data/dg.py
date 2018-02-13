@@ -208,11 +208,17 @@ def _decompose(n, dim, numInterp):
                      (numInterp**np.arange(dim)), numInterp)
 
 
-def _makeMesh(nInterp, Xc):
+def _makeMesh(nInterp, Xc, xlo=None, xup=None):
     nx = Xc.shape[0]
-    dx = (Xc[-1] - Xc[0])/nx    # dx = Xc[1] - Xc[0] didn't work for numCells=1
-    xlo = Xc[0] - 0.5*dx
-    xup = Xc[-1] + 0.5*dx
+    if xlo is None or xup is None:
+        if nx == 1:
+            raise ValueError("Cannot create interpolated grid from 1 cell without specifying 'xlo' and 'xup'")
+        else:
+            dx = (Xc[-1] - Xc[0]) / (nx-1)
+        xlo = Xc[0] - 0.5*dx
+        xup = Xc[-1] + 0.5*dx
+    else:
+        dx = (xup - xlo) / nx
     dx2 = dx/nInterp
     return np.linspace(xlo+0.5*dx2, xup-0.5*dx2, nInterp*nx)
 
@@ -261,8 +267,10 @@ class GInterp(object):
         lower, upper = dat.getBounds()
         cells = dat.getNumCells()
         self.dx = (upper - lower)/cells
-        grid, _, _ = dat.peakGrid()
+        grid, xlo, xup = dat.peakGrid()
         self.Xc = grid
+        self.xlo = xlo
+        self.xup = xup
 
     def _getRawNodal(self, component):
         q = self.q
@@ -301,15 +309,15 @@ class GInterpZeroOrder(GInterp):
     
     def differentiate(self, direction, comp=0):
         q = np.squeeze(self._getRawNodal(comp))
-        coords = np.array(self.Xc)
+        grid = np.array(self.Xc)
         if direction is not None:
-            return coords, np.gradient(q, coords[direction][1] - coords[direction][0], axis=direction, edge_order=2)
+            return grid, np.gradient(q, coords[direction][1] - coords[direction][0], axis=direction, edge_order=2)
         else:
             derivativeData = np.zeros(q.shape, self.numDims)
             for i in range(0,self.numDims):
                 derivativeData[:,i] = np.gradient(q, coords[i][1] - coords[i][0], axis=i, edge_order=2)
                 derivativeData[:,i] /= (coords[i][1] - coords[i][0])
-            return coords, derivativeData[..., np.newaxis]
+            return grid, derivativeData[..., np.newaxis]
         
 class GInterpNodal(GInterp):
     """Class for manipulating nodal DG data
@@ -330,27 +338,27 @@ class GInterpNodal(GInterp):
         q = self._getRawNodal(comp)
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basis, self.numInterp, self.read)
-        coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d])
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
+                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
-        return coords, _interpOnMesh(cMat, q)[..., np.newaxis]
+        return grid, _interpOnMesh(cMat, q)[..., np.newaxis]
 
     def differentiate(self, direction, comp=0):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
-        coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), 
-                            self.Xc[d])
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), 
+                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
         if direction is not None:
-            return np.array(coords), _interpOnMesh(cMat[:, :, direction], q) \
+            return grid, _interpOnMesh(cMat[:, :, direction], q) \
                 / (self.Xc[direction][1] - self.Xc[direction][0])
         else:
             derivativeData = np.zeros(q.shape, self.numDims)
             for i in range(0,self.numDims):
                 derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return coords, derivativeData[..., np.newaxis]
+            return grid, derivativeData[..., np.newaxis]
 
 class GInterpModal(GInterp):
     """Class for manipulating modal DG data
@@ -370,24 +378,24 @@ class GInterpModal(GInterp):
         q = self._getRawModal(comp)
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basis, self.numInterp, self.read)
-        coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d])
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
+                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
-        return coords, _interpOnMesh(cMat, q)[..., np.newaxis]
+        return grid, _interpOnMesh(cMat, q)[..., np.newaxis]
 
     def differentiate(self, direction, comp=0):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
-        coords = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d])
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
+                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
         if direction is not None:
-            return np.array(coords), _interpOnMesh(cMat[:, :, direction], q) \
+            return grid, _interpOnMesh(cMat[:, :, direction], q) \
                 / (self.Xc[direction][1] - self.Xc[direction][0])
         else:
             derivativeData = np.zeros(q.shape, self.numDims)
             for i in range(0,self.numDims):
                 derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return coords, derivativeData[..., np.newaxis]
+            return grid, derivativeData[..., np.newaxis]
