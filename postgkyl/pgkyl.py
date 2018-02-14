@@ -1,38 +1,17 @@
 #!/usr/bin/env python
-import base64
-import sys
 from glob import glob
-from time import time
 from os.path import isfile
+from time import time
+import sys
 
 import click
 import numpy as np
 
+from postgkyl.commands.util import vlog
 from postgkyl.data import GData
 import postgkyl.commands as cmd
-from postgkyl.commands.util import vlog
 
-
-def _getGData(fName):
-    spl = fName.split('(')
-    if len(spl) == 1:
-        return GData(fName)
-    elif len(spl) == 2:
-        count = spl[1].strip(')')
-        counts = count.split(',')
-        count = [int(s) for s in counts]
-        return GData(spl[0], count=tuple(count))
-    elif len(spl) == 3:
-        offset = spl[1].strip(')')
-        offsets = offset.split(',')
-        offset = [int(s) for s in offsets]
-        count = spl[2].strip(')')
-        counts = count.split(',')
-        count = [int(s) for s in counts]
-        return GData(spl[0], offset=tuple(offset), count=tuple(count))
-    else:
-        raise NameError("{:s} is not in the supported format".format(fName))
-
+# Version print helper
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -44,23 +23,53 @@ def _printVersion(ctx, param, value):
     click.echo('There is NO warranty.\n')
     ctx.exit()
 
+# Helper for expanding the partial load indices for easier looping
+def _expandPartialLoadIdx(numFiles, idx):
+    if not idx:
+        idxOut = [None for _ in range(numFiles)]
+    elif len(idx) == 1:
+        idxOut = [idx[0] for _ in range(numFiles)]
+    elif len(idx) > 1 and len(idx) != numFiles:
+        raise IndexError("Partial load indices mismatch")
+    else:
+        idxOut = idx
+    return idxOut
+ 
+# The command line mode entry command
 @click.group(chain=True)
 @click.option('--filename', '-f', multiple=True,
-              help='Specify one or more files to work with.')
-@click.option('--savechain', '-c', is_flag=True,
-              help='Save command chain for quick repetition.')
-@click.option('-v', '--verbose', is_flag=True,
-              help='Turn on verbosity.')
+              help="Specify one or more files to work with.")
+@click.option('--savechain', '-s', is_flag=True,
+              help="Save command chain for quick repetition.")
+@click.option('--stack/--no-stack', default=False,
+              help="Turn the Postgkyl stack capabilities ON/OFF")
+@click.option('--verbose', '-v', is_flag=True,
+              help="Turn on verbosity.")
 @click.option('--version', is_flag=True, callback=_printVersion,
               expose_value=False, is_eager=True,
-              help='Print the version information.')
+              help="Print the version information.")
+@click.option('--c0', multiple=True,
+              help="Partial file load: 0th coord (either int or slice)")
+@click.option('--c1', multiple=True,
+              help="Partial file load: 1st coord (either int or slice)")
+@click.option('--c2', multiple=True,
+              help="Partial file load: 2nd coord (either int or slice)")
+@click.option('--c3', multiple=True,
+              help="Partial file load: 3rd coord (either int or slice)")
+@click.option('--c4', multiple=True,
+              help="Partial file load: 4th coord (either int or slice)")
+@click.option('--c5', multiple=True,
+              help="Partial file load: 5th coord (either int or slice)")
+@click.option('--comp', '-c', multiple=True,
+              help="Partial file load: comps (either int or slice)")
 @click.pass_context
-def cli(ctx, filename, verbose, savechain):
-    ctx.obj = {}
-
-    ctx.obj['startTime'] = time()
+def cli(ctx, filename, savechain, stack, verbose,
+        c0, c1, c2, c3, c4, c5, comp):
+    ctx.obj = {}  # The main contex object
+    ctx.obj['startTime'] = time()  # Timings are written in the verbose mode
     if verbose:
         ctx.obj['verbose'] = True
+        # Monty Python references should be a part of Python code
         vlog(ctx, 'This is Postgkyl running in verbose mode!')
         vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
         vlog(ctx, 'And now for something completelly different...')
@@ -69,7 +78,7 @@ def cli(ctx, filename, verbose, savechain):
 
     if savechain:
         ctx.obj['savechain'] = True
-        fh = open('pgkylchain.dat', 'w')
+        fh = open('pgkylchain.dat', 'w')  # The default chain name
         fh.close()
     else:
         ctx.obj['savechain'] = False
@@ -79,59 +88,87 @@ def cli(ctx, filename, verbose, savechain):
     ctx.obj['dataSets'] = []
     ctx.obj['setIds'] = []
 
-    cnt = 0
+    # Expand indices for easy looping
+    c0 = _expandPartialLoadIdx(numFiles, c0)
+    c1 = _expandPartialLoadIdx(numFiles, c1)
+    c2 = _expandPartialLoadIdx(numFiles, c2)
+    c3 = _expandPartialLoadIdx(numFiles, c3)
+    c4 = _expandPartialLoadIdx(numFiles, c4)
+    c5 = _expandPartialLoadIdx(numFiles, c5)
+    comp = _expandPartialLoadIdx(numFiles, comp)
+
+    cnt = 0 # Counter for number of loaded files
     for s in range(numFiles):
         if "*" not in filename[s]:
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
-            ctx.obj['dataSets'].append(_getGData(filename[s]))
+            ctx.obj['dataSets'].append(GData(filename[s], comp=comp[s],
+                                             coord0=c0[s], coord1=c1[s],
+                                             coord2=c2[s], coord3=c3[s],
+                                             coord4=c4[s], coord5=c5[s],
+                                             stack=stack))
             ctx.obj['setIds'].append(cnt)
             cnt += 1
-        else:
+        else:  # Postgkyl allows for wild-card loading (requires quotes)
             files = glob(str(filename[s]))
             for fn in files:
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
-                    ctx.obj['dataSets'].append(_getGData(fn))
+                    ctx.obj['dataSets'].append(GData(fn, comp=comp[s],
+                                                     coord0=c0[s],
+                                                     coord1=c1[s],
+                                                     coord2=c2[s],
+                                                     coord3=c3[s],
+                                                     coord4=c4[s],
+                                                     coord5=c5[s],
+                                                     stack=stack))
                     ctx.obj['setIds'].append(cnt)
                     cnt += 1
                 except:
                     pass
-
+    # It is possite to run pgkyl without any file (e.e., for getting a
+    # holp for a command; however, it will fail if files are specified
+    # but not loaded
     if numFiles > 0 and cnt == 0:
         raise NameError("no files loaded")
     ctx.obj['numSets'] = cnt
     ctx.obj['sets'] = range(cnt)
 
-    ctx.obj['hold'] = 'off'
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
 
 @click.command(help='Run the saved command chain')
+@click.option('--filename', '-f', default='pgkylchain.dat',
+              help="Specify file with stored chain (default 'pgkylchain.dat')")
 @click.pass_context
-def rc(ctx):
-    if isfile('pgkylchain.dat'):
-        fh = open('pgkylchain.dat', 'r')
+def rc(ctx, filename):
+    if isfile(filename):
+        fh = open(filename, 'r')
         for line in fh.readlines():
-            if sys.version_info[0] == 3:
-                s = base64.b64decode(line).decode()
-            else:
-                s = base64.b64decode(line)
-            eval('ctx.invoke(cmd.{:s})'.format(s))
+            eval('ctx.invoke(cmd.{:s})'.format(line))
         fh.close()
     else:
-        click.echo("WARNING: 'pgkylchain.dat' does not exist; "
-                   "command chain needs to be saved first with "
-                   "the pgkyl flag -c")
+        raise NameError("File with stored chain ({:s}) does not exist".
+                        format(filename))
 
+@click.command(help='Pop the data stack')
+@click.pass_context
+def pop(ctx):
+    vlog(ctx, 'Poping the stack')
+    pushChain(ctx, 'select.pop')
+    for s in ctx.obj['sets']:
+        ctx.obj['dataSet'][s].popGrid()
+        ctx.obj['dataSet'][s].popValues()
 
+# Hook the individual commands into pgkyl
 cli.add_command(cmd.dg.interpolate)
 cli.add_command(cmd.info.info)
 cli.add_command(cmd.plot.plot)
 cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.select.select)
 cli.add_command(rc)
+cli.add_command(pop)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)
