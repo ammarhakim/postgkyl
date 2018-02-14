@@ -4,23 +4,30 @@ import numpy as np
 import postgkyl.data.select 
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Subselect data set')
-@click.option('--g0', default=None, help='Select 1st coordinate')
-@click.option('--g1', default=None, help='Select 2nd coordinate')
-@click.option('--g2', default=None, help='Select 3rd coordinate')
-@click.option('--g3', default=None, help='Select 4th coordinate')
-@click.option('--g4', default=None, help='Select 5th coordinate')
-@click.option('--g5', default=None, help='Select 6th coordinate')
-@click.option('-c', '--comp', default=None, help='Select component')
+@click.command(help='Subselect data set(s)')
+@click.option('--c0', default=None,
+              help="Indices for 0th coord (either int, float, or slice)")
+@click.option('--c1', default=None,
+              help="Indices for 1st coord (either int, float, or slice)")
+@click.option('--c2', default=None,
+              help="Indices for 2nd coord (either int, float, or slice)")
+@click.option('--c3', default=None,
+              help="Indices for 3rd coord (either int, float, or slice)")
+@click.option('--c4', default=None,
+              help="Indices for 4th coord (either int, float, or slice)")
+@click.option('--c5',  default=None,
+              help="Indices for 5th coord (either int, float, or slice)")
+@click.option('--comp', '-c', default=None,
+              help="Indices for components (either int, slice, or coma-separated)")
 @click.pass_context
 def select(ctx, **kwargs):
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select.select', **kwargs)
     for s in ctx.obj['sets']:
        postgkyl.data.select(ctx.obj['dataSets'][s],
-                            axis0=kwargs['g0'], axis1=kwargs['g1'],
-                            axis2=kwargs['g2'], axis3=kwargs['g3'],
-                            axis4=kwargs['g4'], axis5=kwargs['g5'],
+                            coord0=kwargs['c0'], coord1=kwargs['c1'],
+                            coord2=kwargs['c2'], coord3=kwargs['c3'],
+                            coord4=kwargs['c4'], coord5=kwargs['c5'],
                             comp=kwargs['comp'])
     vlog(ctx, 'Finishing select')
 
@@ -51,15 +58,6 @@ def dataset(ctx, **kwargs):
     else:
         vlog(ctx, 'Selecting all data sets'.format(idx))
         ctx.obj['sets'] = range(ctx.obj['numSets'])
-
-@click.command(help='Pop the data stack')
-@click.pass_context
-def pop(ctx):
-    vlog(ctx, 'Poping the stack')
-    pushChain(ctx, 'select.pop')
-    for s in ctx.obj['sets']:
-        ctx.obj['dataSet'][s].popGrid()
-        ctx.obj['dataSet'][s].popValues()
 
 @click.command(help='Collect data from the active datasets')
 @click.option('-s', '--sumdata', is_flag=True,

@@ -1,6 +1,5 @@
-from time import time
 from os.path import isfile
-import base64
+from time import time
 import sys
 
 import click
@@ -23,10 +22,6 @@ def pushChain(ctx, command, **kwargs):
             if type(value) == str:
                 value = "'" + value + "'"
             s = s + ', {:s}={}'.format(key, value)
-        if sys.version_info[0] == 3:
-            fh.write(base64.b64encode(s.encode()).decode())
-        else:
-            fh.write(base64.b64encode(s.encode()))
-        fh.write('\n')
+        fh.write(s + '\n')
         fh.close()
 
