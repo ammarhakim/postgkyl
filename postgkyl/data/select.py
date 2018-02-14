@@ -1,5 +1,6 @@
 import numpy as np
 
+# Find the neares value to the input in a specified narray
 def _findNearest(array, value):
     idx = np.searchsorted(array, value)
     if idx > 0 and (idx == len(array) or np.fabs(value - array[idx-1]) <
@@ -8,7 +9,8 @@ def _findNearest(array, value):
     else:
         return array[idx]
 
-
+# Find the neares value to the input in a specified narray and return
+# its index
 def _findNearestIdx(array, value):
     idx = np.searchsorted(array, value)
     if idx > 0 and (idx == len(array) or np.fabs(value - array[idx-1]) <
@@ -17,6 +19,8 @@ def _findNearestIdx(array, value):
     else:
         return idx
 
+# Helper function to convert strings to integers and find the neares
+# index for the float input
 def _getIdx(idx, grid):
     if isinstance(idx, str):
         if idx.isdigit():
@@ -35,7 +39,7 @@ def _getIdx(idx, grid):
     else:
         raise TypeError("'idx' is neither int, float or, str")
 
-def select(data, comp=None,
+def select(gdata, comp=None,
            coord0=None, coord1=None, coord2=None,
            coord3=None, coord4=None, coord5=None):
     """Selects parts of the GData.
@@ -45,22 +49,23 @@ def select(data, comp=None,
     components, and using both indicies (integer) and values (float).
 
     Atributes:
-        data (GData)
+        gdata (GData)
         coord0-5 (index, value, or slice (e.g. '1:5')
         comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
     """
     coords = (coord0, coord1, coord2, coord3, coord4, coord5)
-    grid, lo, up = data.peakGrid()
-    grid = list(grid)
-    lo = np.array(lo)
-    up = np.array(up)
-    values = data.peakValues()
-    numDims = data.getNumDims()
+    grid, lo, up = gdata.peakGrid()
+    grid = list(grid)  # copy the grid
+    lo = np.array(lo)  # copy the lower boundaries
+    up = np.array(up)  # copy the upper boundaries
+    values = gdata.peakValues()
+    numDims = gdata.getNumDims()
     idxValues = [slice(0, values.shape[d]) for d in range(numDims+1)]
     
+    # Loop for coordinates
     for d, coord in enumerate(coords):
         if d < numDims and coord is not None:
-            dx = grid[d][1] - grid[d][0]
+            dz = grid[d][1] - grid[d][0]
             if isinstance(coord, int) or isinstance(coord, float):
                 idx = _getIdx(coord, grid[d])
                 grid[d] = grid[d][idx, np.newaxis]
@@ -76,8 +81,10 @@ def select(data, comp=None,
                     idx = _getIdx(coord, grid[d])
                     grid[d] = grid[d][idx, np.newaxis]
                     idxValues[d] = idx
-            lo[d] = grid[d].min() - 0.5*dx
-            up[d] = grid[d].max() + 0.5*dx
+            # Adjust the grid span
+            lo[d] = grid[d].min() - 0.5*dz
+            up[d] = grid[d].max() + 0.5*dz
+    # Select components
     if comp is not None:
         if isinstance(comp, int) or isinstance(comp, float):
             idx = _getIdx(comp, grid[d])
@@ -95,12 +102,13 @@ def select(data, comp=None,
                 idx = int(comp)
                 idxValues[-1] = idx
             
-    data.pushGrid(grid, lo, up)
+    # Push data back
+    gdata.pushGrid(grid, lo, up)
     valuesOut = values[idxValues]
-    for d, nc in enumerate(data.getNumCells()):
+    for d, nc in enumerate(gdata.getNumCells()):
         if nc == 1:
             valuesOut = np.expand_dims(valuesOut, d)
-    if len(valuesOut.shape) == numDims:
+    if len(valuesOut.shape) == numDims:  # Retaining the last dim when needed
         valuesOut = valuesOut[..., np.newaxis]
-    data.pushValues(valuesOut)
+    gdata.pushValues(valuesOut)
                 
