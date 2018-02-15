@@ -40,9 +40,8 @@ def plot(ctx, **kwargs):
     pushChain(ctx, 'plot.plot', **kwargs)
 
     for s in ctx.obj['sets']:
-        grid, lo, up = ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
-        postgkyl.output.plot(grid, values, **kwargs)
+        dat = ctx.obj['dataSets'][s]
+        postgkyl.output.plot(dat, **kwargs)
         plt.show()
 
     vlog(ctx, 'Finishing plot')

@@ -10,7 +10,7 @@ def _colorbar(obj, fig, ax, label=""):
     cax = divider.append_axes("right", size="3%", pad=0.05)
     return fig.colorbar(obj, cax=cax, label=label)
 
-def plot(grid, values, *args, figure=None, squeeze=False,
+def plot(gdata, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
          style=None, **kwargs):
     """Plots Gkyl data
@@ -20,26 +20,35 @@ def plot(grid, values, *args, figure=None, squeeze=False,
 
     Args:
     """
+    # Load Postgkyl style
     if style is None:
         plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
                       + "/postgkyl.mplstyle")
     else:
         plt.style.use(style)
 
+    # Get the handles on the grid and values
+    grid, lower, upper = gdata.peakGrid()
+    values = gdata.peakValues()
+
+    # Squeeze the data (get rid of "collapsed" dimensions)
     if isinstance(grid, list):
         numDims = len(grid)
-
         idx = []
         for d in range(numDims):
             if len(grid[d]) == 1:
                 idx.append(d)
         if idx:
             grid = np.delete(grid, idx)
+            lower = np.delete(lower, idx)
+            upper = np.delete(upper, idx)
             values = np.squeeze(values, tuple(idx)) 
             numDims = len(grid)
     else:
         numDims = 1
         grid = grid[0]
+        lower = lower[0]
+        upper = upper[0]
 
     numComps = values.shape[-1]
     if streamline or quiver:
@@ -49,6 +58,7 @@ def plot(grid, values, *args, figure=None, squeeze=False,
     idxComps = range(0, numComps, step)
     numComps = len(idxComps)
 
+    # Prepare the figure
     if figure is None:
         fig = plt.figure()
     elif isinstance(figure, int):
@@ -58,13 +68,14 @@ def plot(grid, values, *args, figure=None, squeeze=False,
     else:
         raise TypeError(("'fig' keyword needs to be one of "
                          "None (default), int, or MPL Figure"))
+    # Prepare the axes
     if squeeze is False:
         if fig.axes:
             ax = fig.axes
             if numComs > len(ax):
                 raise ValueError(
                     "Trying to plot into figure with not enough axes")
-        else:
+        else:  # Not ideal but simple enough algorithm to split subplots
             sr = np.sqrt(numComps)
             if sr == np.ceil(sr):
                 numRows = int(sr)
@@ -87,13 +98,15 @@ def plot(grid, values, *args, figure=None, squeeze=False,
             plt.subplots(1, 1, num=fig.number)
     ax = fig.axes
 
+    # Main plotting loop
     for comp in idxComps:
         if squeeze:
             cax = ax[0]
         else:
             cax = ax[comp]
-
-        if contour:
+            
+        # Special plots:
+        if contour:  
             im = cax.contour(grid[0], grid[1],
                              values[..., comp].transpose(),
                              *args)
@@ -117,10 +130,12 @@ def plot(grid, values, *args, figure=None, squeeze=False,
                                 *args,
                                 color=magnitude.transpose())
             cb = _colorbar(im.lines, fig, cax)
-        else:
+        else:  # Basic plots:
             if numDims == 1:
-                im, = cax.plot(grid[0], values[..., comp],
+                im = cax.plot(grid[0], values[..., comp],
                                *args)
+                cax.set_xlim((lower, upper))
+                cax.legend(loc=0)
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
@@ -129,6 +144,10 @@ def plot(grid, values, *args, figure=None, squeeze=False,
             else:
                 raise ValueError("{:d}D data not yet supported".
                                  format(numDims))
+
+        # Formating
+        cax.grid(True)
+            
     plt.tight_layout()
     return im
 
