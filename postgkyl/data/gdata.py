@@ -284,7 +284,11 @@ class GData(object):
         return len(self._grid[0])
 
     def getNumCells(self):
-        return self._values[-1].shape[:-1]
+        numDims = self.getNumDims()
+        cells = np.zeros(numDims, dtype=np.int)
+        for d in range(numDims):
+            cells[d] = len(self._grid[-1][d])
+        return cells
 
     def getNumComps(self):
         return self._values[-1].shape[-1]
