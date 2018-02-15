@@ -41,7 +41,9 @@ def plot(ctx, **kwargs):
 
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
-        postgkyl.output.plot(dat, **kwargs)
-        plt.show()
+        postgkyl.output.plot(dat, labelPrefix='s{:d}'.format(s),
+                             **kwargs)
 
+    if kwargs['show']:
+        plt.show()
     vlog(ctx, 'Finishing plot')

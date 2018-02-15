@@ -12,7 +12,7 @@ def _colorbar(obj, fig, ax, label=""):
 
 def plot(gdata, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
-         style=None, **kwargs):
+         style=None, legend=True, labelPrefix='', **kwargs):
     """Plots Gkyl data
 
     Unifies the plotting across a wide range of Gkyl applications. Can
@@ -32,6 +32,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
     values = gdata.peakValues()
 
     # Squeeze the data (get rid of "collapsed" dimensions)
+    axLabel = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']
     if isinstance(grid, list):
         numDims = len(grid)
         idx = []
@@ -42,6 +43,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
             grid = np.delete(grid, idx)
             lower = np.delete(lower, idx)
             upper = np.delete(upper, idx)
+            axLabel = np.delete(axLabel, idx)
             values = np.squeeze(values, tuple(idx)) 
             numDims = len(grid)
     else:
@@ -49,6 +51,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
         grid = grid[0]
         lower = lower[0]
         upper = upper[0]
+        axLabel = axLabel[0]
 
     numComps = values.shape[-1]
     if streamline or quiver:
@@ -63,18 +66,26 @@ def plot(gdata, *args, figure=None, squeeze=False,
         fig = plt.figure()
     elif isinstance(figure, int):
         fig = plt.figure(figure)
+    elif isinstance(figure, str) or isinstance(figure, unicode):
+        fig = plt.figure(int(figure))
     elif isinstance(figure, matplotlib.figure.Figure):
         fig = figure
     else:
         raise TypeError(("'fig' keyword needs to be one of "
                          "None (default), int, or MPL Figure"))
     # Prepare the axes
-    if squeeze is False:
-        if fig.axes:
+    if fig.axes:
+        ax = fig.axes
+        if squeeze is False and numComps > len(ax):
+            raise ValueError(
+                "Trying to plot into figure with not enough axes")
+    else:
+        if squeeze:
+            plt.subplots(1, 1, num=fig.number)
             ax = fig.axes
-            if numComs > len(ax):
-                raise ValueError(
-                    "Trying to plot into figure with not enough axes")
+            ax.set_xlabel(axLabel[0])
+            if numDims == 2:
+                cax.set_ylabel(axLabel[1])
         else:  # Not ideal but simple enough algorithm to split subplots
             sr = np.sqrt(numComps)
             if sr == np.ceil(sr):
@@ -93,10 +104,13 @@ def plot(gdata, *args, figure=None, squeeze=False,
             else:
                 plt.subplots(numRows, numCols,
                              sharex='all', num=fig.number)
-    else:
-        if not fig.axes:
-            plt.subplots(1, 1, num=fig.number)
-    ax = fig.axes
+            ax = fig.axes
+            for comp in idxComps:
+                if comp >= (numRows-1) * numCols:
+                    ax[comp].set_xlabel(axLabel[0])
+                if numDims == 2:
+                    if comp % numRows == 0:
+                        ax[comp].set_ylabel(axLabel[1])
 
     # Main plotting loop
     for comp in idxComps:
@@ -104,6 +118,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
             cax = ax[0]
         else:
             cax = ax[comp]
+        label='{:s}c{:d}'.format(labelPrefix, comp)
             
         # Special plots:
         if contour:  
@@ -133,9 +148,8 @@ def plot(gdata, *args, figure=None, squeeze=False,
         else:  # Basic plots:
             if numDims == 1:
                 im = cax.plot(grid[0], values[..., comp],
-                               *args)
+                               *args, label=label)
                 cax.set_xlim((lower, upper))
-                cax.legend(loc=0)
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
@@ -145,9 +159,23 @@ def plot(gdata, *args, figure=None, squeeze=False,
                 raise ValueError("{:d}D data not yet supported".
                                  format(numDims))
 
-        # Formating
+        # Formatting
         cax.grid(True)
-            
+        # Legend
+        if legend:
+            if numDims == 1:
+                cax.legend(loc=0)
+            else:
+                cax.text(0.03, 0.96, label,
+                         bbox=dict(facecolor='w', edgecolor='w', alpha=0.8,
+                                   boxstyle="round"),
+                         verticalalignment='top',
+                         horizontalalignment='left',
+                         transform=cax.transAxes)
+
+    for i in range(numComps, len(ax)):
+        ax[i].axis('off')
+   
     plt.tight_layout()
     return im
 
