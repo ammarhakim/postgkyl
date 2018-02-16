@@ -12,7 +12,7 @@ def vlog(ctx, message):
 
 def pushChain(ctx, command, **kwargs):
     if ctx.obj['savechain'] == True:
-        fh = open('pgkylchain.dat', 'a')
+        fh = open('.pgkylchain', 'a')
         s = '{:s}'.format(command)
 
         for key, value in kwargs.items():
