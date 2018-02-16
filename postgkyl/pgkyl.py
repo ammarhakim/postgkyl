@@ -93,7 +93,7 @@ def cli(ctx, filename, savechain, stack, verbose,
 
     if savechain:
         ctx.obj['savechain'] = True
-        fh = open('pgkylchain.dat', 'w')  # The default chain name
+        fh = open('.pgkylchain', 'w')  # The default chain name
         fh.close()
     else:
         ctx.obj['savechain'] = False
@@ -154,10 +154,10 @@ def cli(ctx, filename, savechain, stack, verbose,
     ctx.obj['ax'] = ''
 
 @click.command(help='Run the saved command chain')
-@click.option('--filename', '-f', default='pgkylchain.dat',
+@click.option('--filename', '-f', default='.pgkylchain',
               help="Specify file with stored chain (default 'pgkylchain.dat')")
 @click.pass_context
-def rc(ctx, filename):
+def runchain(ctx, filename):
     if isfile(filename):
         fh = open(filename, 'r')
         for line in fh.readlines():
@@ -182,7 +182,7 @@ cli.add_command(cmd.info.info)
 cli.add_command(cmd.plot.plot)
 cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.select.select)
-cli.add_command(rc)
+cli.add_command(runchain)
 cli.add_command(pop)
 
 #cli.add_command(cmd.agyro.agyro)
