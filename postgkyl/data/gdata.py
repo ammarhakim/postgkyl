@@ -240,15 +240,40 @@ class GData(object):
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
+    def getBounds(self):
+        return self._lower[-1], self._upper[-1]
+
+    def getNumCells(self):
+        numDims = self.getNumDims()
+        cells = np.zeros(numDims, dtype=np.int)
+        for d in range(numDims):
+            cells[d] = len(self._grid[-1][d])
+        return cells
+
+    def getNumComps(self):
+        return self._values[-1].shape[-1]
+
+    def getNumDims(self):
+        return len(self._grid[0])
+
     def peakGrid(self):
-        return self._grid[-1], self._lower[-1], self._upper[-1]
-    
+        return self._grid[-1]
+
+    def peakValues(self):
+        return self._values[-1]
+
     def popGrid(self):
         if not self._stack:
-            return self._grid.pop(), self._lower.pop(), self._upper.pop()
+            return self._grid.pop()
         else:
             raise RuntimeError("'pop' is dissables when stack is turned OFF")
-    
+
+    def popValues(self):
+        if not self._stack:
+            return self._grid.pop()
+        else:
+            raise RuntimeError("'pop' is dissables when stack is turned OFF")
+
     def pushGrid(self, grid, lower=None, upper=None):
         if not self._stack:
             self._grid.append(grid)
@@ -267,36 +292,11 @@ class GData(object):
             if upper is not None:
                 self._upper[0] = upper
 
-    def peakValues(self):
-        return self._values[-1]
-    
-    def popValues(self):
-        if not self._stack:
-            return self._grid.pop()
-        else:
-            raise RuntimeError("'pop' is dissables when stack is turned OFF")
-    
     def pushValues(self, values):
         if not self._stack:
             self._values.append(values)
         else:
             self._values[0] = values
-        
-    def getNumDims(self):
-        return len(self._grid[0])
-
-    def getNumCells(self):
-        numDims = self.getNumDims()
-        cells = np.zeros(numDims, dtype=np.int)
-        for d in range(numDims):
-            cells[d] = len(self._grid[-1][d])
-        return cells
-
-    def getNumComps(self):
-        return self._values[-1].shape[-1]
-
-    def getBounds(self):
-        return self._lower[-1], self._upper[-1]
 
     #-----------------------------------------------------------------
     #-- Output -------------------------------------------------------
