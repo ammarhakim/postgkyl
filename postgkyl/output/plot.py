@@ -84,9 +84,9 @@ def plot(gdata, *args, figure=None, squeeze=False,
         if squeeze:
             plt.subplots(1, 1, num=fig.number)
             ax = fig.axes
-            ax.set_xlabel(axLabel[0])
+            ax[0].set_xlabel(axLabel[0])
             if numDims == 2:
-                cax.set_ylabel(axLabel[1])
+                ax[0].set_ylabel(axLabel[1])
         else:  # Not ideal but simple enough algorithm to split subplots
             sr = np.sqrt(numComps)
             if sr == np.ceil(sr):

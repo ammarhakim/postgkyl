@@ -143,9 +143,20 @@ class GData(object):
                 "File extension '{:s}' is not supported".
                 format(extension)))
 
+        numDims = len(cells)
+        dz = (upper - lower) / cells
+        # Adjusts bounds in case ghost layer is included in data
+        for d in range(numDims):
+            if cells[d] != self._values[0].shape[d]:
+                ngl = int(np.floor((cells[d] - self._values[0].shape[d])*0.5))
+                ngu = int(np.ceil((cells[d] - self._values[0].shape[d])*0.5))
+                cells[d] = self._values[0].shape[d]
+                lower[d] = lower[d] - ngl*dz[d]
+                upper[d] = upper[d] + ngu*dz[d]
+
         self._lower.append(lower)
         self._upper.append(upper)
-        numDims = len(cells)
+
         # Create and append grid
         dz = (upper - lower) / cells
         grid = [np.linspace(lower[d] + 0.5*dz[d], upper[d] - 0.5*dz[d],
