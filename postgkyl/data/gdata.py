@@ -125,25 +125,27 @@ class GData(object):
                         = adios.readvar(self._fName, 'time')
                 except KeyError:
                     self.time = None
+
+            # Adjust boundaries for 'offset' and 'count'
+            numDims = len(cells)
+            dz = (upper - lower) / cells
+            if offset:
+                for d in range(numDims):
+                    lower[d] = lower[d] + offset[d]*dz[d]
+                    cells[d] = cells[d] - np.int(offset[d])
+            if count:
+                for d in range(numDims):
+                    upper[d] = lower[d] + count[d]*dz[d]
+                    cells[d] = np.int(count[d])
+                            
         else:
             raise NameError((
                 "File extension '{:s}' is not supported".
                 format(extension)))
 
-        # Adjust boundaries for 'offset' and 'count'
-        numDims = len(cells)
-        dz = (upper - lower) / cells
-        if offset:
-            for d in range(numDims):
-                lower[d] = lower[d] + offset[d]*dz[d]
-                cells[d] = cells[d] - np.int(offset[d])
-        if count:
-            for d in range(numDims):
-                upper[d] = lower[d] + count[d]*dz[d]
-                cells[d] = np.int(count[d])
         self._lower.append(lower)
         self._upper.append(upper)
-
+        numDims = len(cells)
         # Create and append grid
         dz = (upper - lower) / cells
         grid = [np.linspace(lower[d] + 0.5*dz[d], upper[d] - 0.5*dz[d],
