@@ -54,8 +54,9 @@ def select(gdata, comp=None,
         comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
     """
     coords = (coord0, coord1, coord2, coord3, coord4, coord5)
-    grid, lo, up = gdata.peakGrid()
+    grid = gdata.peakGrid()
     grid = list(grid)  # copy the grid
+    lo, up = gdata.getBounds()
     lo = np.array(lo)  # copy the lower boundaries
     up = np.array(up)  # copy the upper boundaries
     values = gdata.peakValues()

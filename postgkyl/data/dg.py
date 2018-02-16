@@ -267,7 +267,8 @@ class GInterp(object):
         lower, upper = dat.getBounds()
         cells = dat.getNumCells()
         self.dx = (upper - lower)/cells
-        grid, xlo, xup = dat.peakGrid()
+        grid = dat.peakGrid()
+        xlo, xup = dat.getBounds()
         self.Xc = grid
         self.xlo = xlo
         self.xup = xup

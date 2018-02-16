@@ -28,7 +28,8 @@ def plot(gdata, *args, figure=None, squeeze=False,
         plt.style.use(style)
 
     # Get the handles on the grid and values
-    grid, lower, upper = gdata.peakGrid()
+    grid  = gdata.peakGrid()
+    lower, upper = gdata.getBounds()
     values = gdata.peakValues()
 
     # Squeeze the data (get rid of "collapsed" dimensions)
@@ -172,10 +173,14 @@ def plot(gdata, *args, figure=None, squeeze=False,
                          verticalalignment='top',
                          horizontalalignment='left',
                          transform=cax.transAxes)
+        
 
     for i in range(numComps, len(ax)):
         ax[i].axis('off')
-   
+
+    figManager = plt.get_current_fig_manager()
+    figManager.window.maximumSize()
+
     plt.tight_layout()
     return im
 

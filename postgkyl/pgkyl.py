@@ -34,9 +34,24 @@ def _expandPartialLoadIdx(numFiles, idx):
     else:
         idxOut = idx
     return idxOut
+
+class AliasedGroup(click.Group):
+
+    def get_command(self, ctx, cmd_name):
+        rv = click.Group.get_command(self, ctx, cmd_name)
+        if rv is not None:
+            return rv
+        matches = [x for x in self.list_commands(ctx)
+                   if x.startswith(cmd_name)]
+        if not matches:
+            return None
+        elif len(matches) == 1:
+            return click.Group.get_command(self, ctx, matches[0])
+        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
  
 # The command line mode entry command
-@click.group(chain=True)
+#@click.group(chain=True)
+@click.command(cls=AliasedGroup, chain=True)
 @click.option('--filename', '-f', multiple=True,
               help="Specify one or more files to work with.")
 @click.option('--savechain', '-s', is_flag=True,
@@ -99,7 +114,7 @@ def cli(ctx, filename, savechain, stack, verbose,
 
     cnt = 0 # Counter for number of loaded files
     for s in range(numFiles):
-        if "*" not in filename[s]:
+        if "*" not in filename[s] and "?" not in filename[s]:
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
             ctx.obj['dataSets'].append(GData(filename[s], comp=comp[s],
@@ -111,7 +126,7 @@ def cli(ctx, filename, savechain, stack, verbose,
             cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
             files = glob(str(filename[s]))
-            for fn in files:
+            for fn in sorted(files):
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
