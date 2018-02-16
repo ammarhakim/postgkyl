@@ -109,7 +109,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
                 if comp >= (numRows-1) * numCols:
                     ax[comp].set_xlabel(axLabel[0])
                 if numDims == 2:
-                    if comp % numRows == 0:
+                    if comp % numCols == 0:
                         ax[comp].set_ylabel(axLabel[1])
 
     # Main plotting loop
