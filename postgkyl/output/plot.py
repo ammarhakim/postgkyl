@@ -150,7 +150,8 @@ def plot(gdata, *args, figure=None, squeeze=False,
             if numDims == 1:
                 im = cax.plot(grid[0], values[..., comp],
                                *args, label=label)
-                cax.set_xlim((lower, upper))
+                plt.autoscale(enable=True, axis='x', tight=True)
+                #cax.set_xlim((lower, upper))
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
@@ -177,9 +178,6 @@ def plot(gdata, *args, figure=None, squeeze=False,
 
     for i in range(numComps, len(ax)):
         ax[i].axis('off')
-
-    figManager = plt.get_current_fig_manager()
-    figManager.window.maximumSize()
 
     plt.tight_layout()
     return im
