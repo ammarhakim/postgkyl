@@ -29,7 +29,7 @@ def interpolate(ctx, **inputs):
                               inputs['polyorder'], inputs['basis'],
                               inputs['interp'], inputs['read'])
         numNodes = dg.numNodes
-        numComps = ctx.obj['dataSets'][s].getNumComps() / numNodes
+        numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
         numDims = ctx.obj['dataSets'][s].getNumDims()
 
         vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))

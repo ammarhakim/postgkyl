@@ -7,7 +7,7 @@ import sys
 import click
 import numpy as np
 
-from postgkyl.commands.util import vlog
+from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import GData
 import postgkyl.commands as cmd
 
@@ -171,10 +171,10 @@ def runchain(ctx, filename):
 @click.pass_context
 def pop(ctx):
     vlog(ctx, 'Poping the stack')
-    pushChain(ctx, 'select.pop')
+    pushChain(ctx, 'pop')
     for s in ctx.obj['sets']:
-        ctx.obj['dataSet'][s].popGrid()
-        ctx.obj['dataSet'][s].popValues()
+        ctx.obj['dataSets'][s].popGrid()
+        ctx.obj['dataSets'][s].popValues()
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.dg.interpolate)
