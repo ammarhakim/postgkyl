@@ -25,11 +25,11 @@ class GData(object):
         self._grid = []  # list of 1D grid slices
         self._values = []  # (N+1)D narray of values 
 
-        self._fName = fName
+        self.fName = fName
         # Sequence load typically cancatenates multiple files
         # When the sequence is in just a single file, _loadFrame will
         # fail and _loadSequence is called instead
-        if isfile(self._fName):
+        if isfile(self.fName):
             coords = (coord0, coord1, coord2, coord3, coord4, coord5)
             self._loadFrame(coords, comp)
         else:
@@ -75,12 +75,12 @@ class GData(object):
 
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
-        extension = self._fName.split('.')[-1]
+        extension = self.fName.split('.')[-1]
         # Gkeyll HDF5 file load
         if extension == 'h5':
             # 'with' is the prefered Python way to open a file which
             # can fail
-            with tables.open_file(self._fName, 'r') as fh:
+            with tables.open_file(self.fName, 'r') as fh:
                 try:
                     self._values.append(fh.root.StructGridField.read())
                 except:
@@ -100,7 +100,7 @@ class GData(object):
         elif extension == 'bp':
             # 'with' is the prefered Python way to open a file which
             # can fail
-            with adios.file(self._fName) as fh:
+            with adios.file(self.fName) as fh:
                 try:
                     var = adios.var(fh, 'CartGridField')
                 except AssertionError:
@@ -122,7 +122,7 @@ class GData(object):
                 # Try loading the time-stamp
                 try:
                     self.time \
-                        = adios.readvar(self._fName, 'time')
+                        = adios.readvar(self.fName, 'time')
                 except KeyError:
                     self.time = None
 
@@ -166,11 +166,11 @@ class GData(object):
 
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
-        files = glob('{:s}*'.format(self._fName))
+        files = glob('{:s}*'.format(self.fName))
         if not files:
             raise NameError((
                 "No data files with the root '{:s}'".
-                format(self._fName)))
+                format(self.fName)))
 
         cnt = 0  # Counter for the number of loaded files
         # Load the first file
@@ -229,7 +229,7 @@ class GData(object):
         if cnt == 0:  # No files loaded
             raise NameError((
                 "No data files with the root '{:s}'".
-                format(self._fName)))
+                format(self.fName)))
 
         # Squeeze the time coordinate ...
         if len(self._grid[0].shape) > 1:

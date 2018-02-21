@@ -12,7 +12,9 @@ def _colorbar(obj, fig, ax, label=""):
 
 def plot(gdata, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
-         style=None, legend=True, labelPrefix='', **kwargs):
+         style=None, legend=True, labelPrefix='',
+         logx=False, logy=False, color=None, fixedaxis=False,
+         **kwargs):
     """Plots Gkyl data
 
     Unifies the plotting across a wide range of Gkyl applications. Can
@@ -150,8 +152,6 @@ def plot(gdata, *args, figure=None, squeeze=False,
             if numDims == 1:
                 im = cax.plot(grid[0], values[..., comp],
                                *args, label=label)
-                plt.autoscale(enable=True, axis='x', tight=True)
-                #cax.set_xlim((lower, upper))
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
@@ -174,7 +174,24 @@ def plot(gdata, *args, figure=None, squeeze=False,
                          verticalalignment='top',
                          horizontalalignment='left',
                          transform=cax.transAxes)
-        
+
+        if logx:
+            cax.set_xscale('log')
+        if logy:
+            cax.set_yscale('log')
+            
+        # if color is not None:
+        #     try:
+        #         im.set_color(color)
+        #     except:
+        #         im.lines.set_color(color)
+        #         im.arrows.set_color(color)
+
+        if numDims == 1:
+            plt.autoscale(enable=True, axis='x', tight=True)
+        elif numDims == 2:
+            if fixedaxis:
+                cax.axis('image')
 
     for i in range(numComps, len(ax)):
         ax[i].axis('off')

@@ -7,33 +7,34 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Plot the data')
 @click.option('--figure', '-f', default=None,
-              help="Specify figure to plot in (default: data set number)")
+              help="Specify figure to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
-              help="Specify is components should be squeezed into one Axes")
-@click.option('--show/--no-show', default=True,
-              help='Turn showing of the plot ON and OFF (default: ON)')
-@click.option('--style',
-              help='Specify Matplotlib style file (default: postgkyl style)')
-@click.option('--free-axis', 'axismode', flag_value='tight', default=True)
-@click.option('--fixed-axis', 'axismode', flag_value='image')
-@click.option('--save/--no-save', default=False,
-              help='Save figure as png')
-@click.option('-q', '--quiver', is_flag=True,
-              help='Switch to quiver mode')
-@click.option('-l', '--streamline', is_flag=True,
-              help='Switch to streamline mode')
+              help="Squeeze the components into one panel.")
 @click.option('-c', '--contour', is_flag=True,
-              help='Switch to contour mode')
-@click.option('--color', type=click.STRING,
-              help='Set color for some plots')
+              help="Switch to contour mode.")
+@click.option('-q', '--quiver', is_flag=True,
+              help="Switch to quiver mode.")
+@click.option('-l', '--streamline', is_flag=True,
+              help="Switch to streamline mode.")
+
+@click.option('--style',
+              help="Specify Matplotlib style file (default: Postgkyl).")
+@click.option('--fixed-axis', 'fixedaxis', is_flag=True,
+              help="Enforce the same scaling on both axes.")
 @click.option('--logx', is_flag=True,
-              help='Set x-axis to log scale')
+              help="Set x-axis to log scale.")
 @click.option('--logy', is_flag=True,
-              help='Set y-axis to log scale')
+              help="Set y-axis to log scale.")
 @click.option('--legend/--no-legend', default=True,
-              help='Show legend')
+              help="Show legend.")
+@click.option('--show/--no-show', default=True,
+              help="Turn showing of the plot ON and OFF (default: ON).")
+#@click.option('--color', type=click.STRING,
+#              help="Set color when available.")
+@click.option('--save', is_flag=True,
+              help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
-              help='Name of PNG file to save')
+              help="Name to save the plot as.")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')
@@ -41,8 +42,17 @@ def plot(ctx, **kwargs):
 
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
+        #if kwargs['color'] == 'seq':
+        #    kwargs['color'] = cm.inferno(s/len(ctx.obj['sets']))
         postgkyl.output.plot(dat, labelPrefix='s{:d}'.format(s),
                              **kwargs)
+        if kwargs['save'] or kwargs['saveas']:
+            if kwargs['saveas']:
+                fName = kwargs['saveas']
+            else:
+                s = dat.fName.split('.')
+                fName = s[0] + '_plot.png'
+            plt.savefig(fName, dpi=200)
 
     if kwargs['show']:
         plt.show()
