@@ -243,7 +243,7 @@ class GData(object):
         self._values[0] = self._values[0][sortIdx, ...]
 
         # Boundaries should arrays even for 1D data
-        lower = np.atleast_1ds(elf._grid[0][0][0])
+        lower = np.atleast_1d(self._grid[0][0][0])
         upper = np.atleast_1d(self._grid[0][0][-1])
         self._lower.append(lower)
         self._upper.append(upper)
