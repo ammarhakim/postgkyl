@@ -16,7 +16,7 @@ class GData(object):
     command line mode.
     """
 
-    def __init__(self, fName, stack=False, comp=None,
+    def __init__(self, fName=None, stack=False, comp=None,
                  coord0=None, coord1=None, coord2=None,
                  coord3=None, coord4=None, coord5=None):
         self._stack = stack  # Turn OFF the stack
@@ -24,16 +24,18 @@ class GData(object):
         self._upper = []  # grid upper edges
         self._grid = []  # list of 1D grid slices
         self._values = []  # (N+1)D narray of values 
+        self.time = None
 
         self.fName = fName
-        # Sequence load typically cancatenates multiple files
-        # When the sequence is in just a single file, _loadFrame will
-        # fail and _loadSequence is called instead
-        if isfile(self.fName):
-            coords = (coord0, coord1, coord2, coord3, coord4, coord5)
-            self._loadFrame(coords, comp)
-        else:
-            self._loadSequence()
+        if fName is not None:
+            # Sequence load typically cancatenates multiple files
+            # When the sequence is in just a single file, _loadFrame will
+            # fail and _loadSequence is called instead
+            if isfile(self.fName):
+                coords = (coord0, coord1, coord2, coord3, coord4, coord5)
+                self._loadFrame(coords, comp)
+            else:
+                self._loadSequence()
 
     #-----------------------------------------------------------------
     #-- File Loading -------------------------------------------------
@@ -76,37 +78,34 @@ class GData(object):
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
         extension = self.fName.split('.')[-1]
-        # Gkeyll HDF5 file load
+        # Gkeyll HDF5 frame load
         if extension == 'h5':
-            # 'with' is the prefered Python way to open a file which
-            # can fail
             with tables.open_file(self.fName, 'r') as fh:
-                try:
-                    self._values.append(fh.root.StructGridField.read())
-                except:
+                if not '/StructGridField' in fh:
                     fh.close()
-                    # Not a Gkyl "frame" data; trying to load as a sequence
                     self._loadSequence()
                     return
 
+                # Get the atributes
                 lower = fh.root.StructGrid._v_attrs.vsLowerBounds
                 upper = fh.root.StructGrid._v_attrs.vsUpperBounds
                 cells = fh.root.StructGrid._v_attrs.vsNumCells
-                try:
+                # Load data
+                self._values.append(fh.root.StructGridField.read())
+                # Load the time-stamp
+                if '/timeData' in fh:
                     self.time = fh.root.timeData._v_attrs.vsTime
-                except AttributeError:
-                    self.time = None
-        # Gkyl ADIOS file load
+
+        # Gkyl ADIOS frame load
         elif extension == 'bp':
-            # 'with' is the prefered Python way to open a file which
-            # can fail
+            # 'with' is the prefered Python way to get a file handler
             with adios.file(self.fName) as fh:
-                try:
-                    var = adios.var(fh, 'CartGridField')
-                except AssertionError:
+                if not 'CartGridField' in fh.vars:
                     # Not a Gkyl "frame" data; trying to load as a sequence
+                    fh.close()
                     self._loadSequence()  
                     return
+
                 # Get the atributes
                 # Postgkyl conventions require the atribuest to be
                 # narrays even for 1D data
@@ -116,15 +115,15 @@ class GData(object):
                     adios.attr(fh, 'upperBounds').value)
                 cells = np.atleast_1d(
                     adios.attr(fh, 'numCells').value)
-                # Create 'offset' and 'count' tuples
+
+                # Create 'offset' and 'count' tuples ...
+                var = adios.var(fh, 'CartGridField')
                 offset, count = self._createOffsetCountBp(var, axes, comp)
+                # ... and load data
                 self._values.append(var.read(offset=offset, count=count))
-                # Try loading the time-stamp
-                try:
-                    self.time \
-                        = adios.readvar(self.fName, 'time')
-                except KeyError:
-                    self.time = None
+                # Load the time-stamp
+                if 'time' in fh.vars:
+                    self.time = adios.var(fh, 'time').read()
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -153,11 +152,10 @@ class GData(object):
                 cells[d] = self._values[0].shape[d]
                 lower[d] = lower[d] - ngl*dz[d]
                 upper[d] = upper[d] + ngu*dz[d]
-
         self._lower.append(lower)
         self._upper.append(upper)
 
-        # Create and append grid
+        # Create and append the grid (cell center values)
         dz = (upper - lower) / cells
         grid = [np.linspace(lower[d] + 0.5*dz[d], upper[d] - 0.5*dz[d],
                             cells[d])
@@ -169,68 +167,43 @@ class GData(object):
         files = glob('{:s}*'.format(self.fName))
         if not files:
             raise NameError((
-                "No data files with the root '{:s}'".
+                "File(s) '{:s}' not found or empty.".
                 format(self.fName)))
 
         cnt = 0  # Counter for the number of loaded files
-        # Load the first file
-        extension = files[0].split('.')[-1]
-        # Gkeyll HDF5 load
-        if extension == 'h5':
-            with tables.open_file(files[0], 'r') as fh:
-                try:
-                    self._values.append(fh.root.DataStruct.data.read())
-                    self._grid.append(fh.root.DataStruct.timeMesh.read())
-                    cnt += 1
-                except:
-                    pass
-        # Gkyl ADIOS load
-        elif extension == 'bp':
-            try:
-                self._values.append(adios.readvar(files[0], 'Data'))
-                self._grid.append(adios.readvar(files[0], 'TimeMesh'))
-                cnt += 1
-            except KeyError:
-                pass
-        
-        # Load the rest of the files
-        for fName in files[1:]:
+        for fName in files:
             extension = fName.split('.')[-1]
-            # Gkeyll HDF5 load
+            # Gkeyll HDF5 history load
             if extension == 'h5':
                 with tables.open_file(fName, 'r') as fh:
-                    try:
-                        self._values[0] \
-                            = np.append(self._values[0],
-                                        fh.root.DataStruct.data.read(),
-                                        axis=0)
-                        self._grid[0] \
-                            = np.append(self._grid[0],
-                                        fh.root.DataStruct.timeMesh.read(),
-                                        axis=0)
-                        cnt += 1
-                    except:  # PNG or TXT file can be offten globed as well
-                        pass
-            # Gkyl ADIOS load
+                    if '/DataStruct/data' in fh and '/DataStruct/timeMesh' in fh:
+                        grid = fh.root.DataStruct.timeMesh.read()
+                        values = fh.root.DataStruct.data.read()
+                    else:
+                        continue
+
+            # Gkyl ADIOS history load
             elif extension == 'bp':
                 with adios.file(fName) as fh:
-                    try:
-                        varData = adios.var(fh, 'Data')
-                        varMesh = adios.var(fh, 'TimeMesh')
-                    except KeyError:  # PNG or TXT file can be offten globed
-                        pass
-
-                    self._values[0] \
-                        = np.append(self._values[0], varData.read(),
-                                    axis=0)
-                    self._grid[0] \
-                        = np.append(self._grid[0], varMesh.read(),
-                                    axis=0)
-                    cnt += 1
+                    if 'Data' in fh.vars and 'TimeMesh' in fh.vars:
+                        values = adios.var(fh, 'Data').read()
+                        grid = adios.var(fh, 'TimeMesh').read()
+                    else:
+                        continue
+            else:
+                continue
+                        
+            if cnt > 0:
+                self._grid[0] = np.append(self._grid[0], grid, axis=0)
+                self._values[0] = np.append(self._values[0], values, axis=0)
+            else:
+                self._grid.append(grid)
+                self._values.append(values)
+            cnt += 1
 
         if cnt == 0:  # No files loaded
             raise NameError((
-                "No data files with the root '{:s}'".
+                "File(s) '{:s}' not found or empty.".
                 format(self.fName)))
 
         # Squeeze the time coordinate ...
@@ -244,48 +217,71 @@ class GData(object):
         self._grid[0][0] = self._grid[0][0][sortIdx]
         self._values[0] = self._values[0][sortIdx, ...]
 
-        # Boundaries should arrays even for 1D data
+        # Create boundaries
         lower = np.atleast_1d(self._grid[0][0][0])
         upper = np.atleast_1d(self._grid[0][0][-1])
         self._lower.append(lower)
         self._upper.append(upper)
-        self.time = None  # Sequence has no time-stamp
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
     def getBounds(self):
-        return self._lower[-1], self._upper[-1]
+        if len(self._lower) > 0 and len(self._upper) > 0:
+            return self._lower[-1], self._upper[-1]
+        else:
+            return np.array([]), np.array([])
 
     def getNumCells(self):
-        numDims = self.getNumDims()
-        cells = np.zeros(numDims, dtype=np.int)
-        for d in range(numDims):
-            cells[d] = len(self._grid[-1][d])
-        return cells
+        if len(self._grid) > 0:
+            numDims = self.getNumDims()
+            cells = np.zeros(numDims, dtype=np.int)
+            for d in range(numDims):
+                cells[d] = len(self._grid[-1][d])
+            return cells
+        else:
+            return np.array([])
 
     def getNumComps(self):
-        return self._values[-1].shape[-1]
+        if len(self._values) > 0:
+            return self._values[-1].shape[-1]
+        else:
+            return np.array([])
 
     def getNumDims(self):
-        return len(self._grid[0])
+        if len(self._grid) > 0:
+            return len(self._grid[0])
+        else:
+            return np.array([])
 
     def peakGrid(self):
-        return self._grid[-1]
+        if len(self._grid) > 0:
+            return self._grid[-1]
+        else:
+            return []
 
     def peakValues(self):
-        return self._values[-1]
+        if len(self._values) > 0:
+            return self._values[-1]
+        else:
+            return np.array([])
 
     def popGrid(self):
-        if not self._stack:
-            return self._grid.pop()
+        if len(self._grid) > 0:
+            if not self._stack:
+                return self._grid.pop()
+            else:
+                raise RuntimeError("'pop' is dissables when stack is turned OFF")
         else:
-            raise RuntimeError("'pop' is dissables when stack is turned OFF")
+            return []
 
     def popValues(self):
-        if not self._stack:
-            return self._grid.pop()
+        if len(self._values) > 0:
+            if not self._stack:
+                return self._values.pop()
+            else:
+                raise RuntimeError("'pop' is dissables when stack is turned OFF")
         else:
-            raise RuntimeError("'pop' is dissables when stack is turned OFF")
+            return np.array([])
 
     def pushGrid(self, grid, lower=None, upper=None):
         if not self._stack:
@@ -331,28 +327,28 @@ class GData(object):
         numCells = self.getNumCells()
         lower, upper = self.getBounds()
 
-        maximum = values.max()
-        maxIdx = np.unravel_index(np.argmax(values), values.shape)
-        minimum = values.min()
-        minIdx = np.unravel_index(np.argmin(values), values.shape)
+        if len(values) > 0:
+            maximum = values.max()
+            maxIdx = np.unravel_index(np.argmax(values), values.shape)
+            minimum = values.min()
+            minIdx = np.unravel_index(np.argmin(values), values.shape)
         
-        output = ""
-        if self.time is not None:
-            output += "- Time: {:e}\n".format(self.time)
-        output += "- Number of components: {:d}\n".format(numComps)
-        output += "- Number of dimensions: {:d}\n".format(numDims)
-        for d in range(numDims):
-            output += "  - Dim {:d}: Num. cells: {:d}; ".format(d,
-                                                                numCells[d])
-            output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
-        output += "- Maximum: {:e} at {:s}".format(maximum,
-                                                   str(maxIdx[:numDims]))
-        if numComps > 1:
-            output += " component {:d}\n".format(maxIdx[-1])
+            output = ""
+            if self.time is not None:
+                output += "- Time: {:e}\n".format(self.time)
+            output += "- Number of components: {:d}\n".format(numComps)
+            output += "- Number of dimensions: {:d}\n".format(numDims)
+            for d in range(numDims):
+                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
+                output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
+            output += "- Maximum: {:e} at {:s}".format(maximum, str(maxIdx[:numDims]))
+            if numComps > 1:
+                output += " component {:d}\n".format(maxIdx[-1])
+            else:
+                output += "\n"
+            output += "- Minimum: {:e} at {:s}".format(minimum, str(minIdx[:numDims]))
+            if numComps > 1:
+                output += " component {:d}".format(minIdx[-1])
+            return output
         else:
-            output += "\n"
-        output += "- Minimum: {:e} at {:s}".format(minimum,
-                                                   str(minIdx[:numDims]))
-        if numComps > 1:
-            output += " component {:d}".format(minIdx[-1])
-        return output
+            return "No data"
