@@ -213,18 +213,20 @@ class GData(object):
                         pass
             # Gkyl ADIOS load
             elif extension == 'bp':
-                try:
+                with adios.file(fName) as fh:
+                    try:
+                        varData = adios.var(fh, 'Data')
+                        varMesh = adios.var(fh, 'TimeMesh')
+                    except KeyError:  # PNG or TXT file can be offten globed
+                        pass
+
                     self._values[0] \
-                        = np.append(self._values[0],
-                                    adios.readvar(fName, 'Data'),
+                        = np.append(self._values[0], varData.read(),
                                     axis=0)
                     self._grid[0] \
-                        = np.append(self._grid[0],
-                                    adios.readvar(fName, 'TimeMesh'),
+                        = np.append(self._grid[0], varMesh.read(),
                                     axis=0)
                     cnt += 1
-                except KeyError:  # PNG or TXT file can be offten globed
-                    pass
 
         if cnt == 0:  # No files loaded
             raise NameError((
