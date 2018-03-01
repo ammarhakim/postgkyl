@@ -6,7 +6,11 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Collect data from the active datasets')
 @click.option('-s', '--sumdata', is_flag=True,
-              help='Sum data in the collected datasets (retain components)')
+              help="Sum data in the collected datasets (retain components)")
+@click.option('-p', '--period', type=click.FLOAT,
+              help="Specify a period to create epoch data instead of time data")
+@click.option('-o', '--offset', default=0.0, type=click.FLOAT,
+              help="Specify an offset to create epoch data instead of time data (default: 0)")
 @click.pass_context
 def collect(ctx, **kwargs):
     vlog(ctx, 'Starting collect')
@@ -25,6 +29,9 @@ def collect(ctx, **kwargs):
             values.append(v)
     time = np.array(time)
     values = np.array(values)
+
+    if kwargs['period'] is not None:
+        time = (time - kwargs['offset']) % kwargs['period']
 
     sortIdx = np.argsort(time)
     time = time[sortIdx]
