@@ -108,7 +108,7 @@ def select(gdata, comp=None,
     valuesOut = values[idxValues]
     # Adding a dummy dimension indicies
     for d, coord in enumerate(coords):
-        if coord is not None and len(grid[d]) == 1:
+        if d < len(grid) and coord is not None and len(grid[d]) == 1:
             valuesOut = np.expand_dims(valuesOut, d)
     # Ddding a dummy component index
     if len(grid) == len(valuesOut.shape):
