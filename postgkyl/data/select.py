@@ -103,13 +103,15 @@ def select(gdata, comp=None,
                 idx = int(comp)
                 idxValues[-1] = idx
             
-    # Push data back
     gdata.pushGrid(grid, lo, up)
+
     valuesOut = values[idxValues]
-    for d, nc in enumerate(gdata.getNumCells()):
-        if nc == 1:
+    # Adding a dummy dimension indicies
+    for d, coord in enumerate(coords):
+        if coord is not None and len(grid[d]) == 1:
             valuesOut = np.expand_dims(valuesOut, d)
-    if len(valuesOut.shape) == numDims:  # Retaining the last dim when needed
+    # Ddding a dummy component index
+    if len(grid) == len(valuesOut.shape):
         valuesOut = valuesOut[..., np.newaxis]
     gdata.pushValues(valuesOut)
                 
