@@ -247,34 +247,34 @@ def _interpOnMesh(cMat, qIn):
     return np.array(qOut)
 
 class GInterp(object):
-    """Base class for DG interpolation.
+    """Base class for DG data manipulation.
 
-    __init__(data : GData, numNodes : int)
-
-    Note:
-    This class should not be used on its own. Currently supported
+    This class should not be used on its own! Currently supported
     child classes are:
-    - GInterpZeroOrder
-    - GInterpNodal
-    - GInterpModal
+        - GInterpNodal
+        - GInterpModal
+
+    Init Args:
+        data (GData): Data to work with
+        numNodes (int): Number of nodes
     """
 
-    def __init__(self, dat, numNodes):
-        self.q = dat.peakValues()
+    def __init__(self, data, numNodes):
+        self.data = data
         self.numNodes = numNodes
-        self.numEqns = self.q.shape[-1]/numNodes
-        self.numDims = dat.getNumDims()
-        lower, upper = dat.getBounds()
-        cells = dat.getNumCells()
+        self.numEqns = data.getNumComps()/numNodes
+        self.numDims = data.getNumDims()
+        lower, upper = data.getBounds()
+        cells = data.getNumCells()
         self.dx = (upper - lower)/cells
-        grid = dat.peakGrid()
-        xlo, xup = dat.getBounds()
+        grid = data.peakGrid()
+        xlo, xup = data.getBounds()
         self.Xc = grid
         self.xlo = xlo
         self.xup = xup
 
     def _getRawNodal(self, component):
-        q = self.q
+        q = self.data.peakValues()
         numEqns = self.numEqns
         shp = [q.shape[i] for i in range(self.numDims)]
         shp.append(self.numNodes)
@@ -284,7 +284,7 @@ class GInterp(object):
         return rawData
 
     def _getRawModal(self, component):
-        q = self.q
+        q = self.data.peakValues()
         numEqns = self.numEqns
         shp = [q.shape[i] for i in range(self.numDims)]
         shp.append(self.numNodes)
@@ -293,76 +293,32 @@ class GInterp(object):
         up = int(lo+self.numNodes)
         rawData = q[..., lo:up]
         return rawData
-
-
-class GInterpZeroOrder(GInterp):
-    """This is provided to allow treating finite-volume data as DG
-    with piecewise constant basis.
-    """
-
-    def __init__(self, data):
-        self.numDims = data.getNumDims()
-        GInterp.__init__(self, data, 1)
-
-    def interpolate(self, c):
-        return np.array(self.Xc),
-        np.squeeze(self._getRawNodal(c))[..., np.newaxis]
-    
-    def differentiate(self, direction, comp=0):
-        q = np.squeeze(self._getRawNodal(comp))
-        grid = np.array(self.Xc)
-        if direction is not None:
-            return grid, np.gradient(q, coords[direction][1] - coords[direction][0], axis=direction, edge_order=2)
-        else:
-            derivativeData = np.zeros(q.shape, self.numDims)
-            for i in range(0,self.numDims):
-                derivativeData[:,i] = np.gradient(q, coords[i][1] - coords[i][0], axis=i, edge_order=2)
-                derivativeData[:,i] /= (coords[i][1] - coords[i][0])
-            return grid, derivativeData[..., np.newaxis]
         
 class GInterpNodal(GInterp):
-    """Class for manipulating nodal DG data
-    """
+    """The class for nodal DG data manipulation.
 
-    def __init__(self, data, polyOrder, basis,
-                 numInterp=None, read=None):
-        self.numDims = data.getNumDims()
-        self.polyOrder = polyOrder
-        self.basis = basis
-        self.numInterp = numInterp
-        self.read = read
-        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basis)
-        GInterp.__init__(self, data,
-                             numNodes)
+    After the initializations, GInterpNodal object provides the
+    interpolate and differentiate methods.  These returns grid and
+    values by default but could be used to directly push to the GData
+    stack with the stack=True flag.
 
-    def interpolate(self, comp=0):
-        q = self._getRawNodal(comp)
-        cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
-                                 self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
-        return grid, _interpOnMesh(cMat, q)[..., np.newaxis]
+    Parent: GInterp
 
-    def differentiate(self, direction, comp=0):
-        q = self._getRawNodal(comp)
-        cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
-                                     self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), 
-                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
-        if direction is not None:
-            return grid, _interpOnMesh(cMat[:, :, direction], q) \
-                / (self.Xc[direction][1] - self.Xc[direction][0])
-        else:
-            derivativeData = np.zeros(q.shape, self.numDims)
-            for i in range(0,self.numDims):
-                derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
-                derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return grid, derivativeData[..., np.newaxis]
+    Init Args:
+        data (GData): Data to work with
+        polyOrder (int): Order of the polynomial approximation
+        basis (str): Specify the basis. Currently supported is the
+            nodal Serendipity 'ns'
+        numInterp (int): Specify number of points on which to
+            interpolate (default: polyOrder + 1)
+        read (str): File name containing the
+            interpolation/differentiation matrix
 
-class GInterpModal(GInterp):
-    """Class for manipulating modal DG data
+    Example:
+        import postgkyl
+        data = postgkyl.GData('file.h5')
+        dg = postgkyl.GInterpNodal(data, 2, 'ns')
+        grid, values = dg.interpolate()
     """
 
     def __init__(self, data, polyOrder, basis,
@@ -375,28 +331,140 @@ class GInterpModal(GInterp):
         numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basis)
         GInterp.__init__(self, data, numNodes)
 
-    def interpolate(self, comp=0):
+    def interpolate(self, comp=0, stack=False):
+        q = self._getRawNodal(comp)
+        cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
+                                 self.basis, self.numInterp, self.read)
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
+                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                  for d in range(self.numDims)]
+        values = _interpOnMesh(cMat, q)[..., np.newaxis]
+
+        if stack is False:
+            return grid, values
+        else:
+            self.data.pushGrid(grid)
+            self.data.pushValues(values)
+
+    def differentiate(self, direction, comp=0, stack=False):
+        q = self._getRawNodal(comp)
+        cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
+                                     self.basis, self.numInterp, self.read)
+        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), 
+                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                  for d in range(self.numDims)]
+        if direction is not None:
+            values = _interpOnMesh(cMat[:, :, direction], q) /\
+                     (self.Xc[direction][1] - self.Xc[direction][0])
+        else:
+            values = np.zeros(q.shape, self.numDims)
+            for i in range(self.numDims):
+                values[:,i] = _interpOnMesh(cMat[:,:,i], q)
+                values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+        values = values[..., np.newaxis]
+
+        if stack is False:
+            return grid, values
+        else:
+            self.data.pushGrid(grid)
+            self.data.pushValues(values)
+
+class GInterpModal(GInterp):
+    """The class for modal DG data manipulation.
+
+    After the initializations, GInterpModal object provides the
+    interpolate and differentiate methods.  These returns grid and
+    values by default but could be used to directly push to the GData
+    stack with the stack=True flag.
+
+    Parent: GInterp
+
+    Init Args:
+        data (GData): Data to work with
+        polyOrder (int): Order of the polynomial approximation
+        basis (str): Specify the basis. Currently supported are the
+            modal Serendipity 'ms' and the maximal order basis 'mo'
+        numInterp (int): Specify number of points on which to
+            interpolate (default: polyOrder + 1)
+        read (str): File name containing the
+            interpolation/differentiation matrix
+
+    Example:
+        import postgkyl
+        data = postgkyl.GData('file.bp')
+        dg = postgkyl.GInterpModal(data, 2, 'ms')
+        grid, values = dg.interpolate()
+    """
+
+    def __init__(self, data, polyOrder, basis,
+                 numInterp=None, read=None):
+        self.numDims = data.getNumDims()
+        self.polyOrder = polyOrder
+        self.basis = basis
+        self.numInterp = numInterp
+        self.read = read
+        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basis)
+        GInterp.__init__(self, data, numNodes)
+
+    def interpolate(self, comp=0, stack=False):
         q = self._getRawModal(comp)
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basis, self.numInterp, self.read)
         grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
-        return grid, _interpOnMesh(cMat, q)[..., np.newaxis]
+        values = _interpOnMesh(cMat, q)[..., np.newaxis]
 
-    def differentiate(self, direction, comp=0):
+        if stack is False:
+            return grid, values
+        else:
+            self.data.pushGrid(grid)
+            self.data.pushValues(values)
+
+    def differentiate(self, direction, comp=0, stack=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
         grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                            self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
                   for d in range(self.numDims)]
         if direction is not None:
-            return grid, _interpOnMesh(cMat[:, :, direction], q) \
-                / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) /\
+                     (self.Xc[direction][1] - self.Xc[direction][0])
         else:
-            derivativeData = np.zeros(q.shape, self.numDims)
-            for i in range(0,self.numDims):
-                derivativeData[:,i] = _interpOnMesh(cMat[:,:,i], q)
-                derivativeData[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
-            return grid, derivativeData[..., np.newaxis]
+            values = np.zeros(q.shape, self.numDims)
+            for i in range(self.numDims):
+                values[:,i] = _interpOnMesh(cMat[:,:,i], q)
+                values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+        values = values[..., np.newaxis]
+
+        if stack is False:
+            return grid, values
+        else:
+            self.data.pushGrid(grid)
+            self.data.pushValues(values)
+
+# class GInterpZeroOrder(GInterp):
+#     """This is provided to allow treating finite-volume data as DG
+#     with piecewise constant basis.
+#     """
+
+#     def __init__(self, data):
+#         self.numDims = data.getNumDims()
+#         GInterp.__init__(self, data, 1)
+
+#     def interpolate(self, c):
+#         return np.array(self.Xc),
+#         np.squeeze(self._getRawNodal(c))[..., np.newaxis]
+    
+#     def differentiate(self, direction, comp=0):
+#         q = np.squeeze(self._getRawNodal(comp))
+#         grid = np.array(self.Xc)
+#         if direction is not None:
+#             return grid, np.gradient(q, coords[direction][1] - coords[direction][0], axis=direction, edge_order=2)
+#         else:
+#             derivativeData = np.zeros(q.shape, self.numDims)
+#             for i in range(0,self.numDims):
+#                 derivativeData[:,i] = np.gradient(q, coords[i][1] - coords[i][0], axis=i, edge_order=2)
+#                 derivativeData[:,i] /= (coords[i][1] - coords[i][0])
+#             return grid, derivativeData[..., np.newaxis]

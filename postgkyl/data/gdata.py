@@ -19,26 +19,27 @@ class GData(object):
         fName (str): String with either full file name of or a
             fragment (for history loading).  Currently supports only
             'h5' and 'bp' files. Empty GData object is created when
-            not specified.
+            not specified
         stack (bool): Turn the internal stack on (True) and off
-            (False) (default: True).
+            (False) (default: True)
         comp (int or 'int:int'): Preselect a componend index (or a
-            slice) for the partial load of data.
+            slice) for the partial load of data
         coord0 (int or 'int:int'): Preselect an index (or a slice) for
-            the first coordinate for the partial load of data.
+            the first coordinate for the partial load of data
         coord1 (int or 'int:int'): Preselect an index (or a slice) for
-            the second coordinate for the partial load of data.
+            the second coordinate for the partial load of data
         coord2 (int or 'int:int'): Preselect an index (or a slice) for
-            the third coordinate for the partial load of data.
+            the third coordinate for the partial load of data
         coord3 (int or 'int:int'): Preselect an index (or a slice) for
-            the fourth coordinate for the partial load of data.
+            the fourth coordinate for the partial load of data
         coord4 (int or 'int:int'): Preselect an index (or a slice) for
-            the fifth coordinate for the partial load of data.
+            the fifth coordinate for the partial load of data
         coord5 (int or 'int:int'): Preselect an index (or a slice) for
-            the sixth coordinate for the partial load of data.
+            the sixth coordinate for the partial load of data
 
     Raises:
-        NameError when file name does not exist or is empty/corrupted.
+        NameError: when file name does not exist or is empty/corrupted.
+        TypeError: when partial load indices are no integers or 'int:int'
 
     Notes:
         - When fine name is incomplete or is not a Gkyl frame,
@@ -305,19 +306,13 @@ class GData(object):
 
     def popGrid(self):
         if len(self._grid) > 0:
-            if not self._stack:
-                return self._grid.pop()
-            else:
-                raise RuntimeError("'pop' is dissables when stack is turned OFF")
+            return self._grid.pop()
         else:
             return []
 
     def popValues(self):
         if len(self._values) > 0:
-            if not self._stack:
-                return self._values.pop()
-            else:
-                raise RuntimeError("'pop' is dissables when stack is turned OFF")
+            return self._values.pop()
         else:
             return np.array([])
 
