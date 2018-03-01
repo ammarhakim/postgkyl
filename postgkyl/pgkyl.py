@@ -182,6 +182,7 @@ cli.add_command(cmd.info.info)
 cli.add_command(cmd.plot.plot)
 cli.add_command(cmd.select.dataset)
 cli.add_command(cmd.select.select)
+cli.add_command(cmd.calculus.integrate)
 cli.add_command(runchain)
 cli.add_command(pop)
 

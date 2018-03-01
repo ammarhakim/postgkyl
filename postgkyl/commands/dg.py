@@ -39,8 +39,6 @@ def interpolate(ctx, **inputs):
             for comp in range(1, numComps):
                 grid, tmp = dg.interpolate(comp)
                 values = np.append(values, tmp, axis=numDims)
- 
-        #label = 'proj_{:s}_{:d}'.format(inputs['basis'], inputs['polyorder'])
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(values)
     vlog(ctx, 'Finishing interpolate')
