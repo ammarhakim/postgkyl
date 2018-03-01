@@ -147,7 +147,6 @@ def cli(ctx, filename, savechain, stack, verbose,
     # but not loaded
     if numFiles > 0 and cnt == 0:
         raise NameError("no files loaded")
-    ctx.obj['numSets'] = cnt
     ctx.obj['sets'] = range(cnt)
 
     ctx.obj['fig'] = ''
@@ -178,6 +177,7 @@ def pop(ctx):
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.dg.interpolate)
+cli.add_command(cmd.collect.collect)
 cli.add_command(cmd.info.info)
 cli.add_command(cmd.plot.plot)
 cli.add_command(cmd.select.dataset)
