@@ -13,6 +13,7 @@ def _colorbar(obj, fig, ax, label=""):
 def plot(gdata, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
          style=None, legend=True, labelPrefix='',
+         xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixedaxis=False,
          **kwargs):
     """Plots Gkyl data
@@ -86,9 +87,17 @@ def plot(gdata, *args, figure=None, squeeze=False,
         if squeeze:
             plt.subplots(1, 1, num=fig.number)
             ax = fig.axes
-            ax[0].set_xlabel(axLabel[0])
-            if numDims == 2:
-                ax[0].set_ylabel(axLabel[1])
+            if xlabel is None:
+                ax[0].set_xlabel(axLabel[0])
+            else:
+                ax[0].set_xlabel(xlabel)
+            if ylabel is None:
+                if numDims == 2:
+                    ax[0].set_ylabel(axLabel[1])
+            else:
+                ax[0].set_ylabel(ylabel)
+            if title is not None:
+                ax[0].set_title(title, y=1.08)
         else:  # Not ideal but simple enough algorithm to split subplots
             sr = np.sqrt(numComps)
             if sr == np.ceil(sr):
@@ -110,10 +119,18 @@ def plot(gdata, *args, figure=None, squeeze=False,
             ax = fig.axes
             for comp in idxComps:
                 if comp >= (numRows-1) * numCols:
-                    ax[comp].set_xlabel(axLabel[0])
-                if numDims == 2:
-                    if comp % numCols == 0:
-                        ax[comp].set_ylabel(axLabel[1])
+                    if xlabel is None:
+                        ax[comp].set_xlabel(axLabel[0])
+                    else:
+                        ax[comp].set_xlabel(xlabel)
+                if comp % numCols == 0:
+                    if ylabel is None:
+                        if numDims == 2:
+                            ax[comp].set_ylabel(axLabel[1])
+                    else:
+                        ax[comp].set_ylabel(ylabel)
+                if comp < numCols and title is not None:
+                    ax[comp].set_title(title, y=1.08)
 
     # Main plotting loop
     for comp in idxComps:
