@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.figure
 import os.path
 
+import click
+
 def _colorbar(obj, fig, ax, label=""):
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -50,6 +52,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
             axLabel = np.delete(axLabel, idx)
             values = np.squeeze(values, tuple(idx)) 
             numDims = len(grid)
+
     else:
         numDims = 1
         grid = grid[0]
