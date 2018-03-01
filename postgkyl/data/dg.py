@@ -247,7 +247,7 @@ def _interpOnMesh(cMat, qIn):
     return np.array(qOut)
 
 class GInterp(object):
-    """Base class for DG data manipulation.
+    """Postgkyl base class for DG data manipulation.
 
     This class should not be used on its own! Currently supported
     child classes are:
@@ -295,7 +295,7 @@ class GInterp(object):
         return rawData
         
 class GInterpNodal(GInterp):
-    """The class for nodal DG data manipulation.
+    """Postgkyl class for nodal DG data manipulation.
 
     After the initializations, GInterpNodal object provides the
     interpolate and differentiate methods.  These returns grid and
@@ -311,8 +311,7 @@ class GInterpNodal(GInterp):
             nodal Serendipity 'ns'
         numInterp (int): Specify number of points on which to
             interpolate (default: polyOrder + 1)
-        read (str): File name containing the
-            interpolation/differentiation matrix
+        read
 
     Example:
         import postgkyl
@@ -370,7 +369,7 @@ class GInterpNodal(GInterp):
             self.data.pushValues(values)
 
 class GInterpModal(GInterp):
-    """The class for modal DG data manipulation.
+    """Postgkyl class for modal DG data manipulation.
 
     After the initializations, GInterpModal object provides the
     interpolate and differentiate methods.  These returns grid and
@@ -386,8 +385,7 @@ class GInterpModal(GInterp):
             modal Serendipity 'ms' and the maximal order basis 'mo'
         numInterp (int): Specify number of points on which to
             interpolate (default: polyOrder + 1)
-        read (str): File name containing the
-            interpolation/differentiation matrix
+        read
 
     Example:
         import postgkyl
