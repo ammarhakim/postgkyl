@@ -196,13 +196,6 @@ def plot(gdata, *args, figure=None, squeeze=False,
             cax.set_xscale('log')
         if logy:
             cax.set_yscale('log')
-            
-        # if color is not None:
-        #     try:
-        #         im.set_color(color)
-        #     except:
-        #         im.lines.set_color(color)
-        #         im.arrows.set_color(color)
 
         if numDims == 1:
             plt.autoscale(enable=True, axis='x', tight=True)

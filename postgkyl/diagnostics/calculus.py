@@ -47,7 +47,7 @@ class GCalculus(object):
             values = np.dot(values, dz[ax])
 
         for ax in sorted(axis):
-            grid[ax] = np.array([])
+            grid[ax] = np.array([0])
             values = np.expand_dims(values, ax)
 
         if stack is False:
