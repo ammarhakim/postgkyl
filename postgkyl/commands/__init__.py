@@ -4,6 +4,7 @@ from . import dg
 from . import plot
 from . import select
 from . import calculus
+from . import collect
 #from postgkyl.commands import euler
 #from postgkyl.commands import tenmoment
 #from postgkyl.commands import cglpressure
