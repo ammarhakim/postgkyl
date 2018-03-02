@@ -1,7 +1,10 @@
 import numpy as np
 
-class GCalculus(object):
+class Calculus(object):
     """Postgkyl class for integration and differential operators.
+
+    Init Args:
+        data (GData): data set
     """
 
     def __init__(self, data):
