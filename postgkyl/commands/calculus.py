@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.diagnostics import GCalculus
+from postgkyl.diagnostics import Calculus
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Integrate data over a specified axis or axes')
@@ -12,7 +12,7 @@ def integrate(ctx, **kwargs):
 
     for s in ctx.obj['sets']:
         data = ctx.obj['dataSets'][s]
-        calc = GCalculus(data)
+        calc = Calculus(data)
         calc.integrate(kwargs['axis'], stack=True)
         
     vlog(ctx, 'Finishing integrate')

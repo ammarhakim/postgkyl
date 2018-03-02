@@ -1,4 +1,5 @@
-from .calculus import GCalculus
+from .calculus import Calculus
+from .fft import Fft
 
 # import correlation functions
 #from .fieldParticleCorrelation import Ce
