@@ -285,13 +285,13 @@ class GData(object):
         if len(self._values) > 0:
             return self._values[-1].shape[-1]
         else:
-            return np.array([])
+            return 0
 
     def getNumDims(self):
         if len(self._grid) > 0:
             return len(self._grid[0])
         else:
-            return np.array([])
+            return 0
 
     def peakGrid(self):
         if len(self._grid) > 0:
