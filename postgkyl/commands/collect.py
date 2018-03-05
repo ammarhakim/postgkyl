@@ -53,6 +53,7 @@ def collect(ctx, **kwargs):
     ctx.obj['dataSets'].append(GData())
     ctx.obj['dataSets'][idx].pushGrid(grid, lo, up)
     ctx.obj['dataSets'][idx].pushValues(values)
+    ctx.obj['dataSets'][idx].fName = 'collect'
 
     vlog(ctx, 'collect: Active data set switched to #{:d}'.format(idx))
     ctx.obj['sets'] = [idx]
