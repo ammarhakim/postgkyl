@@ -1,5 +1,6 @@
-from .calculus import Calculus
-from .fft import Fft
+from .calculus import integrate
+
+from .fft import fft
 
 # import correlation functions
 #from .fieldParticleCorrelation import Ce

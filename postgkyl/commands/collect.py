@@ -14,7 +14,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def collect(ctx, **kwargs):
     vlog(ctx, 'Starting collect')
-    pushChain(ctx, 'collect.collect', **kwargs)
+    pushChain(ctx, 'collect', **kwargs)
     time = []
     values = []
 

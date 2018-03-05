@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.diagnostics import Fft
+import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Calculate the Fast Fourier Transformartion.')
@@ -9,11 +9,10 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def fft(ctx, **kwargs):
     vlog(ctx, 'Starting FFT')
-    pushChain(ctx, 'fft.fft', **kwargs)
+    pushChain(ctx, 'fft', **kwargs)
 
     for s in ctx.obj['sets']:
         data = ctx.obj['dataSets'][s]
-        ft = Fft(data)
-        ft.fft(kwargs['psd'], stack=True)
+        diag.fft(data, kwargs['psd'], stack=True)
         
     vlog(ctx, 'Finishing FFT')

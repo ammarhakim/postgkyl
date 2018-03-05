@@ -22,7 +22,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def select(ctx, **kwargs):
     vlog(ctx, 'Starting select')
-    pushChain(ctx, 'select.select', **kwargs)
+    pushChain(ctx, 'select', **kwargs)
     for s in ctx.obj['sets']:
        postgkyl.data.select(ctx.obj['dataSets'][s],
                             coord0=kwargs['c0'], coord1=kwargs['c1'],

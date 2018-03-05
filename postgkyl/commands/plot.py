@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 import click
 
-import postgkyl.output
+import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Plot the data')
@@ -46,18 +46,18 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')
-    pushChain(ctx, 'plot.plot', **kwargs)
+    pushChain(ctx, 'plot', **kwargs)
 
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
         #if kwargs['color'] == 'seq':
         #    kwargs['color'] = cm.inferno(s/len(ctx.obj['sets']))
         if kwargs['arg'] is not None:
-            postgkyl.output.plot(dat, kwargs['arg'], labelPrefix='s{:d}'.format(s),
-                                 **kwargs)
+            gplot(dat, kwargs['arg'], labelPrefix='s{:d}'.format(s),
+                 **kwargs)
         else:
-            postgkyl.output.plot(dat, labelPrefix='s{:d}'.format(s),
-                                 **kwargs)
+            gplot(dat, labelPrefix='s{:d}'.format(s),
+                 **kwargs)
         if kwargs['save'] or kwargs['saveas']:
             if kwargs['saveas']:
                 fName = kwargs['saveas']

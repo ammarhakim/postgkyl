@@ -8,7 +8,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def info(ctx, **kwargs):
     vlog(ctx, 'Starting info')
-    pushChain(ctx, 'info.info', **kwargs)
+    pushChain(ctx, 'info', **kwargs)
 
     if kwargs['allsets'] is True:
         vlog(ctx, ("Printing the current top of stack "
