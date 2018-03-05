@@ -1,8 +1,8 @@
 import numpy as np
 
 def integrate(data, axis, stack=False):
-    grid = list(self.data.peakGrid())
-    values = np.copy(self.data.peakValues())
+    grid = list(data.peakGrid())
+    values = np.copy(data.peakValues())
 
     # Convert Python input to an input Numpy understands
     if axis is not None:
@@ -24,7 +24,7 @@ def integrate(data, axis, stack=False):
         else:
             raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
     else:
-        numDims = self.data.getNumDims()
+        numDims = data.getNumDims()
         axis = tuple(range(numDims))
 
     # Get dz elements
@@ -46,8 +46,8 @@ def integrate(data, axis, stack=False):
     if stack is False:
         return grid, values
     else:
-        self.data.pushGrid(grid)
-        self.data.pushValues(values)
+        data.pushGrid(grid)
+        data.pushValues(values)
 
 def grad(data):
     pass

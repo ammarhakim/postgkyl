@@ -1,9 +1,9 @@
 import numpy as np
 from scipy import fftpack
 
-def fft(self, psd=False, stack=False):
-    grid = self.data.peakGrid()
-    values = self.data.peakValues() 
+def fft(data, psd=False, stack=False):
+    grid = data.peakGrid()
+    values = data.peakValues() 
 
     # Remove dummy dimensions
     numDims = len(grid)
@@ -16,7 +16,7 @@ def fft(self, psd=False, stack=False):
         values = np.squeeze(values, tuple(idx)) 
         numDims = len(grid)
 
-    numComps = self.data.getNumComps()
+    numComps = data.getNumComps()
     if numDims > 1:
         raise ValueError("Only 1D darta are currently supported.")
 
@@ -34,8 +34,8 @@ def fft(self, psd=False, stack=False):
     if stack:
         lo = np.array([freq[0][0]])
         up = np.array([freq[0][-1]])
-        self.data.pushGrid(freq, lo, up)
-        self.data.pushValues(ftValues)
+        data.pushGrid(freq, lo, up)
+        data.pushValues(ftValues)
     else:
         return freq, ftValues
         

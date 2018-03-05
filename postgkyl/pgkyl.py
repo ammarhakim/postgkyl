@@ -184,6 +184,7 @@ cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
 cli.add_command(cmd.plot)
 cli.add_command(cmd.select)
+cli.add_command(cmd.write)
 cli.add_command(pop)
 cli.add_command(runchain)
 

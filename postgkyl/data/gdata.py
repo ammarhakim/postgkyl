@@ -1,6 +1,6 @@
 from glob import glob
+import shutil
 from os.path import isfile
-import logging as log
 
 import adios
 import numpy as np
@@ -215,7 +215,8 @@ class GData(object):
             # Gkeyll HDF5 history load
             if extension == 'h5':
                 with tables.open_file(fName, 'r') as fh:
-                    if '/DataStruct/data' in fh and '/DataStruct/timeMesh' in fh:
+                    if '/DataStruct/data' in fh and \
+                       '/DataStruct/timeMesh' in fh:
                         grid = fh.root.DataStruct.timeMesh.read()
                         values = fh.root.DataStruct.data.read()
                     else:
@@ -341,7 +342,7 @@ class GData(object):
             self._values[0] = values
 
     #-----------------------------------------------------------------
-    #-- Output -------------------------------------------------------
+    #-- Info ---------------------------------------------------------
     def info(self):
         """Prints GData object information.
 
@@ -374,15 +375,112 @@ class GData(object):
             output += "- Number of dimensions: {:d}\n".format(numDims)
             for d in range(numDims):
                 output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
-                output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
-            output += "- Maximum: {:e} at {:s}".format(maximum, str(maxIdx[:numDims]))
+                output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
+                                                              upper[d])
+            output += "- Maximum: {:e} at {:s}".format(maximum,
+                                                       str(maxIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}\n".format(maxIdx[-1])
             else:
                 output += "\n"
-            output += "- Minimum: {:e} at {:s}".format(minimum, str(minIdx[:numDims]))
+            output += "- Minimum: {:e} at {:s}".format(minimum,
+                                                       str(minIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}".format(minIdx[-1])
             return output
         else:
             return "No data"
+
+    #-----------------------------------------------------------------
+    #-- Write --------------------------------------------------------
+    def write(self, fName=None, txt=False):
+        """Writes data in ADIOS .bp file or ASCII .txt file
+        """
+        if txt:
+            mode = 'txt'
+        else:
+            mode = 'bp'
+        # Create output file name
+        if fName is None:
+            if self.fName is not None:
+                fn = self.fName
+                fName = fn.split('.')[0].strip('_') + '_mod.' + mode
+            else:
+                fName = "gdata." + mode
+        else:
+            if isinstance(fName, str):
+                raise TypeError("'fName' must be a string")
+            if fName.split('.')[-1] != mode:
+                fileName += '.' + mode
+
+        numDims = self.getNumDims()
+        numComps = self.getNumComps()
+        numCells = self.getNumCells()
+
+        if mode == 'bp':
+            # Create string number of cells and offsets
+            sNumCells = ""
+            sOffsets = ""
+            for i in range(numDims):
+                sNumCells += "{:d},".format(numCells[i])
+                sOffsets += "0,"
+            sNumCells += "{:d}".format(numComps)
+            sOffsets += "0"
+
+            # ADIOS init
+            adios.init_noxml()
+            adios.set_max_buffer_size(1000)
+            groupId = adios.declare_group("CartField", "")
+            adios.select_method(groupId, "POSIX1", "", "")
+
+            # Define variables and attributes
+            adios.define_attribute_byvalue(groupId, "numCells", "", numCells)
+            lo, up = self.getBounds()
+            adios.define_attribute_byvalue(groupId, "lowerBounds", "", lo)
+            adios.define_attribute_byvalue(groupId, "upperBounds", "", up)
+            if self.time is not None:
+                adios.define_var(groupId, "time", "",
+                                 adios.DATATYPE.double, "", "", "")
+            adios.define_var(groupId, "CartGridField", "",
+                             adios.DATATYPE.double,
+                             sNumCells, sNumCells, sOffsets)
+
+            # Write the data and finalize
+            fh = adios.open("CartField", fName, 'w')
+            if self.time is not None:
+                adios.write(fh, "time", self.time)
+            adios.write(fh, "CartGridField", self.peakValues())
+            adios.close(fh)
+            adios.finalize()
+
+            # Cheating
+            shutil.move(fName + '.dir/' + fName + '.0', fName)
+            shutil.rmtree(fName + '.dir')
+
+        elif mode == 'txt':
+            numRows = int(numCells.prod())
+            grid = self.peakGrid()
+            values = self.peakValues()
+
+            basis = np.full(numDims, 1.0)
+            for d in range(numDims-1):
+                basis[d] = numCells[(d+1):].prod()
+
+            fh = open(fName, 'w')
+            for i in range(numRows):
+                idx = i
+                idxs = np.zeros(numDims, np.int)
+                for d in range(numDims):
+                    idxs[d] = int(idx // basis[d])
+                    idx = idx % basis[d]
+
+                line = ""
+                for d in range(numDims-1):
+                    line += "{:e}, ".format(grid[d][idxs[d]])
+                line += "{:e}; ".format(grid[numDims-1][idxs[numDims-1]])
+                for c in range(numComps-1):
+                    line += "{:e}, ".format(values[tuple(idxs)][c])
+                line += "{:e}\n".format(values[tuple(idxs)][numComps-1])
+                fh.write(line)
+            fh.close()
+
