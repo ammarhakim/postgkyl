@@ -454,7 +454,11 @@ class GData(object):
             adios.finalize()
 
             # Cheating
-            shutil.move(fName + '.dir/' + fName + '.0', fName)
+            if len(fName.split('/')) > 1:
+                nm = fName.split('/')[-1]
+            else:
+                nm = fName
+            shutil.move(fName + '.dir/' + nm + '.0', fName)
             shutil.rmtree(fName + '.dir')
 
         elif mode == 'txt':
