@@ -24,11 +24,11 @@ def select(ctx, **kwargs):
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select', **kwargs)
     for s in ctx.obj['sets']:
-       postgkyl.data.select(ctx.obj['dataSets'][s],
-                            coord0=kwargs['c0'], coord1=kwargs['c1'],
-                            coord2=kwargs['c2'], coord3=kwargs['c3'],
-                            coord4=kwargs['c4'], coord5=kwargs['c5'],
-                            comp=kwargs['comp'])
+        postgkyl.data.select(ctx.obj['dataSets'][s], stack=True,
+                             coord0=kwargs['c0'], coord1=kwargs['c1'],
+                             coord2=kwargs['c2'], coord3=kwargs['c3'],
+                             coord4=kwargs['c4'], coord5=kwargs['c5'],
+                             comp=kwargs['comp'])
     vlog(ctx, 'Finishing select')
 
 @click.command(help='Select data sets(s)')

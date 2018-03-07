@@ -21,7 +21,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
-@click.option('--fixed-axis', 'fixedaxis', is_flag=True,
+@click.option('--fix-aspect', 'fixaspect', is_flag=True,
               help="Enforce the same scaling on both axes.")
 @click.option('--logx', is_flag=True,
               help="Set x-axis to log scale.")

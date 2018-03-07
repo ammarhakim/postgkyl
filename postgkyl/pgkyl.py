@@ -178,15 +178,23 @@ def pop(ctx):
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.collect)
 cli.add_command(cmd.dataset)
+cli.add_command(cmd.euler)
 cli.add_command(cmd.fft)
 cli.add_command(cmd.info)
 cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
 cli.add_command(cmd.plot)
 cli.add_command(cmd.select)
+cli.add_command(cmd.tenmoment)
 cli.add_command(cmd.write)
 cli.add_command(pop)
 cli.add_command(runchain)
+
+cli.add_command(cmd.temp.abs)
+cli.add_command(cmd.temp.log)
+cli.add_command(cmd.temp.mult)
+cli.add_command(cmd.temp.norm)
+cli.add_command(cmd.temp.pow)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)
