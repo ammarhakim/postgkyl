@@ -1,3 +1,4 @@
+import sys
 from glob import glob
 import shutil
 from os.path import isfile
@@ -65,7 +66,6 @@ class GData(object):
         self._values = []  # (N+1)D narray of values 
         self.time = None
 
-        self.fName = fName
         if fName is not None:
             # Sequence load typically cancatenates multiple files
             # When the sequence is in just a single file, _loadFrame will
