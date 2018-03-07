@@ -39,7 +39,7 @@ def _getIdx(idx, grid):
     else:
         raise TypeError("'idx' is neither int, float or, str")
 
-def select(gdata, comp=None,
+def select(data, comp=None, stack=False,
            coord0=None, coord1=None, coord2=None,
            coord3=None, coord4=None, coord5=None):
     """Selects parts of the GData.
@@ -49,18 +49,18 @@ def select(gdata, comp=None,
     components, and using both indicies (integer) and values (float).
 
     Atributes:
-        gdata (GData)
+        data (GData)
         coord0-5 (index, value, or slice (e.g. '1:5')
         comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
     """
     coords = (coord0, coord1, coord2, coord3, coord4, coord5)
-    grid = gdata.peakGrid()
+    grid = data.peakGrid()
     grid = list(grid)  # copy the grid
-    lo, up = gdata.getBounds()
+    lo, up = data.getBounds()
     lo = np.array(lo)  # copy the lower boundaries
     up = np.array(up)  # copy the upper boundaries
-    values = gdata.peakValues()
-    numDims = gdata.getNumDims()
+    values = data.peakValues()
+    numDims = data.getNumDims()
     idxValues = [slice(0, values.shape[d]) for d in range(numDims+1)]
     
     # Loop for coordinates
@@ -102,8 +102,6 @@ def select(gdata, comp=None,
             else:
                 idx = int(comp)
                 idxValues[-1] = idx
-            
-    gdata.pushGrid(grid, lo, up)
 
     valuesOut = values[idxValues]
     # Adding a dummy dimension indicies
@@ -113,5 +111,10 @@ def select(gdata, comp=None,
     # Ddding a dummy component index
     if len(grid) == len(valuesOut.shape):
         valuesOut = valuesOut[..., np.newaxis]
-    gdata.pushValues(valuesOut)
+
+    if stack:
+        data.pushGrid(grid, lo, up)
+        data.pushValues(valuesOut)
+    else:
+        return grid, valuesOut
                 

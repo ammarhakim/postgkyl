@@ -16,7 +16,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
-         logx=False, logy=False, color=None, fixedaxis=False,
+         logx=False, logy=False, color=None, fixaspect=False,
          **kwargs):
     """Plots Gkyl data
 
@@ -114,11 +114,11 @@ def plot(gdata, *args, figure=None, squeeze=False,
                 numCols = int(np.ceil(sr))
             if numDims == 2:
                 plt.subplots(numRows, numCols,
-                             sharex='all', sharey='all',
+                             sharex=True, sharey=True,
                              num=fig.number)
             else:
                 plt.subplots(numRows, numCols,
-                             sharex='all', num=fig.number)
+                             sharex=True, num=fig.number)
             ax = fig.axes
             for comp in idxComps:
                 if comp >= (numRows-1) * numCols:
@@ -162,7 +162,7 @@ def plot(gdata, *args, figure=None, squeeze=False,
         elif streamline:
             magnitude = np.sqrt(values[..., comp]**2 
                                 + values[..., comp + 1]**2)
-            im = cax.streamplot(coords[0], coords[1],
+            im = cax.streamplot(grid[0], grid[1],
                                 values[..., comp].transpose(),
                                 values[..., comp + 1].transpose(),
                                 *args,
@@ -203,8 +203,8 @@ def plot(gdata, *args, figure=None, squeeze=False,
         if numDims == 1:
             plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
-            if fixedaxis:
-                cax.axis('image')
+            if fixaspect:
+                plt.setp(cax, aspect=1.0, adjustable='box-forced')
 
     for i in range(numComps, len(ax)):
         ax[i].axis('off')

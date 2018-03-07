@@ -1,9 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.commands import tm
-from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog, pushChain
+import postgkyl.diagnostics as diag
+from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Extract ten-moment primitive variables from fluid simulation')
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
@@ -13,47 +12,41 @@ from postgkyl.commands.output import vlog, pushChain
                                  "pressure"
               ]))
 @click.pass_context
-def tenmoment(ctx, **inputs):
+def tenmoment(ctx, **kwargs):
     vlog(ctx, 'Starting tenmoment')
-    pushChain(ctx, **inputs)
+    pushChain(ctx, 'tenmoment', **kwargs)
 
-    v = inputs['variable_name']
+    v = kwargs['variable_name']
     for s in ctx.obj['sets']:
-        coords, q = peakStack(ctx, s)
+        data = ctx.obj['dataSets'][s]
 
-        vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
+        vlog(ctx, 'tenmoment: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
-            tmp = tm.getRho(q)
+            diag.getDensity(data, stack=True)
         elif v == "xvel":
-            tmp = tm.getU(q)
+            diag.getVx(data, stack=True)
         elif v == "yvel":
-            tmp = tm.getV(q)
+            diag.getVy(data, stack=True)
         elif v == "zvel":
-            tmp = tm.getW(q)
+            diag.getVz(data, stack=True)
         elif v == "vel":
-            tmp = tm.getVel(q)
+            diag.getVi(data, stack=True)
         elif v == "pxx":
-            tmp = tm.getPxx(q)
+            diag.getPxx(data, stack=True)
         elif v == "pxy":
-            tmp = tm.getPxy(q)
+            diag.getPxy(data, stack=True)
         elif v == "pxz":
-            tmp = tm.getPxz(q)
+            diag.getPxz(data, stack=True)
         elif v == "pyy":
-            tmp = tm.getPyy(q)
+            diag.getPyy(data, stack=True)
         elif v == "pyz":
-            tmp = tm.getPyz(q)
+            diag.getPyz(data, stack=True)
         elif v == "pzz":
-            tmp = tm.getPzz(q)
+            diag.getPzz(data, stack=True)
         elif v == "pressure":
-            tmp = tm.getPressure(q)
+            diag.getP(data, numMoms=10, stack=True)
         elif v == "pressureTensor":
-            tmp = tm.getPressureTensor(q)
-        else:
-            vlog(ctx, 'No such variable %s' % v)
-            
-        tmp = antiSqueeze(coords, tmp)
-
-        pushStack(ctx, s, coords, tmp, v)
+            diag.getPij(data, stack=True)
 
     vlog(ctx, 'Finishing tenmoment')
 

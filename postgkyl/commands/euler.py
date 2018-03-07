@@ -1,13 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog, pushChain
-
-def pressure(gasGamma, q):
-    return (gasGamma-1)*(q[..., 4] -
-                         0.5*(q[..., 1]**2 + q[..., 2]**2 +
-                              q[..., 3]**2)/q[..., 0])
+import postgkyl.diagnostics as diag
+from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Extract Euler (five-moment) primitive variables from fluid simulation')
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
@@ -16,33 +11,28 @@ def pressure(gasGamma, q):
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "pressure"]))
 @click.pass_context
-def euler(ctx, **inputs):
+def euler(ctx, **kwargs):
     vlog(ctx, 'Starting euler')
-    pushChain(ctx, 'euler.euler', **inputs)
+    pushChain(ctx, 'euler', **kwargs)
 
-    v = inputs['variable_name']
+    v = kwargs['variable_name']
     for s in ctx.obj['sets']:
-        coords, q = peakStack(ctx, s)
+        data = ctx.obj['dataSets'][s]
 
         vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
-            tmp = q[..., 0]
+            diag.getDensity(data, stack=True)
         elif v == "xvel":
-            tmp = q[..., 1] / q[..., 0]
+            diag.getVx(data, stack=True)
         elif v == "yvel":
-            tmp = q[..., 2] / q[..., 0]
+            diag.getVy(data, stack=True)
         elif v == "zvel":
-            tmp = q[..., 3] / q[..., 0]
+            diag.getVz(data, stack=True)
         elif v == "vel":
-            tmp = np.copy(q[..., 1:4])
-            tmp[..., 0] = tmp[..., 0] / q[..., 0]
-            tmp[..., 1] = tmp[..., 1] / q[..., 0]
-            tmp[..., 2] = tmp[..., 2] / q[..., 0]
+            diag.getVi(data, stack=True)
         elif v == "pressure":
-            tmp = pressure(inputs['gas_gamma'], q)
-        tmp = antiSqueeze(coords, tmp)
+            diag.getP(data, gasGamma=kwargs['gas_gamma'], numMoms=5, stack=True)
 
-        pushStack(ctx, s, coords, tmp, v)
     vlog(ctx, 'Finishing euler')
 
     

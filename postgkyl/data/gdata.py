@@ -317,7 +317,9 @@ class GData(object):
         else:
             return np.array([])
 
-    def pushGrid(self, grid, lower=None, upper=None):
+    def pushGrid(self, grid=None, lower=None, upper=None):
+        if grid is None:
+            grid = self.peakGrid()
         if not self._stack:
             self._grid.append(grid)
             if lower is not None:
