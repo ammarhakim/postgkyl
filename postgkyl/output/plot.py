@@ -12,12 +12,12 @@ def _colorbar(obj, fig, ax, label=""):
     cax = divider.append_axes("right", size="3%", pad=0.05)
     return fig.colorbar(obj, cax=cax, label=label)
 
-def plot(gdata, *args, figure=None, squeeze=False,
+def plot(gdata, figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixaspect=False,
-         **kwargs):
+         *args, **kwargs):
     """Plots Gkyl data
 
     Unifies the plotting across a wide range of Gkyl applications. Can
