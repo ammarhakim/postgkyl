@@ -19,7 +19,7 @@ def _printVersion(ctx, param, value):
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkyl Team')
     click.echo('Gkyl can be used freely for research at universities,')
-    click.echo('national laboratories and other non-profit institutions.')
+    click.echo('national laboratories, and other non-profit institutions.')
     click.echo('There is NO warranty.\n')
     ctx.exit()
 
