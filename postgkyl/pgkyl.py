@@ -114,14 +114,18 @@ def cli(ctx, filename, savechain, stack, verbose,
 
     cnt = 0 # Counter for number of loaded files
     for s in range(numFiles):
-        if "*" not in filename[s] and "?" not in filename[s]:
+        if "*" not in filename[s] and "?" not in filename[s] and "!" not in filename[s]:
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
-            ctx.obj['dataSets'].append(GData(filename[s], comp=comp[s],
-                                             coord0=c0[s], coord1=c1[s],
-                                             coord2=c2[s], coord3=c3[s],
-                                             coord4=c4[s], coord5=c5[s],
-                                             stack=stack))
+            try:
+                ctx.obj['dataSets'].append(GData(filename[s], comp=comp[s],
+                                                 coord0=c0[s], coord1=c1[s],
+                                                 coord2=c2[s], coord3=c3[s],
+                                                 coord4=c4[s], coord5=c5[s],
+                                                 stack=stack))
+            except NameError:
+                click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
+                ctx.exit()
             ctx.obj['setIds'].append(cnt)
             cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
@@ -146,7 +150,8 @@ def cli(ctx, filename, savechain, stack, verbose,
     # holp for a command; however, it will fail if files are specified
     # but not loaded
     if numFiles > 0 and cnt == 0:
-        raise NameError("no files loaded")
+        click.echo(click.style("ERROR: No files loaded",fg='red'))
+        ctx.exit()
     ctx.obj['sets'] = range(cnt)
 
     ctx.obj['fig'] = ''

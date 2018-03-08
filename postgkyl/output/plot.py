@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import matplotlib.figure
 import os.path
 
@@ -12,12 +13,14 @@ def _colorbar(obj, fig, ax, label=""):
     cax = divider.append_axes("right", size="3%", pad=0.05)
     return fig.colorbar(obj, cax=cax, label=label)
 
-def plot(gdata, figure=None, squeeze=False,
+def plot(gdata, args=(),
+         figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
+         diverging=False, group=None,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixaspect=False,
-         *args, **kwargs):
+         **kwargs):
     """Plots Gkyl data
 
     Unifies the plotting across a wide range of Gkyl applications. Can
@@ -124,11 +127,13 @@ def plot(gdata, figure=None, squeeze=False,
                 if comp >= (numRows-1) * numCols:
                     if xlabel is None:
                         ax[comp].set_xlabel(axLabel[0])
+                        if group == 1:
+                            ax[comp].set_xlabel(axLabel[1])
                     else:
                         ax[comp].set_xlabel(xlabel)
                 if comp % numCols == 0:
                     if ylabel is None:
-                        if numDims == 2:
+                        if numDims == 2 and group is None:
                             ax[comp].set_ylabel(axLabel[1])
                     else:
                         ax[comp].set_ylabel(ylabel)
@@ -168,10 +173,39 @@ def plot(gdata, figure=None, squeeze=False,
                                 *args,
                                 color=magnitude.transpose())
             cb = _colorbar(im.lines, fig, cax)
+        elif diverging:
+            vmax = np.abs(values[..., comp]).max()
+            im = cax.pcolormesh(grid[0], grid[1],
+                                values[..., comp].transpose(),
+                                vmax=vmax, vmin=-vmax,
+                                cmap='RdBu_r',
+                                *args)
+            cb = _colorbar(im, fig, cax)
+        elif group is not None:
+            if numDims != 2:
+                raise ValueError("'group' plot available only for 2D data")
+            if group == 0:
+                numLines = values.shape[1]
+            else:
+                numLines = values.shape[0]
+            for l in range(numLines):
+                idx = [slice(0, u) for u in values.shape]
+                idx[-1] = comp
+                color = cm.inferno(l / (numLines-1))
+                if group == 0:
+                    idx[1] = l
+                    im = cax.plot(grid[0], values[tuple(idx)],
+                                  *args, color=color)
+                else:
+                    idx[0] = l
+                    im = cax.plot(grid[1], values[tuple(idx)],
+                                  *args, color=color)
+            numDims = 1
+            legend = False
         else:  # Basic plots:
             if numDims == 1:
                 im = cax.plot(grid[0], values[..., comp],
-                               *args, label=label)
+                              *args, label=label)
             elif numDims == 2:
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
