@@ -8,7 +8,7 @@ from postgkyl.data.gdata import GData
 from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
-postgkylPath = os.path.dirname(os.path.realpath(__file__))
+path = os.path.dirname(os.path.realpath(__file__))
 
 def _getNumNodes(dim, polyOrder, basis):
     if basis.lower() == 'ns' or basis.lower() == 'ms':
@@ -33,15 +33,6 @@ def _getNumNodes(dim, polyOrder, basis):
             format(basis))
     return numNodes
 
-# FIX THISSSSSSS!!!!!!!
-def _getDataPath():
-    path = os.path.dirname(os.path.realpath(__file__))
-    # test if path contains h5 files
-    test = glob(path + "/*.h5")
-    if test == []:
-        path = path + "/../../../../../data" #Conda path
-    return path
-
 def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
     if interp is not None and read is None:
         mat = createInterpMatrix(dim, polyOrder, basis, interp)
@@ -64,13 +55,13 @@ def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
                 # file since interp not specified.
                 varid = "xformMatrix{:d}{:d}".format(dim, polyOrder)
                 if basis.lower() == 'ns':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesNodalSerendipity.h5'
                 elif basis.lower() == 'ms':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesModalSerendipity.h5'
                 elif basis.lower() == 'mo':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesModalMaximal.h5'
 
                 else:
@@ -115,13 +106,13 @@ def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
                 # file since interp not specified.
                 varid = "xformMatrix{:d}{:d}".format(dim, polyOrder)
                 if basis.lower() == 'ns':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesNodalSerendipity.h5'
                 elif basis.lower() == 'ms':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesModalSerendipity.h5'
                 elif basis.lower() == 'mo':
-                    fileName = _getDataPath() \
+                    fileName = path \
                                + '/xformMatricesModalMaximal.h5'
                 else:
                     raise NameError(
@@ -139,13 +130,13 @@ def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
         # Load interpolation matrix from the pre-computed HDF5 file.
         varid = 'xformMatrix%i%i' % (dim, polyOrder)
         if basis.lower() == 'ns':
-            fileName = _getDataPath() + '/xformMatricesNodalSerendipity.h5'
+            fileName = path + '/xformMatricesNodalSerendipity.h5'
 
         elif basis.lower() == 'ms':
-            fileName = _getDataPath() + '/xformMatricesModalSerendipity.h5'
+            fileName = path + '/xformMatricesModalSerendipity.h5'
 
         elif basis.lower() == 'mo':
-            fileName = _getDataPath() + '/xformMatricesModalMaximal.h5'
+            fileName = path + '/xformMatricesModalMaximal.h5'
             
         else:
             raise NameError(
