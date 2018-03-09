@@ -129,7 +129,7 @@ def getPij(data, stack=False):
     else:
         return out
 
-def getP(data, gasGamma=5.0/3, numMoms=None, stack=False):
+def getP(data, gasGamma=5.0/3, numMom=None, stack=False):
     values = data.peakValues()
     if numMom is None:
         if data.getNumComps() == 5:

@@ -31,7 +31,7 @@ def euler(ctx, **kwargs):
         elif v == "vel":
             diag.getVi(data, stack=True)
         elif v == "pressure":
-            diag.getP(data, gasGamma=kwargs['gas_gamma'], numMoms=5, stack=True)
+            diag.getP(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
 
     vlog(ctx, 'Finishing euler')
 
