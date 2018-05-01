@@ -1,13 +1,13 @@
+import os
 import click
 import numpy as np
 import matplotlib.pyplot as plt
 
-from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze
-from postgkyl.commands.output import vlog, pushChain
+from postgkyl.commands.util import vlog, pushChain
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
-@click.command(help='Fit exponential to data')
+@click.command(help='Fit e^(2x) to the data')
 @click.option('-g', '--guess', default=(1.0, 0.1),
               help='Specify initial guess')
 @click.option('-p', '--plot', is_flag=True,
@@ -19,28 +19,32 @@ from postgkyl.commands.output import vlog, pushChain
 @click.pass_context
 def growth(ctx, **inputs):
     vlog(ctx, 'Starting growth')
-    pushChain( ctx, 'diagnostics.growth', **inputs) 
+    pushChain( ctx, 'growth', **inputs) 
 
     from postgkyl.diagnostics.growth import fitGrowth, exp2
 
     for s in ctx.obj['sets']:
-        coords, values = peakStack(ctx, s)
-        numDims = len(coords)
-        numComps = values.shape[-1]
+        time = ctx.obj['dataSets'][s].peakGrid()
+        values = ctx.obj['dataSets'][s].peakValues()
+        numDims = ctx.obj['dataSets'][s].getNumDims()
+        if numDims > 1:
+            click.echo(click.style("ERROR: 'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
+            ctx.exit()
         
         vlog(ctx, 'growth: Starting fit for data set #{:d}'.format(s))
-        bestParams, bestR2, bestN = fitGrowth(coords[0], values[..., 0],
+        bestParams, bestR2, bestN = fitGrowth(time[0], values[..., 0],
                                               minN=inputs['minn'],
                                               maxN=inputs['maxn'],
                                               p0=inputs['guess'])
 
         if inputs['plot'] is True:
             vlog(ctx, 'growth: Plotting data and fit')
-            plt.style.use(ctx.obj['mplstyle'])
+            plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
+                      + "/../output/postgkyl.mplstyle")
             fig, ax = plt.subplots()
-            ax.plot(coords[0], values[..., 0], '.')
+            ax.plot(time[0], values[..., 0], '.')
             ax.set_autoscale_on(False)
-            ax.plot(coords[0], exp2(coords[0], *bestParams))
+            ax.plot(time[0], exp2(time[0], *bestParams))
             ax.grid(True)
             plt.show()
     vlog(ctx, 'Finishing growth')

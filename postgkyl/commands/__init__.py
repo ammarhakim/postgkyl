@@ -10,6 +10,7 @@ from .plot import plot
 from .select import select
 from .tenmoment import tenmoment
 from .write import write
+from .growth import growth
 
 from . import temp
 

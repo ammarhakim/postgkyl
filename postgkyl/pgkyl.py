@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.0 2018-02 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.0.3 2018-05 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkyl Team')
     click.echo('Gkyl can be used freely for research at universities,')
@@ -185,6 +185,7 @@ cli.add_command(cmd.collect)
 cli.add_command(cmd.dataset)
 cli.add_command(cmd.euler)
 cli.add_command(cmd.fft)
+cli.add_command(cmd.growth)
 cli.add_command(cmd.info)
 cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
@@ -203,19 +204,14 @@ cli.add_command(cmd.temp.pow)
 
 #cli.add_command(cmd.agyro.agyro)
 #cli.add_command(cmd.cglpressure.cglpressure)
-#cli.add_command(cmd.diagnostics.growth)
+
 #cli.add_command(cmd.euler.euler)
 #cli.add_command(cmd.output.write)
-#cli.add_command(cmd.tenmoment.tenmoment)
-#cli.add_command(cmd.transform.abs)
 #cli.add_command(cmd.transform.curl)
 #cli.add_command(cmd.transform.div)
 #cli.add_command(cmd.transform.grad)
-#cli.add_command(cmd.transform.log)
 #cli.add_command(cmd.transform.mask)
 #cli.add_command(cmd.transform.mult)
-#cli.add_command(cmd.transform.norm)
-#cli.add_command(cmd.transform.pow)
 #cli.add_command(cmd.transform.transpose)
 
 if __name__ == '__main__':
