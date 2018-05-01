@@ -20,6 +20,7 @@ def plot(gdata, args=(),
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixaspect=False,
+         vmin=None, vmax=None,
          **kwargs):
     """Plots Gkyl data
 
@@ -95,10 +96,12 @@ def plot(gdata, args=(),
             ax = fig.axes
             if xlabel is None:
                 ax[0].set_xlabel(axLabel[0])
+                if group == 1:
+                    ax[0].set_xlabel(axLabel[1])
             else:
                 ax[0].set_xlabel(xlabel)
             if ylabel is None:
-                if numDims == 2:
+                if numDims == 2 and group is None:
                     ax[0].set_ylabel(axLabel[1])
             else:
                 ax[0].set_ylabel(ylabel)
@@ -182,7 +185,7 @@ def plot(gdata, args=(),
                                 *args)
             cb = _colorbar(im, fig, cax)
         elif group is not None:
-            if numDims != 2:
+            if len(grid) != 2:
                 raise ValueError("'group' plot available only for 2D data")
             if group == 0:
                 numLines = values.shape[1]
@@ -200,15 +203,19 @@ def plot(gdata, args=(),
                     idx[0] = l
                     im = cax.plot(grid[1], values[tuple(idx)],
                                   *args, color=color)
-            numDims = 1
             legend = False
         else:  # Basic plots:
             if numDims == 1:
                 im = cax.plot(grid[0], values[..., comp],
                               *args, label=label)
             elif numDims == 2:
+                if vmax is None:
+                    vmax = values[..., comp].max()
+                if vmin is None:
+                    vmin = values[..., comp].min()
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
+                                    #vmin=vmin, vmax=vmax,
                                     *args)
                 cb = _colorbar(im, fig, cax)
             else:
@@ -238,7 +245,7 @@ def plot(gdata, args=(),
             plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
             if fixaspect:
-                plt.setp(cax, aspect=1.0, adjustable='box-forced')
+                plt.setp(cax, aspect=1.0)
 
     for i in range(numComps, len(ax)):
         ax[i].axis('off')
