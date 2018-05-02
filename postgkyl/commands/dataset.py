@@ -29,4 +29,4 @@ def dataset(ctx, **kwargs):
             ctx.obj['sets'] = [int(idx)]
     else:
         vlog(ctx, 'Selecting all data sets'.format(idx))
-        ctx.obj['sets'] = range(ctx.obj['numSets'])
+        ctx.obj['sets'] = range(len(ctx.obj['dataSets']))

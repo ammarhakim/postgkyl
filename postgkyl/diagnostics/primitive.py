@@ -117,12 +117,12 @@ def getPzz(data, stack=False):
 def getPij(data, stack=False):
     values = data.peakValues()
     out = np.copy(values[..., 4:10])
-    out[..., 0] = getPxx(data)
-    out[..., 1] = getPxy(data)
-    out[..., 2] = getPxz(data)
-    out[..., 3] = getPyy(data)
-    out[..., 4] = getPyz(data)
-    out[..., 5] = getPzz(data)
+    out[..., 0] = np.squeeze(getPxx(data))
+    out[..., 1] = np.squeeze(getPxy(data))
+    out[..., 2] = np.squeeze(getPxz(data))
+    out[..., 3] = np.squeeze(getPyy(data))
+    out[..., 4] = np.squeeze(getPyz(data))
+    out[..., 5] = np.squeeze(getPzz(data))
     if stack:
         data.pushGrid()
         data.pushValues(out)

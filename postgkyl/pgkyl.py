@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.0.3 2018-05 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.0.4 2018-05-02 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkyl Team')
     click.echo('Gkyl can be used freely for research at universities,')
@@ -196,6 +196,7 @@ cli.add_command(cmd.write)
 cli.add_command(pop)
 cli.add_command(runchain)
 
+cli.add_command(cmd.agyro)
 cli.add_command(cmd.temp.abs)
 cli.add_command(cmd.temp.log)
 cli.add_command(cmd.temp.mult)
