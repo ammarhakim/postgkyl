@@ -13,9 +13,7 @@ from .write import write
 from .growth import growth
 
 from . import temp
+from .agyro import agyro
 
-#from postgkyl.commands import euler
-#from postgkyl.commands import tenmoment
 #from postgkyl.commands import cglpressure
-#from postgkyl.commands import agyro
 

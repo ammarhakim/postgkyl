@@ -1,9 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.commands import tm
-from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
-from postgkyl.commands.output import vlog, pushChain
+from postgkyl.data import GData
+from postgkyl.commands.util import vlog, pushChain
 
 def getSwisdak(pij, B):
     tmp = np.copy(pij[..., 0:2])
@@ -56,23 +55,27 @@ def getForb(pij, B):
 @click.option('--forb', is_flag=True, default=False,
               help='Compute agyrotropy using Forbenius norm.')
 @click.pass_context
-def agyro(ctx, **inputs):
+def agyro(ctx, **kwargs):
     vlog(ctx, 'Starting agyro')
-    pushChain(ctx, 'agyro.agyro', **inputs)
+    pushChain(ctx, 'agyro', **kwargs)
 
-    coords, pij = peakStack(ctx, ctx.obj['sets'][0])
-    coords, B = peakStack(ctx, ctx.obj['sets'][1])
+    grid = ctx.obj['dataSets'][ctx.obj['sets'][0]].peakGrid()
+    lo, up = ctx.obj['dataSets'][ctx.obj['sets'][0]].getBounds()
 
-    if inputs['forb']:
+    pij = ctx.obj['dataSets'][ctx.obj['sets'][0]].peakValues()
+    B = ctx.obj['dataSets'][ctx.obj['sets'][1]].peakValues()
+
+    if kwargs['forb']:
         tmp = getForb(pij, B)
     else:
         tmp = getSwisdak(pij, B)
 
-    tmp = antiSqueeze(coords, tmp)
+    tmp = tmp[..., np.newaxis]
 
-    idx = addStack(ctx)
-    ctx.obj['type'].append('hist')
-    pushStack(ctx, idx, coords, tmp, 'agyro')
+    ctx.obj['dataSets'].append(GData())
+    idx = len(ctx.obj['dataSets'])-1
+    ctx.obj['dataSets'][idx].pushGrid(grid, lo, up)
+    ctx.obj['dataSets'][idx].pushValues(tmp)
     ctx.obj['sets'] = [idx]
 
     vlog(ctx, 'Finishing agyro')
