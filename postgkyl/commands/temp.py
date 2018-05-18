@@ -58,6 +58,8 @@ def abs(ctx):
 @click.command(help='Normalize data')
 @click.option('--shift/--no-shift', default=False,
               help='Shift minimal value to zero (default: False).')
+@click.option('--usefirst', is_flag=True,  default=False,
+              help='Normalize to first value in field')
 @click.pass_context
 def norm(ctx, **kwargs):
     vlog(ctx, 'Normalizing data')
@@ -70,8 +72,11 @@ def norm(ctx, **kwargs):
         valuesOut = values.copy()
         for comp in range(numComps):
             if kwargs['shift']:
-                valuesOut[..., comp] -= valuesOut[..., comp].min() 
-            valuesOut[..., comp] /= np.abs(valuesOut[..., comp]).max()  
+                valuesOut[..., comp] -= valuesOut[..., comp].min()
+            if kwargs["usefirst"]:
+                valuesOut[..., comp] /= valuesOut[..., comp].item(0)
+            else:
+                valuesOut[..., comp] /= np.abs(valuesOut[..., comp]).max()
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(valuesOut)
 
