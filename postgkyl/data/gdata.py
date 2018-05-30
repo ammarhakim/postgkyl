@@ -65,6 +65,7 @@ class GData(object):
         self._grid = []  # list of 1D grid slices
         self._values = []  # (N+1)D narray of values 
         self.time = None
+        self.frame = 0
 
         self.fName = fName
         if fName is not None:
@@ -164,6 +165,8 @@ class GData(object):
                 # Load the time-stamp
                 if 'time' in fh.vars:
                     self.time = adios.var(fh, 'time').read()
+                if 'frame' in fh.vars:
+                    self.frame = adios.var(fh, 'frame').read()
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -374,6 +377,8 @@ class GData(object):
             output = ""
             if self.time is not None:
                 output += "- Time: {:e}\n".format(self.time)
+            if self.frame is not None:
+                output += "- Frame: {:d}\n".format(self.frame)
             output += "- Number of components: {:d}\n".format(numComps)
             output += "- Number of dimensions: {:d}\n".format(numDims)
             for d in range(numDims):
