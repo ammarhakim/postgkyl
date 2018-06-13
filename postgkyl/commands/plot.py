@@ -50,6 +50,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
               help="Name to save the plot as.")
+@click.option('--compspace', is_flag=True,
+              help="Plot on computational space (ignore nodal coordinates)")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')
