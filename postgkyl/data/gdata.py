@@ -2,11 +2,20 @@ import sys
 from glob import glob
 import shutil
 from os.path import isfile
+from difflib import SequenceMatcher
 
 import adios
 import numpy as np
 import tables
 
+# gets grid file name given field name and grid name
+def getGridFileName(fName, gridName):
+    fl = glob("*%s.bp*" % gridName)
+    for f in fl:
+        m = SequenceMatcher(None, fName, fName, f).find_longest_match(0, len(fName), 0, len(f))
+        if m.a == 0 and m.b == 0 and m.size > 0:
+            return f
+    return None
 
 class GData(object):
     """Provides interface to Gkeyll output data.
@@ -160,17 +169,22 @@ class GData(object):
                 cells = np.atleast_1d(
                     adios.attr(fh, 'numCells').value)
 
-                # check if we have a type key and read in grid based
-                # on it
+                # Check if we have a type key
                 if "type" in fh.attrs.keys():
-                    gt = adios.attr(fh, "type").value
-                    self._gridType = gt.decode('UTF-8')
+                    self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
+
+                gridNm = "grid"
+                # get name of grid file
+                if "grid" in fh.attrs.keys():
+                    gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
+
+                gridFileName = gridNm
 
                 # get grid data from appropriate file
                 if self._gridType == "uniform":
                     pass # nothing to for uniform grids
                 elif self._gridType == "mapped":
-                    pass
+                    self._nodalGrid = GData(gridFileName).peakValues()
                 elif fieldType == "nonuniform":
                     raise TypeError("'nonuniform' is not presently supported")
                 else:
@@ -303,6 +317,9 @@ class GData(object):
             return cells
         else:
             return np.array([])
+
+    def getNodalGrid(self):
+        return self._nodalGrid
 
     def getNumComps(self):
         if len(self._values) > 0:
