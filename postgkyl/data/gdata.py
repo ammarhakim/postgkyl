@@ -63,6 +63,7 @@ class GData(object):
         self._lower = []  # grid lower edges
         self._upper = []  # grid upper edges
         self._grid = []  # list of 1D grid slices
+        self._nodalGrid = None # nodal grid, if any
         self._values = []  # (N+1)D narray of values 
         self.time = None
         self.frame = 0
@@ -156,6 +157,20 @@ class GData(object):
                     adios.attr(fh, 'upperBounds').value)
                 cells = np.atleast_1d(
                     adios.attr(fh, 'numCells').value)
+
+                # check if we have a type key and read in grid based
+                # on it
+                fieldType = "uniform"
+                if "type" in fh.attrs.keys():
+                    fieldType = adios.attr(fh, "type").value
+
+                # get grid data from appropriate file
+                if fieldType == "uniform":
+                    pass # nothing to for uniform grids
+                elif fieldType == "mapped":
+                    pass
+                elif fieldType == "nonuniform":
+                    raise TypeError("'nonuniform' is not presently supported")
 
                 # Create 'offset' and 'count' tuples ...
                 var = adios.var(fh, 'CartGridField')
