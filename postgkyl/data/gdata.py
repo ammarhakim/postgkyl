@@ -63,6 +63,8 @@ class GData(object):
         self._lower = []  # grid lower edges
         self._upper = []  # grid upper edges
         self._grid = []  # list of 1D grid slices
+        self._gridType = "uniform" # type of grid
+        self._gridFile = "grid" # name of grid file
         self._nodalGrid = None # nodal grid, if any
         self._values = []  # (N+1)D narray of values 
         self.time = None
@@ -160,18 +162,20 @@ class GData(object):
 
                 # check if we have a type key and read in grid based
                 # on it
-                fieldType = "uniform"
                 if "type" in fh.attrs.keys():
-                    fieldType = adios.attr(fh, "type").value
+                    gt = adios.attr(fh, "type").value
+                    self._gridType = gt.decode('UTF-8')
 
                 # get grid data from appropriate file
-                if fieldType == "uniform":
+                if self._gridType == "uniform":
                     pass # nothing to for uniform grids
-                elif fieldType == "mapped":
+                elif self._gridType == "mapped":
                     pass
                 elif fieldType == "nonuniform":
                     raise TypeError("'nonuniform' is not presently supported")
-
+                else:
+                    raise TypeError("Unsupported grid type info in field!")
+                
                 # Create 'offset' and 'count' tuples ...
                 var = adios.var(fh, 'CartGridField')
                 offset, count = self._createOffsetCountBp(var, axes, comp)
@@ -396,6 +400,7 @@ class GData(object):
                 output += "- Frame: {:d}\n".format(self.frame)
             output += "- Number of components: {:d}\n".format(numComps)
             output += "- Number of dimensions: {:d}\n".format(numDims)
+            output += "- Grid type: {:s}\n".format(self._gridType)
             for d in range(numDims):
                 output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
