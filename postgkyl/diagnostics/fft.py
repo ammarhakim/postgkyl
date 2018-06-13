@@ -18,7 +18,7 @@ def fft(data, psd=False, stack=False):
 
     numComps = data.getNumComps()
     if numDims > 1:
-        raise ValueError("Only 1D darta are currently supported.")
+        raise ValueError("Only 1D data are currently supported.")
 
     N = len(grid[0])
     dx = grid[0][1] - grid[0][0]
