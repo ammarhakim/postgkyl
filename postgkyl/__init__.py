@@ -32,6 +32,7 @@ from . import data
 from . import diagnostics
 from . import tools
 from . import output
+from . import utils
 
 # import selected classes to the root
 from .data.gdata import GData

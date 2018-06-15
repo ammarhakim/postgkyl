@@ -8,6 +8,8 @@ import adios
 import numpy as np
 import tables
 
+from postgkyl.utils import idxParser
+
 # gets grid file name given field name and grid name
 def getGridFileName(fName, gridName):
     fl = glob("*%s.bp*" % gridName)
@@ -92,40 +94,32 @@ class GData(object):
 
     #-----------------------------------------------------------------
     #-- File Loading -------------------------------------------------
-    def _createOffsetCountBp(self, var, coords, comp):
-        numDims = len(var.dims)
-        count = np.array(var.dims)
+    def _createOffsetCountBp(self, bpVar, coords, comp):
+        numDims = len(bpVar.dims)
+        count = np.array(bpVar.dims)
         offset = np.zeros(numDims, np.int)
 
         for d, coord in enumerate(coords):
             if d < numDims-1 and coord is not None:  # Last dim stores comp
+                coord = idxParser(coord)
                 if isinstance(coord, int):
                     offset[d] = coord
                     count[d] = 1
-                elif isinstance(coord, str):
-                    if len(coord.split(':')) == 2:
-                        idxs = coord.split(':')
-                        offset[d] = int(idxs[0])
-                        count[d] = int(idxs[1]) - int(idxs[0])
-                    else:
-                        offset[d] = int(coord)
-                        count[d] = 1
+                elif isinstance(coord, slice):
+                    offset[d] = coord.start
+                    count[d] = coord.stop - coord.start
                 else:
-                    raise TypeError("'coord' is neither 'int' or 'str'")
+                    raise TypeError("'coord' is neither number or slice")
         if comp is not None:
+            comp = idxParser(comp)
             if isinstance(comp, int):
                 offset[-1] = comp
                 count[-1] = 1
-            elif isinstance(comp, str):
-                if len(comp.split(':')) == 2:
-                    idxs = comp.split(':')
-                    offset[-1] = int(idxs[0])
-                    count[-1] = int(idxs[1]) - int(idxs[0])
-                else:
-                    offset[-1] = int(comp)
-                    count[-1] = 1
+            elif isinstance(comp, slice):
+                offset[d] = comp.start
+                count[d] = comp.stop - comp.start
             else:
-                raise TypeError("'comp' is neither 'int' or 'str'")
+                raise TypeError("'comp' is neither number or slice")
         return tuple(offset), tuple(count)
 
     def _loadFrame(self, axes=(None, None, None, None, None, None),
@@ -162,12 +156,9 @@ class GData(object):
                 # Get the atributes
                 # Postgkyl conventions require the atribuest to be
                 # narrays even for 1D data
-                lower = np.atleast_1d(
-                    adios.attr(fh, 'lowerBounds').value)
-                upper = np.atleast_1d(
-                    adios.attr(fh, 'upperBounds').value)
-                cells = np.atleast_1d(
-                    adios.attr(fh, 'numCells').value)
+                lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
+                upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
+                cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
 
                 # Check if we have a type key
                 if "type" in fh.attrs.keys():
