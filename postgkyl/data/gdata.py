@@ -73,6 +73,7 @@ class GData(object):
         self._stack = stack  # Turn OFF the stack
         self._lower = []  # grid lower edges
         self._upper = []  # grid upper edges
+        self._cells = []  # number of cells
         self._grid = []  # list of 1D grid slices
         self._gridType = "uniform" # type of grid
         self._gridFile = "grid" # name of grid file
@@ -172,18 +173,21 @@ class GData(object):
                 gridFileName = gridNm
 
                 # get grid data from appropriate file
-                if self._gridType == "uniform":
-                    pass # nothing to for uniform grids
-                elif self._gridType == "mapped":
-                    self._nodalGrid = GData(gridFileName).peakValues()
-                elif fieldType == "nonuniform":
-                    raise TypeError("'nonuniform' is not presently supported")
-                else:
-                    raise TypeError("Unsupported grid type info in field!")
                 
                 # Create 'offset' and 'count' tuples ...
                 var = adios.var(fh, 'CartGridField')
                 offset, count = self._createOffsetCountBp(var, axes, comp)
+                # .. load grid if provided ... 
+                if self._gridType == "uniform":
+                    pass # nothing to for uniform grids
+                elif self._gridType == "mapped":
+                    with adios.file(gridFileName) as gridFh:
+                        gridVar = adios.var(gridFh, 'CartGridField')
+                        self._nodalGrid = gridVar.read(offset=offset, count=count)
+                elif self._gridType == "nonuniform":
+                    raise TypeError("'nonuniform' is not presently supported")
+                else:
+                    raise TypeError("Unsupported grid type info in field!")               
                 # ... and load data
                 self._values.append(var.read(offset=offset, count=count))
                 # Load the time-stamp
@@ -197,12 +201,22 @@ class GData(object):
             dz = (upper - lower) / cells
             if offset:
                 for d in range(numDims):
-                    lower[d] = lower[d] + offset[d]*dz[d]
-                    cells[d] = cells[d] - np.int(offset[d])
+                    if self._gridType == "uniform":
+                        lower[d] = lower[d] + offset[d]*dz[d]
+                        cells[d] = cells[d] - np.int(offset[d])
+                    elif self._gridType == "mapped":
+                        idx = np.full(numDims, offset[d])
+                        lower[d] = self._nodalGrid[idx ,d]
+                        cells[d] = cells[d] - np.int(offset[d])
             if count:
                 for d in range(numDims):
-                    upper[d] = lower[d] + count[d]*dz[d]
-                    cells[d] = np.int(count[d])
+                    if self._gridType == "uniform":
+                        upper[d] = lower[d] + count[d]*dz[d]
+                        cells[d] = np.int(count[d])
+                    elif self._gridType == "mapped":
+                        idx = np.full(numDims, offset[d]+count[d])
+                        upper[d] = self._nodalGrid[idx ,d]
+                        cells[d] = np.int(count[d])
                             
         else:
             raise NameError((
@@ -221,13 +235,7 @@ class GData(object):
                 upper[d] = upper[d] + ngu*dz[d]
         self._lower.append(lower)
         self._upper.append(upper)
-
-        # Create and append the grid (cell center values)
-        dz = (upper - lower) / cells
-        grid = [np.linspace(lower[d] + 0.5*dz[d], upper[d] - 0.5*dz[d],
-                            cells[d])
-                for d in range(numDims)]
-        self._grid.append(grid)
+        self._cells.append(cells)
 
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
@@ -300,17 +308,10 @@ class GData(object):
             return np.array([]), np.array([])
 
     def getNumCells(self):
-        if len(self._grid) > 0:
-            numDims = self.getNumDims()
-            cells = np.zeros(numDims, dtype=np.int)
-            for d in range(numDims):
-                cells[d] = len(self._grid[-1][d])
-            return cells
+        if len(self._lower) > 0 and len(self._upper) > 0:
+            return self._cells[-1]
         else:
             return np.array([])
-
-    def getNodalGrid(self):
-        return self._nodalGrid
 
     def getNumComps(self):
         if len(self._values) > 0:
@@ -319,14 +320,38 @@ class GData(object):
             return 0
 
     def getNumDims(self):
-        if len(self._grid) > 0:
-            return len(self._grid[0])
+        if len(self._lower) > 0:
+            return int(len(self._lower[0]))
         else:
             return 0
 
+    def getNodalGrid(self):
+        return self._nodalGrid
+
+    def getGrid(self, nodal=False):
+        if self._gridType == "uniform":
+            lower, upper = self.getBounds()
+            cells = self.getNumCells()
+            if nodal == False:
+                dz = (upper - lower) / cells
+                grid = [np.linspace(lower[d] + 0.5*dz[d],
+                                    upper[d] - 0.5*dz[d],
+                                    cells[d])
+                        for d in range(self.getNumDims())]
+            else:
+                grid = [np.linspace(lower[d],
+                                    upper[d],
+                                    cells[d]+1)
+                        for d in range(self.getNumDims())]
+            return grid
+        elif self._gridType == "mapped":
+            return self._nodalGrid
+        
+
+    # legacy function
     def peakGrid(self):
-        if len(self._grid) > 0:
-            return self._grid[-1]
+        if len(self._values) > 0:
+            return self.getGrid()
         else:
             return []
 
