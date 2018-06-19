@@ -52,6 +52,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Name to save the plot as.")
 @click.option('--compspace', is_flag=True,
               help="Plot on computational space (ignore nodal coordinates)")
+@click.option('-e', '--edgecolors', type=click.STRING,
+              help="Set color for cell edges (default: None)")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')

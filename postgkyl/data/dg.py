@@ -204,14 +204,9 @@ def _makeMesh(nInterp, Xc, xlo=None, xup=None):
     if xlo is None or xup is None:
         if nx == 1:
             raise ValueError("Cannot create interpolated grid from 1 cell without specifying 'xlo' and 'xup'")
-        else:
-            dx = (Xc[-1] - Xc[0]) / (nx-1)
-        xlo = Xc[0] - 0.5*dx
-        xup = Xc[-1] + 0.5*dx
-    else:
-        dx = (xup - xlo) / nx
-    dx2 = dx/nInterp
-    return np.linspace(xlo+0.5*dx2, xup-0.5*dx2, nInterp*nx)
+        xlo = Xc[0]
+        xup = Xc[-1]
+    return np.linspace(xlo, xup, nInterp*nx+1)
 
 
 def _interpOnMesh(cMat, qIn):
@@ -322,27 +317,41 @@ class GInterpNodal(GInterp):
         GInterp.__init__(self, data, numNodes)
 
     def interpolate(self, comp=0, stack=False):
-        q = self._getRawNodal(comp)
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
-        values = _interpOnMesh(cMat, q)[..., np.newaxis]
+        nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
+        if isinstance(comp, int):
+            q = self._getRawNodal(comp)
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+        elif isinstance(comp, tuple):
+            q = self._getRawNodal(comp[0])
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+            for c in comp[1:]:
+                q = self._getRawNodal(c)
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+        elif isinstance(comp, slice):
+            q = self._getRawNodal(comp.start)
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+            for c in range(comp.start+1, comp.stop):
+                q = self._getRawNodal(c)
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
 
         if stack is False:
+            grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                    for d in range(self.numDims)]
             return grid, values
         else:
-            self.data.pushGrid(grid)
+            cells = np.zeros(self.numDims)
+            for d in range(self.numDims):
+                cells[d] = nInterp * self.Xc[d].shape[0]
+            self.data.pushBoundsAndCells(self.xlo, self.xup, cells)
             self.data.pushValues(values)
 
     def differentiate(self, direction, comp=0, stack=False):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))), 
-                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
+        nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
             values = _interpOnMesh(cMat[:, :, direction], q) /\
                      (self.Xc[direction][1] - self.Xc[direction][0])
@@ -354,9 +363,14 @@ class GInterpNodal(GInterp):
         values = values[..., np.newaxis]
 
         if stack is False:
+            grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                    for d in range(self.numDims)]
             return grid, values
         else:
-            self.data.pushGrid(grid)
+            cells = np.zeros(self.numDims)
+            for d in range(self.numDims):
+                cells[d] = nInterp * self.Xc[d].shape[0]
+            self.data.pushBoundsAndCells(self.xlo, self.xup, cells)
             self.data.pushValues(values)
 
 class GInterpModal(GInterp):
@@ -396,27 +410,41 @@ class GInterpModal(GInterp):
         GInterp.__init__(self, data, numNodes)
 
     def interpolate(self, comp=0, stack=False):
-        q = self._getRawModal(comp)
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
-        values = _interpOnMesh(cMat, q)[..., np.newaxis]
+        nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
+        if isinstance(comp, int):
+            q = self._getRawNodal(comp)
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+        elif isinstance(comp, tuple):
+            q = self._getRawNodal(comp[0])
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+            for c in comp[1:]:
+                q = self._getRawNodal(c)
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+        elif isinstance(comp, slice):
+            q = self._getRawNodal(comp.start)
+            values = _interpOnMesh(cMat, q)[..., np.newaxis]
+            for c in range(comp.start+1, comp.stop):
+                q = self._getRawNodal(c)
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
 
         if stack is False:
+            grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                    for d in range(self.numDims)]
             return grid, values
         else:
-            self.data.pushGrid(grid)
+            cells = np.zeros(self.numDims)
+            for d in range(self.numDims):
+                cells[d] = nInterp * self.Xc[d].shape[0]
+            self.data.pushBoundsAndCells(self.xlo, self.xup, cells)
             self.data.pushValues(values)
 
     def differentiate(self, direction, comp=0, stack=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basis, self.numInterp, self.read)
-        grid = [_makeMesh(int(round(cMat.shape[0] ** (1.0/self.numDims))),
-                          self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
-                  for d in range(self.numDims)]
+        nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
             values = _interpOnMesh(cMat[:, :, direction], q) /\
                      (self.Xc[direction][1] - self.Xc[direction][0])
@@ -428,9 +456,14 @@ class GInterpModal(GInterp):
         values = values[..., np.newaxis]
 
         if stack is False:
+            grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
+                    for d in range(self.numDims)]
             return grid, values
         else:
-            self.data.pushGrid(grid)
+            cells = np.zeros(self.numDims)
+            for d in range(self.numDims):
+                cells[d] = nInterp * self.Xc[d].shape[0]
+            self.data.pushBounsdAndCells(self.xlo, self.xup, cells)
             self.data.pushValues(values)
 
 # class GInterpZeroOrder(GInterp):

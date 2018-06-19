@@ -74,10 +74,11 @@ class GData(object):
         self._lower = []  # grid lower edges
         self._upper = []  # grid upper edges
         self._cells = []  # number of cells
-        self._grid = []  # list of 1D grid slices
+        self._gridCC = []  # cell centered grid
+        self._gridND = []  # nodal grid
+        self._gridStored = False
         self._gridType = "uniform" # type of grid
         self._gridFile = "grid" # name of grid file
-        self._nodalGrid = None # nodal grid, if any
         self._values = []  # (N+1)D narray of values 
         self.time = None
         self.frame = 0
@@ -164,15 +165,10 @@ class GData(object):
                 # Check if we have a type key
                 if "type" in fh.attrs.keys():
                     self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
-
                 gridNm = "grid"
                 # get name of grid file
                 if "grid" in fh.attrs.keys():
                     gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
-
-                gridFileName = gridNm
-
-                # get grid data from appropriate file
                 
                 # Create 'offset' and 'count' tuples ...
                 var = adios.var(fh, 'CartGridField')
@@ -181,9 +177,12 @@ class GData(object):
                 if self._gridType == "uniform":
                     pass # nothing to for uniform grids
                 elif self._gridType == "mapped":
-                    with adios.file(gridFileName) as gridFh:
+                    with adios.file(gridNm) as gridFh:
                         gridVar = adios.var(gridFh, 'CartGridField')
-                        self._nodalGrid = gridVar.read(offset=offset, count=count)
+                        tmp = gridVar.read(offset=offset, count=count)
+                        grid = [tmp[..., d] for d in range(tmp.shape[-1])]
+                        self._gridND.append(grid)
+                        self._gridStored = True
                 elif self._gridType == "nonuniform":
                     raise TypeError("'nonuniform' is not presently supported")
                 else:
@@ -206,7 +205,7 @@ class GData(object):
                         cells[d] = cells[d] - np.int(offset[d])
                     elif self._gridType == "mapped":
                         idx = np.full(numDims, offset[d])
-                        lower[d] = self._nodalGrid[idx ,d]
+                        lower[d] = self._gridND[0][idx ,d]
                         cells[d] = cells[d] - np.int(offset[d])
             if count:
                 for d in range(numDims):
@@ -215,7 +214,7 @@ class GData(object):
                         cells[d] = np.int(count[d])
                     elif self._gridType == "mapped":
                         idx = np.full(numDims, offset[d]+count[d])
-                        upper[d] = self._nodalGrid[idx ,d]
+                        upper[d] = self._gridND[0][idx ,d]
                         cells[d] = np.int(count[d])
                             
         else:
@@ -270,10 +269,10 @@ class GData(object):
                 continue
                         
             if cnt > 0:
-                self._grid[0] = np.append(self._grid[0], grid, axis=0)
+                self._gridCC[0] = np.append(self._gridCC[0], grid, axis=0)
                 self._values[0] = np.append(self._values[0], values, axis=0)
             else:
-                self._grid.append(grid)
+                self._gridCC.append(grid)
                 self._values.append(values)
             cnt += 1
 
@@ -283,79 +282,89 @@ class GData(object):
                 format(self.fName)))
 
         # Squeeze the time coordinate ...
-        if len(self._grid[0].shape) > 1:
-            self._grid[0] = np.squeeze(self._grid[0])
+        if len(self._gridCC[0].shape) > 1:
+            self._gridCC[0] = np.squeeze(self._gridCC[0])
         # ... and make it a list following the Postgkyl grid conventions
-        self._grid[0] = [self._grid[0]]
+        self._gridCC[0] = [self._gridCC[0]]
+        self._gridStored = True
 
         # glob() doesn't guarantee the right order
-        sortIdx = np.argsort(self._grid[0][0])
-        self._grid[0][0] = self._grid[0][0][sortIdx]
+        sortIdx = np.argsort(self._gridCC[0][0])
+        self._gridCC[0][0] = self._gridCC[0][0][sortIdx]
         self._values[0] = self._values[0][sortIdx, ...]
 
         # Create boundaries
-        lower = np.atleast_1d(self._grid[0][0][0])
-        upper = np.atleast_1d(self._grid[0][0][-1])
+        lower = np.atleast_1d(self._gridCC[0][0][0])
+        upper = np.atleast_1d(self._gridCC[0][0][-1])
+        cells = np.atleast_1d(len(self._gridCC[0][0]))
         self._lower.append(lower)
         self._upper.append(upper)
+        self._cells.append(cells)
+
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
+    def getNumCells(self):
+        if len(self._lower) > 0 and len(self._upper) > 0:
+            return self._cells[-1]
+        else:
+            return 0
+    def getNumComps(self):
+        if len(self._values) > 0:
+            return self._values[-1].shape[-1]
+        else:
+            return 0
+    def getNumDims(self, squeeze=False):
+        if len(self._lower) > 0:
+            numDims = int(len(self._lower[0]))
+            if squeeze:
+                cells = self.getNumCells()
+                for d in range(numDims):
+                    if cells[d] == 1:
+                        numDims = numDims - 1
+            return numDims
+        else:
+            return 0
+
     def getBounds(self):
         if len(self._lower) > 0 and len(self._upper) > 0:
             return self._lower[-1], self._upper[-1]
         else:
             return np.array([]), np.array([])
 
-    def getNumCells(self):
-        if len(self._lower) > 0 and len(self._upper) > 0:
-            return self._cells[-1]
-        else:
-            return np.array([])
-
-    def getNumComps(self):
-        if len(self._values) > 0:
-            return self._values[-1].shape[-1]
-        else:
-            return 0
-
-    def getNumDims(self):
-        if len(self._lower) > 0:
-            return int(len(self._lower[0]))
-        else:
-            return 0
-
-    def getNodalGrid(self):
-        return self._nodalGrid
-
-    def getGrid(self, nodal=False):
-        if self._gridType == "uniform":
-            lower, upper = self.getBounds()
-            cells = self.getNumCells()
-            if nodal == False:
-                dz = (upper - lower) / cells
-                grid = [np.linspace(lower[d] + 0.5*dz[d],
-                                    upper[d] - 0.5*dz[d],
-                                    cells[d])
-                        for d in range(self.getNumDims())]
+    def _constructUniformGridCC(self):
+        lower, upper = self.getBounds()
+        cells = self.getNumCells()
+        dz = (upper - lower) / cells
+        grid = [np.linspace(lower[d] + 0.5*dz[d],
+                            upper[d] - 0.5*dz[d],
+                            cells[d])
+                for d in range(self.getNumDims())]
+        return grid
+    def _constructUniformGridND(self):
+        lower, upper = self.getBounds()
+        cells = self.getNumCells()
+        grid = [np.linspace(lower[d],
+                            upper[d],
+                            cells[d]+1)
+                for d in range(self.getNumDims())]
+        return grid
+    def getGrid(self, nodal=False, compSpace=False):
+        if not self._gridStored or compSpace:
+            if not nodal:
+                grid = self._constructUniformGridCC()
             else:
-                grid = [np.linspace(lower[d],
-                                    upper[d],
-                                    cells[d]+1)
-                        for d in range(self.getNumDims())]
-            return grid
-        elif self._gridType == "mapped":
-            return self._nodalGrid
-        
-
-    # legacy function
-    def peakGrid(self):
-        if len(self._values) > 0:
-            return self.getGrid()
+                grid = self._constructUniformGridND()
         else:
-            return []
+            if not nodal:
+                if len(self._gridCC) > 0:
+                    grid = self._gridCC[-1]
+            else:
+                if len(self._gridND) > 0:
+                    grid = self._gridND[-1]
+        return grid
 
-    def peakValues(self):
+    def getValues(self):
         if len(self._values) > 0:
             return self._values[-1]
         else:
@@ -363,19 +372,31 @@ class GData(object):
 
     def popGrid(self):
         if len(self._grid) > 0:
+            self._lower.pop()
+            self._upper.pop()
+            self._cells.pop
             return self._grid.pop()
         else:
             return []
-
     def popValues(self):
         if len(self._values) > 0:
             return self._values.pop()
         else:
             return np.array([])
 
+    def pushBoundsAndCells(self, lower, upper, cells):
+        if not self._stack:
+            self._lower.append(lower)
+            self._upper.append(upper)
+            self._cells.append(cells)
+        else:
+            self._lower[0] = lower
+            self._upper[0] = upper
+            self._cells[0] = cells
+
     def pushGrid(self, grid=None, lower=None, upper=None):
         if grid is None:
-            grid = self.peakGrid()
+            grid = self.getGrid()
         if not self._stack:
             self._grid.append(grid)
             if lower is not None:
@@ -392,12 +413,18 @@ class GData(object):
                 self._lower[0] = lower
             if upper is not None:
                 self._upper[0] = upper
-
     def pushValues(self, values):
         if not self._stack:
             self._values.append(values)
         else:
             self._values[0] = values
+
+
+    # legacy function
+    def peakGrid(self):
+        return self.getGrid()
+    def peakValues(self):
+        return self.getValues()
 
     #-----------------------------------------------------------------
     #-- Info ---------------------------------------------------------
