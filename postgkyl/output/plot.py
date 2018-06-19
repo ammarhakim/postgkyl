@@ -20,7 +20,7 @@ def plot(gdata, args=(),
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixaspect=False,
-         vmin=None, vmax=None, compspace=False,
+         vmin=None, vmax=None, compspace=False, edgecolors=None,
          **kwargs):
     """Plots Gkyl data
 
@@ -36,18 +36,26 @@ def plot(gdata, args=(),
     else:
         plt.style.use(style)
 
+    numDims = gdata.getNumDims(squeeze=True)
+    if numDims == 1:
+        grid = gdata.getGrid(compSpace=compspace)
+    elif numDims == 2:
+        if streamline or quiver or contour:
+            grid = gdata.getGrid(compSpace=compspace)
+        else:
+            grid = gdata.getGrid(nodal=True, compSpace=compspace)
+    else:
+        raise Exception('Only 1D and 2D plots are currently supported')
+        
     # Get the handles on the grid and values
-    grid  = gdata.peakGrid()
     lower, upper = gdata.getBounds()
     values = gdata.peakValues()
-    nodalGrid = gdata.getNodalGrid()
 
     # Squeeze the data (get rid of "collapsed" dimensions)
     axLabel = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']
-    if isinstance(grid, list):
-        numDims = len(grid)
+    if len(grid) > numDims:
         idx = []
-        for d in range(numDims):
+        for d in range(len(grid)):
             if len(grid[d]) <= 1:
                 idx.append(d)
         if idx:
@@ -56,14 +64,6 @@ def plot(gdata, args=(),
             upper = np.delete(upper, idx)
             axLabel = np.delete(axLabel, idx)
             values = np.squeeze(values, tuple(idx)) 
-            numDims = len(grid)
-
-    else:
-        numDims = 1
-        grid = grid[0]
-        lower = lower[0]
-        upper = upper[0]
-        axLabel = axLabel[0]
 
     numComps = values.shape[-1]
     if streamline or quiver:
@@ -154,12 +154,9 @@ def plot(gdata, args=(),
             
         # Special plots:
         if contour:
-            if nodalGrid is not None and not compspace:
-                raise TypeError(("'contour' plots don't work with mapped grids"))
-            else:
-                im = cax.contour(grid[0], grid[1],
-                                 values[..., comp].transpose(),
-                                 *args)
+            im = cax.contour(grid[0], grid[1],
+                             values[..., comp].transpose(),
+                             *args)
             cb = _colorbar(im, fig, cax)
         elif quiver:
             skip = int(np.max((len(grid[0]), len(grid[1])))//15)
@@ -182,20 +179,11 @@ def plot(gdata, args=(),
             cb = _colorbar(im.lines, fig, cax)
         elif diverging:
             vmax = np.abs(values[..., comp]).max()
-            if nodalGrid is not None and not compspace:
-                xn = nodalGrid[:,:,0]
-                yn = nodalGrid[:,:,1]
-                im = cax.pcolormesh(xn, yn,
-                                    values[..., comp],
-                                    vmax=vmax, vmin=-vmax,
-                                    cmap='RdBu_r',
-                                    *args)
-            else:
-                im = cax.pcolormesh(grid[0], grid[1],
-                                    values[..., comp].transpose(),
-                                    vmax=vmax, vmin=-vmax,
-                                    cmap='RdBu_r',
-                                    *args)
+            im = cax.pcolormesh(grid[0], grid[1],
+                                values[..., comp],
+                                vmax=vmax, vmin=-vmax,
+                                cmap='RdBu_r', edgecolors=edgecolors,
+                                *args)
             cb = _colorbar(im, fig, cax)
         elif group is not None:
             if len(grid) != 2:
@@ -226,17 +214,10 @@ def plot(gdata, args=(),
                     vmax = values[..., comp].max()
                 if vmin is None:
                     vmin = values[..., comp].min()
-                if nodalGrid is not None and not compspace:
-                    xn = nodalGrid[:,:,0]
-                    yn = nodalGrid[:,:,1]
-                    im = cax.pcolormesh(xn, yn,
-                                        values[..., comp],
-                                        *args)
-                else:
-                    im = cax.pcolormesh(grid[0], grid[1],
-                                        values[..., comp].transpose(),
-                                        #vmin=vmin, vmax=vmax,
-                                        *args)
+                im = cax.pcolormesh(grid[0], grid[1],
+                                    values[..., comp].transpose(),
+                                    vmin=vmin, vmax=vmax, edgecolors=edgecolors,
+                                    *args)
                 cb = _colorbar(im, fig, cax)
             else:
                 raise ValueError("{:d}D data not yet supported".
@@ -272,7 +253,3 @@ def plot(gdata, args=(),
 
     plt.tight_layout()
     return im
-
-   
-    
-    

@@ -33,12 +33,5 @@ def interpolate(ctx, **inputs):
         numDims = ctx.obj['dataSets'][s].getNumDims()
 
         vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
-        grid, values = dg.interpolate(0)
-
-        if numComps > 1:
-            for comp in range(1, numComps):
-                grid, tmp = dg.interpolate(comp)
-                values = np.append(values, tmp, axis=numDims)
-        ctx.obj['dataSets'][s].pushGrid(grid)
-        ctx.obj['dataSets'][s].pushValues(values)
+        dg.interpolate(tuple(range(numComps)), stack=True)
     vlog(ctx, 'Finishing interpolate')
