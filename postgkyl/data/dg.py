@@ -328,13 +328,13 @@ class GInterpNodal(GInterp):
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in comp[1:]:
                 q = self._getRawNodal(c)
-                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis], axis=-1)
         elif isinstance(comp, slice):
             q = self._getRawNodal(comp.start)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in range(comp.start+1, comp.stop):
                 q = self._getRawNodal(c)
-                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis], axis=-1)
 
         if stack is False:
             grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
@@ -421,13 +421,13 @@ class GInterpModal(GInterp):
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in comp[1:]:
                 q = self._getRawNodal(c)
-                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis], axis=-1)
         elif isinstance(comp, slice):
             q = self._getRawNodal(comp.start)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in range(comp.start+1, comp.stop):
                 q = self._getRawNodal(c)
-                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis])
+                values = np.append(values, _interpOnMesh(cMat, q)[..., np.newaxis], axis=-1)
 
         if stack is False:
             grid = [_makeMesh(nInterp, self.Xc[d], xlo=self.xlo[d], xup=self.xup[d])
