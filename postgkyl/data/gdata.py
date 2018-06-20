@@ -100,6 +100,7 @@ class GData(object):
         numDims = len(bpVar.dims)
         count = np.array(bpVar.dims)
         offset = np.zeros(numDims, np.int)
+        cnt = 0
 
         for d, coord in enumerate(coords):
             if d < numDims-1 and coord is not None:  # Last dim stores comp
@@ -112,6 +113,8 @@ class GData(object):
                     count[d] = coord.stop - coord.start
                 else:
                     raise TypeError("'coord' is neither number or slice")
+                cnt = cnt + 1
+                
         if comp is not None:
             comp = idxParser(comp)
             if isinstance(comp, int):
@@ -122,7 +125,12 @@ class GData(object):
                 count[d] = comp.stop - comp.start
             else:
                 raise TypeError("'comp' is neither number or slice")
-        return tuple(offset), tuple(count)
+            cnt = cnt + 1
+
+        if cnt > 0:
+            return tuple(offset), tuple(count)
+        else:
+            return (), ()
 
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
@@ -169,7 +177,6 @@ class GData(object):
                 # get name of grid file
                 if "grid" in fh.attrs.keys():
                     gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
-                
                 # Create 'offset' and 'count' tuples ...
                 var = adios.var(fh, 'CartGridField')
                 offset, count = self._createOffsetCountBp(var, axes, comp)
@@ -180,7 +187,8 @@ class GData(object):
                     with adios.file(gridNm) as gridFh:
                         gridVar = adios.var(gridFh, 'CartGridField')
                         tmp = gridVar.read(offset=offset, count=count)
-                        grid = [tmp[..., d] for d in range(tmp.shape[-1])]
+                        grid = [tmp[..., d].transpose() 
+                                for d in range(tmp.shape[-1])]
                         self._gridND.append(grid)
                         self._gridStored = True
                 elif self._gridType == "nonuniform":
@@ -394,21 +402,33 @@ class GData(object):
             self._upper[0] = upper
             self._cells[0] = cells
 
-    def pushGrid(self, grid=None, lower=None, upper=None):
-        if grid is None:
-            grid = self.getGrid()
+    def pushGrid(self, grid, lower=None, upper=None, nodal=False):
+        lo, up = self.getBounds()
+        cells = np.zeros(self.getNumDims())
+        for d in range(self.getNumDims()):
+            cells[d] = len(grid[d])
         if not self._stack:
-            self._grid.append(grid)
+            if not nodal:
+                self._gridCC.append(grid)
+            else:
+                self._gridND.append(grid)
+            self._cells.append(cells)
+
             if lower is not None:
                 self._lower.append(lower)
             else:
-                self._lower.append(self._lower[-1])
+                self._lower.append(lo)
             if upper is not None:
                 self._upper.append(upper)
             else:
-                self._upper.append(self._upper[-1])
+                self._upper.append(up)
         else:
-            self._grid[0] = grid
+            if not nodal:
+                self._gridCC[0] = grid
+            else:
+                self._gridND[0] = grid
+            self._cells[0] = cells
+
             if lower is not None:
                 self._lower[0] = lower
             if upper is not None:
