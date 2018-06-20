@@ -367,9 +367,13 @@ class GData(object):
             if not nodal:
                 if len(self._gridCC) > 0:
                     grid = self._gridCC[-1]
+                else:
+                    grid = self._gridND[-1]
             else:
                 if len(self._gridND) > 0:
                     grid = self._gridND[-1]
+                else:
+                    grid = self._gridCC[-1]
         return grid
 
     def getValues(self):
