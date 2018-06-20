@@ -30,7 +30,6 @@ def interpolate(ctx, **inputs):
                               inputs['interp'], inputs['read'])
         numNodes = dg.numNodes
         numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
-        numDims = ctx.obj['dataSets'][s].getNumDims()
 
         vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
         dg.interpolate(tuple(range(numComps)), stack=True)

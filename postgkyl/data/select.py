@@ -23,6 +23,8 @@ def select(data, comp=None, stack=False,
     lo, up = data.getBounds()
     lo = np.array(lo)  # copy the lower boundaries
     up = np.array(up)  # copy the upper boundaries
+    cells = data.getNumCells()
+    cells = np.array(cells)
     values = data.getValues()
     numDims = data.getNumDims()
     idxValues = [slice(0, values.shape[d]) for d in range(numDims+1)]
@@ -30,17 +32,20 @@ def select(data, comp=None, stack=False,
     # Loop for coordinates
     for d, coord in enumerate(coords):
         if d < numDims and coord is not None:
-            coord = idxParser(coord, grid[d])
-            # dz = grid[d][1] - grid[d][0]
-            if isinstance(coord, int):
-                grid[d] = grid[d][coord, np.newaxis]
-                idxValues[d] = coord
-            elif isinstance(coord, slice):
+            idx = idxParser(coord, grid[d])
+            dz = grid[d][1] - grid[d][0]
+            if isinstance(idx, int):
+                grid[d] = grid[d][idx, np.newaxis]
+                idxValues[d] = idx
+            elif isinstance(idx, slice):
                     grid[d] = grid[d][idx]
                     idxValues[d] = idx
+            else:
+                raise TypeError("The coordinate select can be only single index (int) or a slice")
             # Adjust the grid span
             lo[d] = grid[d].min() - 0.5*dz
             up[d] = grid[d].max() + 0.5*dz
+            cells[d] = len(grid[d])
 
     # Select components
     if comp is not None:
@@ -56,7 +61,10 @@ def select(data, comp=None, stack=False,
         valuesOut = valuesOut[..., np.newaxis]
 
     if stack:
-        data.pushGrid(grid, lo, up)
+        if data._gridStored:
+            data.pushGrid(grid, lo, up)
+        else:
+            data.pushBoundsAndCells(lo, up, cells)
         data.pushValues(valuesOut)
     else:
         return grid, valuesOut

@@ -182,7 +182,8 @@ def plot(gdata, args=(),
             im = cax.pcolormesh(grid[0], grid[1],
                                 values[..., comp],
                                 vmax=vmax, vmin=-vmax,
-                                cmap='RdBu_r', edgecolors=edgecolors,
+                                cmap='RdBu_r',
+                                edgecolors=edgecolors, linewidth=0.1,
                                 *args)
             cb = _colorbar(im, fig, cax)
         elif group is not None:
@@ -216,7 +217,8 @@ def plot(gdata, args=(),
                     vmin = values[..., comp].min()
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
-                                    vmin=vmin, vmax=vmax, edgecolors=edgecolors,
+                                    vmin=vmin, vmax=vmax,
+                                    edgecolors=edgecolors, linewidth=0.1,
                                     *args)
                 cb = _colorbar(im, fig, cax)
             else:
