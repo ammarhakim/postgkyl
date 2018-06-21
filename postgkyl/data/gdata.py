@@ -486,7 +486,7 @@ class GData(object):
             output += "- Number of dimensions: {:d}\n".format(numDims)
             output += "- Grid type: {:s}\n".format(self._gridType)
             for d in range(numDims):
-                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
+                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, int(numCells[d]))
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
             output += "- Maximum: {:e} at {:s}".format(maximum,
