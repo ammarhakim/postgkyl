@@ -50,13 +50,13 @@ def plot(gdata, args=(),
     # Get the handles on the grid and values
     lower, upper = gdata.getBounds()
     values = gdata.peakValues()
-
+    print(len(grid[0]))
     # Squeeze the data (get rid of "collapsed" dimensions)
     axLabel = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']
     if len(grid) > numDims:
         idx = []
         for d in range(len(grid)):
-            if len(grid[d]) <= 1:
+            if len(grid[d]) <= 1 or (len(grid[d]) <=2 and numDims==2):
                 idx.append(d)
         if idx:
             grid = np.delete(grid, idx)
