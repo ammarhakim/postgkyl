@@ -270,7 +270,7 @@ class GInterp(object):
         return rawData
 
     def _getRawModal(self, component):
-        q = self.data.peakValues()
+        q = self.data.getValues()
         numEqns = self.numEqns
         shp = [q.shape[i] for i in range(self.numDims)]
         shp.append(self.numNodes)
@@ -420,21 +420,21 @@ class GInterpModal(GInterp):
                                  self.basis, self.numInterp, self.read)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if isinstance(comp, int):
-            q = self._getRawNodal(comp)
+            q = self._getRawModal(comp)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
         elif isinstance(comp, tuple):
-            q = self._getRawNodal(comp[0])
+            q = self._getRawModal(comp[0])
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in comp[1:]:
-                q = self._getRawNodal(c)
+                q = self._getRawModal(c)
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
         elif isinstance(comp, slice):
-            q = self._getRawNodal(comp.start)
+            q = self._getRawModal(comp.start)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
             for c in range(comp.start+1, comp.stop):
-                q = self._getRawNodal(c)
+                q = self._getRawModal(c)
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
