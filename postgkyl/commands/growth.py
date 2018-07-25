@@ -16,6 +16,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Set minimal number of points to fit')
 @click.option('--maxn', type=click.INT,
               help='Set maximal number of points to fit')
+@click.option('-i', '--instantaneous', is_flag=True,
+              help='Plot instantaneous growth rate vs time')
 @click.pass_context
 def growth(ctx, **inputs):
     vlog(ctx, 'Starting growth')
@@ -45,6 +47,21 @@ def growth(ctx, **inputs):
             ax.plot(time[0], values[..., 0], '.')
             ax.set_autoscale_on(False)
             ax.plot(time[0], exp2(time[0], *bestParams))
+            ax.grid(True)
+            plt.show()
+
+        if inputs['instantaneous'] is True:
+            vlog(ctx, 'growth: Plotting instantaneous growth rate')
+            gammas = []
+            for i in range(1,len(time[0])-1):
+                gamma = (values[i+1,0] - values[i-1,0])/(2*values[i,0]*(time[0][i+1] - time[0][i-1]))
+                gammas.append(gamma)
+            
+            plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
+                      + "/../output/postgkyl.mplstyle")
+            fig, ax = plt.subplots()
+            ax.plot(time[0][1:-1], gammas)
+            #ax.set_autoscale_on(False)
             ax.grid(True)
             plt.show()
     vlog(ctx, 'Finishing growth')
