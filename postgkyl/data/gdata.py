@@ -83,6 +83,9 @@ class GData(object):
         self.time = None
         self.frame = 0
 
+        self.changeset = None
+        self.builddate = None
+
         self.fName = fName
         if fName is not None:
             # Sequence load typically cancatenates multiple files
@@ -197,11 +200,16 @@ class GData(object):
                     raise TypeError("Unsupported grid type info in field!")               
                 # ... and load data
                 self._values.append(var.read(offset=offset, count=count))
-                # Load the time-stamp
+
+                # load attributes
                 if 'time' in fh.vars:
                     self.time = adios.var(fh, 'time').read()
                 if 'frame' in fh.vars:
                     self.frame = adios.var(fh, 'frame').read()
+                if 'changeset' in fh.vars:
+                    self.changeset = adios.var(fh, 'changeset').read()
+                if 'builddate' in fh.vars:
+                    self.builddate = adios.var(fh, 'builddate').read()
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -478,6 +486,11 @@ class GData(object):
             minIdx = np.unravel_index(np.argmin(values), values.shape)
         
             output = ""
+
+            if self.changeset is not None:
+                output += "- Changeset: {:s}\n".format(self.changeset)
+            if self.builddate is not None:
+                output += "- Build Date: {:s}\n".format(self.builddate)
             if self.time is not None:
                 output += "- Time: {:e}\n".format(self.time)
             if self.frame is not None:
