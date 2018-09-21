@@ -140,76 +140,80 @@ class GData(object):
         extension = self.fName.split('.')[-1]
         # Gkeyll HDF5 frame load
         if extension == 'h5':
-            with tables.open_file(self.fName, 'r') as fh:
-                if not '/StructGridField' in fh:
-                    fh.close()
-                    self._loadSequence()
-                    return
-
-                # Get the atributes
-                lower = fh.root.StructGrid._v_attrs.vsLowerBounds
-                upper = fh.root.StructGrid._v_attrs.vsUpperBounds
-                cells = fh.root.StructGrid._v_attrs.vsNumCells
-                # Load data
-                self._values.append(fh.root.StructGridField.read())
-                # Load the time-stamp
-                if '/timeData' in fh:
-                    self.time = fh.root.timeData._v_attrs.vsTime
+            fh = tables.open_file(self.fName, 'r')
+            if not '/StructGridField' in fh:
+                fh.close()
+                self._loadSequence()
+                return
+            
+            # Get the atributes
+            lower = fh.root.StructGrid._v_attrs.vsLowerBounds
+            upper = fh.root.StructGrid._v_attrs.vsUpperBounds
+            cells = fh.root.StructGrid._v_attrs.vsNumCells
+            # Load data
+            self._values.append(fh.root.StructGridField.read())
+            # Load the time-stamp
+            if '/timeData' in fh:
+                self.time = fh.root.timeData._v_attrs.vsTime
+            fh.close()
 
         # Gkyl ADIOS frame load
         elif extension == 'bp':
             # 'with' is the prefered Python way to get a file handler
-            with adios.file(self.fName) as fh:
-                if not 'CartGridField' in fh.vars:
-                    # Not a Gkyl "frame" data; trying to load as a sequence
-                    fh.close()
-                    self._loadSequence()  
-                    return
+            fh = adios.file(self.fName)
+            if not 'CartGridField' in fh.vars:
+                # Not a Gkyl "frame" data; trying to load as a sequence
+                fh.close()
+                self._loadSequence()  
+                return
 
-                # Get the atributes
-                # Postgkyl conventions require the atribuest to be
-                # narrays even for 1D data
-                lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
-                upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
-                cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
+            # Get the atributes
+            # Postgkyl conventions require the atribuest to be
+            # narrays even for 1D data
+            lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
+            upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
+            cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
 
-                # Check if we have a type key
-                if "type" in fh.attrs.keys():
-                    self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
-                gridNm = "grid"
-                # get name of grid file
-                if "grid" in fh.attrs.keys():
-                    gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
-                # Create 'offset' and 'count' tuples ...
-                var = adios.var(fh, 'CartGridField')
-                offset, count = self._createOffsetCountBp(var, axes, comp)
-                # .. load grid if provided ... 
-                if self._gridType == "uniform":
-                    pass # nothing to for uniform grids
-                elif self._gridType == "mapped":
-                    with adios.file(gridNm) as gridFh:
-                        gridVar = adios.var(gridFh, 'CartGridField')
-                        tmp = gridVar.read(offset=offset, count=count)
-                        grid = [tmp[..., d].transpose() 
-                                for d in range(tmp.shape[-1])]
-                        self._gridND.append(grid)
-                        self._gridStored = True
-                elif self._gridType == "nonuniform":
-                    raise TypeError("'nonuniform' is not presently supported")
-                else:
-                    raise TypeError("Unsupported grid type info in field!")               
-                # ... and load data
-                self._values.append(var.read(offset=offset, count=count))
+            # Check if we have a type key
+            if "type" in fh.attrs.keys():
+                self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
+            gridNm = "grid"
+            # get name of grid file
+            if "grid" in fh.attrs.keys():
+                gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
+            # Create 'offset' and 'count' tuples ...
+            var = adios.var(fh, 'CartGridField')
+            offset, count = self._createOffsetCountBp(var, axes, comp)
+            # .. load grid if provided ... 
+            if self._gridType == "uniform":
+                pass # nothing to for uniform grids
+            elif self._gridType == "mapped":
+                with adios.file(gridNm) as gridFh:
+                    gridVar = adios.var(gridFh, 'CartGridField')
+                    tmp = gridVar.read(offset=offset, count=count)
+                    grid = [tmp[..., d].transpose() 
+                            for d in range(tmp.shape[-1])]
+                    self._gridND.append(grid)
+                    self._gridStored = True
+            elif self._gridType == "nonuniform":
+                raise TypeError("'nonuniform' is not presently supported")
+            else:
+                raise TypeError("Unsupported grid type info in field!")
 
-                # load attributes
-                if 'time' in fh.vars:
-                    self.time = adios.var(fh, 'time').read()
-                if 'frame' in fh.vars:
-                    self.frame = adios.var(fh, 'frame').read()
-                if 'changeset' in fh.vars:
-                    self.changeset = adios.var(fh, 'changeset').read()
-                if 'builddate' in fh.vars:
-                    self.builddate = adios.var(fh, 'builddate').read()
+            # ... and load data
+            self._values.append(var.read(offset=offset, count=count))
+
+            # load attributes
+            if 'time' in fh.vars:
+                self.time = adios.var(fh, 'time').read()
+            if 'frame' in fh.vars:
+                self.frame = adios.var(fh, 'frame').read()
+            if 'changeset' in fh.vars:
+                self.changeset = adios.var(fh, 'changeset').read()
+            if 'builddate' in fh.vars:
+                self.builddate = adios.var(fh, 'builddate').read()
+
+            fh.close()
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
