@@ -1,11 +1,10 @@
-import sys
-from glob import glob
-import shutil
-from os.path import isfile
 from difflib import SequenceMatcher
-
+from glob import glob
+from os.path import isfile
 import adios
 import numpy as np
+import shutil
+import sys
 import tables
 
 from postgkyl.utils import idxParser
@@ -69,14 +68,15 @@ class GData(object):
 
     def __init__(self, fName=None, stack=False, comp=None,
                  coord0=None, coord1=None, coord2=None,
-                 coord3=None, coord4=None, coord5=None):
+                 coord3=None, coord4=None, coord5=None,
+                 compgrid=False):
         self._stack = stack  # Turn OFF the stack
         self._lower = []  # grid lower edges
         self._upper = []  # grid upper edges
         self._cells = []  # number of cells
+        self._compGrid = compgrid # disregard the mapped grid?
         self._gridCC = []  # cell centered grid
         self._gridND = []  # nodal grid
-        self._gridStored = False
         self._gridType = "uniform" # type of grid
         self._gridFile = "grid" # name of grid file
         self._values = []  # (N+1)D narray of values 
@@ -159,7 +159,6 @@ class GData(object):
 
         # Gkyl ADIOS frame load
         elif extension == 'bp':
-            # 'with' is the prefered Python way to get a file handler
             fh = adios.file(self.fName)
             if not 'CartGridField' in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
@@ -173,18 +172,22 @@ class GData(object):
             lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
             upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
             cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
+            if 'changeset' in fh.attrs.keys():
+                self.changeset = adios.attr(fh, 'changeset').value.decode('UTF-8')
+            if 'builddate' in fh.attrs.keys():
+                self.builddate = adios.attr(fh, 'builddate').value.decode('UTF-8')
 
             # Check if we have a type key
-            if "type" in fh.attrs.keys():
+            if "type" in fh.attrs.keys() and self._compGrid is False:
                 self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
             gridNm = "grid"
-            # get name of grid file
+            # Get name of grid file
             if "grid" in fh.attrs.keys():
                 gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
             # Create 'offset' and 'count' tuples ...
             var = adios.var(fh, 'CartGridField')
             offset, count = self._createOffsetCountBp(var, axes, comp)
-            # .. load grid if provided ... 
+            # .. load nodal grid if provided ...
             if self._gridType == "uniform":
                 pass # nothing to for uniform grids
             elif self._gridType == "mapped":
@@ -194,7 +197,6 @@ class GData(object):
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
                     self._gridND.append(grid)
-                    self._gridStored = True
             elif self._gridType == "nonuniform":
                 raise TypeError("'nonuniform' is not presently supported")
             else:
@@ -208,11 +210,6 @@ class GData(object):
                 self.time = adios.var(fh, 'time').read()
             if 'frame' in fh.vars:
                 self.frame = adios.var(fh, 'frame').read()
-            if 'changeset' in fh.vars:
-                self.changeset = adios.var(fh, 'changeset').read()
-            if 'builddate' in fh.vars:
-                self.builddate = adios.var(fh, 'builddate').read()
-
             fh.close()
 
             # Adjust boundaries for 'offset' and 'count'
@@ -256,6 +253,19 @@ class GData(object):
         self._upper.append(upper)
         self._cells.append(cells)
 
+        # Construct grids
+        grid = [np.linspace(lower[d] + 0.5*dz[d],
+                            upper[d] - 0.5*dz[d],
+                            cells[d])
+                for d in range(numDims)]
+        self._gridCC.append(grid)
+        if len(self._gridND) == 0: # Grid not load from BP file
+            grid = [np.linspace(lower[d],
+                                upper[d],
+                                cells[d]+1)
+                    for d in range(numDims)]
+            self._gridND.append(grid)
+
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
         files = glob('{:s}*'.format(self.fName))
@@ -269,22 +279,26 @@ class GData(object):
             extension = fName.split('.')[-1]
             # Gkeyll HDF5 history load
             if extension == 'h5':
-                with tables.open_file(fName, 'r') as fh:
-                    if '/DataStruct/data' in fh and \
-                       '/DataStruct/timeMesh' in fh:
-                        grid = fh.root.DataStruct.timeMesh.read()
-                        values = fh.root.DataStruct.data.read()
-                    else:
-                        continue
+                fh = tables.open_file(fName, 'r')
+                if '/DataStruct/data' in fh and \
+                   '/DataStruct/timeMesh' in fh:
+                    grid = fh.root.DataStruct.timeMesh.read()
+                    values = fh.root.DataStruct.data.read()
+                    fh.close()
+                else:
+                    fh.close()
+                    continue
 
             # Gkyl ADIOS history load
             elif extension == 'bp':
-                with adios.file(fName) as fh:
-                    if 'Data' in fh.vars and 'TimeMesh' in fh.vars:
-                        values = adios.var(fh, 'Data').read()
-                        grid = adios.var(fh, 'TimeMesh').read()
-                    else:
-                        continue
+                fh =  adios.file(fName)
+                if 'Data' in fh.vars and 'TimeMesh' in fh.vars:
+                    values = adios.var(fh, 'Data').read()
+                    grid = adios.var(fh, 'TimeMesh').read()
+                    fh.close()
+                else:
+                    fh.close()
+                    continue
             else:
                 continue
                         
@@ -306,7 +320,6 @@ class GData(object):
             self._gridCC[0] = np.squeeze(self._gridCC[0])
         # ... and make it a list following the Postgkyl grid conventions
         self._gridCC[0] = [self._gridCC[0]]
-        self._gridStored = True
 
         # glob() doesn't guarantee the right order
         sortIdx = np.argsort(self._gridCC[0][0])
@@ -321,6 +334,14 @@ class GData(object):
         self._upper.append(upper)
         self._cells.append(cells)
 
+        # This might seem crazy but matplotlib...
+        grid = np.zeros(cells+1)
+        grid[1:-1] = 0.5 * (self._gridCC[0][0][:-1] + 
+                            self._gridCC[0][0][1:])
+        grid[0] = 1.5*self._gridCC[0][0][0] - 0.5*self._gridCC[0][0][1]
+        grid[-1] = 1.5*self._gridCC[0][0][-1] - 0.5*self._gridCC[0][0][-2]
+        self._gridND.append(grid)
+
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
@@ -329,11 +350,13 @@ class GData(object):
             return self._cells[-1]
         else:
             return 0
+
     def getNumComps(self):
         if len(self._values) > 0:
             return self._values[-1].shape[-1]
         else:
             return 0
+
     def getNumDims(self, squeeze=False):
         if len(self._lower) > 0:
             numDims = int(len(self._lower[0]))
@@ -352,41 +375,15 @@ class GData(object):
         else:
             return np.array([]), np.array([])
 
-    def _constructUniformGridCC(self):
-        lower, upper = self.getBounds()
-        cells = self.getNumCells()
-        dz = (upper - lower) / cells
-        grid = [np.linspace(lower[d] + 0.5*dz[d],
-                            upper[d] - 0.5*dz[d],
-                            cells[d])
-                for d in range(self.getNumDims())]
-        return grid
-    def _constructUniformGridND(self):
-        lower, upper = self.getBounds()
-        cells = self.getNumCells()
-        grid = [np.linspace(lower[d],
-                            upper[d],
-                            cells[d]+1)
-                for d in range(self.getNumDims())]
-        return grid
     def getGrid(self, nodal=False, compSpace=False):
-        if not self._gridStored or compSpace:
+        if len(self._values) > 0:
             if not nodal:
-                grid = self._constructUniformGridCC()
+                grid = self._gridCC[-1]
             else:
-                grid = self._constructUniformGridND()
+                grid = self._gridND[-1]
+                return grid
         else:
-            if not nodal:
-                if len(self._gridCC) > 0:
-                    grid = self._gridCC[-1]
-                else:
-                    grid = self._gridND[-1]
-            else:
-                if len(self._gridND) > 0:
-                    grid = self._gridND[-1]
-                else:
-                    grid = self._gridCC[-1]
-        return grid
+            return []
 
     def getValues(self):
         if len(self._values) > 0:
@@ -394,12 +391,18 @@ class GData(object):
         else:
             return np.array([])
 
-    def popGrid(self):
+
+    def popGrid(self, nodal=False):
         if len(self._grid) > 0:
             self._lower.pop()
             self._upper.pop()
             self._cells.pop
-            return self._grid.pop()
+            if not nodal:
+                self._gridND.pop()
+                return self._gridCC.pop()
+            else:
+                self_.gridCC.pop()
+                return self._gridND.pop()
         else:
             return []
     def popValues(self):
@@ -408,15 +411,15 @@ class GData(object):
         else:
             return np.array([])
 
-    def pushBoundsAndCells(self, lower, upper, cells):
-        if not self._stack:
-            self._lower.append(lower)
-            self._upper.append(upper)
-            self._cells.append(cells)
-        else:
-            self._lower[0] = lower
-            self._upper[0] = upper
-            self._cells[0] = cells
+    # def pushBoundsAndCells(self, lower, upper, cells):
+    #     if not self._stack:
+    #         self._lower.append(lower)
+    #         self._upper.append(upper)
+    #         self._cells.append(cells)
+    #     else:
+    #         self._lower[0] = lower
+    #         self._upper[0] = upper
+    #         self._cells[0] = cells
 
     def pushGrid(self, grid, lower=None, upper=None, nodal=False):
         lo, up = self.getBounds()
@@ -491,17 +494,13 @@ class GData(object):
         
             output = ""
 
-            if self.changeset is not None:
-                output += "- Changeset: {:s}\n".format(self.changeset)
-            if self.builddate is not None:
-                output += "- Build Date: {:s}\n".format(self.builddate)
             if self.time is not None:
                 output += "- Time: {:e}\n".format(self.time)
             if self.frame is not None:
                 output += "- Frame: {:d}\n".format(self.frame)
             output += "- Number of components: {:d}\n".format(numComps)
             output += "- Number of dimensions: {:d}\n".format(numDims)
-            output += "- Grid type: {:s}\n".format(self._gridType)
+            output += "- Grid: ({:s})\n".format(self._gridType)
             for d in range(numDims):
                 output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, int(numCells[d]))
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
@@ -516,13 +515,19 @@ class GData(object):
                                                        str(minIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}".format(minIdx[-1])
+
+            if self.changeset is not None and self.builddate is not None:
+
+                output += "\n- Created with Gkeyll:\n"
+                output += "  - Changeset: {:s}\n".format(self.changeset)
+                output += "  - Build Date: {:s}".format(self.builddate)
             return output
         else:
             return "No data"
 
     #-----------------------------------------------------------------
     #-- Write --------------------------------------------------------
-    def write(self, fName=None, txt=False):
+    def write(self, bufferSize=1000, fName=None, txt=False):
         """Writes data in ADIOS .bp file or ASCII .txt file
         """
         if txt:
@@ -558,7 +563,7 @@ class GData(object):
 
             # ADIOS init
             adios.init_noxml()
-            adios.set_max_buffer_size(1000)
+            adios.set_max_buffer_size(bufferSize)
             groupId = adios.declare_group("CartField", "")
             adios.select_method(groupId, "POSIX1", "", "")
 
