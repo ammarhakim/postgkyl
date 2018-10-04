@@ -1,4 +1,4 @@
-from difflib import SequenceMatcher
+#from difflib import SequenceMatcher
 from glob import glob
 from os.path import isfile
 import adios
@@ -10,13 +10,13 @@ import tables
 from postgkyl.utils import idxParser
 
 # gets grid file name given field name and grid name
-def getGridFileName(fName, gridName):
-    fl = glob("*%s.bp*" % gridName)
-    for f in fl:
-        m = SequenceMatcher(None, fName, fName, f).find_longest_match(0, len(fName), 0, len(f))
-        if m.a == 0 and m.b == 0 and m.size > 0:
-            return f
-    return None
+# def getGridFileName(fName, gridName):
+#     fl = glob("*%s.bp*" % gridName)
+#     for f in fl:
+#         m = SequenceMatcher(None, fName, fName, f).find_longest_match(0, len(fName), 0, len(f))
+#         if m.a == 0 and m.b == 0 and m.size > 0:
+#             return f
+#     return None
 
 class GData(object):
     """Provides interface to Gkeyll output data.
@@ -71,12 +71,8 @@ class GData(object):
                  coord3=None, coord4=None, coord5=None,
                  compgrid=False):
         self._stack = stack  # Turn OFF the stack
-        self._lower = []  # grid lower edges
-        self._upper = []  # grid upper edges
-        self._cells = []  # number of cells
         self._compGrid = compgrid # disregard the mapped grid?
-        self._gridCC = []  # cell centered grid
-        self._gridND = []  # nodal grid
+        self._grid = []  # cell centered grid
         self._gridType = "uniform" # type of grid
         self._gridFile = "grid" # name of grid file
         self._values = []  # (N+1)D narray of values 
@@ -150,11 +146,12 @@ class GData(object):
             lower = fh.root.StructGrid._v_attrs.vsLowerBounds
             upper = fh.root.StructGrid._v_attrs.vsUpperBounds
             cells = fh.root.StructGrid._v_attrs.vsNumCells
-            # Load data
+            # Load data ...
             self._values.append(fh.root.StructGridField.read())
-            # Load the time-stamp
+            # ... and the time-stamp
             if '/timeData' in fh:
                 self.time = fh.root.timeData._v_attrs.vsTime
+
             fh.close()
 
         # Gkyl ADIOS frame load
@@ -177,102 +174,95 @@ class GData(object):
             if 'builddate' in fh.attrs.keys():
                 self.builddate = adios.attr(fh, 'builddate').value.decode('UTF-8')
 
-            # Check if we have a type key
-            if "type" in fh.attrs.keys() and self._compGrid is False:
-                self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
-            gridNm = "grid"
-            # Get name of grid file
-            if "grid" in fh.attrs.keys():
-                gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
-            # Create 'offset' and 'count' tuples ...
+            # Load data ...
             var = adios.var(fh, 'CartGridField')
             offset, count = self._createOffsetCountBp(var, axes, comp)
+            self._values.append(var.read(offset=offset, count=count))
+            # ... and the time-stamp
+            if 'time' in fh.vars:
+                self.time = adios.var(fh, 'time').read()
+            if 'frame' in fh.vars:
+                self.frame = adios.var(fh, 'frame').read()
+
+            # Check for mapped grid ...
+            if "type" in fh.attrs.keys() and self._compGrid is False:
+                self._gridType = adios.attr(fh, "type").value.decode('UTF-8')
             # .. load nodal grid if provided ...
             if self._gridType == "uniform":
-                pass # nothing to for uniform grids
+                pass # nothing to do for uniform grids
             elif self._gridType == "mapped":
+                if "grid" in fh.attrs.keys():
+                    gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
+                else:
+                    gridNm = "grid"  
                 with adios.file(gridNm) as gridFh:
                     gridVar = adios.var(gridFh, 'CartGridField')
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
-                    self._gridND.append(grid)
+                    self._grid.append(grid)
             elif self._gridType == "nonuniform":
                 raise TypeError("'nonuniform' is not presently supported")
             else:
                 raise TypeError("Unsupported grid type info in field!")
 
-            # ... and load data
-            self._values.append(var.read(offset=offset, count=count))
-
-            # load attributes
-            if 'time' in fh.vars:
-                self.time = adios.var(fh, 'time').read()
-            if 'frame' in fh.vars:
-                self.frame = adios.var(fh, 'frame').read()
-            fh.close()
-
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
             dz = (upper - lower) / cells
             if offset:
-                for d in range(numDims):
-                    if self._gridType == "uniform":
-                        lower[d] = lower[d] + offset[d]*dz[d]
-                        cells[d] = cells[d] - np.int(offset[d])
-                    elif self._gridType == "mapped":
+                if self._gridType == "uniform":
+                    lower = lower + offset*dz
+                    cells = cells - np.int(offset)
+                elif self._gridType == "mapped":
+                    for d in range(numDims):
                         idx = np.full(numDims, offset[d])
-                        lower[d] = self._gridND[0][idx ,d]
+                        lower[d] = self._gridND[0][idx, d]
                         cells[d] = cells[d] - np.int(offset[d])
             if count:
-                for d in range(numDims):
-                    if self._gridType == "uniform":
-                        upper[d] = lower[d] + count[d]*dz[d]
-                        cells[d] = np.int(count[d])
-                    elif self._gridType == "mapped":
+                if self._gridType == "uniform":
+                    upper = lower + count*dz
+                    cells = np.int(count)
+                elif self._gridType == "mapped":
+                    for d in range(numDims):
                         idx = np.full(numDims, offset[d]+count[d])
                         upper[d] = self._gridND[0][idx ,d]
                         cells[d] = np.int(count[d])
+
+            fh.close()
                             
         else:
-            raise NameError((
+            raise NameError(
                 "File extension '{:s}' is not supported".
-                format(extension)))
+                format(extension))
 
         numDims = len(cells)
         dz = (upper - lower) / cells
         # Adjusts bounds in case ghost layer is included in data
         for d in range(numDims):
             if cells[d] != self._values[0].shape[d]:
+                if self._gridType == "mapped":
+                    raise ValueError("Data appears to include ghost cells which is not compatible with mapped grid. Use computational grid 'compgrid' instead.")
                 ngl = int(np.floor((cells[d] - self._values[0].shape[d])*0.5))
                 ngu = int(np.ceil((cells[d] - self._values[0].shape[d])*0.5))
                 cells[d] = self._values[0].shape[d]
                 lower[d] = lower[d] - ngl*dz[d]
                 upper[d] = upper[d] + ngu*dz[d]
-        self._lower.append(lower)
-        self._upper.append(upper)
-        self._cells.append(cells)
 
-        # Construct grids
-        grid = [np.linspace(lower[d] + 0.5*dz[d],
-                            upper[d] - 0.5*dz[d],
-                            cells[d])
-                for d in range(numDims)]
-        self._gridCC.append(grid)
-        if len(self._gridND) == 0: # Grid not load from BP file
+        # Construct grids if not loaded already
+        if len(self._grid) == 0:
             grid = [np.linspace(lower[d],
                                 upper[d],
                                 cells[d]+1)
                     for d in range(numDims)]
-            self._gridND.append(grid)
+            self._grid.append(grid)
 
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
         files = glob('{:s}*'.format(self.fName))
         if not files:
-            raise NameError((
+            raise NameError(
                 "File(s) '{:s}' not found or empty.".
-                format(self.fName)))
+                format(self.fName))
 
         cnt = 0  # Counter for the number of loaded files
         for fName in files:
@@ -303,51 +293,39 @@ class GData(object):
                 continue
                         
             if cnt > 0:
-                self._gridCC[0] = np.append(self._gridCC[0], grid, axis=0)
+                self._grid[0] = np.append(self._gridCC[0], grid, axis=0)
                 self._values[0] = np.append(self._values[0], values, axis=0)
             else:
-                self._gridCC.append(grid)
+                self._grid.append(grid)
                 self._values.append(values)
             cnt += 1
 
         if cnt == 0:  # No files loaded
-            raise NameError((
+            raise NameError(
                 "File(s) '{:s}' not found or empty.".
-                format(self.fName)))
+                format(self.fName))
 
         # Squeeze the time coordinate ...
-        if len(self._gridCC[0].shape) > 1:
-            self._gridCC[0] = np.squeeze(self._gridCC[0])
+        if len(self._grid[0].shape) > 1:
+            self._grid[0] = np.squeeze(self._grid[0])
         # ... and make it a list following the Postgkyl grid conventions
-        self._gridCC[0] = [self._gridCC[0]]
+        self._grid[0] = [self._grid[0]]
 
         # glob() doesn't guarantee the right order
-        sortIdx = np.argsort(self._gridCC[0][0])
-        self._gridCC[0][0] = self._gridCC[0][0][sortIdx]
+        sortIdx = np.argsort(self._grid[0][0])
+        self._grid[0][0] = self._grid[0][0][sortIdx]
         self._values[0] = self._values[0][sortIdx, ...]
-
-        # Create boundaries
-        lower = np.atleast_1d(self._gridCC[0][0][0])
-        upper = np.atleast_1d(self._gridCC[0][0][-1])
-        cells = np.atleast_1d(len(self._gridCC[0][0]))
-        self._lower.append(lower)
-        self._upper.append(upper)
-        self._cells.append(cells)
-
-        # This might seem crazy but matplotlib...
-        grid = np.zeros(cells+1)
-        grid[1:-1] = 0.5 * (self._gridCC[0][0][:-1] + 
-                            self._gridCC[0][0][1:])
-        grid[0] = 1.5*self._gridCC[0][0][0] - 0.5*self._gridCC[0][0][1]
-        grid[-1] = 1.5*self._gridCC[0][0][-1] - 0.5*self._gridCC[0][0][-2]
-        self._gridND.append(grid)
 
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
     def getNumCells(self):
-        if len(self._lower) > 0 and len(self._upper) > 0:
-            return self._cells[-1]
+        if len(self._values) > 0:
+            numDims = len(self._values[-1].shape)-1
+            cells = np.zeros(numDims)
+            for d in range(numDims):
+                cells[d] = self._values[-1].shape[d]
+            return cells
         else:
             return 0
 
@@ -358,8 +336,8 @@ class GData(object):
             return 0
 
     def getNumDims(self, squeeze=False):
-        if len(self._lower) > 0:
-            numDims = int(len(self._lower[0]))
+        if len(self._values) > 0:
+            numDims = len(self._values[-1].shape)-1
             if squeeze:
                 cells = self.getNumCells()
                 for d in range(numDims):
@@ -370,8 +348,13 @@ class GData(object):
             return 0
 
     def getBounds(self):
-        if len(self._lower) > 0 and len(self._upper) > 0:
-            return self._lower[-1], self._upper[-1]
+        if len(self._grid) > 0:
+            numDims = len(self._values[-1].shape)-1
+            lo, up = np.zeros(numDims), np.zeros(numDims)
+            for d in range(numDims):
+                lo[d] = self.grid[-1][d].min()
+                up[d] = self.grid[-1][d].max()
+            return lo, up
         else:
             return np.array([]), np.array([])
 
