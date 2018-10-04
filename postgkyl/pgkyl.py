@@ -77,9 +77,11 @@ class AliasedGroup(click.Group):
               help="Partial file load: 5th coord (either int or slice)")
 @click.option('--comp', '-c', multiple=True,
               help="Partial file load: comps (either int or slice)")
+@click.option('--compgrid', is_flag=True,
+              help="Disregard the mapped grid information")
 @click.pass_context
 def cli(ctx, filename, savechain, stack, verbose,
-        c0, c1, c2, c3, c4, c5, comp):
+        c0, c1, c2, c3, c4, c5, comp, compgrid):
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time()  # Timings are written in the verbose mode
     if verbose:
@@ -122,7 +124,8 @@ def cli(ctx, filename, savechain, stack, verbose,
                                                  coord0=c0[s], coord1=c1[s],
                                                  coord2=c2[s], coord3=c3[s],
                                                  coord4=c4[s], coord5=c5[s],
-                                                 stack=stack))
+                                                 stack=stack,
+                                                 compgrid=compgrid))
             except NameError:
                 click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
                 ctx.exit()

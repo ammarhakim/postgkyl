@@ -217,7 +217,7 @@ def plot(gdata, args=(),
                     vmin = values[..., comp].min()
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
-                                    vmin=vmin, vmax=vmax,
+                                    #vmin=vmin, vmax=vmax,
                                     edgecolors=edgecolors, linewidth=0.1,
                                     *args)
                 cb = _colorbar(im, fig, cax)
