@@ -256,6 +256,7 @@ class GData(object):
                     for d in range(numDims)]
             self._grid.append(grid)
 
+
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
         files = glob('{:s}*'.format(self.fName))
@@ -352,19 +353,15 @@ class GData(object):
             numDims = len(self._values[-1].shape)-1
             lo, up = np.zeros(numDims), np.zeros(numDims)
             for d in range(numDims):
-                lo[d] = self.grid[-1][d].min()
-                up[d] = self.grid[-1][d].max()
+                lo[d] = self._grid[-1][d].min()
+                up[d] = self._grid[-1][d].max()
             return lo, up
         else:
             return np.array([]), np.array([])
 
-    def getGrid(self, nodal=False, compSpace=False):
+    def getGrid(self):
         if len(self._values) > 0:
-            if not nodal:
-                grid = self._gridCC[-1]
-            else:
-                grid = self._gridND[-1]
-                return grid
+            return self._grid[-1]
         else:
             return []
 
@@ -377,64 +374,23 @@ class GData(object):
 
     def popGrid(self, nodal=False):
         if len(self._grid) > 0:
-            self._lower.pop()
-            self._upper.pop()
-            self._cells.pop
-            if not nodal:
-                self._gridND.pop()
-                return self._gridCC.pop()
-            else:
-                self_.gridCC.pop()
-                return self._gridND.pop()
+            return self._grid.pop()
         else:
             return []
+
     def popValues(self):
         if len(self._values) > 0:
             return self._values.pop()
         else:
             return np.array([])
 
-    # def pushBoundsAndCells(self, lower, upper, cells):
-    #     if not self._stack:
-    #         self._lower.append(lower)
-    #         self._upper.append(upper)
-    #         self._cells.append(cells)
-    #     else:
-    #         self._lower[0] = lower
-    #         self._upper[0] = upper
-    #         self._cells[0] = cells
 
-    def pushGrid(self, grid, lower=None, upper=None, nodal=False):
-        lo, up = self.getBounds()
-        cells = np.zeros(self.getNumDims())
-        for d in range(self.getNumDims()):
-            cells[d] = len(grid[d])
+    def pushGrid(self, grid):
         if not self._stack:
-            if not nodal:
-                self._gridCC.append(grid)
-            else:
-                self._gridND.append(grid)
-            self._cells.append(cells)
-
-            if lower is not None:
-                self._lower.append(lower)
-            else:
-                self._lower.append(lo)
-            if upper is not None:
-                self._upper.append(upper)
-            else:
-                self._upper.append(up)
+            self._grid.append(grid)
         else:
-            if not nodal:
-                self._gridCC[0] = grid
-            else:
-                self._gridND[0] = grid
-            self._cells[0] = cells
-
-            if lower is not None:
-                self._lower[0] = lower
-            if upper is not None:
-                self._upper[0] = upper
+            self._grid[0] = grid
+ 
     def pushValues(self, values):
         if not self._stack:
             self._values.append(values)
@@ -444,8 +400,10 @@ class GData(object):
 
     # legacy function
     def peakGrid(self):
+        print("'peakGrid' is a legacy function; please switch to 'getGrid'")
         return self.getGrid()
     def peakValues(self):
+        print("'peakValues' is a legacy function; please switch to 'getValues'")
         return self.getValues()
 
     #-----------------------------------------------------------------
@@ -463,18 +421,13 @@ class GData(object):
         Returns:
             output (str): A list of strings with the informations
         """
-        values = self.peakValues()
+        values = self.getValues()
         numComps = self.getNumComps()
         numDims = self.getNumDims()
         numCells = self.getNumCells()
         lower, upper = self.getBounds()
 
         if len(values) > 0:
-            maximum = values.max()
-            maxIdx = np.unravel_index(np.argmax(values), values.shape)
-            minimum = values.min()
-            minIdx = np.unravel_index(np.argmin(values), values.shape)
-        
             output = ""
 
             if self.time is not None:
@@ -488,6 +441,11 @@ class GData(object):
                 output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, int(numCells[d]))
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
+
+            maximum = values.max()
+            maxIdx = np.unravel_index(np.argmax(values), values.shape)
+            minimum = values.min()
+            minIdx = np.unravel_index(np.argmin(values), values.shape)
             output += "- Maximum: {:e} at {:s}".format(maximum,
                                                        str(maxIdx[:numDims]))
             if numComps > 1:
@@ -500,7 +458,6 @@ class GData(object):
                 output += " component {:d}".format(minIdx[-1])
 
             if self.changeset is not None and self.builddate is not None:
-
                 output += "\n- Created with Gkeyll:\n"
                 output += "  - Changeset: {:s}\n".format(self.changeset)
                 output += "  - Build Date: {:s}".format(self.builddate)
