@@ -216,7 +216,7 @@ class GData(object):
                 elif self._gridType == "mapped":
                     for d in range(numDims):
                         idx = np.full(numDims, offset[d])
-                        lower[d] = self._gridND[0][idx, d]
+                        lower[d] = self._grid[0][idx, d]
                         cells[d] = cells[d] - offset[d]
             if count:
                 if self._gridType == "uniform":
@@ -225,7 +225,7 @@ class GData(object):
                 elif self._gridType == "mapped":
                     for d in range(numDims):
                         idx = np.full(numDims, offset[d]+count[d])
-                        upper[d] = self._gridND[0][idx ,d]
+                        upper[d] = self._grid[0][idx ,d]
                         cells[d] = count[d]
 
             fh.close()
@@ -294,7 +294,7 @@ class GData(object):
                 continue
                         
             if cnt > 0:
-                self._grid[0] = np.append(self._gridCC[0], grid, axis=0)
+                self._grid[0] = np.append(self._grid[0], grid, axis=0)
                 self._values[0] = np.append(self._values[0], values, axis=0)
             else:
                 self._grid.append(grid)
