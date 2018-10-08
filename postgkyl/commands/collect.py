@@ -20,7 +20,7 @@ def collect(ctx, **kwargs):
 
     for s in ctx.obj['sets']:
         time.append(ctx.obj['dataSets'][s].time)
-        v = ctx.obj['dataSets'][s].peakValues()
+        v = ctx.obj['dataSets'][s].getValues()
         if kwargs['sumdata']:
             numDims = ctx.obj['dataSets'][s].getNumDims()
             axis = tuple(range(numDims))
@@ -41,17 +41,14 @@ def collect(ctx, **kwargs):
         grid = [time]
     else:
         s = ctx.obj['sets'][0]
-        grid = list(ctx.obj['dataSets'][s].peakGrid())
+        grid = list(ctx.obj['dataSets'][s].getGrid())
         grid.insert(0, time)
-        lo, up = ctx.obj['dataSets'][s].getBounds()
-        lo = np.insert(lo, 0, time[0])
-        up = np.insert(up, 0, time[-1])
 
     vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values.shape))
     idx = len(ctx.obj['dataSets'])
     ctx.obj['setIds'].append(idx)
     ctx.obj['dataSets'].append(GData())
-    ctx.obj['dataSets'][idx].pushGrid(grid, lo, up)
+    ctx.obj['dataSets'][idx].pushGrid(grid)
     ctx.obj['dataSets'][idx].pushValues(values)
     ctx.obj['dataSets'][idx].fName = 'collect'
 
