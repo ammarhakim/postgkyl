@@ -86,7 +86,7 @@ def plot(gdata, args=(),
         step = 2
     else:
         step = 1
-    idxComps = range(0, numComps, step)
+    idxComps = range(int(np.floor(numComps/step)))
     numComps = len(idxComps)
 
     # Prepare the figure
@@ -138,7 +138,7 @@ def plot(gdata, args=(),
                 numRows = int(np.ceil(sr))
                 numCols = int(np.ceil(sr))
 
-            if numDims == 1: 
+            if numDims == 1 or group is not None: 
                 plt.subplots(numRows, numCols,
                              sharex=True,
                              num=fig.number)
@@ -195,17 +195,17 @@ def plot(gdata, args=(),
                                 gridCC[1][skip2::skip],
                                 values[skip2::skip,
                                        skip2::skip,
-                                       comp].transpose(),
+                                       2*comp].transpose(),
                                 values[skip2::skip,
                                        skip2::skip,
-                                       comp+1].transpose())
+                                       2*comp+1].transpose())
             elif streamline:  #---------------------------------------
-                magnitude = np.sqrt(values[..., comp]**2 
-                                    + values[..., comp + 1]**2)
+                magnitude = np.sqrt(values[..., 2*comp]**2 
+                                    + values[..., 2*comp+1]**2)
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.streamplot(gridCC[0], gridCC[1],
-                                    values[..., comp].transpose(),
-                                    values[..., comp + 1].transpose(),
+                                    values[..., 2*comp].transpose(),
+                                    values[..., 2*comp+1].transpose(),
                                     *args,
                                     color=magnitude.transpose())
                 cb = _colorbar(im.lines, fig, cax)
