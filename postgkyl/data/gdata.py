@@ -211,22 +211,22 @@ class GData(object):
             dz = (upper - lower) / cells
             if offset:
                 if self._gridType == "uniform":
-                    lower = lower + offset*dz
-                    cells = cells - np.int(offset)
+                    lower = lower + offset[:numDims]*dz
+                    cells = cells - offset[:numDims]
                 elif self._gridType == "mapped":
                     for d in range(numDims):
                         idx = np.full(numDims, offset[d])
                         lower[d] = self._gridND[0][idx, d]
-                        cells[d] = cells[d] - np.int(offset[d])
+                        cells[d] = cells[d] - offset[d]
             if count:
                 if self._gridType == "uniform":
-                    upper = lower + count*dz
-                    cells = np.int(count)
+                    upper = lower + count[:numDims]*dz
+                    cells = count[:numDims]
                 elif self._gridType == "mapped":
                     for d in range(numDims):
                         idx = np.full(numDims, offset[d]+count[d])
                         upper[d] = self._gridND[0][idx ,d]
-                        cells[d] = np.int(count[d])
+                        cells[d] = count[d]
 
             fh.close()
                             
