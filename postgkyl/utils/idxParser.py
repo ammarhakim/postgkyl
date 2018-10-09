@@ -15,7 +15,7 @@ def _findCellIndex(array, value):
     if array is None:
         raise TypeError("The index value is float but the 'array' from which to select the neares value is not specified.")
     idx = np.searchsorted(array, value)
-    return int(idx-1)
+    return int(idx)
 
 def _stringToIndex(value, array=None, nodal=True):
     if isinstance(value, str):
