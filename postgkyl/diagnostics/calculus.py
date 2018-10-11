@@ -1,8 +1,8 @@
 import numpy as np
 
 def integrate(data, axis, stack=False):
-    grid = list(data.peakGrid())
-    values = np.copy(data.peakValues())
+    grid = list(data.getGrid())
+    values = np.copy(data.getValues())
 
     # Convert Python input to an input Numpy understands
     if axis is not None:
@@ -16,9 +16,9 @@ def integrate(data, axis, stack=False):
                 axis = tuple([int(a) for a in axes])
             elif len(axis.split(':')) == 2:
                 bounds = axis.split(':')
-                axis = np.zeros(bounds[1]-bounds[0], np.int)
-                axis += int(bounds[0])
-                axis = tuple(axis)
+                #axis = np.zeros(bounds[1]-bounds[0], np.int)
+                #axis += int(bounds[0])
+                axis = tuple(range(bouns[0], bounds[1]))
             else:
                 axis = tuple([int(axis)])
         else:
@@ -30,8 +30,7 @@ def integrate(data, axis, stack=False):
     # Get dz elements
     dz = []
     for coord in grid:
-        dz.append(coord - np.roll(coord, 1))
-        dz[-1][0] = dz[-1][1]  # "Fix" the first element
+        dz.append(coord[1:] - coord[:-1])
 
     # Integration assuming values are cell centered averages
     # Should work for nonuniform meshes

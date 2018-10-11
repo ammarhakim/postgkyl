@@ -17,5 +17,5 @@ def write(ctx, **kwargs):
     for s in ctx.obj['sets']:
         ctx.obj['dataSets'][s].write(fName=kwargs['filename'],
                                      txt=kwargs['txt'],
-                                     bufferSize=buffersize)
+                                     bufferSize=kwargs['buffersize'])
     vlog(ctx, 'Finishing write')
