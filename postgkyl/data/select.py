@@ -64,8 +64,8 @@ def select(data, comp=None, stack=False,
     #     if d < numDims and coord is not None and len(grid[d]) == 1:
     #         valuesOut = np.expand_dims(valuesOut, d)
     # # Ddding a dummy component index
-    # if numDims == len(valuesOut.shape):
-    #     valuesOut = valuesOut[..., np.newaxis]
+    if numDims == len(valuesOut.shape):
+        valuesOut = valuesOut[..., np.newaxis]
 
     if stack:
         data.pushGrid(grid)

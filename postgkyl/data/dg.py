@@ -202,8 +202,6 @@ def _decompose(n, dim, numInterp):
 def _makeMesh(nInterp, Xc, xlo=None, xup=None):
     nx = Xc.shape[0]-1 # expecting nodal mesh
     if xlo is None or xup is None:
-        if nx == 1:
-            raise ValueError("Cannot create interpolated grid from 1 cell without specifying 'xlo' and 'xup'")
         xlo = Xc[0]
         xup = Xc[-1]
     return np.linspace(xlo, xup, nInterp*nx+1)

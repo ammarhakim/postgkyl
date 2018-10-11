@@ -15,12 +15,12 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.0.8 2018-10-08 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.0.9 2018-10-11 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkyl Team')
     click.echo('Gkyl can be used freely for research at universities,')
     click.echo('national laboratories, and other non-profit institutions.')
-    click.echo('There is NO warranty.\n')
+    click.echo('There is NO warranty. SPAM!\n')
     ctx.exit()
 
 # Helper for expanding the partial load indices for easier looping

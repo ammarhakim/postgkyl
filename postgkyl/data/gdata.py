@@ -496,7 +496,7 @@ class GData(object):
             sNumCells = ""
             sOffsets = ""
             for i in range(numDims):
-                sNumCells += "{:d},".format(numCells[i])
+                sNumCells += "{:d},".format(int(numCells[i]))
                 sOffsets += "0,"
             sNumCells += "{:d}".format(numComps)
             sOffsets += "0"
@@ -523,7 +523,7 @@ class GData(object):
             fh = adios.open("CartField", fName, 'w')
             if self.time is not None:
                 adios.write(fh, "time", self.time)
-            adios.write(fh, "CartGridField", self.peakValues())
+            adios.write(fh, "CartGridField", self.getValues())
             adios.close(fh)
             adios.finalize()
 
@@ -537,8 +537,8 @@ class GData(object):
 
         elif mode == 'txt':
             numRows = int(numCells.prod())
-            grid = self.peakGrid()
-            values = self.peakValues()
+            grid = self.getGrid()
+            values = self.getValues()
 
             basis = np.full(numDims, 1.0)
             for d in range(numDims-1):
