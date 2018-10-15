@@ -1,7 +1,7 @@
 import numpy as np
 
 def getDensity(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out = values[..., 0, np.newaxis]
     if stack:
         data.pushGrid()
@@ -10,7 +10,7 @@ def getDensity(data, stack=False):
         return out
 
 def getVx(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out =  values[..., 1, np.newaxis] / values[..., 0, np.newaxis]
     if stack:
         data.pushGrid()
@@ -19,7 +19,7 @@ def getVx(data, stack=False):
         return out
 
 def getVy(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out = values[..., 2, np.newaxis] / values[..., 0, np.newaxis]
     if stack:
         data.pushGrid()
@@ -28,7 +28,7 @@ def getVy(data, stack=False):
         return out
 
 def getVz(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out = values[..., 3, np.newaxis] / values[..., 0, np.newaxis]
     if stack:
         data.pushGrid()
@@ -37,7 +37,7 @@ def getVz(data, stack=False):
         return out
 
 def getVi(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out = values[..., 1:4] / values[..., 0, np.newaxis]
     if stack:
         data.pushGrid()
@@ -46,7 +46,7 @@ def getVi(data, stack=False):
         return out
 
 def getPxx(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vx = getVx(data)
     out = values[..., 4, np.newaxis] - r*vx*vx
@@ -57,7 +57,7 @@ def getPxx(data, stack=False):
         return out
 
 def getPxy(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vx = getVx(data)
     vy = getVy(data)
@@ -69,7 +69,7 @@ def getPxy(data, stack=False):
         return out
 
 def getPxz(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vx = getVx(data)
     vz = getVz(data)
@@ -81,7 +81,7 @@ def getPxz(data, stack=False):
         return out
 
 def getPyy(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vy = getVy(data)
     return values[..., 7, np.newaxis] - r*vy*vy
@@ -92,7 +92,7 @@ def getPyy(data, stack=False):
         return out
 
 def getPyz(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vy = getVy(data)
     vz = getVz(data)
@@ -104,7 +104,7 @@ def getPyz(data, stack=False):
         return out
 
 def getPzz(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     r = getDensity(data)
     vz = getVz(data)
     out = values[..., 9, np.newaxis] - r*vz*vz
@@ -115,7 +115,7 @@ def getPzz(data, stack=False):
         return out
 
 def getPij(data, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     out = np.copy(values[..., 4:10])
     out[..., 0] = np.squeeze(getPxx(data))
     out[..., 1] = np.squeeze(getPxy(data))
@@ -130,7 +130,7 @@ def getPij(data, stack=False):
         return out
 
 def getP(data, gasGamma=5.0/3, numMom=None, stack=False):
-    values = data.peakValues()
+    values = data.getValues()
     if numMom is None:
         if data.getNumComps() == 5:
             numMom = 5
