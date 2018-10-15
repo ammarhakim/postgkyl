@@ -38,8 +38,7 @@ def _command(gridStack, evalStack, s):
             gridStack.append(g0)
         else:
             gridStack.append(g1)
-        return True
-    if s == '-':
+    elif s == '-':
         v1 = evalStack.pop()
         v0 = evalStack.pop()
         evalStack.append(v0-v1)
@@ -49,8 +48,7 @@ def _command(gridStack, evalStack, s):
             gridStack.append(g0)
         else:
             gridStack.append(g1)
-        return True
-    if s == '*':
+    elif s == '*':
         v1 = evalStack.pop()
         v0 = evalStack.pop()
         evalStack.append(v0*v1)
@@ -60,8 +58,7 @@ def _command(gridStack, evalStack, s):
             gridStack.append(g0)
         else:
             gridStack.append(g1)
-        return True
-    if s == '/':
+    elif s == '/':
         v1 = evalStack.pop()
         v0 = evalStack.pop()
         evalStack.append(v0/v1)
@@ -71,9 +68,24 @@ def _command(gridStack, evalStack, s):
             gridStack.append(g0)
         else:
             gridStack.append(g1)
-        return True
+    elif s == 'sqrt':
+        v0 = evalStack.pop()
+        evalStack.append(np.sqrt(v0))
+        g0 = gridStack.pop()
+        gridStack.append(g0)
+    elif s == 'pow':
+        v1 = evalStack.pop()
+        v0 = evalStack.pop()
+        evalStack.append(np.power(v0, v1))
+        g1 = gridStack.pop()
+        g0 = gridStack.pop()
+        if g0 is not None:
+            gridStack.append(g0)
+        else:
+            gridStack.append(g1)
     else:
         return False
+    return True
 
 @click.command(help='Evaluate stuff using Reverse Polish Notation (RPN)')
 @click.argument('chain', nargs=1, type=click.STRING)
