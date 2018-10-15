@@ -11,6 +11,7 @@ from .select import select
 from .tenmoment import tenmoment
 from .write import write
 from .growth import growth
+from .evaluate import evaluate
 
 from . import temp
 from .agyro import agyro

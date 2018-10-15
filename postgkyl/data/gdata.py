@@ -385,9 +385,12 @@ class GData(object):
             return np.array([])
 
 
-    def pushGrid(self, grid):
+    def pushGrid(self, grid=None):
         if not self._stack:
-            self._grid.append(grid)
+            if grid is not None:
+                self._grid.append(grid)
+            else:
+                self._grid.append(self._grid[-1])
         else:
             self._grid[0] = grid
  
