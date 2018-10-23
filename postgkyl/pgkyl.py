@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.1.0 2018-10-11 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.1.1 2018-10-23 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
@@ -184,16 +184,18 @@ def pop(ctx):
         ctx.obj['dataSets'][s].popValues()
 
 # Hook the individual commands into pgkyl
+cli.add_command(cmd.animate)
 cli.add_command(cmd.collect)
 cli.add_command(cmd.dataset)
 cli.add_command(cmd.euler)
-cli.add_command(cmd.evaluate)
+cli.add_command(cmd.ev)
 cli.add_command(cmd.fft)
 cli.add_command(cmd.growth)
 cli.add_command(cmd.info)
 cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
 cli.add_command(cmd.plot)
+cli.add_command(cmd.pr)
 cli.add_command(cmd.select)
 cli.add_command(cmd.tenmoment)
 cli.add_command(cmd.write)
@@ -203,9 +205,7 @@ cli.add_command(runchain)
 cli.add_command(cmd.agyro)
 cli.add_command(cmd.temp.abs)
 cli.add_command(cmd.temp.log)
-cli.add_command(cmd.temp.mult)
 cli.add_command(cmd.temp.norm)
-cli.add_command(cmd.temp.pow)
 
 #cli.add_command(cmd.cglpressure.cglpressure)
 

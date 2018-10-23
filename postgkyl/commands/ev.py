@@ -90,7 +90,7 @@ def _command(gridStack, evalStack, s):
 @click.command(help='Evaluate stuff using Reverse Polish Notation (RPN)')
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.pass_context
-def evaluate(ctx, **kwargs):
+def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
     pushChain(ctx, 'evaluate', **kwargs)
 

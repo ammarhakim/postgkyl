@@ -94,10 +94,10 @@ def plot(gdata, args=(),
         fig = plt.figure()
     elif isinstance(figure, int):
         fig = plt.figure(figure)
-    elif isinstance(figure, str) or isinstance(figure, unicode):
-        fig = plt.figure(int(figure))
     elif isinstance(figure, matplotlib.figure.Figure):
         fig = figure
+    elif isinstance(figure, str) or isinstance(figure, unicode):
+        fig = plt.figure(int(figure))
     else:
         raise TypeError(("'fig' keyword needs to be one of "
                          "None (default), int, or MPL Figure"))
@@ -180,6 +180,7 @@ def plot(gdata, args=(),
             gridCC = _gridNodalToCellCentered(grid, cells)
             im = cax.plot(gridCC[0], values[..., comp],
                           *args, label=label)
+            cax.set_ylim(vmin, vmax)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
@@ -238,17 +239,17 @@ def plot(gdata, args=(),
                                       *args, color=color)
                 legend = False
             else:  # Basic plots -------------------------------------
-                if vmax is None:
-                    vmax_l = values[..., comp].max()
-                else:
-                    vmax_l = vmax
-                if vmin is None:
-                    vmin_l = values[..., comp].min()
-                else:
-                    vmin_l = vmin
+                # if vmax is None:
+                #     vmax_l = values[..., comp].max()
+                # else:
+                #     vmax_l = vmax
+                # if vmin is None:
+                #     vmin_l = values[..., comp].min()
+                # else:
+                #     vmin_l = vmin
                 im = cax.pcolormesh(grid[0], grid[1],
                                     values[..., comp].transpose(),
-                                    vmin=vmin_l, vmax=vmax_l,
+                                    vmin=vmin, vmax=vmax,
                                     edgecolors=edgecolors,
                                     linewidth=0.1,
                                     *args)

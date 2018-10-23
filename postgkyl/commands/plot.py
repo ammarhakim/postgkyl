@@ -50,8 +50,6 @@ from postgkyl.commands.util import vlog, pushChain
               help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
               help="Name to save the plot as.")
-@click.option('--compspace', is_flag=True,
-              help="Plot on computational space (ignore nodal coordinates)")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
 @click.pass_context
