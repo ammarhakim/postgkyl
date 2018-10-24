@@ -26,8 +26,8 @@ def growth(ctx, **inputs):
     from postgkyl.diagnostics.growth import fitGrowth, exp2
 
     for s in ctx.obj['sets']:
-        time = ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        time = ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         numDims = ctx.obj['dataSets'][s].getNumDims()
         if numDims > 1:
             click.echo(click.style("ERROR: 'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
