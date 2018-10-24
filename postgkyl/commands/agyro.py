@@ -59,11 +59,11 @@ def agyro(ctx, **kwargs):
     vlog(ctx, 'Starting agyro')
     pushChain(ctx, 'agyro', **kwargs)
 
-    grid = ctx.obj['dataSets'][ctx.obj['sets'][0]].peakGrid()
+    grid = ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()
     lo, up = ctx.obj['dataSets'][ctx.obj['sets'][0]].getBounds()
 
-    pij = ctx.obj['dataSets'][ctx.obj['sets'][0]].peakValues()
-    B = ctx.obj['dataSets'][ctx.obj['sets'][1]].peakValues()
+    pij = ctx.obj['dataSets'][ctx.obj['sets'][0]].getValues()
+    B = ctx.obj['dataSets'][ctx.obj['sets'][1]].getValues()
 
     if kwargs['forb']:
         tmp = getForb(pij, B)

@@ -12,8 +12,8 @@ def mult(ctx, **kwargs):
     vlog(ctx, 'Multiplying by {:f}'.format(kwargs['factor']))
     pushChain(ctx, 'temp.mult', **kwargs)
     for s in ctx.obj['sets']:
-        grid =  ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        grid =  ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         values = values * kwargs['factor']
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(values)
@@ -25,8 +25,8 @@ def pow(ctx, **kwargs):
     vlog(ctx, 'Calculating the power of {:f}'.format(kwargs['power']))
     pushChain(ctx, 'temp.pow', **kwargs)
     for s in ctx.obj['sets']:
-        grid =  ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        grid =  ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         values = values ** kwargs['power']
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(values)
@@ -37,8 +37,8 @@ def log(ctx):
     vlog(ctx, 'Calculating the natural log')
     pushChain(ctx, 'temp.log')
     for s in ctx.obj['sets']:
-        grid =  ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        grid =  ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         values = np.log(values)
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(values)
@@ -49,8 +49,8 @@ def abs(ctx):
     vlog(ctx, 'Calculating the absolute value')
     pushChain(ctx, 'transform.log')
     for s in ctx.obj['sets']:
-        grid =  ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        grid =  ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         values = np.abs(values)
         ctx.obj['dataSets'][s].pushGrid(grid)
         ctx.obj['dataSets'][s].pushValues(values)
@@ -65,8 +65,8 @@ def norm(ctx, **kwargs):
     vlog(ctx, 'Normalizing data')
     pushChain(ctx, 'temp.norm', **kwargs)
     for s in ctx.obj['sets']:
-        grid =  ctx.obj['dataSets'][s].peakGrid()
-        values = ctx.obj['dataSets'][s].peakValues()
+        grid =  ctx.obj['dataSets'][s].getGrid()
+        values = ctx.obj['dataSets'][s].getValues()
         
         numComps = ctx.obj['dataSets'][s].getNumComps()
         valuesOut = values.copy()
