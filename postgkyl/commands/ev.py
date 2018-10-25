@@ -34,7 +34,7 @@ def _command(gridStack, evalStack, s):
         evalStack.append(v0+v1)
         g1 = gridStack.pop()
         g0 = gridStack.pop()
-        if g0 is not None:
+        if g0 is not []:
             gridStack.append(g0)
         else:
             gridStack.append(g1)
@@ -44,7 +44,7 @@ def _command(gridStack, evalStack, s):
         evalStack.append(v0-v1)
         g1 = gridStack.pop()
         g0 = gridStack.pop()
-        if g0 is not None:
+        if g0 is not []:
             gridStack.append(g0)
         else:
             gridStack.append(g1)
@@ -54,7 +54,7 @@ def _command(gridStack, evalStack, s):
         evalStack.append(v0*v1)
         g1 = gridStack.pop()
         g0 = gridStack.pop()
-        if g0 is not None:
+        if g0 is not []:
             gridStack.append(g0)
         else:
             gridStack.append(g1)
@@ -73,13 +73,43 @@ def _command(gridStack, evalStack, s):
         evalStack.append(np.sqrt(v0))
         g0 = gridStack.pop()
         gridStack.append(g0)
+    elif s == 'abs':
+        v0 = evalStack.pop()
+        evalStack.append(np.abs(v0))
+        g0 = gridStack.pop()
+        gridStack.append(g0)
+    elif s == 'log':
+        v0 = evalStack.pop()
+        evalStack.append(np.log(v0))
+        g0 = gridStack.pop()
+        gridStack.append(g0)
+    elif s == 'log10':
+        v0 = evalStack.pop()
+        evalStack.append(np.log10(v0))
+        g0 = gridStack.pop()
+        gridStack.append(g0)
+    elif s == 'min':
+        v0 = evalStack.pop()
+        evalStack.append(np.min(v0))
+        g0 = gridStack.pop()
+        gridStack.append([])
+    elif s == 'max':
+        v0 = evalStack.pop()
+        evalStack.append(np.max(v0))
+        g0 = gridStack.pop()
+        gridStack.append([])
+    elif s == 'mean':
+        v0 = evalStack.pop()
+        evalStack.append(np.atleast_1d(np.mean(v0)))
+        g0 = gridStack.pop()
+        gridStack.append([])
     elif s == 'pow':
         v1 = evalStack.pop()
         v0 = evalStack.pop()
         evalStack.append(np.power(v0, v1))
         g1 = gridStack.pop()
         g0 = gridStack.pop()
-        if g0 is not None:
+        if g0 is not []:
             gridStack.append(g0)
         else:
             gridStack.append(g1)
@@ -87,7 +117,7 @@ def _command(gridStack, evalStack, s):
         return False
     return True
 
-@click.command(help='Evaluate stuff using Reverse Polish Notation (RPN)')
+@click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are: '+', '-', '*', '/', 'sqrt', 'abs', 'log', 'log10', 'pow', 'min', 'max', and 'mean'.")
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.pass_context
 def ev(ctx, **kwargs):

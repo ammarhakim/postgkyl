@@ -8,7 +8,7 @@ except (IOError, ImportError):
    long_description = ''
 
 setup(name='postgkyl',
-      version='1.1.0',
+      version='1.1.2',
       description='Postrocessing utilities for Gkyl simulation framework',
       long_description=long_description,
       url='https://bitbucket.org/ammarhakim/postgkyl',
