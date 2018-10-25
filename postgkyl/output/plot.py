@@ -180,7 +180,6 @@ def plot(gdata, args=(),
             gridCC = _gridNodalToCellCentered(grid, cells)
             im = cax.plot(gridCC[0], values[..., comp],
                           *args, label=label)
-            cax.set_ylim(vmin, vmax)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
@@ -280,6 +279,7 @@ def plot(gdata, args=(),
             cax.set_yscale('log')
 
         if numDims == 1:
+            cax.set_ylim(vmin, vmax)
             plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
             if fixaspect:

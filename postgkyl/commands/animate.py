@@ -6,18 +6,14 @@ import click
 import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
-def update(s, ctx, fig, vmin, vmax, kwargs):
+def update(s, ctx, kwargs):
     dat = ctx.obj['dataSets'][s]
     plt.clf()
+    kwargs['title'] = 'F: {:d}  T: {:.4e}'.format(dat.frame, dat.time)
     if kwargs['arg'] is not None:
-        return gplot(dat, kwargs['arg'], figure=fig,
-                     labelPrefix='s{:d}'.format(s),
-                     vmin=vmin, vmax=vmax, legend=False,
-                     **kwargs)
+        return gplot(dat, kwargs['arg'], **kwargs)
     else:
-        return gplot(dat, figure=fig, labelPrefix='s{:d}'.format(s),
-                     vmin=vmin, vmax=vmax, legend=False,
-                     **kwargs)
+        return gplot(dat, **kwargs)
 
 @click.command(help='Animate the data')
 @click.option('--squeeze', '-s', is_flag=True,
@@ -73,12 +69,16 @@ def animate(ctx, **kwargs):
             vmin = val.min()
         if vmax < val.max():
             vmax = val.max()
+    kwargs['vmin'] = vmin
+    kwargs['vmax'] = vmax
 
     numSets = len(ctx.obj['sets'])
     fig = plt.figure()
+    kwargs['figure'] = fig
+    kwargs['legend'] = False
    
     anim = FuncAnimation(fig, update, numSets,
-                         fargs=(ctx, fig, vmin, vmax, kwargs),
+                         fargs=(ctx, kwargs),
                          interval=kwargs['interval'], blit=False)
 
     #if kwargs['show']:
