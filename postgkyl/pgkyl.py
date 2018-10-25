@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.1.1 2018-10-23 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.1.2 2018-10-24 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
@@ -133,7 +133,18 @@ def cli(ctx, filename, savechain, stack, verbose,
             cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
             files = glob(str(filename[s]))
-            for fn in sorted(files):
+            def crush(s):                             
+                splitted = s.split('_')
+                tmp = splitted[-1].split('.')
+                splitted[-1] = int(tmp[0])
+                splitted.append(tmp[1])
+                return tuple(splitted)
+            try:
+                files = sorted(files, key=crush)
+            except Exception:
+                click.echo(click.style("WARNING: The loaded files appear to be of different types. Sorting is turned off.", fg='yellow'))
+
+            for fn in files:
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
@@ -203,8 +214,6 @@ cli.add_command(pop)
 cli.add_command(runchain)
 
 cli.add_command(cmd.agyro)
-cli.add_command(cmd.temp.abs)
-cli.add_command(cmd.temp.log)
 cli.add_command(cmd.temp.norm)
 
 #cli.add_command(cmd.cglpressure.cglpressure)
