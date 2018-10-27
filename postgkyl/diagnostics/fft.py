@@ -2,8 +2,8 @@ import numpy as np
 from scipy import fftpack
 
 def fft(data, psd=False, stack=False):
-    grid = data.peakGrid()
-    values = data.peakValues() 
+    grid = data.getGrid()
+    values = data.getValues() 
 
     # Remove dummy dimensions
     numDims = len(grid)
@@ -34,7 +34,7 @@ def fft(data, psd=False, stack=False):
     if stack:
         lo = np.array([freq[0][0]])
         up = np.array([freq[0][-1]])
-        data.pushGrid(freq, lo, up)
+        data.pushGrid(freq)#, lo, up)
         data.pushValues(ftValues)
     else:
         return freq, ftValues
