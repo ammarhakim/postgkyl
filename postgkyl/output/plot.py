@@ -279,7 +279,8 @@ def plot(gdata, args=(),
             cax.set_yscale('log')
 
         if numDims == 1:
-            cax.set_ylim(vmin, vmax)
+            if vmin is not None and vmax is not None:
+                cax.set_ylim(vmin, vmax)
             plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
             if fixaspect:

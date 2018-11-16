@@ -69,13 +69,21 @@ def plot(ctx, **kwargs):
         else:
             gplot(dat, labelPrefix='s{:d}'.format(s),
                  **kwargs)
-        if kwargs['save'] or kwargs['saveas']:
+
+        if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
             if kwargs['saveas']:
                 fName = kwargs['saveas']
             else:
                 s = dat.fName.split('.')
                 fName = s[0] + '_plot.png'
             plt.savefig(fName, dpi=200)
+    if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
+        if kwargs['saveas']:
+            fName = kwargs['saveas']
+        else:
+            s = dat.fName.split('.')
+            fName = s[0] + '_plot.png'
+        plt.savefig(fName, dpi=200)
 
     if kwargs['show']:
         plt.show()
