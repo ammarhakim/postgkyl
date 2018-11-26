@@ -212,7 +212,7 @@ def plot(gdata, args=(),
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
                 im = cax.pcolormesh(grid[0], grid[1],
-                                    values[..., comp],
+                                    values[..., comp].transpose(),
                                     vmax=vmax, vmin=-vmax,
                                     cmap='RdBu_r',
                                     edgecolors=edgecolors, linewidth=0.1,

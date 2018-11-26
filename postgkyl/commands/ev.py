@@ -113,6 +113,14 @@ def _command(gridStack, evalStack, s):
             gridStack.append(g0)
         else:
             gridStack.append(g1)
+    elif s == 'grad':
+        v1 = int(evalStack.pop())
+        v0 = evalStack.pop()
+        g1 = gridStack.pop()
+        g0 = gridStack.pop()
+        zc = (g0[v1][1:] + g0[v1][:-1])*0.5 # get cell centered values
+        evalStack.append(np.gradient(v0, zc, edge_order=2, axis=v1))
+        gridStack.append(g0)
     else:
         return False
     return True
