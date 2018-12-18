@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.1.5 2018-11-26 ({:s})'.format(sys.platform))
+    click.echo('Postgkyl 1.2 2018-12-18 ({:s})'.format(sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')

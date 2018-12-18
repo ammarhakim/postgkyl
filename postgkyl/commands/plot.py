@@ -30,6 +30,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set x-axis to log scale.")
 @click.option('--logy', is_flag=True,
               help="Set y-axis to log scale.")
+@click.option('--xscale', default=1.0, type=click.FLOAT,
+              help="Scalar value to scale the x-axis (default: 1.0).")
+@click.option('--yscale', default=1.0, type=click.FLOAT,
+              help="Scalar value to scale the y-axis (default: 1.0).")
 @click.option('--vmax', default=None, type=click.FLOAT,
               help="Set maximal value for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,

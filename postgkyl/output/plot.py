@@ -36,6 +36,7 @@ def plot(gdata, args=(),
          figure=None, squeeze=False,
          streamline=False, quiver=False, contour=False,
          diverging=False, group=None,
+         xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, color=None, fixaspect=False,
@@ -88,6 +89,11 @@ def plot(gdata, args=(),
         step = 1
     idxComps = range(int(np.floor(numComps/step)))
     numComps = len(idxComps)
+
+    if xscale != 1.0:
+        axLabel[0] = axLabel[0] + r' $\times$ {:.3e}'.format(xscale)
+    if numDims == 2 and yscale != 1.0:
+        axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
 
     # Prepare the figure
     if figure is None:
@@ -178,12 +184,13 @@ def plot(gdata, args=(),
         # Special plots:
         if numDims == 1:
             gridCC = _gridNodalToCellCentered(grid, cells)
-            im = cax.plot(gridCC[0], values[..., comp],
+            im = cax.plot(gridCC[0]*xscale,
+                          values[..., comp],
                           *args, label=label)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
-                im = cax.contour(gridCC[0], gridCC[1],
+                im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
                                  values[..., comp].transpose(),
                                  *args)
                 cb = _colorbar(im, fig, cax)
@@ -191,8 +198,8 @@ def plot(gdata, args=(),
                 skip = int(np.max((len(grid[0]), len(grid[1])))//15)
                 skip2 = int(skip//2)
                 gridCC = _gridNodalToCellCentered(grid, cells)
-                im = cax.quiver(gridCC[0][skip2::skip],
-                                gridCC[1][skip2::skip],
+                im = cax.quiver(gridCC[0][skip2::skip]*xscale,
+                                gridCC[1][skip2::skip]*yscale,
                                 values[skip2::skip,
                                        skip2::skip,
                                        2*comp].transpose(),
@@ -203,7 +210,7 @@ def plot(gdata, args=(),
                 magnitude = np.sqrt(values[..., 2*comp]**2 
                                     + values[..., 2*comp+1]**2)
                 gridCC = _gridNodalToCellCentered(grid, cells)
-                im = cax.streamplot(gridCC[0], gridCC[1],
+                im = cax.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,
                                     values[..., 2*comp].transpose(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
@@ -211,7 +218,7 @@ def plot(gdata, args=(),
                 cb = _colorbar(im.lines, fig, cax)
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
-                im = cax.pcolormesh(grid[0], grid[1],
+                im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                                     values[..., comp].transpose(),
                                     vmax=vmax, vmin=-vmax,
                                     cmap='RdBu_r',
@@ -230,11 +237,11 @@ def plot(gdata, args=(),
                     color = cm.inferno(l / (numLines-1))
                     if group == 0:
                         idx[1] = l
-                        im = cax.plot(gridCC[0], values[tuple(idx)],
+                        im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
                                       *args, color=color)
                     else:
                         idx[0] = l
-                        im = cax.plot(gridCC[1], values[tuple(idx)],
+                        im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
                                       *args, color=color)
                 legend = False
             else:  # Basic plots -------------------------------------
@@ -246,7 +253,7 @@ def plot(gdata, args=(),
                 #     vmin_l = values[..., comp].min()
                 # else:
                 #     vmin_l = vmin
-                im = cax.pcolormesh(grid[0], grid[1],
+                im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                                     values[..., comp].transpose(),
                                     vmin=vmin, vmax=vmax,
                                     edgecolors=edgecolors,
