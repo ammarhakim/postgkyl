@@ -133,6 +133,7 @@ def cli(ctx, filename, savechain, stack, verbose,
             cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
             files = glob(str(filename[s]))
+            files = [f for f in files if f.find("restart") < 0]
             def crush(s):                             
                 splitted = s.split('_')
                 tmp = splitted[-1].split('.')
