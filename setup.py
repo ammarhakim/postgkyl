@@ -9,7 +9,7 @@ except (IOError, ImportError):
 
 setup(name='postgkyl',
       version='1.2',
-      description='Postrocessing utilities for Gkyl simulation framework',
+      description='Postrocessing utilities for Gkeyll simulation framework',
       long_description=long_description,
       url='https://bitbucket.org/ammarhakim/postgkyl',
       packages=['postgkyl',

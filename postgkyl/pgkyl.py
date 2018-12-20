@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from glob import glob
-from os.path import isfile
-from time import time
+from os import path
+import time
 import sys
 
 import click
@@ -15,7 +15,18 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Postgkyl 1.2 2018-12-18 ({:s})'.format(sys.platform))
+        
+    fls = glob(path.dirname(path.realpath(__file__)) + "/*/*.py")
+    latest = 0.0
+    for f in fls:
+        if latest < path.getmtime(f):
+            latest = path.getmtime(f)
+            struct = time.gmtime(latest)
+            date = "{:d}-{:02d}-{:02d}".format(struct.tm_year,
+                                           struct.tm_mon,
+                                           struct.tm_mday)
+
+    click.echo('Postgkyl 1.2 {:s} ({:s})'.format(date, sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
@@ -83,7 +94,7 @@ class AliasedGroup(click.Group):
 def cli(ctx, filename, savechain, stack, verbose,
         c0, c1, c2, c3, c4, c5, comp, compgrid):
     ctx.obj = {}  # The main contex object
-    ctx.obj['startTime'] = time()  # Timings are written in the verbose mode
+    ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
     if verbose:
         ctx.obj['verbose'] = True
         # Monty Python references should be a part of Python code
@@ -177,7 +188,7 @@ def cli(ctx, filename, savechain, stack, verbose,
               help="Specify file with stored chain (default 'pgkylchain.dat')")
 @click.pass_context
 def runchain(ctx, filename):
-    if isfile(filename):
+    if path.isfile(filename):
         fh = open(filename, 'r')
         for line in fh.readlines():
             eval('ctx.invoke(cmd.{:s})'.format(line))
