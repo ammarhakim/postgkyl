@@ -30,6 +30,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set x-axis to log scale.")
 @click.option('--logy', is_flag=True,
               help="Set y-axis to log scale.")
+@click.option('--logz', is_flag=True,
+              help="Set values of 2D plot to log scale.")
 @click.option('--xscale', default=1.0, type=click.FLOAT,
               help="Scalar value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
