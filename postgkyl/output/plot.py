@@ -2,6 +2,7 @@ import click
 import matplotlib.cm as cm
 import matplotlib.figure
 import matplotlib.pyplot as plt
+import matplotlib.colors as cl
 import numpy as np
 import os.path
 
@@ -39,7 +40,8 @@ def plot(gdata, args=(),
          xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
-         logx=False, logy=False, color=None, fixaspect=False,
+         logx=False, logy=False, logz=False,
+         color=None, fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
          **kwargs):
     """Plots Gkeyll data
@@ -245,20 +247,31 @@ def plot(gdata, args=(),
                                       *args, color=color)
                 legend = False
             else:  # Basic plots -------------------------------------
-                # if vmax is None:
-                #     vmax_l = values[..., comp].max()
-                # else:
-                #     vmax_l = vmax
-                # if vmin is None:
-                #     vmin_l = values[..., comp].min()
-                # else:
-                #     vmin_l = vmin
-                im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
-                                    values[..., comp].transpose(),
-                                    vmin=vmin, vmax=vmax,
-                                    edgecolors=edgecolors,
-                                    linewidth=0.1,
-                                    *args)
+                if logz:
+                    if vmax is None:
+                        vmax_l = values[..., comp].max()
+                    else:
+                        vmax_l = vmax
+                    if vmin is None:
+                        vmin_l = values[..., comp].min()
+                        if vmin_l <= 0:
+                            vmin_l = 1e-16
+                    else:
+                        vmin_l = vmin
+                    norm = cl.LogNorm(vmin=vmin_l, vmax=vmax_l)
+                    im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
+                                        values[..., comp].transpose(),
+                                        norm=norm,#vmin=vmin, vmax=vmax,
+                                        edgecolors=edgecolors,
+                                        linewidth=0.1,
+                                        *args)
+                else:
+                    im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
+                                        values[..., comp].transpose(),
+                                        vmin=vmin, vmax=vmax,
+                                        edgecolors=edgecolors,
+                                        linewidth=0.1,
+                                        *args) 
                 cb = _colorbar(im, fig, cax)
         else:
             raise ValueError("{:d}D data not yet supported".
