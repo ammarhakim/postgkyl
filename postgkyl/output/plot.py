@@ -12,7 +12,10 @@ def _colorbar(obj, fig, ax, label="", extend=None):
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.05)
-    return fig.colorbar(obj, cax=cax, label=label, extend=extend)
+    if extend is not None:
+        return fig.colorbar(obj, cax=cax, label=label, extend=extend)
+    else:
+        return fig.colorbar(obj, cax=cax, label=label)
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
