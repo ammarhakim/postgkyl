@@ -7,12 +7,12 @@ import numpy as np
 import os.path
 
 # Helper functions
-def _colorbar(obj, fig, ax, label=""):
+def _colorbar(obj, fig, ax, label="", extend=None):
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.05)
-    return fig.colorbar(obj, cax=cax, label=label)
+    return fig.colorbar(obj, cax=cax, label=label, extend=extend)
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
@@ -247,21 +247,28 @@ def plot(gdata, args=(),
                                       *args, color=color)
                 legend = False
             else:  # Basic plots -------------------------------------
+                extend = None
+                if vmin is not None and vmax is not None:
+                    extend = 'both'
+                elif vmax is not None:
+                    extend = 'max'
+                elif vmin is not None:
+                    extend = 'min'
+
                 if logz:
-                    if vmax is None:
-                        vmax_l = values[..., comp].max()
-                    else:
-                        vmax_l = vmax
-                    if vmin is None:
-                        vmin_l = values[..., comp].min()
-                        if vmin_l <= 0:
-                            vmin_l = 1e-16
-                    else:
-                        vmin_l = vmin
-                    norm = cl.LogNorm(vmin=vmin_l, vmax=vmax_l)
+                    tmp = np.array(values[..., comp])
+                    if vmin is not None or vmax is not None:
+                        for i in range(tmp.shape[0]):
+                            for j in range(tmp.shape[1]):
+                                if vmin and tmp[i, j] < vmin:
+                                    tmp[i, j] = vmin
+                                if vmax and tmp[i, j] > vmax:
+                                    tmp[i, j] = vmax
+
+                    norm = cl.LogNorm(vmin=vmin, vmax=vmax)
                     im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
-                                        values[..., comp].transpose(),
-                                        norm=norm,#vmin=vmin, vmax=vmax,
+                                        tmp.transpose(),
+                                        norm=norm,# vmin=vmin, vmax=vmax,
                                         edgecolors=edgecolors,
                                         linewidth=0.1,
                                         *args)
@@ -272,7 +279,7 @@ def plot(gdata, args=(),
                                         edgecolors=edgecolors,
                                         linewidth=0.1,
                                         *args) 
-                cb = _colorbar(im, fig, cax)
+                cb = _colorbar(im, fig, cax, extend=extend)
         else:
             raise ValueError("{:d}D data not yet supported".
                              format(numDims))
