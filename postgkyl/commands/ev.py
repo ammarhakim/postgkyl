@@ -134,6 +134,7 @@ def ev(ctx, **kwargs):
 
     gridStack, evalStack = [], []
     chainSplit = kwargs['chain'].split(' ')
+    #chainSplit = list(filter(None, chainSplit))
 
     for s in chainSplit:
         isData = _data(ctx, gridStack, evalStack, s)
