@@ -445,10 +445,10 @@ class GData(object):
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
 
-            maximum = values.max()
-            maxIdx = np.unravel_index(np.argmax(values), values.shape)
-            minimum = values.min()
-            minIdx = np.unravel_index(np.argmin(values), values.shape)
+            maximum = np.nanmax(values)
+            maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
+            minimum = np.nanmin(values)
+            minIdx = np.unravel_index(np.nanargmin(values), values.shape)
             output += "- Maximum: {:e} at {:s}".format(maximum,
                                                        str(maxIdx[:numDims]))
             if numComps > 1:
