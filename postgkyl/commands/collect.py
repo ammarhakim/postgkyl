@@ -24,7 +24,7 @@ def collect(ctx, **kwargs):
         if kwargs['sumdata']:
             numDims = ctx.obj['dataSets'][s].getNumDims()
             axis = tuple(range(numDims))
-            values.append(v.sum(axis=axis))
+            values.append(np.nansum(v, axis=axis))
         else:
             values.append(v)
     time = np.array(time)
