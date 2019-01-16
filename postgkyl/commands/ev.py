@@ -6,12 +6,17 @@ from postgkyl.commands.util import vlog, pushChain
 
 def _data(ctx, gridStack, evalStack, s):
     if s[0] == 'f':
-        if '[' in s:
-            setIdx = int(s[1:].split('[')[0])
-            compIdx = int(s.split('[')[1].split(']')[0])
-        else:
-            setIdx = int(s[1:])
-            compIdx = None
+        try:
+            if '[' in s:
+                setIdx = int(s[1:].split('[')[0])
+                compIdx = int(s.split('[')[1].split(']')[0])
+            else:
+                setIdx = int(s[1:])
+                compIdx = None
+        except ValueError:
+            click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
+            ctx.exit()
+
         gridStack.append(ctx.obj['dataSets'][setIdx].getGrid())
         values = ctx.obj['dataSets'][setIdx].getValues()
         if compIdx is not None:
@@ -130,7 +135,7 @@ def _command(gridStack, evalStack, s):
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
-    pushChain(ctx, 'evaluate', **kwargs)
+    pushChain(ctx, 'ev', **kwargs)
 
     gridStack, evalStack = [], []
     chainSplit = kwargs['chain'].split(' ')
