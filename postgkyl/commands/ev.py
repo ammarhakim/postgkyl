@@ -11,27 +11,38 @@ def _data(ctx, gridStack, evalStack, s):
                 setIdx = s[1:].split('[')[0]
                 compIdx = int(s.split('[')[1].split(']')[0])
             else:
-                setIdx = s[1:]
+                if len(s) == 1:
+                    setIdx = 0
+                else:
+                    setIdx = s[1:]
                 compIdx = None
         except ValueError:
             click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
             ctx.exit()
             
         if setIdx == '*':
-            if len(gridStack) == 1: # switching the stacks to the "piece-wise" mode
-                tmpGrid = list(gridStack[0])
-                tmpEval = list(evalStack[0])
-                for i in ctx.obj['sets']:
-                    gridStack.append(tmpGrid)
-                    evalStack.append(tmpEval)
+            if len(gridStack) == 1: # switching stacks to "piece-wise" mode
+                for i in range(len(ctx.obj['sets'])-1):
+                    gridStack.append(list(gridStack[0]))
+                    evalStack.append(list(evalStack[0]))
+
             for i, setIdx in enumerate(ctx.obj['sets']):
-                gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
-                values = ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getValues()
+                gridStack[i].append(ctx.obj['dataSets'][setIdx].getGrid())
+                values = ctx.obj['dataSets'][setIdx].getValues()
                 if compIdx is not None:
                     values = values[..., compIdx, np.newaxis]
                 evalStack[i].append(values)
         else:
-            setIdx = int(setIdx)
+            try:
+                setIdx = int(setIdx)
+            except ValueError:
+                click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
+                ctx.exit()
+
+            if setIdx < 0 or setIdx >= len(ctx.obj['sets']):
+                click.echo(click.style("ERROR in 'ev': Data set index '{:d}' needs to be between 0 and {:d}".format(setIdx,  len(ctx.obj['sets'])-1), fg='red'))
+                ctx.exit()
+            
             for i in range(len(gridStack)):
                 gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
                 values = ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getValues()
@@ -51,7 +62,7 @@ def _data(ctx, gridStack, evalStack, s):
 
 
 def _command(gridStack, evalStack, s):
-    for i in range(len(gridStack)):
+    for i in range(len(evalStack)):
         if s == '+':
             v1 = evalStack[i].pop()
             v0 = evalStack[i].pop()
@@ -158,7 +169,7 @@ def ev(ctx, **kwargs):
 
     gridStack, evalStack = [[]], [[]]
     chainSplit = kwargs['chain'].split(' ')
-    #chainSplit = list(filter(None, chainSplit))
+    chainSplit = list(filter(None, chainSplit))
 
     for s in chainSplit:
         isData = _data(ctx, gridStack, evalStack, s)
