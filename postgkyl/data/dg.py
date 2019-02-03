@@ -227,7 +227,7 @@ def _interpOnMesh(cMat, qIn):
         # define multi-D qOut slices
         idxs = [slice(int(startIdx[i]), int(numCells[i]*numInterp), numInterp)
                 for i in range(numDims)]
-        qOut[idxs] = temp
+        qOut[tuple(idxs)] = temp
     return np.array(qOut)
 
 class GInterp(object):
