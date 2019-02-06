@@ -1,8 +1,22 @@
 import click
 import numpy as np
+import importlib
+from os import path
+import sys
 
 from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
+
+# load base commands
+from  postgkyl.commands import ev_cmd as cmdBase
+# load user commands
+if path.isfile(path.expanduser("~") + '/pgkyl_ev.py'):
+    sys.path.insert(0, path.expanduser("~"))
+    import pgkyl_ev as cmdUser
+    userCommands = True
+else:
+    userCommands = False
+
 
 def _data(ctx, gridStack, evalStack, s):
     if s[0] == 'f':
@@ -62,102 +76,24 @@ def _data(ctx, gridStack, evalStack, s):
 
 
 def _command(gridStack, evalStack, s):
+    if userCommands and s in cmdUser.cmds:
+        numIn = cmdUser.cmds[s]['numIn']
+        func = cmdUser.cmds[s]['func']
+    elif s in cmdBase.cmds:
+        numIn = cmdBase.cmds[s]['numIn']
+        func = cmdBase.cmds[s]['func']
+    else:
+        return False
+
     for i in range(len(evalStack)):
-        if s == '+':
-            v1 = evalStack[i].pop()
-            v0 = evalStack[i].pop()
-            evalStack[i].append(v0+v1)
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            if g0 is not []:
-                gridStack[i].append(g0)
-            else:
-                gridStack[i].append(g1)
-        elif s == '-':
-            v1 = evalStack[i].pop()
-            v0 = evalStack[i].pop()
-            evalStack[i].append(v0-v1)
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            if g0 is not []:
-                gridStack[i].append(g0)
-            else:
-                gridStack[i].append(g1)
-        elif s == '*':
-            v1 = evalStack[i].pop()
-            v0 = evalStack[i].pop()
-            evalStack[i].append(v0*v1)
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            if g0 is not []:
-                gridStack[i].append(g0)
-            else:
-                gridStack[i].append(g1)
-        elif s == '/':
-            v1 = evalStack[i].pop()
-            v0 = evalStack[i].pop()
-            evalStack[i].append(v0/v1)
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            if g0 is not None:
-                gridStack[i].append(g0)
-            else:
-                gridStack[i].append(g1)
-        elif s == 'sqrt':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.sqrt(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append(g0)
-        elif s == 'abs':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.abs(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append(g0)
-        elif s == 'log':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.log(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append(g0)
-        elif s == 'log10':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.log10(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append(g0)
-        elif s == 'min':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.min(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append([])
-        elif s == 'max':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.max(v0))
-            g0 = gridStack[i].pop()
-            gridStack[i].append([])
-        elif s == 'mean':
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.atleast_1d(np.mean(v0)))
-            g0 = gridStack[i].pop()
-            gridStack[i].append([])
-        elif s == 'pow':
-            v1 = evalStack[i].pop()
-            v0 = evalStack[i].pop()
-            evalStack[i].append(np.power(v0, v1))
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            if g0 is not []:
-                gridStack[i].append(g0)
-            else:
-                gridStack[i].append(g1)
-        elif s == 'grad':
-            v1 = int(evalStack[i].pop())
-            v0 = evalStack[i].pop()
-            g1 = gridStack[i].pop()
-            g0 = gridStack[i].pop()
-            zc = (g0[v1][1:] + g0[v1][:-1])*0.5 # get cell centered values
-            evalStack[i].append(np.gradient(v0, zc, edge_order=2, axis=v1))
-            gridStack[i].append(g0)
-        else:
-            return False
+        inGrid, inValues = [], []
+        for j in range(numIn):
+            inGrid.append(gridStack[i].pop())
+            inValues.append(evalStack[i].pop())
+        outGrid, outValues = func(inGrid, inValues)
+        gridStack[i].append(outGrid)
+        evalStack[i].append(outValues)
+
     return True
 
 @click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are: '+', '-', '*', '/', 'sqrt', 'abs', 'log', 'log10', 'pow', 'min', 'max', 'grad', and 'mean'.")

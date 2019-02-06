@@ -4,6 +4,7 @@ from .collect import collect
 from .dataset import dataset
 from .euler import euler
 from .ev import ev
+from . import ev_cmd
 from .fft import fft
 from .growth import growth
 from .info import info
