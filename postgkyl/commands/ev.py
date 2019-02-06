@@ -78,9 +78,11 @@ def _data(ctx, gridStack, evalStack, s):
 def _command(gridStack, evalStack, s):
     if userCommands and s in cmdUser.cmds:
         numIn = cmdUser.cmds[s]['numIn']
+        numOut = cmdUser.cmds[s]['numOut']
         func = cmdUser.cmds[s]['func']
     elif s in cmdBase.cmds:
         numIn = cmdBase.cmds[s]['numIn']
+        numOut = cmdBase.cmds[s]['numOut']
         func = cmdBase.cmds[s]['func']
     else:
         return False
@@ -91,8 +93,9 @@ def _command(gridStack, evalStack, s):
             inGrid.append(gridStack[i].pop())
             inValues.append(evalStack[i].pop())
         outGrid, outValues = func(inGrid, inValues)
-        gridStack[i].append(outGrid)
-        evalStack[i].append(outValues)
+        for j in range(numOut):
+            gridStack[i].append(outGrid[j])
+            evalStack[i].append(outValues[j])
 
     return True
 
