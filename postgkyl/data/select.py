@@ -57,7 +57,7 @@ def select(data, comp=None, stack=False,
     # Select components
     if comp is not None:
         idxValues[-1] = idxParser(comp)
-    valuesOut = values[idxValues]
+    valuesOut = values[tuple(idxValues)]
 
     # Adding a dummy dimension indicies
     # for d, coord in enumerate(coords):
