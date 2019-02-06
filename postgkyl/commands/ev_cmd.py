@@ -8,7 +8,7 @@ def add(inGrid, inValues):
     outValues = inValues[0] + inValues[1]
     return outGrid, outValues
 
-def substract(inGrid, inValues):
+def subtract(inGrid, inValues):
     if inGrid[0] is not []:
         outGrid = inGrid[0]
     else:
@@ -83,7 +83,7 @@ def grad(inGrid, inValues):
     return outGrid, outValues 
 
 cmds = { '+' : { 'numIn' : 2, 'func' : add }, 
-         '-' : { 'numIn' : 2, 'func' : substract },
+         '-' : { 'numIn' : 2, 'func' : subtract },
          '*' : { 'numIn' : 2, 'func' : mult },
          '/' : { 'numIn' : 2, 'func' : divide },
          'sqrt' : { 'numIn' : 1, 'func' : sqrt },
