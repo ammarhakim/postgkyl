@@ -17,6 +17,13 @@ if path.isfile(path.expanduser("~") + '/pgkyl_ev.py'):
 else:
     userCommands = False
 
+helpStr = ""
+for s in cmdBase.cmds.keys():
+    helpStr += " '{:s}',".format(s)
+if userCommands:
+    for s in cmdUser.cmds.keys():
+        helpStr += " '{:s}',".format(s)
+
 
 def _data(ctx, gridStack, evalStack, s):
     if s[0] == 'f':
@@ -99,7 +106,7 @@ def _command(gridStack, evalStack, s):
 
     return True
 
-@click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are: '+', '-', '*', '/', 'sqrt', 'abs', 'log', 'log10', 'pow', 'min', 'max', 'grad', and 'mean'.")
+@click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1])
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.pass_context
 def ev(ctx, **kwargs):
