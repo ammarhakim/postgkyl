@@ -323,9 +323,9 @@ class GData(object):
     def getNumCells(self):
         if len(self._values) > 0:
             numDims = len(self._values[-1].shape)-1
-            cells = np.zeros(numDims)
+            cells = np.zeros(numDims, np.int32)
             for d in range(numDims):
-                cells[d] = self._values[-1].shape[d]
+                cells[d] = int(self._values[-1].shape[d])
             return cells
         else:
             return 0
@@ -441,7 +441,7 @@ class GData(object):
             output += "- Number of dimensions: {:d}\n".format(numDims)
             output += "- Grid: ({:s})\n".format(self._gridType)
             for d in range(numDims):
-                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, int(numCells[d]))
+                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
 
