@@ -332,13 +332,13 @@ class GData(object):
 
     def getNumComps(self):
         if len(self._values) > 0:
-            return self._values[-1].shape[-1]
+            return int(self._values[-1].shape[-1])
         else:
             return 0
 
     def getNumDims(self, squeeze=False):
         if len(self._values) > 0:
-            numDims = len(self._values[-1].shape)-1
+            numDims = int(len(self._values[-1].shape)-1)
             if squeeze:
                 cells = self.getNumCells()
                 for d in range(numDims):
