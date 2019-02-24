@@ -485,7 +485,7 @@ class GData(object):
             else:
                 fName = "gdata." + mode
         else:
-            if isinstance(fName, str):
+            if not isinstance(fName, str):
                 raise TypeError("'fName' must be a string")
             if fName.split('.')[-1] != mode:
                 fileName += '.' + mode
