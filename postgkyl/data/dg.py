@@ -251,7 +251,7 @@ class GInterp(object):
         self.Xc = data.getGrid()
 
     def _getRawNodal(self, component):
-        q = self.data.peakValues()
+        q = self.data.getValues()
         numEqns = self.numEqns
         shp = [q.shape[i] for i in range(self.numDims)]
         shp.append(self.numNodes)
