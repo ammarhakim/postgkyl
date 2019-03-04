@@ -9,7 +9,7 @@ def fft(data, psd=False, stack=False):
     numDims = len(grid)
     idx = []
     for d in range(numDims):
-        if len(grid[d]) <= 1:
+        if len(grid[d]) <= 2:
             idx.append(d)
     if idx:
         grid = np.delete(grid, idx)
