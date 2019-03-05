@@ -20,3 +20,4 @@ from .primitive import getPyz
 from .primitive import getPzz
 from .primitive import getPij
 from .primitive import getP
+from .primitive import getKE

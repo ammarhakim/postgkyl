@@ -154,3 +154,15 @@ def getP(data, gasGamma=5.0/3, numMom=None, stack=False):
         data.pushValues(out)
     else:
         return out
+
+def getKE(data, gasGamma=5.0/3, numMom=None, stack=False):
+    values = data.getValues()
+    Er = values[..., 4, np.newaxis]
+    pr = getP(data)
+    ke = Er - pr/(gasGamma-1)
+
+    if stack:
+        data.pushGrid()
+        data.pushValues(ke)
+    else:
+        return ke
