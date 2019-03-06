@@ -30,7 +30,20 @@ def _data(ctx, gridStack, evalStack, s):
         try:
             if '[' in s:
                 setIdx = s[1:].split('[')[0]
-                compIdx = int(s.split('[')[1].split(']')[0])
+                compIdx = s.split('[')[1].split(']')[0]
+                if ':' in compIdx:
+                    tmp = compIdx.split(':')
+                    if tmp[0] == '':
+                        lo = None
+                    else:
+                        lo = int(tmp[0])
+                    if tmp[1] == '':
+                        up = None
+                    else:
+                        up = int(tmp[1])
+                    compIdx = slice(lo, up)
+                else:
+                    compIdx = int(compIdx)
             else:
                 if len(s) == 1:
                     setIdx = 0
@@ -51,7 +64,10 @@ def _data(ctx, gridStack, evalStack, s):
                 gridStack[i].append(ctx.obj['dataSets'][setIdx].getGrid())
                 values = ctx.obj['dataSets'][setIdx].getValues()
                 if compIdx is not None:
-                    values = values[..., compIdx, np.newaxis]
+                    if type(compIdx) == int:
+                        values = values[..., compIdx, np.newaxis]
+                    else:
+                        values = values[..., compIdx]
                 evalStack[i].append(values)
         else:
             try:
@@ -68,7 +84,10 @@ def _data(ctx, gridStack, evalStack, s):
                 gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
                 values = ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getValues()
                 if compIdx is not None:
-                    values = values[..., compIdx, np.newaxis]
+                    if type(compIdx) == int:
+                        values = values[..., compIdx, np.newaxis]
+                    else:
+                        values = values[..., compIdx]
                 evalStack[i].append(values)
         return True
     else:
