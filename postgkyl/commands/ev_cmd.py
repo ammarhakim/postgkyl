@@ -84,7 +84,15 @@ def power(inGrid, inValues):
     else:
         outGrid = inGrid[1]
     outValues = np.pow(inValues[1], inValues[0])
-    return [outGrid], [outValues] 
+    return [outGrid], [outValues]
+
+def sq(inGrid, inValues):
+    if inGrid[0] != []:
+        outGrid = inGrid[0]
+    else:
+        outGrid = inGrid[1]
+    outValues = inValues[0]**2
+    return [outGrid], [outValues]
 
 
 def grad(inGrid, inValues):
@@ -174,6 +182,7 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          'min' : { 'numIn' : 1, 'numOut' : 1, 'func' : minimum },
          'mean' : { 'numIn' : 1, 'numOut' : 1, 'func' : mean },
          'pow' : { 'numIn' : 2, 'numOut' : 1, 'func' : power },
+         'sq' : { 'numIn' : 1, 'numOut' : 1, 'func' : sq },
          'grad' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad },
          'div' : { 'numIn' : 1, 'numOut' : 1, 'func' : divergence },
          'curl' : { 'numIn' : 1, 'numOut' : 1, 'func' : curl },
