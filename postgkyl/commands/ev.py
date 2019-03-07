@@ -106,7 +106,7 @@ def _data(ctx, gridStack, evalStack, s):
             return False
 
 
-def _command(gridStack, evalStack, s):
+def _command(ctx, gridStack, evalStack, s):
     if userCommands and s in cmdUser.cmds:
         numIn = cmdUser.cmds[s]['numIn']
         numOut = cmdUser.cmds[s]['numOut']
@@ -123,7 +123,11 @@ def _command(gridStack, evalStack, s):
         for j in range(numIn):
             inGrid.append(gridStack[i].pop())
             inValues.append(evalStack[i].pop())
-        outGrid, outValues = func(inGrid, inValues)
+        try:
+            outGrid, outValues = func(inGrid, inValues)
+        except Exception as err:
+            click.echo(click.style("{}".format(err), fg='red'))
+            ctx.exit()
         for j in range(numOut):
             gridStack[i].append(outGrid[j])
             evalStack[i].append(outValues[j])
@@ -144,7 +148,7 @@ def ev(ctx, **kwargs):
     for s in chainSplit:
         isData = _data(ctx, gridStack, evalStack, s)
         if not isData:
-            isCommand = _command(gridStack, evalStack, s)
+            isCommand = _command(ctx, gridStack, evalStack, s)
 
         if not isData and not isCommand:
             click.echo(click.style("ERROR in 'ev': Evaluate input '{:s}' represents neither data nor commad".format(s), fg='red'))
