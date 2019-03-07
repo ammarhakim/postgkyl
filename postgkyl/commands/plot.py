@@ -56,6 +56,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
               help="Name to save the plot as.")
+@click.option('--dpi', type=click.INT, default=200,
+              help="DPI for output")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
 @click.pass_context
@@ -82,14 +84,14 @@ def plot(ctx, **kwargs):
             else:
                 s = dat.fName.split('.')
                 fName = s[0] + '_plot.png'
-            plt.savefig(fName, dpi=200)
+            plt.savefig(fName, dpi=kwargs['dpi'])
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
         if kwargs['saveas']:
             fName = kwargs['saveas']
         else:
             s = dat.fName.split('.')
             fName = s[0] + '_plot.png'
-        plt.savefig(fName, dpi=200)
+        plt.savefig(fName, dpi=kwargs['dpi'])
 
     if kwargs['show']:
         plt.show()
