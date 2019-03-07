@@ -1,3 +1,4 @@
+import click
 import numpy as np
 
 def add(inGrid, inValues):
@@ -83,7 +84,7 @@ def power(inGrid, inValues):
         outGrid = inGrid[0]
     else:
         outGrid = inGrid[1]
-    outValues = np.pow(inValues[1], inValues[0])
+    outValues = np.power(inValues[1], inValues[0])
     return [outGrid], [outValues] 
 
 
@@ -122,8 +123,8 @@ def divergence(inGrid, inValues):
     outGrid = inGrid[0]
     numDims = len(inGrid[0])
     numComps = inValues[0].shape[-1]
-    if numComps != numDims:
-        raise ValueError("Number of components does not correspond to the number of dimensions")
+    if numComps > numDims:
+        click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
 
     outShape = list(inValues[0].shape)
     outShape[-1] = 1
@@ -138,20 +139,26 @@ def curl(inGrid, inValues):
     outGrid = inGrid[0]
     numDims = len(inGrid[0])
     numComps = inValues[0].shape[-1]
-    if numDims != 2 and numDims !=3:
-        raise ValueError("Number of dimensions needs to be either 2 or 3")
-    if numComps != numDims:
-        raise ValueError("Number of components does not correspond to the number of dimensions")
 
     outShape = list(inValues[0].shape)
     if numDims == 2:
         outShape[-1] = 1
     outValues = np.zeros(outShape)
     if numDims == 2:
+        if numComps > 2:
+            click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). Only the third component of curl will be calculated.".format(numComps, numDims), fg='yellow'))
+        elif numComps < 2:
+            raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
+
         zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
         zc1 = 0.5*(inGrid[0][1][1:] + inGrid[0][1][:-1])
         outValues[..., 0] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
     else:
+        if numComps > 3:
+            click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
+        elif numComps < 3:
+            raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
+
         zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
         zc1 = 0.5*(inGrid[0][1][1:] + inGrid[0][1][:-1])
         zc2 = 0.5*(inGrid[0][2][1:] + inGrid[0][2][:-1])
