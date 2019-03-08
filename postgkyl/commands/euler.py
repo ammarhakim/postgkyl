@@ -9,7 +9,7 @@ from postgkyl.commands.util import vlog, pushChain
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel", "pressure", "ke"]))
+                                 "zvel", "vel", "pressure", "ke", "mach"]))
 @click.pass_context
 def euler(ctx, **kwargs):
     vlog(ctx, 'Starting euler')
@@ -34,6 +34,8 @@ def euler(ctx, **kwargs):
             diag.getP(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
         elif v == "ke":
             diag.getKE(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+        elif v == "mach":
+            diag.getMach(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
 
     vlog(ctx, 'Finishing euler')
 
