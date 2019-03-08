@@ -166,3 +166,19 @@ def getKE(data, gasGamma=5.0/3, numMom=None, stack=False):
         data.pushValues(ke)
     else:
         return ke
+
+def getMach(data, gasGamma=5.0/3, numMom=None, stack=False):
+    values = data.getValues()
+    vx = getVx(data)
+    vy = getVy(data)
+    vz = getVz(data)
+    rho = getDensity(data)
+    pr = getP(data, gasGamma)
+    cs = np.sqrt(gasGamma*pr/rho)
+    mach = np.sqrt(vx**2+vy**2+vz**2)/cs
+
+    if stack:
+        data.pushGrid()
+        data.pushValues(mach)
+    else:
+        return mach
