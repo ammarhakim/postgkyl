@@ -29,8 +29,10 @@ def integrate(data, axis, stack=False):
 
     # Get dz elements
     dz = []
-    for coord in grid:
+    for d, coord in enumerate(grid):
         dz.append(coord[1:] - coord[:-1])
+        if len(coord) == values.shape[d]:
+            dz[-1] = np.append(dz[-1], dz[-1][-1])
 
     # Integration assuming values are cell centered averages
     # Should work for nonuniform meshes
