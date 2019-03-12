@@ -1,38 +1,50 @@
 import click
 import numpy as np
 
-def add(inGrid, inValues):
-    if inGrid[0] != []:
-        outGrid = inGrid[0]
+
+def _gridCheck(grid0, grid1):
+    if grid0 != [] and grid1 != []:
+        cnt0, cnt1 = 0, 0
+        for d in range(len(grid0)):
+            if len(grid0[d]) == 1:
+                cnt0 += 1
+        for d in range(len(grid1)):
+            if len(grid1[d]) == 1:
+                cnt1 += 1
+
+        if cnt0 < cnt1:
+            return grid0
+        else:
+            return grid1
+        print(cnt0, cnt1)
+    elif grid0 != []:
+        return grid0
+    elif grid1 != []:
+        return grid1
     else:
-        outGrid = inGrid[1]
+        return []
+
+
+def add(inGrid, inValues):
+    outGrid = _gridCheck(inGrid[0], inGrid[1])
     outValues = inValues[0] + inValues[1]
     return [outGrid], [outValues]
 
 
 def subtract(inGrid, inValues):
-    if inGrid[0] != []:
-        outGrid = inGrid[0]
-    else:
-        outGrid = inGrid[1]
+    outGrid = _gridCheck(inGrid[0], inGrid[1])
     outValues = inValues[1] - inValues[0]
     return [outGrid], [outValues]
 
 
 def mult(inGrid, inValues):
-    if inGrid[0] != []:
-        outGrid = inGrid[0]
-    else:
-        outGrid = inGrid[1]
+    outGrid = _gridCheck(inGrid[0], inGrid[1])
     outValues = inValues[1] * inValues[0]
     return [outGrid], [outValues]
 
 
 def divide(inGrid, inValues):
-    if inGrid[0] != []:
-        outGrid = inGrid[0]
-    else:
-        outGrid = inGrid[1]
+    outGrid = _gridCheck(inGrid[0], inGrid[1])
     outValues = inValues[1] / inValues[0]
     return [outGrid], [outValues]
 
@@ -91,10 +103,16 @@ def sq(inGrid, inValues):
     return [outGrid], [outValues]
 
 
+def length(inGrid, inValues):
+    ax = int(inValues[0])
+    length = inGrid[1][ax][-1] - inGrid[1][ax][0]
+    return [[]], [length]
+
+
 def grad(inGrid, inValues):
     outGrid = inGrid[1]
     ax = inValues[0]
-    if type(ax) == str and ':' in ax:
+    if isinstance(ax, str) and ':' in ax:
         tmp = ax.split(':')
         if tmp[0] == '':
             lo = None
@@ -120,6 +138,46 @@ def grad(inGrid, inValues):
         zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
         outValues[...,cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1], zc, edge_order=2, axis=d)
     return [outGrid], [outValues]
+
+
+def integrate(inGrid, inValues):
+    grid = np.array(inGrid[1])
+    values = np.array(inValues[1])
+
+    axis = inValues[0]
+    if isinstance(axis, float):
+        axis = tuple([int(axis)])
+    elif isinstance(axis, tuple):
+        pass
+    elif isinstance(axis, str):
+        if len(axis.split(',')) > 1:
+            axes = axis.split(',')
+            axis = tuple([int(a) for a in axes])
+        elif len(axis.split(':')) == 2:
+            bounds = axis.split(':')
+            axis = tuple(range(bouns[0], bounds[1]))
+        elif axis == 'all':
+            numDims = len(grid)
+            axis = tuple(range(numDims))
+    else:
+            raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
+
+    dz = []
+    for d, coord in enumerate(grid):
+        dz.append(coord[1:] - coord[:-1])
+        if len(coord) == values.shape[d]:
+            dz[-1] = np.append(dz[-1], dz[-1][-1])
+
+    # Integration assuming values are cell centered averages
+    # Should work for nonuniform meshes
+    for ax in sorted(axis, reverse=True):
+        values = np.moveaxis(values, ax, -1)
+        values = np.dot(values, dz[ax])
+    for ax in sorted(axis):
+        grid[ax] = np.array([0])
+        values = np.expand_dims(values, ax)
+
+    return [grid], [values]
 
 
 def divergence(inGrid, inValues):
@@ -183,9 +241,11 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          'max' : { 'numIn' : 1, 'numOut' : 1, 'func' : maximum },
          'min' : { 'numIn' : 1, 'numOut' : 1, 'func' : minimum },
          'mean' : { 'numIn' : 1, 'numOut' : 1, 'func' : mean },
+         'len' : { 'numIn' : 2, 'numOut' : 1, 'func' : length },
          'pow' : { 'numIn' : 2, 'numOut' : 1, 'func' : power },
          'sq' : { 'numIn' : 1, 'numOut' : 1, 'func' : sq },
          'grad' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad },
+         'int' : { 'numIn' : 2, 'numOut' : 1, 'func' : integrate },
          'div' : { 'numIn' : 1, 'numOut' : 1, 'func' : divergence },
          'curl' : { 'numIn' : 1, 'numOut' : 1, 'func' : curl },
 }
