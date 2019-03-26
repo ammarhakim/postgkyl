@@ -179,6 +179,6 @@ def getMach(data, gasGamma=5.0/3, numMom=None, stack=False):
 
     if stack:
         data.pushGrid()
-        data.pushValues(mach)
+        data.pushValues(mach) 
     else:
         return mach
