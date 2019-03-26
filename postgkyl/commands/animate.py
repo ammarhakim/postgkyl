@@ -50,6 +50,8 @@ def update(s, ctx, kwargs):
               help="Specify a title label.")
 @click.option('-i', '--interval', default=100,
               help="Specify the animation interval.")
+@click.option('-f', '--float', is_flag=True,
+              help="Choose min/max levels based on current frame")
 # @click.option('--save', is_flag=True,
 #               help="Save figure as PNG.")
 # @click.option('--saveas', type=click.STRING, default=None,
@@ -61,16 +63,17 @@ def animate(ctx, **kwargs):
     vlog(ctx, 'Starting animate')
     pushChain(ctx, 'animate', **kwargs)
 
-    vmin = float('inf')
-    vmax = float('-inf')
-    for s in ctx.obj['sets']:
-        val = ctx.obj['dataSets'][s].getValues()
-        if vmin > val.min():
-            vmin = val.min()
-        if vmax < val.max():
-            vmax = val.max()
-    kwargs['vmin'] = vmin
-    kwargs['vmax'] = vmax
+    if not kwargs['float']:
+        vmin = float('inf')
+        vmax = float('-inf')
+        for s in ctx.obj['sets']:
+            val = ctx.obj['dataSets'][s].getValues()
+            if vmin > val.min():
+                vmin = val.min()
+            if vmax < val.max():
+                vmax = val.max()
+        kwargs['vmin'] = vmin
+        kwargs['vmax'] = vmax
 
     numSets = len(ctx.obj['sets'])
     fig = plt.figure()
