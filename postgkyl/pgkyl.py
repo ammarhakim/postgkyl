@@ -196,7 +196,7 @@ def cli(ctx, filename, savechain, stack, verbose,
 
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
-cli.__doc__ = docString
+#cli.__doc__ = docString
 
 @click.command(help='Run the saved command chain')
 @click.option('--filename', '-f', default='.pgkylchain',
