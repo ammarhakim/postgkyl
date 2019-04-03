@@ -71,7 +71,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 # The command line mode entry command
 #@click.group(chain=True)
 @click.command(cls=AliasedGroup, chain=True,
-               context_settings=CONTEXT_SETTINGS, help=docString)
+               context_settings=CONTEXT_SETTINGS, help="test")
 @click.option('--filename', '-f', multiple=True,
               help="Specify one or more files to work with.")
 @click.option('--savechain', '-s', is_flag=True,
