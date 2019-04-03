@@ -5,7 +5,7 @@ import click
 import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Plot the data')
+@click.command()
 @click.option('--figure', '-f', default=None,
               help="Specify figure to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
@@ -62,6 +62,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set color for cell edges (default: None)")
 @click.pass_context
 def plot(ctx, **kwargs):
+    """Test
+    """
     vlog(ctx, 'Starting plot')
     pushChain(ctx, 'plot', **kwargs)
 

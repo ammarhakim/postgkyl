@@ -61,9 +61,17 @@ class AliasedGroup(click.Group):
         ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
 
  
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+# # Modifying the docstring for the main file
+# fName = path.dirname(path.realpath(__file__)) + '/pgkyl.rst'
+# with open(fName, 'r') as file:
+#     docString = file.read()
+
 # The command line mode entry command
 #@click.group(chain=True)
-@click.command(cls=AliasedGroup, chain=True)
+@click.command(cls=AliasedGroup, chain=True,
+               context_settings=CONTEXT_SETTINGS, help=docString)
 @click.option('--filename', '-f', multiple=True,
               help="Specify one or more files to work with.")
 @click.option('--savechain', '-s', is_flag=True,
@@ -94,6 +102,11 @@ class AliasedGroup(click.Group):
 @click.pass_context
 def cli(ctx, filename, savechain, stack, verbose,
         c0, c1, c2, c3, c4, c5, comp, compgrid):
+    """
+    \b
+    test
+    test
+    """
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
     if verbose:
@@ -183,6 +196,7 @@ def cli(ctx, filename, savechain, stack, verbose,
 
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
+cli.__doc__ = docString
 
 @click.command(help='Run the saved command chain')
 @click.option('--filename', '-f', default='.pgkylchain',
