@@ -184,7 +184,10 @@ def plot(gdata, args=(),
             cax = ax[0]
         else:
             cax = ax[comp]
-        label='{:s}c{:d}'.format(labelPrefix, comp)
+        if len(idxComps) > 1:
+            label = '{:s}c{:d}'.format(labelPrefix, comp)
+        else:
+            label = labelPrefix
             
         # Special plots:
         if numDims == 1:
@@ -293,7 +296,7 @@ def plot(gdata, args=(),
         cax.grid(True)
         # Legend
         if legend:
-            if numDims == 1:
+            if numDims == 1 and label != '':
                 cax.legend(loc=0)
             else:
                 cax.text(0.03, 0.96, label,

@@ -136,6 +136,8 @@ def _command(ctx, gridStack, evalStack, s):
 
 @click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1])
 @click.argument('chain', nargs=1, type=click.STRING)
+@click.option('--label', '-l',
+              help="Specify a custom label for the result.")
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
@@ -170,6 +172,11 @@ def ev(ctx, **kwargs):
 
         vlog(ctx, 'ev: Active data set switched to #{:d}'.format(idx))
         ctx.obj['sets'] = [idx]
+
+        if kwargs['label']:
+            ctx.obj['labels'].append(kwargs['label'])
+        else:
+            ctx.obj['labels'].append(kwargs['chain'])
     else:
         for i, setIdx in enumerate(ctx.obj['sets']):
             ctx.obj['dataSets'][setIdx].pushGrid(gridStack[i][-1])

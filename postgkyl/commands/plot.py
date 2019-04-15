@@ -62,22 +62,24 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set color for cell edges (default: None)")
 @click.pass_context
 def plot(ctx, **kwargs):
-    """Test
-    """
     vlog(ctx, 'Starting plot')
     pushChain(ctx, 'plot', **kwargs)
 
     if kwargs['group'] is not None:
         kwargs['group'] = int(kwargs['group'])
+
+
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
-        #if kwargs['color'] == 'seq':
-        #    kwargs['color'] = cm.inferno(s/len(ctx.obj['sets']))
+        if len(ctx.obj['sets']) > 1:
+            label = ctx.obj['labels'][s]
+        else:
+            label = ''
         if kwargs['arg'] is not None:
-            gplot(dat, kwargs['arg'], labelPrefix='s{:d}'.format(s), 
+            gplot(dat, kwargs['arg'], labelPrefix=label, 
                  **kwargs)
         else:
-            gplot(dat, labelPrefix='s{:d}'.format(s),
+            gplot(dat, labelPrefix=label,
                  **kwargs)
 
         if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
