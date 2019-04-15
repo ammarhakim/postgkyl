@@ -26,7 +26,7 @@ def _printVersion(ctx, param, value):
                                            struct.tm_mon,
                                            struct.tm_mday)
 
-    click.echo('Postgkyl 1.2 {:s} ({:s})'.format(date, sys.platform))
+    click.echo('Postgkyl 1.3 {:s} ({:s})'.format(date, sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
@@ -71,9 +71,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 # The command line mode entry command
 #@click.group(chain=True)
 @click.command(cls=AliasedGroup, chain=True,
-               context_settings=CONTEXT_SETTINGS, help="test")
+               context_settings=CONTEXT_SETTINGS)
 @click.option('--filename', '-f', multiple=True,
               help="Specify one or more files to work with.")
+@click.option('--label', '-l', multiple=True,
+              help="Specify a custom label for each dataset.")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
 @click.option('--stack/--no-stack', default=False,
@@ -100,13 +102,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
 @click.pass_context
-def cli(ctx, filename, savechain, stack, verbose,
+def cli(ctx, filename, label, savechain, stack, verbose,
         c0, c1, c2, c3, c4, c5, comp, compgrid):
-    """
-    \b
-    test
-    test
-    """
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
     if verbose:
@@ -128,7 +125,11 @@ def cli(ctx, filename, savechain, stack, verbose,
     ctx.obj['files'] = filename
     numFiles = len(filename)
     ctx.obj['dataSets'] = []
+    ctx.obj['labels'] = []
     ctx.obj['setIds'] = []
+
+    ctx.obj['fig'] = ''
+    ctx.obj['ax'] = ''
 
     # Expand indices for easy looping
     c0 = _expandPartialLoadIdx(numFiles, c0)
@@ -194,9 +195,33 @@ def cli(ctx, filename, savechain, stack, verbose,
         ctx.exit()
     ctx.obj['sets'] = range(cnt)
 
-    ctx.obj['fig'] = ''
-    ctx.obj['ax'] = ''
-#cli.__doc__ = docString
+
+    # Automatically set label from unique parts of the file names
+    nameComps = np.zeros(cnt, np.int)
+    names = []
+    for sIdx in range(cnt):
+        fName = ctx.obj['dataSets'][sIdx].fName
+        fName = fName.split('.')[0]
+        names.append(fName.split('_'))
+        nameComps[sIdx] = len(names[sIdx])
+        ctx.obj['labels'].append('')
+    maxComps = np.max(nameComps)
+    idxMaxComps = np.argmax(nameComps)
+    for i in range(maxComps): 
+        unique = True
+        compStr = names[idxMaxComps][i]
+        for sIdx in range(cnt):
+            if i < len(names[sIdx]) and sIdx != idxMaxComps:
+                if names[sIdx][i] == compStr:
+                    unique = False
+        if unique:
+            for sIdx in range(cnt):
+                if i < len(names[sIdx]):
+                    ctx.obj['labels'][sIdx] += names[sIdx][i]
+    # User specified labels
+    for sIdx, l in enumerate(label):
+        ctx.obj['labels'][sIdx] = l
+
 
 @click.command(help='Run the saved command chain')
 @click.option('--filename', '-f', default='.pgkylchain',
