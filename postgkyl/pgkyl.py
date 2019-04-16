@@ -218,7 +218,10 @@ def cli(ctx, filename, label, savechain, stack, verbose,
             if unique:
                 for sIdx in range(cnt):
                     if i < len(names[sIdx]):
-                        ctx.obj['labels'][sIdx] += names[sIdx][i]
+                        if ctx.obj['labels'][sIdx] == "":
+                            ctx.obj['labels'][sIdx] += names[sIdx][i]
+                        else:
+                            ctx.obj['labels'][sIdx] += '_{:s}'.format(names[sIdx][i])
             # User specified labels
             for sIdx, l in enumerate(label):
                 ctx.obj['labels'][sIdx] = l

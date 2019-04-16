@@ -42,6 +42,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set minimal value for plots.")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
+@click.option('--force-legend', 'forcelegend', is_flag=True,
+              help="Force legend even when plotting a single dataset.")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
 #@click.option('--color', type=click.STRING,
@@ -71,7 +73,7 @@ def plot(ctx, **kwargs):
 
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
-        if len(ctx.obj['sets']) > 1:
+        if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
             label = ctx.obj['labels'][s]
         else:
             label = ''
