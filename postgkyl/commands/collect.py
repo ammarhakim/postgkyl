@@ -48,6 +48,7 @@ def collect(ctx, **kwargs):
     idx = len(ctx.obj['dataSets'])
     ctx.obj['setIds'].append(idx)
     ctx.obj['dataSets'].append(GData())
+    ctx.obj['labels'].append('collect')
     ctx.obj['dataSets'][idx].pushGrid(grid)
     ctx.obj['dataSets'][idx].pushValues(values)
     ctx.obj['dataSets'][idx].fName = 'collect'
