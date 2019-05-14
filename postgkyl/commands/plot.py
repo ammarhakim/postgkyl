@@ -69,7 +69,7 @@ def plot(ctx, **kwargs):
 
     if kwargs['group'] is not None:
         kwargs['group'] = int(kwargs['group'])
-
+    #end
 
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
@@ -77,28 +77,37 @@ def plot(ctx, **kwargs):
             label = ctx.obj['labels'][s]
         else:
             label = ''
+        #end
         if kwargs['arg'] is not None:
             gplot(dat, kwargs['arg'], labelPrefix=label, 
                  **kwargs)
         else:
             gplot(dat, labelPrefix=label,
                  **kwargs)
+        #end
 
-        if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
+        if (kwargs['save'] or kwargs['saveas']):
             if kwargs['saveas']:
                 fName = kwargs['saveas']
             else:
-                s = dat.fName.split('.')
-                fName = s[0] + '_plot.png'
+                if dat.fName:
+                    s = dat.fName.split('.')
+                else:
+                    s = 'ev_' + ctx.obj['labels'][s].replace(' ', '_')
+                #end
+                fName = s + '.png'
+            #end
+        #end
+        if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
             plt.savefig(fName, dpi=kwargs['dpi'])
+        #end
+    #end
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-        if kwargs['saveas']:
-            fName = kwargs['saveas']
-        else:
-            s = dat.fName.split('.')
-            fName = s[0] + '_plot.png'
         plt.savefig(fName, dpi=kwargs['dpi'])
+    #end
 
     if kwargs['show']:
         plt.show()
+    #end
     vlog(ctx, 'Finishing plot')
+#end
