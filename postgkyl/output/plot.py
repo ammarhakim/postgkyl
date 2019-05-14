@@ -16,12 +16,15 @@ def _colorbar(obj, fig, ax, label="", extend=None):
         return fig.colorbar(obj, cax=cax, label=label, extend=extend)
     else:
         return fig.colorbar(obj, cax=cax, label=label)
+    #end
+#end
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
     gridOut = []
     if numDims != len(cells):  # sanity check
         raise ValueError("Number dimensions for 'grid' and 'values' doesn't match")
+    #end
     for d in range(numDims):
         if len(grid[d].shape) == 1:
             if grid[d].shape[0] == cells[d]:
@@ -30,10 +33,13 @@ def _gridNodalToCellCentered(grid, cells):
                 gridOut.append(0.5*(grid[d][:-1]+grid[d][1:]))
             else:
                 raise ValueError("Something is terribly wrong...")
+            #end
         else:
             pass
+        #end
+    #end
     return gridOut
-        
+#end
 
 
 def plot(gdata, args=(),
@@ -60,13 +66,14 @@ def plot(gdata, args=(),
                       + "/postgkyl.mplstyle")
     else:
         plt.style.use(style)
+    #end
 
     #-----------------------------------------------------------------
     #-- Data Loading -------------------------------------------------
     numDims = gdata.getNumDims(squeeze=True)
     if numDims > 2:
         raise Exception('Only 1D and 2D plots are currently supported')
-        
+    #end    
     # Get the handles on the grid and values
     grid = gdata.getGrid()
     values = gdata.getValues()
@@ -79,6 +86,8 @@ def plot(gdata, args=(),
         for d in range(len(grid)):
             if cells[d] <= 1:
                 idx.append(d)
+            #end
+        #end
         if idx:
             grid = np.delete(grid, idx)
             lower = np.delete(lower, idx)
@@ -86,19 +95,22 @@ def plot(gdata, args=(),
             cells = np.delete(cells, idx)
             axLabel = np.delete(axLabel, idx)
             values = np.squeeze(values, tuple(idx)) 
-
+        #end
     numComps = values.shape[-1]
     if streamline or quiver:
         step = 2
     else:
         step = 1
+    #end
     idxComps = range(int(np.floor(numComps/step)))
     numComps = len(idxComps)
 
     if xscale != 1.0:
         axLabel[0] = axLabel[0] + r' $\times$ {:.3e}'.format(xscale)
+    #end
     if numDims == 2 and yscale != 1.0:
         axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
+    #end
 
     # Prepare the figure
     if figure is None:
@@ -112,6 +124,7 @@ def plot(gdata, args=(),
     else:
         raise TypeError(("'fig' keyword needs to be one of "
                          "None (default), int, or MPL Figure"))
+    #end
 
     #-----------------------------------------------------------------
     #-- Preparing the Axes -------------------------------------------
@@ -120,6 +133,7 @@ def plot(gdata, args=(),
         if squeeze is False and numComps > len(ax):
             raise ValueError(
                 "Trying to plot into figure with not enough axes")
+        #end
     else:
         if squeeze:  # Plotting into 1 panel
             plt.subplots(1, 1, num=fig.number)
@@ -128,15 +142,20 @@ def plot(gdata, args=(),
                 ax[0].set_xlabel(axLabel[0])
                 if group == 1:
                     ax[0].set_xlabel(axLabel[1])
+                #end
             else:
                 ax[0].set_xlabel(xlabel)
+            #end
             if ylabel is None:
                 if numDims == 2 and group is None:
                     ax[0].set_ylabel(axLabel[1])
+                #end
             else:
                 ax[0].set_ylabel(ylabel)
+            #end
             if title is not None:
                 ax[0].set_title(title, y=1.08)
+            #end
         else:  # Plotting each components into its own subplot
             sr = np.sqrt(numComps)
             if sr == np.ceil(sr):
@@ -148,6 +167,7 @@ def plot(gdata, args=(),
             else:
                 numRows = int(np.ceil(sr))
                 numCols = int(np.ceil(sr))
+            #end
 
             if numDims == 1 or group is not None: 
                 plt.subplots(numRows, numCols,
@@ -157,6 +177,7 @@ def plot(gdata, args=(),
                 plt.subplots(numRows, numCols,
                              sharex=True, sharey=True,
                              num=fig.number)
+            #end
             ax = fig.axes
             # Adding labels only to the right subplots
             for comp in idxComps:
@@ -165,17 +186,26 @@ def plot(gdata, args=(),
                         ax[comp].set_xlabel(axLabel[0])
                         if group == 1:
                             ax[comp].set_xlabel(axLabel[1])
+                        #end
                     else:
                         ax[comp].set_xlabel(xlabel)
+                    #end
+                #end
                 if comp % numCols == 0:
                     if ylabel is None:
                         if numDims == 2 and group is None:
                             ax[comp].set_ylabel(axLabel[1])
+                        #end
                     else:
                         ax[comp].set_ylabel(ylabel)
+                    #end
+                #end
                 if comp < numCols and title is not None:
                     ax[comp].set_title(title, y=1.08)
-
+                #end
+            #end
+        #end
+    #end
 
     #-----------------------------------------------------------------
     #-- Main Plotting Loop -------------------------------------------
@@ -184,11 +214,16 @@ def plot(gdata, args=(),
             cax = ax[0]
         else:
             cax = ax[comp]
+        #end
         if len(idxComps) > 1:
-            label = '{:s}c{:d}'.format(labelPrefix, comp)
+            if labelPrefix == "":
+                label = str(comp)
+            else:
+                label = '{:s}_c{:d}'.format(labelPrefix, comp)
+            #end
         else:
             label = labelPrefix
-            
+        #end
         # Special plots:
         if numDims == 1:
             gridCC = _gridNodalToCellCentered(grid, cells)
@@ -260,7 +295,7 @@ def plot(gdata, args=(),
                     extend = 'max'
                 elif vmin is not None:
                     extend = 'min'
-
+                #end
                 if logz:
                     tmp = np.array(values[..., comp])
                     if vmin is not None or vmax is not None:
@@ -268,9 +303,13 @@ def plot(gdata, args=(),
                             for j in range(tmp.shape[1]):
                                 if vmin and tmp[i, j] < vmin:
                                     tmp[i, j] = vmin
+                                #end
                                 if vmax and tmp[i, j] > vmax:
                                     tmp[i, j] = vmax
-
+                                #end
+                            #end
+                        #end
+                    #end
                     norm = cl.LogNorm(vmin=vmin, vmax=vmax)
                     im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                                         tmp.transpose(),
@@ -285,11 +324,13 @@ def plot(gdata, args=(),
                                         edgecolors=edgecolors,
                                         linewidth=0.1,
                                         *args) 
+                #end
                 cb = _colorbar(im, fig, cax, extend=extend)
+            #end
         else:
             raise ValueError("{:d}D data not yet supported".
                              format(numDims))
-
+        #end
 
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
@@ -305,22 +346,29 @@ def plot(gdata, args=(),
                          verticalalignment='top',
                          horizontalalignment='left',
                          transform=cax.transAxes)
-
+            #end
+        #end
         if logx:
             cax.set_xscale('log')
+        #end
         if logy:
             cax.set_yscale('log')
-
+        #end
         if numDims == 1:
             if vmin is not None and vmax is not None:
                 cax.set_ylim(vmin, vmax)
+            #end
             plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
             if fixaspect:
                 plt.setp(cax, aspect=1.0)
-
+            #end
+        #end
+    #end
     for i in range(numComps, len(ax)):
         ax[i].axis('off')
+    #end
 
     plt.tight_layout()
     return im
+#end
