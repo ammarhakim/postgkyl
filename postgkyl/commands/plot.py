@@ -70,7 +70,8 @@ def plot(ctx, **kwargs):
     if kwargs['group'] is not None:
         kwargs['group'] = int(kwargs['group'])
     #end
-
+    
+    fName = ""
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
         if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
@@ -89,20 +90,25 @@ def plot(ctx, **kwargs):
         if (kwargs['save'] or kwargs['saveas']):
             if kwargs['saveas']:
                 fName = kwargs['saveas']
+            #end
             else:
+                if fName != "":
+                    fName = fName + "_"
                 if dat.fName:
-                    s = dat.fName.split('.')
+                    fName = fName + dat.fName.split('.')[0]
                 else:
-                    s = 'ev_' + ctx.obj['labels'][s].replace(' ', '_')
+                    name = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
                 #end
-                fName = s + '.png'
             #end
         #end
         if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
+            fName = str(fName) + '.png'
             plt.savefig(fName, dpi=kwargs['dpi'])
+            fName = ""
         #end
     #end
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
+        fName = str(fName) + '.png'
         plt.savefig(fName, dpi=kwargs['dpi'])
     #end
 
