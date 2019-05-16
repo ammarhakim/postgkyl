@@ -10,15 +10,15 @@ from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
 path = os.path.dirname(os.path.realpath(__file__))
 
-def _getNumNodes(dim, polyOrder, basis):
-    if basis.lower() == 'ns' or basis.lower() == 'ms':
+def _getNumNodes(dim, polyOrder, basisType):
+    if basisType.lower() == 'serendipity':
         numNodesSerendipity = np.array([[ 2,   3,   4,   5],
                                         [ 4,   8,  12,  17],
                                         [ 8,  20,  32,  50],
                                         [16,  48,  80, 136],
                                         [32, 112, 192, 352]])
         numNodes = numNodesSerendipity[dim-1, polyOrder-1]
-    elif basis.lower() == 'mo':
+    elif basisType.lower() == 'maximal-order':
         numNodesMaximal = np.array([[2,  3,  4,   5],
                                     [3,  6, 10,  15],
                                     [4, 10, 20,  35],
@@ -30,12 +30,15 @@ def _getNumNodes(dim, polyOrder, basis):
             "GInterp: Basis '{:s}' is not supported!\n"
             "Supported basis are currently 'ns' (Nodal Serendipity),"
             " 'ms' (Modal Serendipity), and 'mo' (Modal Maximal Order)".
-            format(basis))
+            format(basisType))
+    #end
     return numNodes
+#end
 
-def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
+
+def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal=True):
     if interp is not None and read is None:
-        mat = createInterpMatrix(dim, polyOrder, basis, interp)
+        mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal)
         return mat
     elif read is not None:
         fileNameGeneral = postgkylPath + '/interpMatrix.h5'
@@ -43,77 +46,72 @@ def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
             print("interpMatrix.h5 not found, creating interpolation matrix\n")
             if interp is not None:
                 print("interp = {}, calling createInterpMatrix for dim = {},"
-                      " basis = {}, and polyOrder = {}\n".
-                      format(interp, dim, basis, polyOrder))
-                mat = createInterpMatrix(dim, polyOrder, basis, interp)
+                      " basisType = {}, and polyOrder = {}\n".
+                      format(interp, dim, basisType, polyOrder))
+                mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal)
                 return mat
             else:
                 print("interp not specified, reading from pre-computed"
-                      " files for dim = {}, basis = {}, and polyOrder = {}\n".
-                      format(dim, basis, polyOrder))
+                      " files for dim = {}, basisType = {}, and polyOrder = {}\n".
+                      format(dim, basisType, polyOrder))
                 # Load interpolation matrix from the pre-computed HDF5
                 # file since interp not specified.
                 varid = "xformMatrix{:d}{:d}".format(dim, polyOrder)
-                if basis.lower() == 'ns':
-                    fileName = path \
-                               + '/xformMatricesNodalSerendipity.h5'
-                elif basis.lower() == 'ms':
-                    fileName = path \
-                               + '/xformMatricesModalSerendipity.h5'
-                elif basis.lower() == 'mo':
-                    fileName = path \
-                               + '/xformMatricesModalMaximal.h5'
-
+                if modal == False and basisType.lower() == 'serendipity':
+                    fileName = path + '/xformMatricesNodalSerendipity.h5'
+                elif modal and basisType.lower() == 'serendipity':
+                    fileName = path + '/xformMatricesModalSerendipity.h5'
+                elif modal and basisType.lower() == 'maximal-order':
+                    fileName = path + '/xformMatricesModalMaximal.h5'
                 else:
                     raise NameError(
-                        "GInterp: Basis {} is not supported!\n"
-                        "Supported basis are currently 'ns'"
+                        "GInterp: BasisType {} is not supported!\n"
+                        "Supported basisType are currently 'ns'"
                         " (Nodal Serendipity), 'ms' (Modal Serendipity),"
                         " and 'mo' (Modal Maximal Order)".
-                        format(basis))
+                        format(basisType))
                 fh = tables.open_file(fileName)
                 mat = np.array(fh.root.matrices._v_children[varid].read())
                 fh.close()
                 return mat.transpose()
+            #end
+        #end
                 
-        fhGeneral = tables.open_file(postgkylPath + \
-                              '/interpMatrix.h5', mode = 'r')        
+        fhGeneral = tables.open_file(postgkylPath+'/interpMatrix.h5',
+                                     mode = 'r')        
         mat = fhGeneral.root.interpolation_matrix[:]
         fhGeneral.close()
         
         # Check if matrix loaded from interpMatrix.h5 has correct first
         # dimension (i.e. has correct number of nodes)
         
-        numNodes = _getNumNodes(dim, polyOrder, basis)
+        numNodes = _getNumNodes(dim, polyOrder, basisType)
         if mat.shape[1] != numNodes:
             print("WARNING: Matrix read from interpMatrix.h5"
                   " does not have the right dimensions for specified "
                   "dim = {:d}, basis = {:d}, and polyOrder = {:d}\n".
-                  format(dim, basis, polyOrder))
+                  format(dim, basisType, polyOrder))
             
             if interp is not None:
                 print("interp = {}, calling createInterpMatrix "
                 "for dim = {:d}, basis = {:d}, and polyOrder = {:d}\n".
-                      format(interp, dim, basis, polyOrder))
-                mat = createInterpMatrix(dim, polyOrder, basis, interp)
+                      format(interp, dim, basisType, polyOrder))
+                mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal)
                 return mat
             else:
                 print("interp not specified, reading from pre-computed "
                       "files for dim = {:d}, basis = {:d}, "
                       "and polyOrder = {}\n".
-                      format(dim, basis, polyOrder))
+                      format(dim, basisType, polyOrder))
                 # Load interpolation matrix from the pre-computed HDF5
                 # file since interp not specified.
                 varid = "xformMatrix{:d}{:d}".format(dim, polyOrder)
-                if basis.lower() == 'ns':
-                    fileName = path \
-                               + '/xformMatricesNodalSerendipity.h5'
-                elif basis.lower() == 'ms':
-                    fileName = path \
-                               + '/xformMatricesModalSerendipity.h5'
-                elif basis.lower() == 'mo':
-                    fileName = path \
-                               + '/xformMatricesModalMaximal.h5'
+                if modal == False and basisType.lower() == 'serendipity':
+                    fileName = path + '/xformMatricesNodalSerendipity.h5'
+                elif modal and basisType.lower() == 'serendipity':
+                    fileName = path + '/xformMatricesModalSerendipity.h5'
+                elif modal and basisType.lower() == 'serendipity':
+                    fileName = path + '/xformMatricesModalMaximal.h5'
                 else:
                     raise NameError(
                         "GInterp: Basis {} is not supported!\n"
@@ -121,82 +119,95 @@ def _loadInterpMatrix(dim, polyOrder, basis, interp, read):
                         "(Nodal Serendipity), 'ms' (Modal Serendipity), "
                         "and 'mo' (Modal Maximal Order)".
                         format(basis))
+                #end
                 fh = tables.open_file(fileName)
                 mat = fh.root.matrices._v_children[varid].read()
                 fh.close()
                 return mat.transpose()
+            #end
+        #end
         return mat
     else:
         # Load interpolation matrix from the pre-computed HDF5 file.
         varid = 'xformMatrix%i%i' % (dim, polyOrder)
-        if basis.lower() == 'ns':
+        if modal == False and basisType.lower() == 'serendipity':
             fileName = path + '/xformMatricesNodalSerendipity.h5'
-
-        elif basis.lower() == 'ms':
+        elif modal and basisType.lower() == 'serendipity':
             fileName = path + '/xformMatricesModalSerendipity.h5'
 
-        elif basis.lower() == 'mo':
+        elif modal and basisType.lower() == 'maximal-order':
             fileName = path + '/xformMatricesModalMaximal.h5'
-            
         else:
             raise NameError(
                 "GInterp: Basis {:s} is not supported!\n"
                 "Supported basis are currently 'ns' (Nodal Serendipity), "
                 "'ms' (Modal Serendipity), and 'mo' (Modal Maximal Order)".
-                format(basis))
+                format(basisType))
+        #end
         fh = tables.open_file(fileName)
         mat = fh.root.matrices._v_children[varid].read()
         fh.close()
         return mat.transpose()
+    #end
+#end
 
-def _loadDerivativeMatrix(dim, polyOrder, basis, interp, read):
+
+def _loadDerivativeMatrix(dim, polyOrder, basisType, interp, read, modal=True):
     if interp is not None and read is None:
-        mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
+        mat = createDerivativeMatrix(dim, polyOrder, basisType, interp, modal)
         return mat
     elif read is not None:
         fileNameGeneral = postgkylPath + '/derivativeMatrix.h5'
         if not os.path.isfile(fileNameGeneral):
             print('derivativeMatrix.h5 not found, creating derivative matrix\n')
             if interp is not None:
-                print('interp = {}, calling createDerivativeMatrix for dim = {}, basis = {}, and polyOrder = {}\n'.format(interp, dim, basis, polyOrder))
-                mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
+                print('interp = {}, calling createDerivativeMatrix for dim = {}, basis = {}, and polyOrder = {}\n'.format(interp, dim, basisType, polyOrder))
+                mat = createDerivativeMatrix(dim, polyOrder, basisType,
+                                             interp, modal)
                 return mat
             else:
                 print('interp not specified, calling createDerivativeMatrix with polyOrder = {}+1 level of interpolation\n'.format(polyOrder))
-                mat = createDerivativeMatrix(dim, polyOrder, basis, polyOrder+1)
+                mat = createDerivativeMatrix(dim, polyOrder, basisType, polyOrder+1)
                 return mat
-
-        fhGeneral = tables.open_file(postgkylPath + \
-                              '/derivativeMatrix.h5', mode = 'r')        
+            #end
+        #end
+        fhGeneral = tables.open_file(postgkylPath+'/derivativeMatrix.h5',
+                                     mode = 'r')        
         mat = fhGeneral.root.derivative_matrix[:]
         fhGeneral.close()
 
         # Check if matrix loaded from interpMatrix.h5 has correct
         # first dimension (i.e. has correct number of nodes)
         
-        numNodes = _getNumNodes(dim, polyOrder, basis)
+        numNodes = _getNumNodes(dim, polyOrder, basisType)
         if mat.shape[1] != numNodes:
-            print('WARNING: Matrix read from derivativeMatrix.h5 does not have the right dimensions for specified dim = {}, basis = {}, and polyOrder = {}\n'.format(dim, basis, polyOrder))
+            print('WARNING: Matrix read from derivativeMatrix.h5 does not have the right dimensions for specified dim = {}, basis = {}, and polyOrder = {}\n'.format(dim, basisType, polyOrder))
             
             if interp is not None:
                 print('interp = {}, calling createDerivativeMatrix for dim = {}, basis = {}, and polyOrder = {}\n'.format(interp, dim, basis, polyOrder))
-                mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
+                mat = createDerivativeMatrix(dim, polyOrder, basisType,
+                                             interp, modal)
                 return mat
             else:
                 print('interp not specified, calling createDerivativeMatrix with polyOrder = {}+1 level of interpolation\n'.format(polyOrder))
-                mat = createDerivativeMatrix(dim, polyOrder, basis, polyOrder+1)
+                mat = createDerivativeMatrix(dim, polyOrder, basisType, polyOrder+1, modal)
                 return mat
-
+            #end
+        #end
         return mat
     else:
         interp = polyOrder+1
-        mat = createDerivativeMatrix(dim, polyOrder, basis, interp)
+        mat = createDerivativeMatrix(dim, polyOrder, basisType, interp, modal)
         return mat
-        
+    #end
+#end
+
+
 def _decompose(n, dim, numInterp):
     """Decompose n to the number decription with basis numInterp"""
     return np.mod(np.full(dim, n, dtype=np.int) /
-                     (numInterp**np.arange(dim)), numInterp)
+                  (numInterp**np.arange(dim)), numInterp)
+#end
 
 
 def _makeMesh(nInterp, Xc, xlo=None, xup=None):
@@ -204,7 +215,9 @@ def _makeMesh(nInterp, Xc, xlo=None, xup=None):
     if xlo is None or xup is None:
         xlo = Xc[0]
         xup = Xc[-1]
+    #end
     return np.linspace(xlo, xup, nInterp*nx+1)
+#end
 
 
 def _interpOnMesh(cMat, qIn):
@@ -228,7 +241,11 @@ def _interpOnMesh(cMat, qIn):
         idxs = [slice(int(startIdx[i]), int(numCells[i]*numInterp), numInterp)
                 for i in range(numDims)]
         qOut[tuple(idxs)] = temp
+    #end
     return np.array(qOut)
+#end
+
+
 
 class GInterp(object):
     """Postgkyl base class for DG data manipulation.
@@ -249,6 +266,7 @@ class GInterp(object):
         self.numEqns = data.getNumComps()/numNodes
         self.numDims = data.getNumDims()
         self.Xc = data.getGrid()
+    #end
 
     def _getRawNodal(self, component):
         q = self.data.getValues()
@@ -258,7 +276,9 @@ class GInterp(object):
         rawData = np.zeros(shp, np.float)
         for n in range(self.numNodes):
             rawData[..., n] = q[..., int(component+n*numEqns)]
+        #end
         return rawData
+    #end
 
     def _getRawModal(self, component):
         q = self.data.getValues()
@@ -270,6 +290,8 @@ class GInterp(object):
         up = int(lo+self.numNodes)
         rawData = q[..., lo:up]
         return rawData
+    #end
+
         
 class GInterpNodal(GInterp):
     """Postgkyl class for nodal DG data manipulation.
@@ -297,19 +319,20 @@ class GInterpNodal(GInterp):
         grid, values = dg.interpolate()
     """
 
-    def __init__(self, data, polyOrder, basis,
+    def __init__(self, data, polyOrder, basisType,
                  numInterp=None, read=None):
         self.numDims = data.getNumDims()
         self.polyOrder = polyOrder
-        self.basis = basis
+        self.basisType = basisType
         self.numInterp = numInterp
         self.read = read
-        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basis)
+        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
         GInterp.__init__(self, data, numNodes)
+    #end
 
     def interpolate(self, comp=0, stack=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
-                                 self.basis, self.numInterp, self.read)
+                                 self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if isinstance(comp, int):
             q = self._getRawNodal(comp)
@@ -322,6 +345,7 @@ class GInterpNodal(GInterp):
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
+            #end
         elif isinstance(comp, slice):
             q = self._getRawNodal(comp.start)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
@@ -330,6 +354,8 @@ class GInterpNodal(GInterp):
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
+            #end
+        #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
         if stack is False:
@@ -337,11 +363,13 @@ class GInterpNodal(GInterp):
         else:
             self.data.pushGrid(grid)
             self.data.pushValues(values)
+        #end
+    #end
 
     def differentiate(self, direction, comp=0, stack=False):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
-                                     self.basis, self.numInterp, self.read)
+                                     self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
             values = _interpOnMesh(cMat[:, :, direction], q) /\
@@ -351,6 +379,8 @@ class GInterpNodal(GInterp):
             for i in range(self.numDims):
                 values[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+            #end
+        #end
         values = values[..., np.newaxis]
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
@@ -359,6 +389,10 @@ class GInterpNodal(GInterp):
         else:
             self.data.pushGrid(grid)
             self.data.pushValues(values)
+        #end
+    #end
+#end
+
 
 class GInterpModal(GInterp):
     """Postgkyl class for modal DG data manipulation.
@@ -386,19 +420,32 @@ class GInterpModal(GInterp):
         grid, values = dg.interpolate()
     """
 
-    def __init__(self, data, polyOrder, basis,
+    def __init__(self, data, polyOrder=None, basisType=None,
                  numInterp=None, read=None):
         self.numDims = data.getNumDims()
-        self.polyOrder = polyOrder
-        self.basis = basis
+        if polyOrder is not None:
+            self.polyOrder = polyOrder
+        elif data.polyOrder is not None:
+            self.polyOrder = data.polyOrder
+        else:
+            raise ValueError('GInterpNodal: polynomial order is neither specified nor stored in the output file')
+        #end
+        if basisType is not None:
+            self.basisType = basisType
+        elif data.basisType is not None:
+            self.basisType = data.basisType
+        else:
+            raise ValueError('GInterpNodal: basis type is neither specified nor stored in the output file')
+        #end
         self.numInterp = numInterp
         self.read = read
-        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basis)
+        numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
         GInterp.__init__(self, data, numNodes)
+    #end
 
     def interpolate(self, comp=0, stack=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
-                                 self.basis, self.numInterp, self.read)
+                                 self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if isinstance(comp, int):
             q = self._getRawModal(comp)
@@ -411,6 +458,7 @@ class GInterpModal(GInterp):
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
+            #end
         elif isinstance(comp, slice):
             q = self._getRawModal(comp.start)
             values = _interpOnMesh(cMat, q)[..., np.newaxis]
@@ -419,6 +467,8 @@ class GInterpModal(GInterp):
                 values = np.append(values,
                                    _interpOnMesh(cMat, q)[..., np.newaxis],
                                    axis=-1)
+            #end
+        #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
         if stack is False:
@@ -426,11 +476,13 @@ class GInterpModal(GInterp):
         else:
             self.data.pushGrid(grid)
             self.data.pushValues(values)
+        #end
+    #end
 
     def differentiate(self, direction, comp=0, stack=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
-                                     self.basis, self.numInterp, self.read)
+                                     self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
             values = _interpOnMesh(cMat[:, :, direction], q) /\
@@ -440,6 +492,8 @@ class GInterpModal(GInterp):
             for i in range(self.numDims):
                 values[:,i] = _interpOnMesh(cMat[:,:,i], q)
                 values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+            #end
+        #end
         values = values[..., np.newaxis]
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
@@ -448,3 +502,6 @@ class GInterpModal(GInterp):
         else:
             self.data.pushGrid(grid)
             self.data.pushValues(values)
+        #end
+    #end
+#end

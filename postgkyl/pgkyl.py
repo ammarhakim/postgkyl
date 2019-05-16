@@ -15,7 +15,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-        
+    #end        
     fls = glob(path.dirname(path.realpath(__file__)) + "/*/*.py")
     latest = 0.0
     for f in fls:
@@ -25,7 +25,8 @@ def _printVersion(ctx, param, value):
             date = "{:d}-{:02d}-{:02d}".format(struct.tm_year,
                                            struct.tm_mon,
                                            struct.tm_mday)
-
+        #end
+    #end
     click.echo('Postgkyl 1.3 {:s} ({:s})'.format(date, sys.platform))
     click.echo(sys.version)
     click.echo('Copyright 2016-2018 Gkeyll Team')
