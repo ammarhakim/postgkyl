@@ -6,7 +6,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Interpolate DG data on a uniform mesh')
 @click.option('--basistype', '-b',
-              type=click.Choice(['serendipity', 'maximal-order']),
+              type=click.Choice(['ms', 'ns', 'mo']),
               help='Specify DG basis')
 @click.option('--polyorder', '-p', type=click.INT,
               help='Specify polynomial order')
@@ -19,14 +19,23 @@ def interpolate(ctx, **inputs):
     vlog(ctx, 'Starting interpolate')
     pushChain(ctx, 'interpolate', **inputs)
 
+    if inputs['basistype'] is not None:
+        if inputs['basistype'] == 'ms' or inputs['basistype'] == 'ns':
+            basisType = 'serendipity'
+        elif inputs['basistype'] == 'mo':
+            basisType = 'maximal-order'
+    else:
+        basisType = None
+    #end
+
     for s in ctx.obj['sets']:
         if ctx.obj['dataSets'][s].modal:
             dg = GInterpModal(ctx.obj['dataSets'][s],
-                              inputs['polyorder'], inputs['basistype'], 
+                              inputs['polyorder'], basisType, 
                               inputs['interp'], inputs['read'])
         else:
             dg = GInterpNodal(ctx.obj['dataSets'][s],
-                              inputs['polyorder'], inputs['basistype'],
+                              inputs['polyorder'], basisType,
                               inputs['interp'], inputs['read'])
         #end
         numNodes = dg.numNodes
