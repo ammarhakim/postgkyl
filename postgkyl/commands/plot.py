@@ -90,14 +90,14 @@ def plot(ctx, **kwargs):
         if (kwargs['save'] or kwargs['saveas']):
             if kwargs['saveas']:
                 fName = kwargs['saveas']
-            #end
             else:
                 if fName != "":
                     fName = fName + "_"
+                    #end
                 if dat.fName:
                     fName = fName + dat.fName.split('.')[0]
                 else:
-                    name = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
+                    fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
                 #end
             #end
         #end
