@@ -323,7 +323,11 @@ class GInterpNodal(GInterp):
                  numInterp=None, read=None):
         self.numDims = data.getNumDims()
         self.polyOrder = polyOrder
-        self.basisType = basisType
+        if basisType == 'ns':
+            self.basisType = 'serendipity'
+        else:
+            self.basisType = basisType
+        #end
         self.numInterp = numInterp
         self.read = read
         numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
@@ -431,7 +435,13 @@ class GInterpModal(GInterp):
             raise ValueError('GInterpNodal: polynomial order is neither specified nor stored in the output file')
         #end
         if basisType is not None:
-            self.basisType = basisType
+            if basisType == 'ms':
+                self.basisType = 'serendipity'
+            elif basisType == 'mo':
+                self.basisType = 'maximal-order'
+            else:
+                self.basisType = basisType
+            #end
         elif data.basisType is not None:
             self.basisType = data.basisType
         else:
