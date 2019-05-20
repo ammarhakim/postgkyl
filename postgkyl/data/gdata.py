@@ -72,6 +72,8 @@ class GData(object):
 
         self.changeset = None
         self.builddate = None
+        self.polyOrder = None
+        self.basisType = None
 
         self.fName = fName
         if fName is not None:
@@ -181,13 +183,9 @@ class GData(object):
             #end
             if 'polyOrder' in fh.attrs.keys():
                 self.polyOrder = adios.attr(fh, 'polyOrder').value
-            else:
-                self.polyOrder = None
             #end
             if 'basisType' in fh.attrs.keys():
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
-            else:
-                self.basisType = None
             #end
             self.modal = True
 
