@@ -38,8 +38,8 @@ def update(s, ctx, kwargs):
               help="Set y-axis to log scale.")
 # @click.option('--legend/--no-legend', default=True,
 #               help="Show legend.")
-# @click.option('--show/--no-show', default=True,
-#               help="Turn showing of the plot ON and OFF (default: ON).")
+@click.option('--show/--no-show', default=True,
+              help="Turn showing of the plot ON and OFF (default: ON).")
 #@click.option('--color', type=click.STRING,
 #              help="Set color when available.")
 @click.option('-x', '--xlabel', type=click.STRING,
@@ -52,10 +52,10 @@ def update(s, ctx, kwargs):
               help="Specify the animation interval.")
 @click.option('-f', '--float', is_flag=True,
               help="Choose min/max levels based on current frame")
-# @click.option('--save', is_flag=True,
-#               help="Save figure as PNG.")
-# @click.option('--saveas', type=click.STRING, default=None,
-#               help="Name to save the plot as.")
+@click.option('--save', is_flag=True,
+              help="Save figure as PNG.")
+@click.option('--saveas', type=click.STRING, default=None,
+              help="Name to save the plot as.")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
 @click.pass_context
@@ -70,10 +70,13 @@ def animate(ctx, **kwargs):
             val = ctx.obj['dataSets'][s].getValues()
             if vmin > val.min():
                 vmin = val.min()
+            #end
             if vmax < val.max():
                 vmax = val.max()
+            #end
         kwargs['vmin'] = vmin
         kwargs['vmax'] = vmax
+    #end
 
     numSets = len(ctx.obj['sets'])
     fig = plt.figure()
@@ -84,6 +87,16 @@ def animate(ctx, **kwargs):
                          fargs=(ctx, kwargs),
                          interval=kwargs['interval'], blit=False)
 
-    #if kwargs['show']:
-    plt.show()
+    fName = 'anim.mp4'
+    if kwargs['saveas']:
+        fName = str(kwargs['saveas'])
+    #end
+    if kwargs['save'] or kwargs['saveas']:
+        anim.save(fName, writer='ffmpeg')
+    #end
+    
+    if kwargs['show']:
+        plt.show()
+    #end
     vlog(ctx, 'Finishing animate')
+#end
