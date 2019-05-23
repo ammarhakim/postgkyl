@@ -8,6 +8,8 @@ from postgkyl.data.gdata import GData
 from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
+from postgkyl.data.recovData import recovCeFn, recovEdFn
+
 path = os.path.dirname(os.path.realpath(__file__))
 
 def _getNumNodes(dim, polyOrder, basisType):
@@ -507,6 +509,49 @@ class GInterpModal(GInterp):
         values = values[..., np.newaxis]
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
+        if stack is False:
+            return grid, values
+        else:
+            self.data.pushGrid(grid)
+            self.data.pushValues(values)
+        #end
+    #end
+
+    def recovery(self, comp=0, stack=False):
+        if isinstance(comp, int):
+            q = self._getRawModal(comp)
+        else:
+            raise ValueError("recovery: only 'int' comp implemented so far")
+        #end
+        if self.numDims > 1:
+            raise ValueError("recovery: only 1D implemented so far")
+        #end
+
+        if self.numInterp is not None:
+            N = self.numInterp
+        else:
+            N = 100
+        #end
+
+        numCells = self.data.getNumCells()
+        grid = [np.linspace(self.Xc[d][0], self.Xc[d][-1],
+                            numCells*N+1)
+                for d in range(self.numDims)]
+
+        values = np.zeros(numCells*N)
+        dx = (self.Xc[0][1]-self.Xc[0][0])
+
+        xC = np.linspace(-1, 1, N, endpoint=False)*dx/2
+        xL = np.linspace(-1, 0, N, endpoint=False)*dx
+        xR = np.linspace(0, 1, N, endpoint=False)*dx
+
+        values[:N] = recovEdFn[self.polyOrder-1](xL, q[0], q[1], dx)
+        values[-N:] = recovEdFn[self.polyOrder-1](xR, q[-2], q[-1], dx)
+        for j in range(1, numCells[0]-1):
+            values[j*N:(j+1)*N] = recovCeFn[self.polyOrder-1](xC, q[j], q[j-1], q[j+1], dx)
+        #end
+
+        values = values[..., np.newaxis]
         if stack is False:
             return grid, values
         else:

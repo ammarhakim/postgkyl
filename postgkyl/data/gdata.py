@@ -549,6 +549,7 @@ class GData(object):
             mode = 'txt'
         else:
             mode = 'bp'
+        #end
         # Create output file name
         if fName is None:
             if self.fName is not None:
@@ -556,11 +557,15 @@ class GData(object):
                 fName = fn.split('.')[0].strip('_') + '_mod.' + mode
             else:
                 fName = "gdata." + mode
+            #end
         else:
             if not isinstance(fName, str):
                 raise TypeError("'fName' must be a string")
+            #end
             if fName.split('.')[-1] != mode:
                 fileName += '.' + mode
+            #end
+        #end
 
         numDims = self.getNumDims()
         numComps = self.getNumComps()
@@ -573,6 +578,7 @@ class GData(object):
             for i in range(numDims):
                 sNumCells += "{:d},".format(int(numCells[i]))
                 sOffsets += "0,"
+            #end
             sNumCells += "{:d}".format(numComps)
             sOffsets += "0"
 
@@ -590,6 +596,7 @@ class GData(object):
             if self.time is not None:
                 adios.define_var(groupId, "time", "",
                                  adios.DATATYPE.double, "", "", "")
+            #end
             adios.define_var(groupId, "CartGridField", "",
                              adios.DATATYPE.double,
                              sNumCells, sNumCells, sOffsets)
@@ -598,6 +605,7 @@ class GData(object):
             fh = adios.open("CartField", fName, 'w')
             if self.time is not None:
                 adios.write(fh, "time", self.time)
+            #end
             adios.write(fh, "CartGridField", self.getValues())
             adios.close(fh)
             adios.finalize()
@@ -607,9 +615,9 @@ class GData(object):
                 nm = fName.split('/')[-1]
             else:
                 nm = fName
+            #end
             shutil.move(fName + '.dir/' + nm + '.0', fName)
             shutil.rmtree(fName + '.dir')
-
         elif mode == 'txt':
             numRows = int(numCells.prod())
             grid = self.getGrid()
@@ -618,6 +626,7 @@ class GData(object):
             basis = np.full(numDims, 1.0)
             for d in range(numDims-1):
                 basis[d] = numCells[(d+1):].prod()
+            #end
 
             fh = open(fName, 'w')
             for i in range(numRows):
@@ -626,14 +635,19 @@ class GData(object):
                 for d in range(numDims):
                     idxs[d] = int(idx // basis[d])
                     idx = idx % basis[d]
-
+                #end
                 line = ""
                 for d in range(numDims-1):
                     line += "{:e}, ".format(grid[d][idxs[d]])
+                #end
                 line += "{:e}; ".format(grid[numDims-1][idxs[numDims-1]])
                 for c in range(numComps-1):
                     line += "{:e}, ".format(values[tuple(idxs)][c])
+                #end
                 line += "{:e}\n".format(values[tuple(idxs)][numComps-1])
                 fh.write(line)
+            #end
             fh.close()
-
+        #end
+    #end
+#end
