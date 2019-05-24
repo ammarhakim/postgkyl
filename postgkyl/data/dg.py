@@ -8,7 +8,7 @@ from postgkyl.data.gdata import GData
 from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
-from postgkyl.data.recovData import recovCeFn, recovEdFn
+from postgkyl.data.recovData import recovC0Fn, recovC1Fn, recovEdFn
 
 path = os.path.dirname(os.path.realpath(__file__))
 
@@ -518,7 +518,7 @@ class GInterpModal(GInterp):
         #end
     #end
 
-    def recovery(self, comp=0, stack=False):
+    def recovery(self, comp=0, c1=False, stack=False):
         if isinstance(comp, int):
             q = self._getRawModal(comp)
         else:
@@ -547,14 +547,23 @@ class GInterpModal(GInterp):
         xR = np.linspace(0, 1, N, endpoint=False)*dx
 
         if self.periodic:
-            values[:N] = recovCeFn[self.polyOrder-1](xC, q[0],q[-1],q[1], dx)
-            values[-N:] = recovCeFn[self.polyOrder-1](xC, q[-1],q[-2],q[0], dx)
+            if c1:
+                values[:N] = recovC1Fn[self.polyOrder-1](xC, q[0],q[-1],q[1], dx)
+                values[-N:] = recovC1Fn[self.polyOrder-1](xC, q[-1],q[-2],q[0], dx)
+            else:
+                values[:N] = recovC0Fn[self.polyOrder-1](xC, q[0],q[-1],q[1], dx)
+                values[-N:] = recovC0Fn[self.polyOrder-1](xC, q[-1],q[-2],q[0], dx)
+            #end
         else:
             values[:N] = recovEdFn[self.polyOrder-1](xL, q[0], q[1], dx)
             values[-N:] = recovEdFn[self.polyOrder-1](xR, q[-2], q[-1], dx)
         #end
         for j in range(1, numCells[0]-1):
-            values[j*N:(j+1)*N] = recovCeFn[self.polyOrder-1](xC, q[j], q[j-1], q[j+1], dx)
+            if c1:
+                values[j*N:(j+1)*N] = recovC1Fn[self.polyOrder-1](xC, q[j], q[j-1], q[j+1], dx)
+            else:
+                values[j*N:(j+1)*N] = recovC0Fn[self.polyOrder-1](xC, q[j], q[j-1], q[j+1], dx)
+            #end
         #end
 
         values = values[..., np.newaxis]

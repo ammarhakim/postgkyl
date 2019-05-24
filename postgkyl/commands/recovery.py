@@ -14,6 +14,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Number of poins to evaluate on')
 @click.option('-r', '--periodic', is_flag=True,
               help='Flag for periodic boundary conditions')
+@click.option('-c', '--c1', is_flag=True,
+              help='Enforce continuous first derivatives')
 @click.pass_context
 def recovery(ctx, **inputs):
     vlog(ctx, 'Starting recovery')
@@ -37,7 +39,7 @@ def recovery(ctx, **inputs):
 
         vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
         #dg.recovery(tuple(range(numComps)), stack=True)
-        dg.recovery(0, stack=True)
+        dg.recovery(0, inputs['c1'], stack=True)
     #end
     vlog(ctx, 'Finishing recovery')
 #end
