@@ -5,6 +5,7 @@ from .collect import collect
 from .dataset import dataset
 from .euler import euler
 from .ev import ev
+from .extractinput import extractinput
 from .fft import fft
 from .growth import growth
 from .info import info

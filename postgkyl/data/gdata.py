@@ -74,6 +74,7 @@ class GData(object):
         self.builddate = None
         self.polyOrder = None
         self.basisType = None
+        self.inputfile = None
 
         self.fName = fName
         if fName is not None:
@@ -187,6 +188,9 @@ class GData(object):
             if 'basisType' in fh.attrs.keys():
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
             #end
+            if 'inputfile' in fh.attrs.keys():
+                self.inputfile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
+            #end            
             self.modal = True
 
             # Load data ...
