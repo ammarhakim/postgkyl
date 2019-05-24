@@ -1,12 +1,12 @@
 package:
   name: postgkyl
-  version: "1.3"
+  version: "1.4"
 
 source:
   path: ./
 
 build:
-  number: 20190522
+  number: 20190523
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5

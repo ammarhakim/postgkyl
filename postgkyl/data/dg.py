@@ -427,7 +427,7 @@ class GInterpModal(GInterp):
     """
 
     def __init__(self, data, polyOrder=None, basisType=None,
-                 numInterp=None, read=None):
+                 numInterp=None, periodic=False, read=None):
         self.numDims = data.getNumDims()
         if polyOrder is not None:
             self.polyOrder = polyOrder
@@ -449,6 +449,7 @@ class GInterpModal(GInterp):
         else:
             raise ValueError('GInterpNodal: basis type is neither specified nor stored in the output file')
         #end
+        self.periodic = periodic
         self.numInterp = numInterp
         self.read = read
         numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
@@ -545,8 +546,13 @@ class GInterpModal(GInterp):
         xL = np.linspace(-1, 0, N, endpoint=False)*dx
         xR = np.linspace(0, 1, N, endpoint=False)*dx
 
-        values[:N] = recovEdFn[self.polyOrder-1](xL, q[0], q[1], dx)
-        values[-N:] = recovEdFn[self.polyOrder-1](xR, q[-2], q[-1], dx)
+        if self.periodic:
+            values[:N] = recovCeFn[self.polyOrder-1](xC, q[0],q[-1],q[1], dx)
+            values[-N:] = recovCeFn[self.polyOrder-1](xC, q[-1],q[-2],q[0], dx)
+        else:
+            values[:N] = recovEdFn[self.polyOrder-1](xL, q[0], q[1], dx)
+            values[-N:] = recovEdFn[self.polyOrder-1](xR, q[-2], q[-1], dx)
+        #end
         for j in range(1, numCells[0]-1):
             values[j*N:(j+1)*N] = recovCeFn[self.polyOrder-1](xC, q[j], q[j-1], q[j+1], dx)
         #end
