@@ -11,7 +11,9 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('--polyorder', '-p', type=click.INT,
               help='Specify polynomial order')
 @click.option('--interp', '-i', type=click.INT,
-              help='Interpolation onto a general mesh of specified amount')
+              help='Number of poins to evaluate on')
+@click.option('-r', '--periodic', is_flag=True,
+              help='Flag for periodic boundary conditions')
 @click.pass_context
 def recovery(ctx, **inputs):
     vlog(ctx, 'Starting recovery')
@@ -29,7 +31,7 @@ def recovery(ctx, **inputs):
     for s in ctx.obj['sets']:
         dg = GInterpModal(ctx.obj['dataSets'][s],
                           inputs['polyorder'], basisType, 
-                          inputs['interp'])
+                          inputs['interp'], inputs['periodic'])
         numNodes = dg.numNodes
         numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
 
