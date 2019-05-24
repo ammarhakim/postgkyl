@@ -12,6 +12,11 @@ def extractinput(ctx, **kwargs):
     sets = ctx.obj['sets']
         
     for s in sets:
-        pass
+        encInp = ctx.obj['dataSets'][s].inputfile
+        if encInp:
+            inpfile = base64.decodebytes(encInp.encode('utf-8')).decode('utf-8')
+            click.echo(inpfile)
+        else:
+            click.echo("No embedded input file!")
 
     vlog(ctx, 'Finishing extractinput')
