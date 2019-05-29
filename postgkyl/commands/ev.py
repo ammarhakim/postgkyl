@@ -90,6 +90,11 @@ def _data(ctx, gridStack, evalStack, s):
                         values = values[..., compIdx]
                 evalStack[i].append(values)
         return True
+    elif '(' in s or '[' in s:
+        for i in range(len(gridStack)):
+            evalStack[i].append(eval(s))
+            gridStack[i].append([])
+        return True
     elif ':' in s or ',' in s:
         for i in range(len(gridStack)):
             evalStack[i].append(str(s))
