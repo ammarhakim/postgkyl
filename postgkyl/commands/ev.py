@@ -76,9 +76,12 @@ def _data(ctx, gridStack, evalStack, s):
                 click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
                 ctx.exit()
 
-            if setIdx < 0 or setIdx >= len(ctx.obj['sets']):
+            if setIdx >= len(ctx.obj['sets']):
                 click.echo(click.style("ERROR in 'ev': Data set index '{:d}' needs to be between 0 and {:d}".format(setIdx,  len(ctx.obj['sets'])-1), fg='red'))
                 ctx.exit()
+
+            if setIdx < 0:
+                setIdx = len(ctx.obj['sets']) + setIdx
             
             for i in range(len(gridStack)):
                 gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
