@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from glob import glob
-from os import path
+import os
 import time
 import sys
 
@@ -16,11 +16,11 @@ def _printVersion(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     #end        
-    fls = glob(path.dirname(path.realpath(__file__)) + "/*/*.py")
+    fls = glob(os.path.dirname(os.path.realpath(__file__)) + "/*/*.py")
     latest = 0.0
     for f in fls:
-        if latest < path.getmtime(f):
-            latest = path.getmtime(f)
+        if latest < os.path.getmtime(f):
+            latest = os.path.getmtime(f)
             struct = time.gmtime(latest)
             date = "{:d}-{:02d}-{:02d}".format(struct.tm_year,
                                            struct.tm_mon,
@@ -65,7 +65,7 @@ class AliasedGroup(click.Group):
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 # # Modifying the docstring for the main file
-# fName = path.dirname(path.realpath(__file__)) + '/pgkyl.rst'
+# fName = os.path.dirname(os.path.realos.path(__file__)) + '/pgkyl.rst'
 # with open(fName, 'r') as file:
 #     docString = file.read()
 
@@ -79,6 +79,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Specify a custom label for each dataset.")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
+@click.option('--savechainas', 
+              help="Save command chain for quick repetition with specified name for multiple options")
 @click.option('--stack/--no-stack', default=False,
               help="Turn the Postgkyl stack capabilities ON/OFF")
 @click.option('--verbose', '-v', is_flag=True,
@@ -103,7 +105,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
 @click.pass_context
-def cli(ctx, filename, label, savechain, stack, verbose,
+def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
         c0, c1, c2, c3, c4, c5, comp, compgrid):
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
@@ -115,13 +117,26 @@ def cli(ctx, filename, label, savechain, stack, verbose,
         vlog(ctx, 'And now for something completelly different...')
     else:
         ctx.obj['verbose'] = False
-
-    if savechain:
+    #end
+    
+    home = os.path.expanduser('~')
+    ctx.obj['savechainPath'] = (home + '/.pgkyl/pgkylchain')
+    if savechain or savechainas is not None:
         ctx.obj['savechain'] = True
-        fh = open('.pgkylchain', 'w')  # The default chain name
+        try:
+            os.makedirs(home + "/.pgkyl")
+        except FileExistsError:
+            # directory already exists
+            pass
+        #end
+        if savechainas is not None:
+            ctx.obj['savechainPath'] = (home + '/.pgkyl/' + str(savechainas))
+        #end
+        fh = open(ctx.obj['savechainPath'], 'w')  # The default chain name
         fh.close()
     else:
         ctx.obj['savechain'] = False
+    #end
 
     ctx.obj['files'] = filename
     numFiles = len(filename)
@@ -156,6 +171,7 @@ def cli(ctx, filename, label, savechain, stack, verbose,
             except NameError:
                 click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
                 ctx.exit()
+            #end
             ctx.obj['setIds'].append(cnt)
             cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
@@ -171,7 +187,8 @@ def cli(ctx, filename, label, savechain, stack, verbose,
                 files = sorted(files, key=crush)
             except Exception:
                 click.echo(click.style("WARNING: The loaded files appear to be of different types. Sorting is turned off.", fg='yellow'))
-
+            #end
+            
             for fn in files:
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
@@ -188,14 +205,19 @@ def cli(ctx, filename, label, savechain, stack, verbose,
                     cnt += 1
                 except:
                     pass
+                #end
+            #end
+        #end
+    #end
+    
     # It is possite to run pgkyl without any file (e.e., for getting a
     # holp for a command; however, it will fail if files are specified
     # but not loaded
     if numFiles > 0 and cnt == 0:
         click.echo(click.style("ERROR: No files loaded",fg='red'))
         ctx.exit()
+    #end
     ctx.obj['sets'] = range(cnt)
-
 
     # Automatically set label from unique parts of the file names
     if cnt > 0:
@@ -207,6 +229,7 @@ def cli(ctx, filename, label, savechain, stack, verbose,
             names.append(fName.split('_'))
             nameComps[sIdx] = len(names[sIdx])
             ctx.obj['labels'].append('')
+        #end
         maxComps = np.max(nameComps)
         idxMaxComps = np.argmax(nameComps)
         for i in range(maxComps): 
@@ -216,6 +239,9 @@ def cli(ctx, filename, label, savechain, stack, verbose,
                 if i < len(names[sIdx]) and sIdx != idxMaxComps:
                     if names[sIdx][i] == compStr:
                         unique = False
+                    #end
+                #end
+            #end
             if unique:
                 for sIdx in range(cnt):
                     if i < len(names[sIdx]):
@@ -223,24 +249,39 @@ def cli(ctx, filename, label, savechain, stack, verbose,
                             ctx.obj['labels'][sIdx] += names[sIdx][i]
                         else:
                             ctx.obj['labels'][sIdx] += '_{:s}'.format(names[sIdx][i])
+                        #end
+                    #end
+                #end
+            #end
             # User specified labels
             for sIdx, l in enumerate(label):
                 ctx.obj['labels'][sIdx] = l
-
+            #end
+        #end
+    #end    
+#end
 
 @click.command(help='Run the saved command chain')
-@click.option('--filename', '-f', default='.pgkylchain',
+@click.option('--filename', '-f',
               help="Specify file with stored chain (default 'pgkylchain.dat')")
 @click.pass_context
 def runchain(ctx, filename):
-    if path.isfile(filename):
-        fh = open(filename, 'r')
+    if filename is None:
+        fn = ctx.obj['savechainPath']
+    else:
+        home = os.path.expanduser('~')
+        fn = home + '/.pgkyl/' + filename
+    #end
+    if os.path.isfile(fn):
+        fh = open(fn, 'r')
         for line in fh.readlines():
             eval('ctx.invoke(cmd.{:s})'.format(line))
         fh.close()
     else:
         raise NameError("File with stored chain ({:s}) does not exist".
                         format(filename))
+    #end
+#end
 
 @click.command(help='Pop the data stack')
 @click.pass_context
@@ -250,6 +291,8 @@ def pop(ctx):
     for s in ctx.obj['sets']:
         ctx.obj['dataSets'][s].popGrid()
         ctx.obj['dataSets'][s].popValues()
+    #end
+#end
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.animate)
