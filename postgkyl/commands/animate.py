@@ -6,14 +6,22 @@ import click
 import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
-def update(s, ctx, kwargs):
-    dat = ctx.obj['dataSets'][s]
+def update(i, ctx, kwargs):
+    dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
     plt.clf()
-    kwargs['title'] = 'F: {:d}  T: {:.4e}'.format(dat.frame, dat.time)
+    kwargs['title'] = ''
+    if dat.frame is not None:
+        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.frame)
+    #end
+    if dat.time is not None:
+        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.time)
+    #end
     if kwargs['arg'] is not None:
         return gplot(dat, kwargs['arg'], **kwargs)
     else:
         return gplot(dat, **kwargs)
+    #end
+#end
 
 @click.command(help='Animate the data')
 @click.option('--squeeze', '-s', is_flag=True,
