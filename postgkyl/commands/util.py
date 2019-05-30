@@ -11,7 +11,6 @@ def vlog(ctx, message):
                                fg='green'))
 
 def pushChain(ctx, command, **kwargs):
-    print(ctx.obj['savechainPath'])
     if ctx.obj['savechain'] == True:
         fh = open(ctx.obj['savechainPath'], 'a')
         s = '{:s}'.format(command)
