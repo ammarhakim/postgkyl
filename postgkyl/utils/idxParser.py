@@ -47,6 +47,12 @@ def idxParser(value, array=None, nodal=True):
                 idx = tuple([_stringToIndex(i, array, nodal) for i in idxs])
             elif len(value.split(':')) == 2:
                 idxs = value.split(':')
+                if idxs[0] == '':
+                   idxs[0] = str(0)
+                if idxs[1] == '':
+                   idxs[1] = str(len(array))
+                if int(idxs[1]) < 0:
+                   idxs[1] = str(len(array) + int(idxs[1]) + 1)
                 idx = slice(_stringToIndex(idxs[0], array, nodal),
                             _stringToIndex(idxs[1], array, nodal))
             else:

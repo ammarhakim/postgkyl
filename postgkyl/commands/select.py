@@ -39,6 +39,7 @@ def select(ctx, **kwargs):
 @click.pass_context
 def dataset(ctx, **kwargs):
     idx = kwargs['idx']
+    print(idx)
     if kwargs['allsets']:
         vlog(ctx, 'Selecting all datasets')
     else:
@@ -55,9 +56,9 @@ def dataset(ctx, **kwargs):
             if sets[0] == '':
                sets[0] = 0
             if sets[1] == '':
-               sets[1] = len(ctx.obj['dataSets'])
+               sets[1] = ctx.obj['numSets']
             if int(sets[1]) < 0:
-               sets[1] = len(ctx.obj['dataSets']) + int(sets[1]) + 1
+               sets[1] = ctx.obj['numSets'] + int(sets[1]) + 1
             ctx.obj['sets'] = range(int(sets[0]), int(sets[1]))
         else:
             ctx.obj['sets'] = [int(idx)]
