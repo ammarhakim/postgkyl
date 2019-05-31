@@ -15,6 +15,7 @@ def dataset(ctx, **kwargs):
         vlog(ctx, 'Selecting all datasets')
     else:
         vlog(ctx, 'Selecting data set(s): {:s}'.format(idx))
+    #end
     pushChain(ctx, 'dataset', **kwargs)
 
     if kwargs['allsets'] is False:
@@ -26,13 +27,18 @@ def dataset(ctx, **kwargs):
             sets = idx.split(':')
             if sets[0] == '':
                sets[0] = 0
+            #end
             if sets[1] == '':
                sets[1] = len(ctx.obj['dataSets'])
+            #end
             if int(sets[1]) < 0:
                sets[1] = len(ctx.obj['dataSets']) + int(sets[1]) + 1
+            #end
             ctx.obj['sets'] = range(int(sets[0]), int(sets[1]))
         else:
             ctx.obj['sets'] = [int(idx)]
+        #end
     else:
         vlog(ctx, 'Selecting all data sets'.format(idx))
         ctx.obj['sets'] = range(len(ctx.obj['dataSets']))
+    #end

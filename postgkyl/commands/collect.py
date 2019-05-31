@@ -27,8 +27,11 @@ def collect(ctx, **kwargs):
             stem = "_".join(ctx.obj['dataSets'][s].fName.split("_")[:-1])
             if not stem in stems:
                 stems.append(stem)
+            #end
+        #end
     else:
         stems = ['collect']
+    #end
 
     for st in stems:
         if group:
@@ -47,11 +50,15 @@ def collect(ctx, **kwargs):
                     values.append(np.nansum(v, axis=axis))
                 else:
                     values.append(v)
+                #end
+            #end
+        #end
         time = np.array(time)
         values = np.array(values)
 
         if kwargs['period'] is not None:
             time = (time - kwargs['offset']) % kwargs['period']
+        #end
 
         sortIdx = np.argsort(time)
         time = time[sortIdx]
@@ -63,6 +70,7 @@ def collect(ctx, **kwargs):
             s = ctx.obj['sets'][0]
             grid = list(ctx.obj['dataSets'][s].getGrid())
             grid.insert(0, time)
+        #end
 
         vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values.shape))
         idx = len(ctx.obj['dataSets'])
@@ -74,6 +82,7 @@ def collect(ctx, **kwargs):
         ctx.obj['dataSets'][idx].fName = st
         vlog(ctx, 'collect: activated data set #{:d}'.format(idx))
         activeSets.append(idx)
+    #end
 
     ctx.obj['sets'] = activeSets
 
