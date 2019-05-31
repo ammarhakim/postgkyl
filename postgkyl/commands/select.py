@@ -52,6 +52,12 @@ def dataset(ctx, **kwargs):
             ctx.obj['sets'] = [int(s) for s in sets]            
         elif len(idx.split(':')) == 2:
             sets = idx.split(':')
+            if sets[0] == '':
+               sets[0] = 0
+            if sets[1] == '':
+               sets[1] = len(ctx.obj['dataSets'])
+            if int(sets[1]) < 0:
+               sets[1] = len(ctx.obj['dataSets']) + int(sets[1]) + 1
             ctx.obj['sets'] = range(int(sets[0]), int(sets[1]))
         else:
             ctx.obj['sets'] = [int(idx)]
