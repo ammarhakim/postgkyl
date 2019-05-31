@@ -79,9 +79,11 @@ def _data(ctx, gridStack, evalStack, s):
             if setIdx >= len(ctx.obj['sets']):
                 click.echo(click.style("ERROR in 'ev': Data set index '{:d}' needs to be between 0 and {:d}".format(setIdx,  len(ctx.obj['sets'])-1), fg='red'))
                 ctx.exit()
+            #end
 
             if setIdx < 0:
                 setIdx = len(ctx.obj['sets']) + setIdx
+            #end
             
             for i in range(len(gridStack)):
                 gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
@@ -97,11 +99,13 @@ def _data(ctx, gridStack, evalStack, s):
         for i in range(len(gridStack)):
             evalStack[i].append(eval(s))
             gridStack[i].append([])
+        #end
         return True
     elif ':' in s or ',' in s:
         for i in range(len(gridStack)):
             evalStack[i].append(str(s))
             gridStack[i].append([])
+        #end
         return True
     else:
         try:
@@ -109,9 +113,12 @@ def _data(ctx, gridStack, evalStack, s):
             for i in range(len(gridStack)):
                 evalStack[i].append(num)
                 gridStack[i].append([])
+            #end
             return True
         except Exception:
             return False
+        #end
+    #end
 
 
 def _command(ctx, gridStack, evalStack, s):

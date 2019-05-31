@@ -108,6 +108,7 @@ def length(inGrid, inValues):
     length = inGrid[1][ax][-1] - inGrid[1][ax][0]
     if len(inGrid[1][ax]) == inValues[1].shape[ax]:
         length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
+    #end
     
     return [[]], [length]
 
@@ -176,6 +177,7 @@ def integrate(inGrid, inValues, avg=False):
     for ax in sorted(axis, reverse=True):
         values = np.moveaxis(values, ax, -1)
         values = np.dot(values, dz[ax])
+    #end
     for ax in sorted(axis):
         grid[ax] = np.array([0])
         values = np.expand_dims(values, ax)
@@ -183,7 +185,10 @@ def integrate(inGrid, inValues, avg=False):
             length = inGrid[1][ax][-1] - inGrid[1][ax][0]
             if len(inGrid[1][ax]) == inValues[1].shape[ax]:
                 length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
+            #end
             values = values / length
+        #end
+    #end
 
     return [grid], [values]
 
