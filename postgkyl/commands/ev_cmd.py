@@ -143,7 +143,7 @@ def grad(inGrid, inValues):
     return [outGrid], [outValues]
 
 
-def integrate(inGrid, inValues):
+def integrate(inGrid, inValues, avg=False):
     grid = np.array(inGrid[1])
     values = np.array(inValues[1])
 
@@ -179,9 +179,16 @@ def integrate(inGrid, inValues):
     for ax in sorted(axis):
         grid[ax] = np.array([0])
         values = np.expand_dims(values, ax)
+        if avg:
+            length = inGrid[1][ax][-1] - inGrid[1][ax][0]
+            if len(inGrid[1][ax]) == inValues[1].shape[ax]:
+                length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
+            values = values / length
 
     return [grid], [values]
 
+def average(inGrid, inValues):
+    return integrate(inGrid, inValues, True)
 
 def divergence(inGrid, inValues):
     outGrid = inGrid[0]
@@ -239,6 +246,7 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          '/' : { 'numIn' : 2, 'numOut' : 1, 'func' : divide },
          'sqrt' : { 'numIn' : 1, 'numOut' : 1, 'func' : sqrt },
          'abs' : { 'numIn' : 1, 'numOut' : 1, 'func' : absolute },
+         'avg' : { 'numIn' : 2, 'numOut' : 1, 'func' : average },
          'log' : { 'numIn' : 1, 'numOut' : 1, 'func' : log },
          'log10' : { 'numIn' : 1, 'numOut' : 1, 'func' : log10 },
          'max' : { 'numIn' : 1, 'numOut' : 1, 'func' : maximum },
