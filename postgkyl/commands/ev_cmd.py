@@ -106,6 +106,9 @@ def sq(inGrid, inValues):
 def length(inGrid, inValues):
     ax = int(inValues[0])
     length = inGrid[1][ax][-1] - inGrid[1][ax][0]
+    if len(inGrid[1][ax]) == inValues[1].shape[ax]:
+        length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
+    
     return [[]], [length]
 
 
