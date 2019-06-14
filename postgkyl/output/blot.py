@@ -206,7 +206,7 @@ def blot(gdata, args=(),
             label = labelPrefix
         #end
         # Special plots:
-        fig.image(image=[values[..., comp].transpose()], x=lower[0], y=lower[1], dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]), palette="Inferno11")
+        fig.image(image=[values[..., comp].transpose()], x=lower[0], y=lower[1], dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]), palette="Inferno256")
         #end
 
         #-------------------------------------------------------------
@@ -247,6 +247,6 @@ def blot(gdata, args=(),
     ##end
     
     blt.output_file("image.html", title="image.py example")
-    blt.show(fig)
+    #blt.show(fig)
     return fig
 #end

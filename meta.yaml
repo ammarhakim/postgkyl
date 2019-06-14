@@ -6,7 +6,7 @@ source:
   path: ./
 
 build:
-  number: 20190524
+  number: 20190614
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
@@ -24,7 +24,7 @@ requirements:
     - python
     - numpy >=1.13
     - scipy
-    - matplotlib >=3.0
+    - matplotlib >=3.1
     - pytables
     - click
     - sympy
