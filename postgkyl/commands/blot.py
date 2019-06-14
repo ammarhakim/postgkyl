@@ -112,8 +112,8 @@ def blot(ctx, **kwargs):
     #    plt.savefig(fName, dpi=kwargs['dpi'])
     #end
 
-    #if kwargs['show']:
-    #    blt.show(fig)
+    if kwargs['show']:
+        blt.show(fig)
     #end
     vlog(ctx, 'Finishing blot')
 #end
