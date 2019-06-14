@@ -1,6 +1,7 @@
 from . import util
 from . import ev_cmd
 from .animate import animate
+from .blot import blot
 from .collect import collect
 from .dataset import dataset
 from .euler import euler

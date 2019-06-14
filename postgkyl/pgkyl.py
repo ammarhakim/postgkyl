@@ -296,6 +296,7 @@ def pop(ctx):
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.animate)
+cli.add_command(cmd.blot)
 cli.add_command(cmd.collect)
 cli.add_command(cmd.dataset)
 cli.add_command(cmd.euler)
