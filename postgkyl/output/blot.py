@@ -98,8 +98,7 @@ def blot(gdata, args=(),
 
     # Prepare the figure
     if figure is None:
-        fig = blt.figure()
-        fig.x_range.range_padding = fig.y_range.range_padding = 0
+        fig = blt.figure(tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")])
     # elif isinstance(figure, int):
     #     fig = plt.figure(figure)
     # elif isinstance(figure, matplotlib.figure.Figure):
@@ -206,11 +205,25 @@ def blot(gdata, args=(),
             label = labelPrefix
         #end
         # Special plots:
-        fig.image(image=[values[..., comp].transpose()], x=lower[0], y=lower[1], dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]), palette="Inferno256")
+        # Basic  plots
+        if numDims == 1:
+            x = 0.5*(grid[0][1:]+grid[0][:-1])
+            fig.line(x, values[..., comp], line_width=2)
+        else:
+            fig.image(image=[values[..., comp].transpose()],
+                      x=lower[0], y=lower[1],
+                      dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]),
+                      palette="Inferno256")
         #end
 
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
+        
+        fig.x_range.range_padding  = 0
+        if numDims == 2:
+            fig.y_range.range_padding = 0
+        #end
+
         # cax.grid(True)
         # # Legend
         # if legend:
@@ -246,7 +259,7 @@ def blot(gdata, args=(),
     #    ax[i].axis('off')
     ##end
     
-    blt.output_file("image.html", title="image.py example")
+    blt.output_file("image.html", title="Postgkyl output")
     #blt.show(fig)
     return fig
 #end
