@@ -378,8 +378,8 @@ class GInterpNodal(GInterp):
                                      self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) /\
-                     (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = values[..., np.newaxis]
         else:
             values = np.zeros(q.shape, self.numDims)
             for i in range(self.numDims):
@@ -387,7 +387,6 @@ class GInterpNodal(GInterp):
                 values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
-        values = values[..., np.newaxis]
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
         if stack is False:
@@ -492,22 +491,23 @@ class GInterpModal(GInterp):
         #end
     #end
 
-    def differentiate(self, direction, comp=0, stack=False):
+    def differentiate(self, direction=None, comp=0, stack=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) /\
-                     (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = values[..., np.newaxis]
         else:
-            values = np.zeros(q.shape, self.numDims)
-            for i in range(self.numDims):
-                values[:,i] = _interpOnMesh(cMat[:,:,i], q)
-                values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+            values = _interpOnMesh(cMat[:,:,0], q)
+            values /= (self.Xc[0][1]-self.Xc[0][0])
+            values = values[..., np.newaxis]
+            for i in range(1, self.numDims):
+                values = np.append(values, _interpOnMesh(cMat[:,:,i], q)[...,np.newaxis], axis=2)
+                values[...,i] /= (self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
-        values = values[..., np.newaxis]
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
         if stack is False:
