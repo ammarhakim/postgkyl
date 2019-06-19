@@ -3,6 +3,7 @@ from . import ev_cmd
 from .animate import animate
 from .blot import blot
 from .collect import collect
+from .differentiate import differentiate
 from .dataset import dataset
 from .euler import euler
 from .ev import ev
