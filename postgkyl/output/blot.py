@@ -112,6 +112,8 @@ def blot(gdata, args=(),
 
     #-----------------------------------------------------------------
     #-- Preparing the Axes -------------------------------------------
+    fig.xaxis.axis_label = axLabel[0]
+    fig.yaxis.axis_label = axLabel[1]
     # if fig.axes:
     #     ax = fig.axes
     #     if squeeze is False and numComps > len(ax):
