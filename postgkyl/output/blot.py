@@ -108,7 +108,7 @@ def blot(gdata, args=(),
         axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
     #end
 
-    sr = np.sqrt(numComps) #determine number of rows and columns
+    sr = np.sqrt(numComps) #determine the number of rows and columns
     if sr == np.ceil(sr):
         numRows = int(sr)
         numCols = int(sr)
@@ -129,9 +129,11 @@ def blot(gdata, args=(),
         #end
         for comp in idxComps:
             fig.append(blt.figure(tooltips=tooltips,
-                                  frame_height=int(screen_height*0.55/numRows),
+                                  frame_height=int(screen_height*0.55/numRows),#adjust figures with the size based on the screen size
                                   frame_width=int(screen_height*0.55/numRows),
-                                  outline_line_color='black')) #adjust figures with the size based on the screen size
+                                  outline_line_color='black',
+                                  min_border_left=70,
+                                  min_border_right=40)) #adjust spacings betweewn subplots to be aligned
         #end
     #end
             
@@ -203,14 +205,17 @@ def blot(gdata, args=(),
     #         ax = fig.axes
     #         # Adding labels only to the right subplots
 
-    for comp in idxComps: #deleting minor ticks
-        fig[comp].xaxis.minor_tick_line_color = None
+    for comp in idxComps: 
+        fig[comp].xaxis.minor_tick_line_color = None #deleting minor ticks
         fig[comp].yaxis.minor_tick_line_color = None
-        #if comp % numCols != 0: #hiding labels for unnecessary subplots
-        #    fig[comp].yaxis.major_label_text_font_size = '0pt'
-        #end
-        #if comp < (numRows-1) * numCols:
-        #    fig[comp].xaxis.major_label_text_font_size = '0pt'
+        #fig[comp].axis.formatter = BasicTickFormatter(precision=2) #get rid of unnecessary floating numbers.
+        if numDims != 1:
+            if comp % numCols != 0: #hiding labels for unnecessary subplots
+                fig[comp].yaxis.major_label_text_font_size = '0pt'
+            #end
+            if comp < (numRows-1) * numCols:
+                fig[comp].xaxis.major_label_text_font_size = '0pt'
+            #end
         #end
     #end
        
@@ -271,9 +276,14 @@ def blot(gdata, args=(),
         if numDims == 1 and label != '':
                 pass
         else: 
-            legend_number = Label(x=lower[0], y=upper[1]-1.4, text=label, render_mode='css',
-                                background_fill_color='white', background_fill_alpha=0.9, border_line_cap='round')
+            legend_number = Label(x=lower[0]+(upper[0]-lower[0])*0.005,
+                                  y=upper[1]-(upper[1]-lower[1])*0.115, 
+                                  text=label, render_mode='css',
+                                  background_fill_color='white', 
+                                  background_fill_alpha=0.9, 
+                                  border_line_cap='round')
             fig[comp].add_layout(legend_number)
+        #end
         
         # Special plots:
         if contour:
@@ -316,6 +326,7 @@ def blot(gdata, args=(),
             fig[comp].x_range.range_padding  = 0
             if numDims == 2:
                 fig[comp].y_range.range_padding = 0
+            #end
         #end
 
         #mapper = linear_cmap(palette=Inferno256)
