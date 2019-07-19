@@ -1,7 +1,18 @@
 import click
 import numpy as np
 import os.path
+import tkinter as tk
 import bokeh.plotting as blt
+from bokeh.layouts import gridplot, layout
+from bokeh.models import Grid, BasicTickFormatter, ColorBar, BasicTicker, LinearColorMapper, Label
+from bokeh.palettes import Inferno256
+from bokeh.transform import linear_cmap
+
+
+root = tk.Tk()#meassuring screen size
+screen_height = root.winfo_screenheight()
+root.withdraw()
+
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
@@ -64,7 +75,7 @@ def blot(gdata, args=(),
     lower, upper = gdata.getBounds()
     cells = gdata.getNumCells()
     # Squeeze the data (get rid of "collapsed" dimensions)
-    axLabel = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']
+    axLabel = ['z_0', 'z_1', 'z_2', 'z_3', 'z_4', 'z_5']
     if len(grid) > numDims:
         idx = []
         for d in range(len(grid)):
@@ -81,6 +92,7 @@ def blot(gdata, args=(),
             values = np.squeeze(values, tuple(idx)) 
         #end
     numComps = values.shape[-1]
+
     if streamline or quiver:
         step = 2
     else:
@@ -96,9 +108,33 @@ def blot(gdata, args=(),
         axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
     #end
 
+    sr = np.sqrt(numComps) #determine number of rows and columns
+    if sr == np.ceil(sr):
+        numRows = int(sr)
+        numCols = int(sr)
+    elif np.ceil(sr) * np.floor(sr) >= numComps:
+        numRows = int(np.floor(sr))
+        numCols = int(np.ceil(sr))
+    else:
+        numRows = int(np.ceil(sr))
+        numCols = int(np.ceil(sr))
+
     # Prepare the figure
     if figure is None:
-        fig = blt.figure(tooltips=[("x", "$x"), ("y", "$y"), ("value", "@image")])
+        fig = []
+        if numDims == 1:
+            tooltips = [(axLabel[0], "$x"), ("value", "$y")] #getting tooltips ready for different dimensions
+        else:
+            tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y"), ("value", "@image")]
+        #end
+        for comp in idxComps:
+            fig.append(blt.figure(tooltips=tooltips,
+                                  frame_height=int(screen_height*0.55/numRows),
+                                  frame_width=int(screen_height*0.55/numRows),
+                                  outline_line_color='black')) #adjust figures with the size based on the screen size
+        #end
+    #end
+            
     # elif isinstance(figure, int):
     #     fig = plt.figure(figure)
     # elif isinstance(figure, matplotlib.figure.Figure):
@@ -111,9 +147,7 @@ def blot(gdata, args=(),
     #end
 
     #-----------------------------------------------------------------
-    #-- Preparing the Axes -------------------------------------------
-    fig.xaxis.axis_label = axLabel[0]
-    fig.yaxis.axis_label = axLabel[1]
+
     # if fig.axes:
     #     ax = fig.axes
     #     if squeeze is False and numComps > len(ax):
@@ -122,6 +156,7 @@ def blot(gdata, args=(),
     #     #end
     # else:
     #     if squeeze:  # Plotting into 1 panel
+    
     #         plt.subplots(1, 1, num=fig.number)
     #         ax = fig.axes
     #         if xlabel is None:
@@ -142,6 +177,7 @@ def blot(gdata, args=(),
     #         if title is not None:
     #             ax[0].set_title(title, y=1.08)
     #         #end
+    
     #     else:  # Plotting each components into its own subplot
     #         sr = np.sqrt(numComps)
     #         if sr == np.ceil(sr):
@@ -154,7 +190,7 @@ def blot(gdata, args=(),
     #             numRows = int(np.ceil(sr))
     #             numCols = int(np.ceil(sr))
     #         #end
-
+    
     #         if numDims == 1 or group is not None: 
     #             plt.subplots(numRows, numCols,
     #                          sharex=True,
@@ -166,6 +202,29 @@ def blot(gdata, args=(),
     #         #end
     #         ax = fig.axes
     #         # Adding labels only to the right subplots
+
+    for comp in idxComps: #deleting minor ticks
+        fig[comp].xaxis.minor_tick_line_color = None
+        fig[comp].yaxis.minor_tick_line_color = None
+        #if comp % numCols != 0: #hiding labels for unnecessary subplots
+        #    fig[comp].yaxis.major_label_text_font_size = '0pt'
+        #end
+        #if comp < (numRows-1) * numCols:
+        #    fig[comp].xaxis.major_label_text_font_size = '0pt'
+        #end
+    #end
+       
+
+    for comp in idxComps: #adding labels
+        if comp >= (numRows-1) * numCols:
+            fig[comp].xaxis.axis_label = axLabel[0]
+        #end
+        if numDims == 2:
+            if comp % numCols == 0:
+                fig[comp].yaxis.axis_label = axLabel[1]
+            #end
+        #end
+    #end
     #         for comp in idxComps:
     #             if comp >= (numRows-1) * numCols:
     #                 if xlabel is None:
@@ -193,6 +252,7 @@ def blot(gdata, args=(),
     #     #end
     # #end
 
+    
     #-----------------------------------------------------------------
     #-- Main Plotting Loop -------------------------------------------
     for comp in idxComps:
@@ -206,24 +266,66 @@ def blot(gdata, args=(),
         else:
             label = labelPrefix
         #end
+
+
+        if numDims == 1 and label != '':
+                pass
+        else: 
+            legend_number = Label(x=lower[0], y=upper[1]-1.4, text=label, render_mode='css',
+                                background_fill_color='white', background_fill_alpha=0.9, border_line_cap='round')
+            fig[comp].add_layout(legend_number)
+        
         # Special plots:
+        if contour:
+            pass
+        elif streamline:
+            pass
+        elif quiver:
+            pass
+        elif diverging:
+            pass
+
         # Basic  plots
         if numDims == 1:
             x = 0.5*(grid[0][1:]+grid[0][:-1])
-            fig.line(x, values[..., comp], line_width=2)
+            fig[comp].line(x, values[..., comp], line_width=2, legend=label)
         else:
-            fig.image(image=[values[..., comp].transpose()],
+        
+            fig[comp].image(image=[values[..., comp].transpose()],
                       x=lower[0], y=lower[1],
                       dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]),
                       palette="Inferno256")
+            mapper = LinearColorMapper(palette='Inferno256',
+                                    low=np.amin(values[...,comp]), 
+                                    high=np.amax(values[...,comp]))#adding a color bar
+            color_bar = ColorBar(color_mapper=mapper, 
+                                 width=7, 
+                                 location=(0,0), 
+                                 formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                 ticker=BasicTicker(desired_num_ticks=4), 
+                                 label_standoff=10, 
+                                 border_line_color=None,
+                                 padding=2,
+                                 bar_line_color='black')
+            fig[comp].add_layout(color_bar, 'right')
         #end
 
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
-        
-        fig.x_range.range_padding  = 0
-        if numDims == 2:
-            fig.y_range.range_padding = 0
+        for comp in idxComps:
+            fig[comp].x_range.range_padding  = 0
+            if numDims == 2:
+                fig[comp].y_range.range_padding = 0
+        #end
+
+        #mapper = linear_cmap(palette=Inferno256)
+        #color_bar = ColorBar (color_mapper=mapper['transform'], width=0.7)   
+        #for comp in idxComps:
+            #fig[comp].add_layout(color_bar, 'right')
+        #fig.x_range.range_padding  = 0
+        #if numDims == 2:
+        #    fig.y_range.range_padding = 0
+
         #end
 
         # cax.grid(True)
@@ -260,8 +362,9 @@ def blot(gdata, args=(),
     #for i in range(numComps, len(ax)):
     #    ax[i].axis('off')
     ##end
-    
-    blt.output_file("image.html", title="Postgkyl output")
-    #blt.show(fig)
-    return fig
+
+    gp = gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
+    #blt.output_file("image.html", title="Postgkyl output")
+    #blt.show(gp)
+    return gp
 #end
