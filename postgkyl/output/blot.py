@@ -1,18 +1,12 @@
-import click
-import numpy as np
-import os.path
-import tkinter as tk
-import bokeh.plotting as blt
+
 from bokeh.layouts import gridplot, layout
 from bokeh.models import Grid, BasicTickFormatter, ColorBar, BasicTicker, LinearColorMapper, Label
 from bokeh.palettes import Inferno256
 from bokeh.transform import linear_cmap
-
-
-root = tk.Tk()#meassuring screen size
-screen_height = root.winfo_screenheight()
-root.withdraw()
-
+import click
+import numpy as np
+import os.path
+import bokeh.plotting as blt
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
@@ -129,8 +123,8 @@ def blot(gdata, args=(),
         #end
         for comp in idxComps:
             fig.append(blt.figure(tooltips=tooltips,
-                                  frame_height=int(screen_height*0.55/numRows),#adjust figures with the size based on the screen size
-                                  frame_width=int(screen_height*0.55/numRows),
+                                  frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
+                                  frame_width=int(600.0/numRows),
                                   outline_line_color='black',
                                   min_border_left=70,
                                   min_border_right=40)) #adjust spacings betweewn subplots to be aligned
@@ -286,14 +280,21 @@ def blot(gdata, args=(),
         #end
         
         # Special plots:
-        if contour:
+        if numDims == 1:
             pass
-        elif streamline:
-            pass
-        elif quiver:
-            pass
-        elif diverging:
-            pass
+        elif numDims == 2:
+            if contour:
+                pass
+            elif streamline:
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                #streamlines(gridCC[0]*xscale, gridCC[1]*yscale, # 1d arrays(evenly spaced grid)
+                #            values[..., 2*comp+1].transpose(), # y velocity
+                #            values[..., 2*comp].transpose(), # x velocity
+                #            density=1)   
+            elif quiver:
+                pass
+            elif diverging:
+                pass
 
         # Basic  plots
         if numDims == 1:
