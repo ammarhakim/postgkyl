@@ -15,10 +15,10 @@ from postgkyl.commands.util import vlog, pushChain
 #               help="Switch to contour mode.")
 # @click.option('-q', '--quiver', is_flag=True,
 #               help="Switch to quiver mode.")
-# @click.option('-l', '--streamline', is_flag=True,
-#               help="Switch to streamline mode.")
-# @click.option('-d', '--diverging', is_flag=True,
-#               help="Switch to diverging colormesh mode.")
+@click.option('-l', '--streamline', is_flag=True,
+              help="Switch to streamline mode.")
+@click.option('-d', '--diverging', is_flag=True,
+              help="Switch to diverging colormesh mode.")
 # @click.option('-g', '--group', type=click.Choice(['0', '1']),
 #               help="Switch to group mode.")
 # @click.option('--style',
