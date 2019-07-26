@@ -1,12 +1,18 @@
 
 from bokeh.layouts import gridplot, layout
-from bokeh.models import Grid, BasicTickFormatter, ColorBar, BasicTicker, LinearColorMapper, Label
+from bokeh.models import Grid, BasicTickFormatter, ColorBar, BasicTicker, LinearColorMapper, Label, ColumnDataSource
 from bokeh.palettes import Inferno256
 from bokeh.transform import linear_cmap
+from bokeh.colors import RGB
+from matplotlib import cm
+from postgkyl.utils import streamlines
 import click
 import numpy as np
 import os.path
 import bokeh.plotting as blt
+import pylab as pl
+import matplotlib.pyplot as plt
+
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
@@ -119,8 +125,12 @@ def blot(gdata, args=(),
         if numDims == 1:
             tooltips = [(axLabel[0], "$x"), ("value", "$y")] #getting tooltips ready for different dimensions
         else:
-            tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y"), ("value", "@image")]
-        #end
+            if streamline or quiver:
+                tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y")]
+            else:
+                tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y"), ("value", "@image")]
+            #end
+        #end                               
         for comp in idxComps:
             fig.append(blt.figure(tooltips=tooltips,
                                   frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
@@ -130,6 +140,7 @@ def blot(gdata, args=(),
                                   min_border_right=40)) #adjust spacings betweewn subplots to be aligned
         #end
     #end
+
             
     # elif isinstance(figure, int):
     #     fig = plt.figure(figure)
@@ -270,7 +281,7 @@ def blot(gdata, args=(),
         if numDims == 1 and label != '':
                 pass
         else: 
-            legend_number = Label(x=lower[0]+(upper[0]-lower[0])*0.005,
+            legend_number = Label(x=lower[0]+(upper[0]-lower[0])*0.025,
                                   y=upper[1]-(upper[1]-lower[1])*0.115, 
                                   text=label, render_mode='css',
                                   background_fill_color='white', 
@@ -281,35 +292,43 @@ def blot(gdata, args=(),
         
         # Special plots:
         if numDims == 1:
-            pass
+            x = 0.5*(grid[0][1:]+grid[0][:-1])
+            fig[comp].line(x, values[..., comp], line_width=2, legend=label)
         elif numDims == 2:
             if contour:
                 pass
             elif streamline:
+                magnitude = np.sqrt(values[..., 2*comp]**2 
+                                    + values[..., 2*comp+1]**2)
                 gridCC = _gridNodalToCellCentered(grid, cells)
-                #streamlines(gridCC[0]*xscale, gridCC[1]*yscale, # 1d arrays(evenly spaced grid)
-                #            values[..., 2*comp+1].transpose(), # y velocity
-                #            values[..., 2*comp].transpose(), # x velocity
-                #            density=1)   
-            elif quiver:
-                pass
-            elif diverging:
-                pass
-
-        # Basic  plots
-        if numDims == 1:
-            x = 0.5*(grid[0][1:]+grid[0][:-1])
-            fig[comp].line(x, values[..., comp], line_width=2, legend=label)
-        else:
-        
-            fig[comp].image(image=[values[..., comp].transpose()],
-                      x=lower[0], y=lower[1],
-                      dw=(upper[0]-lower[0]), dh=(upper[1]-lower[1]),
-                      palette="Inferno256")
-            mapper = LinearColorMapper(palette='Inferno256',
-                                    low=np.amin(values[...,comp]), 
-                                    high=np.amax(values[...,comp]))#adding a color bar
-            color_bar = ColorBar(color_mapper=mapper, 
+                plt.subplots(numRows, numCols,
+                             sharex=True, sharey=True)
+                strm = plt.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,  # make streamline plot by matplotlib first
+                                      values[..., 2*comp].transpose(),
+                                      values[..., 2*comp+1].transpose(), 
+                                      color=magnitude.transpose(), 
+                                      linewidth=2)
+                lines = strm.lines # get the line and color data of matplotlib streamline
+                pathes = lines.get_paths()
+                arr = lines.get_array().data
+                points = np.stack([p.vertices.T for p in pathes], axis=0)
+                X = points[:, 0, :].tolist()
+                Y = points[:, 1, :].tolist()
+                mapper = linear_cmap(field_name="color", palette=Inferno256, low=arr.min(), high=arr.max())
+                # use the data to create a multiline, use linear_map and palette to set the color of the lines:
+                source = ColumnDataSource(dict(x=X, y=Y, color=arr))
+                fig[comp].multi_line("x", "y", line_color=mapper, source=source, line_width=3) 
+                                    
+                #xs, ys = streamlines(gridCC[0]*xscale, 
+                #                     gridCC[1]*yscale, # 1d arrays
+                #                     values[..., 2*comp].transpose(), # x velocity
+                #                     values[..., 2*comp+1].transpose(), # y velocity
+                #                     density=1)
+                #fig[comp].multi_line(xs, ys, color=inferno(len(xs)), line_width=2, line_alpha=0.8)
+                colormapper = LinearColorMapper(palette='Inferno256',
+                                    low=np.amin(magnitude.transpose()), 
+                                    high=np.amax(magnitude.transpose()))#adding a color bar
+                color_bar = ColorBar(color_mapper=colormapper, 
                                  width=7, 
                                  location=(0,0), 
                                  formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
@@ -318,7 +337,57 @@ def blot(gdata, args=(),
                                  border_line_color=None,
                                  padding=2,
                                  bar_line_color='black')
-            fig[comp].add_layout(color_bar, 'right')
+                fig[comp].add_layout(color_bar, 'right')
+                #end
+            elif quiver:
+                pass
+            elif diverging:
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                vmax = np.abs(values[..., comp]).max()
+                x_range = gridCC[0]*xscale #setting x coordinates
+                y_range = gridCC[1]*yscale #setting y coordinates
+                CmToRgb = (255 * cm.RdBu_r(range(256))).astype('int') #extract colors from maplotlib colormap
+                RgbToHexa = [RGB(*tuple(rgb)).to_hex() for rgb in CmToRgb] # convert RGB numbers into colormap hexacode string
+                mapper = LinearColorMapper(palette=RgbToHexa,
+                                           low=-vmax, 
+                                           high=vmax)#adding a color bar
+                fig[comp].image(image=[values[..., comp].transpose()],
+                                x=x_range[0], y=y_range[0],
+                                dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
+                                color_mapper=mapper)    
+                color_bar = ColorBar(color_mapper=mapper, 
+                                    width=7, 
+                                    location=(0,0), 
+                                    formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                    ticker=BasicTicker(desired_num_ticks=4), 
+                                    label_standoff=10, 
+                                    border_line_color=None,
+                                    padding=2,
+                                    bar_line_color='black')
+                fig[comp].add_layout(color_bar, 'right')
+
+        # Basic  plots
+            else:
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                mapper = LinearColorMapper(palette='Inferno256',
+                                           low=np.amin(values[...,comp]), 
+                                           high=np.amax(values[...,comp]))
+                x_range = gridCC[0]*xscale #setting x coordinates
+                y_range = gridCC[1]*yscale                               
+                fig[comp].image(image=[values[..., comp].transpose()],
+                                x=x_range[0], y=y_range[0],
+                                dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
+                                color_mapper=mapper)
+                color_bar = ColorBar(color_mapper=mapper, #adding a colorbar
+                                    width=7, 
+                                    location=(0,0), 
+                                    formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                    ticker=BasicTicker(desired_num_ticks=4), 
+                                    label_standoff=10, 
+                                    border_line_color=None,
+                                    padding=2,
+                                    bar_line_color='black')
+                fig[comp].add_layout(color_bar, 'right')
         #end
 
         #-------------------------------------------------------------
