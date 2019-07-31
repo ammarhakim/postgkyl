@@ -1,18 +1,15 @@
-
-from bokeh.layouts import gridplot, layout
-from bokeh.models import Grid, BasicTickFormatter, ColorBar, BasicTicker, LinearColorMapper, Label, ColumnDataSource
-from bokeh.palettes import Inferno256
-from bokeh.transform import linear_cmap
-from bokeh.colors import RGB
 from matplotlib import cm
 from postgkyl.utils import streamlines
 import click
 import numpy as np
 import os.path
 import bokeh.plotting as blt
-import pylab as pl
+import bokeh.models as bm
+import bokeh.layouts as bl
+import bokeh.transform as bt
+import bokeh.colors as bc
+import bokeh.palettes
 import matplotlib.pyplot as plt
-
 
 def _gridNodalToCellCentered(grid, cells):
     numDims = len(grid)
@@ -126,7 +123,7 @@ def blot(gdata, args=(),
             tooltips = [(axLabel[0], "$x"), ("value", "$y")] #getting tooltips ready for different dimensions
         else:
             if streamline or quiver:
-                tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y")]
+                tooltips = []
             else:
                 tooltips = [(axLabel[0], "$x"), (axLabel[1], "$y"), ("value", "@image")]
             #end
@@ -213,6 +210,10 @@ def blot(gdata, args=(),
     for comp in idxComps: 
         fig[comp].xaxis.minor_tick_line_color = None #deleting minor ticks
         fig[comp].yaxis.minor_tick_line_color = None
+        fig[comp].xaxis.major_label_text_font_size = '12pt' #tick font size adjustment
+        fig[comp].yaxis.major_label_text_font_size = '12pt'
+        fig[comp].xaxis.axis_label_text_font_size = '12pt' #label font size adjustment
+        fig[comp].yaxis.axis_label_text_font_size = '12pt'
         #fig[comp].axis.formatter = BasicTickFormatter(precision=2) #get rid of unnecessary floating numbers.
         if numDims != 1:
             if comp % numCols != 0: #hiding labels for unnecessary subplots
@@ -224,7 +225,6 @@ def blot(gdata, args=(),
         #end
     #end
        
-
     for comp in idxComps: #adding labels
         if comp >= (numRows-1) * numCols:
             fig[comp].xaxis.axis_label = axLabel[0]
@@ -266,31 +266,7 @@ def blot(gdata, args=(),
     #-----------------------------------------------------------------
     #-- Main Plotting Loop -------------------------------------------
     for comp in idxComps:
-
-        if len(idxComps) > 1:
-            if labelPrefix == "":
-                label = str(comp)
-            else:
-                label = '{:s}_c{:d}'.format(labelPrefix, comp)
-            #end
-        else:
-            label = labelPrefix
-        #end
-
-
-        if numDims == 1 and label != '':
-                pass
-        else: 
-            legend_number = Label(x=lower[0]+(upper[0]-lower[0])*0.025,
-                                  y=upper[1]-(upper[1]-lower[1])*0.115, 
-                                  text=label, render_mode='css',
-                                  background_fill_color='white', 
-                                  background_fill_alpha=0.9, 
-                                  border_line_cap='round')
-            fig[comp].add_layout(legend_number)
-        #end
-        
-        # Special plots:
+        # Special plots
         if numDims == 1:
             x = 0.5*(grid[0][1:]+grid[0][:-1])
             fig[comp].line(x, values[..., comp], line_width=2, legend=label)
@@ -314,9 +290,9 @@ def blot(gdata, args=(),
                 points = np.stack([p.vertices.T for p in pathes], axis=0)
                 X = points[:, 0, :].tolist()
                 Y = points[:, 1, :].tolist()
-                mapper = linear_cmap(field_name="color", palette=Inferno256, low=arr.min(), high=arr.max())
+                mapper = bt.linear_cmap(field_name="color", palette=Inferno256, low=arr.min(), high=arr.max())
                 # use the data to create a multiline, use linear_map and palette to set the color of the lines:
-                source = ColumnDataSource(dict(x=X, y=Y, color=arr))
+                source = bm.ColumnDataSource(dict(x=X, y=Y, color=arr))
                 fig[comp].multi_line("x", "y", line_color=mapper, source=source, line_width=3) 
                                     
                 #xs, ys = streamlines(gridCC[0]*xscale, 
@@ -325,15 +301,15 @@ def blot(gdata, args=(),
                 #                     values[..., 2*comp+1].transpose(), # y velocity
                 #                     density=1)
                 #fig[comp].multi_line(xs, ys, color=inferno(len(xs)), line_width=2, line_alpha=0.8)
-                colormapper = LinearColorMapper(palette='Inferno256',
+                colormapper = bm.LinearColorMapper(palette='Inferno256',
                                     low=np.amin(magnitude.transpose()), 
                                     high=np.amax(magnitude.transpose()))#adding a color bar
-                color_bar = ColorBar(color_mapper=colormapper, 
+                color_bar = bm.ColorBar(color_mapper=colormapper, 
                                  width=7, 
                                  location=(0,0), 
-                                 formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
-                                 ticker=BasicTicker(desired_num_ticks=4), 
-                                 label_standoff=10, 
+                                 formatter=bm.BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                 ticker=bm.BasicTicker(desired_num_ticks=4), 
+                                 label_standoff=12, 
                                  border_line_color=None,
                                  padding=2,
                                  bar_line_color='black')
@@ -347,55 +323,105 @@ def blot(gdata, args=(),
                 x_range = gridCC[0]*xscale #setting x coordinates
                 y_range = gridCC[1]*yscale #setting y coordinates
                 CmToRgb = (255 * cm.RdBu_r(range(256))).astype('int') #extract colors from maplotlib colormap
-                RgbToHexa = [RGB(*tuple(rgb)).to_hex() for rgb in CmToRgb] # convert RGB numbers into colormap hexacode string
-                mapper = LinearColorMapper(palette=RgbToHexa,
+                RgbToHexa = [bc.RGB(*tuple(rgb)).to_hex() for rgb in CmToRgb] # convert RGB numbers into colormap hexacode string
+                mapper = bm.LinearColorMapper(palette=RgbToHexa,
                                            low=-vmax, 
                                            high=vmax)#adding a color bar
                 fig[comp].image(image=[values[..., comp].transpose()],
                                 x=x_range[0], y=y_range[0],
                                 dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
                                 color_mapper=mapper)    
-                color_bar = ColorBar(color_mapper=mapper, 
+                color_bar = bm.ColorBar(color_mapper=mapper, 
                                     width=7, 
                                     location=(0,0), 
-                                    formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
-                                    ticker=BasicTicker(desired_num_ticks=4), 
-                                    label_standoff=10, 
+                                    formatter=bm.BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                    ticker=bm.BasicTicker(desired_num_ticks=4), 
+                                    label_standoff=12, 
                                     border_line_color=None,
                                     padding=2,
                                     bar_line_color='black')
                 fig[comp].add_layout(color_bar, 'right')
-
+            #end
         # Basic  plots
             else:
                 gridCC = _gridNodalToCellCentered(grid, cells)
-                mapper = LinearColorMapper(palette='Inferno256',
-                                           low=np.amin(values[...,comp]), 
-                                           high=np.amax(values[...,comp]))
                 x_range = gridCC[0]*xscale #setting x coordinates
-                y_range = gridCC[1]*yscale                               
-                fig[comp].image(image=[values[..., comp].transpose()],
-                                x=x_range[0], y=y_range[0],
-                                dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
-                                color_mapper=mapper)
-                color_bar = ColorBar(color_mapper=mapper, #adding a colorbar
-                                    width=7, 
-                                    location=(0,0), 
-                                    formatter=BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
-                                    ticker=BasicTicker(desired_num_ticks=4), 
-                                    label_standoff=10, 
-                                    border_line_color=None,
-                                    padding=2,
-                                    bar_line_color='black')
-                fig[comp].add_layout(color_bar, 'right')
+                y_range = gridCC[1]*yscale #setting y coordinates
+                print(grid[0][1]-grid[0][0])
+                if logz:
+                    tmp = np.array(values[..., comp])
+                    print(vmin, vmax)
+                    if vmin is not None or vmax is not None:
+                        for i in range(tmp.shape[0]):
+                            for j in range(tmp.shape[1]):
+                                if vmin and tmp[i, j] < vmin:
+                                    tmp[i, j] = vmin
+                                    MinimumValue = tmp[i, j]
+                                    print(MinimumValue)
+                                #end
+                                if vmax and tmp[i, j] > vmax:
+                                    tmp[i, j] = vmax
+                                    MaximumValue = tmp[i,j]
+                                    print(MaximumValue)
+                                #end            
+                    elif vmin is None and vmax is None: # if vmin and vmax are not defined
+                        MinimumValue = np.amin(values[...,comp])
+                        MaximumValue = np.amax(values[...,comp])
+                        print(MinimumValue)
+                        print(MaximumValue)
+                        print('')
+                            #end
+                        #end
+                    #end
+                    mapper = bm.LogColorMapper(palette='Inferno256',
+                                            low=MinimumValue, 
+                                            high=MaximumValue) 
+                    fig[comp].image(image=[tmp.transpose()],
+                                    x=x_range[0], y=y_range[0],
+                                    dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
+                                    color_mapper=mapper)
+                    color_bar = bm.ColorBar(color_mapper=mapper, #adding a colorbar
+                                        width=7, 
+                                        location=(0,0), 
+                                        formatter=bm.BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                        ticker=bm.BasicTicker(), 
+                                        label_standoff=12, 
+                                        border_line_color=None,
+                                        padding=2,
+                                        bar_line_color='black')
+                    fig[comp].add_layout(color_bar, 'right')
+                else:
+                    mapper = bm.LinearColorMapper(palette='Inferno256',
+                                            low=np.amin(values[...,comp]), 
+                                            high=np.amax(values[...,comp]))                              
+                    fig[comp].image(image=[values[..., comp].transpose()],
+                                    x=x_range[0], y=y_range[0],
+                                    dw=(x_range[-1]-x_range[0]), dh=(y_range[-1]-y_range[0]),
+                                    color_mapper=mapper)
+                    color_bar = bm.ColorBar(color_mapper=mapper, #adding a colorbar
+                                        width=7, 
+                                        location=(0,0), 
+                                        formatter=bm.BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
+                                        ticker=bm.BasicTicker(desired_num_ticks=4), 
+                                        label_standoff=12, 
+                                        border_line_color=None,
+                                        padding=2,
+                                        bar_line_color='black',
+                                        major_label_text_font_size='9pt')
+                    fig[comp].add_layout(color_bar, 'right')
+                #end
+            #end
+        else:
+            raise ValueError("{:d}D data not yet supported".
+                             format(numDims))
         #end
 
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
-        for comp in idxComps:
-            fig[comp].x_range.range_padding  = 0
-            if numDims == 2:
-                fig[comp].y_range.range_padding = 0
+    
+        fig[comp].x_range.range_padding  = 0
+        if numDims == 2:
+            fig[comp].y_range.range_padding = 0
             #end
         #end
 
@@ -410,19 +436,29 @@ def blot(gdata, args=(),
         #end
 
         # cax.grid(True)
-        # # Legend
-        # if legend:
-        #     if numDims == 1 and label != '':
-        #         cax.legend(loc=0)
-        #     else:
-        #         cax.text(0.03, 0.96, label,
-        #                  bbox=dict(facecolor='w', edgecolor='w', alpha=0.8,
-        #                            boxstyle="round"),
-        #                  verticalalignment='top',
-        #                  horizontalalignment='left',
-        #                  transform=cax.transAxes)
-        #     #end
-        # #end
+        if legend:
+            if len(idxComps) > 1:
+                if labelPrefix == "":
+                    label = str(comp)
+                else:
+                    label = '{:s}_c{:d}'.format(labelPrefix, comp)
+                #end
+            else:
+                label = labelPrefix
+            #end
+            if numDims == 1 and label != '':
+                pass
+            else:
+                legend_number = bm.Label(x=lower[0]+(upper[0]-lower[0])*0.025,
+                                     y=upper[1]-(upper[1]-lower[1])*0.115, 
+                                        text=label, render_mode='css',
+                                        background_fill_color='white', 
+                                        background_fill_alpha=0.9, 
+                                        border_line_cap='round')
+                fig[comp].add_layout(legend_number)
+            #end
+        #end
+    #end
         # if logx:
         #     cax.set_xscale('log')
         # #end
@@ -444,7 +480,7 @@ def blot(gdata, args=(),
     #    ax[i].axis('off')
     ##end
 
-    gp = gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
+    gp = bl.gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
     #blt.output_file("image.html", title="Postgkyl output")
     #blt.show(gp)
     return gp
