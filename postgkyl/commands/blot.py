@@ -13,8 +13,8 @@ from postgkyl.commands.util import vlog, pushChain
 #               help="Additional plotting arguments like '*--'.")
 # @click.option('-c', '--contour', is_flag=True,
 #               help="Switch to contour mode.")
-# @click.option('-q', '--quiver', is_flag=True,
-#               help="Switch to quiver mode.")
+@click.option('-q', '--quiver', is_flag=True,
+              help="Switch to quiver mode.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Switch to streamline mode.")
 @click.option('-d', '--diverging', is_flag=True,
@@ -25,10 +25,10 @@ from postgkyl.commands.util import vlog, pushChain
 #               help="Specify Matplotlib style file (default: Postgkyl).")
 # @click.option('--fix-aspect', 'fixaspect', is_flag=True,
 #               help="Enforce the same scaling on both axes.")
-# @click.option('--logx', is_flag=True,
-#               help="Set x-axis to log scale.")
-# @click.option('--logy', is_flag=True,
-#               help="Set y-axis to log scale.")
+@click.option('--logx', is_flag=True,
+              help="Set x-axis to log scale.")
+@click.option('--logy', is_flag=True,
+              help="Set y-axis to log scale.")
 @click.option('--logz', is_flag=True,
               help="Set values of 2D plot to log scale.")
 # @click.option('--xscale', default=1.0, type=click.FLOAT,
