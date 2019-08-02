@@ -115,7 +115,6 @@ def blot(gdata, args=(),
     else:
         numRows = int(np.ceil(sr))
         numCols = int(np.ceil(sr))
-
     # Prepare the figure
     if figure is None:
         fig = []
@@ -129,12 +128,31 @@ def blot(gdata, args=(),
             #end
         #end                               
         for comp in idxComps:
-            fig.append(blt.figure(tooltips=tooltips,
-                                  frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
-                                  frame_width=int(600.0/numRows),
-                                  outline_line_color='black',
-                                  min_border_left=70,
-                                  min_border_right=40)) #adjust spacings betweewn subplots to be aligned
+            if logx:
+                fig.append(blt.figure(tooltips=tooltips,
+                                    x_axis_type = "log",
+                                    frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
+                                    frame_width=int(600.0/numRows),
+                                    outline_line_color='black',
+                                    min_border_left=70,
+                                    min_border_right=40)) #adjust spacings betweewn subplots to be aligned
+            elif logy:
+                    fig.append(blt.figure(tooltips=tooltips,
+                                          y_axis_type = "log",
+                                          frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
+                                          frame_width=int(600.0/numRows),
+                                          outline_line_color='black',
+                                          min_border_left=70,
+                                          min_border_right=40)) #adjust spacings betweewn subplots to be aligned
+            elif logx and logy:
+                pass
+            else:
+                fig.append(blt.figure(tooltips=tooltips,
+                                    frame_height=int(600.0/numRows),#adjust figures with the size based on the screen size
+                                    frame_width=int(600.0/numRows),
+                                    outline_line_color='black',
+                                    min_border_left=70,
+                                    min_border_right=40)) #adjust spacings betweewn subplots to be aligned
         #end
     #end
 
@@ -266,6 +284,15 @@ def blot(gdata, args=(),
     #-----------------------------------------------------------------
     #-- Main Plotting Loop -------------------------------------------
     for comp in idxComps:
+        if len(idxComps) > 1:
+            if labelPrefix == "":
+                label = str(comp)
+            else:
+                label = '{:s}_c{:d}'.format(labelPrefix, comp)
+        #end
+        else:
+            label = labelPrefix
+        #end
         # Special plots
         if numDims == 1:
             x = 0.5*(grid[0][1:]+grid[0][:-1])
@@ -316,7 +343,27 @@ def blot(gdata, args=(),
                 fig[comp].add_layout(color_bar, 'right')
                 #end
             elif quiver:
-                pass
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                x_range = gridCC[0]*xscale #setting x coordinates
+                y_range = gridCC[1]*yscale #setting y coordinates
+                dx = grid[0][1]-grid[0][0]
+                dy = grid[1][1]-grid[1][0]
+                freq = 2
+                v_x = values[..., 2*comp].transpose()
+                v_y = values[..., 2*comp+1].transpose()
+                X, Y = np.meshgrid(x_range, y_range)
+                speed = np.sqrt(v_x**2 + v_y**2)
+                theta = np.arctan2(v_y*dy,v_x*dx) #arctan(y/x)
+                maxSpeed = speed.max()
+                x0 = X[::freq, ::freq].flatten()
+                y0 = Y[::freq, ::freq].flatten()
+                length = speed[::freq, ::freq].flatten()/ maxSpeed
+                angle = theta[::freq, ::freq].flatten()
+                x1 = x0 + 0.9 * freq * dx * v_x[::freq, ::freq].flatten()/speed[::freq, ::freq].max()
+                y1 = y0 + 0.9 * freq * dy * v_y[::freq, ::freq].flatten()/speed[::freq, ::freq].max()
+                fig[comp].segment(x0, y0, x1, y1, color='black') #vector line
+                fig[comp].triangle(x1, y1, size=4.0, angle=angle-np.pi/2, color='black') #vector arrow
+
             elif diverging:
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 vmax = np.abs(values[..., comp]).max()
@@ -347,32 +394,23 @@ def blot(gdata, args=(),
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 x_range = gridCC[0]*xscale #setting x coordinates
                 y_range = gridCC[1]*yscale #setting y coordinates
-                print(grid[0][1]-grid[0][0])
                 if logz:
                     tmp = np.array(values[..., comp])
-                    print(vmin, vmax)
                     if vmin is not None or vmax is not None:
                         for i in range(tmp.shape[0]):
                             for j in range(tmp.shape[1]):
                                 if vmin and tmp[i, j] < vmin:
                                     tmp[i, j] = vmin
-                                    MinimumValue = tmp[i, j]
-                                    print(MinimumValue)
                                 #end
                                 if vmax and tmp[i, j] > vmax:
                                     tmp[i, j] = vmax
-                                    MaximumValue = tmp[i,j]
-                                    print(MaximumValue)
                                 #end            
-                    elif vmin is None and vmax is None: # if vmin and vmax are not defined
-                        MinimumValue = np.amin(values[...,comp])
-                        MaximumValue = np.amax(values[...,comp])
-                        print(MinimumValue)
-                        print(MaximumValue)
-                        print('')
-                            #end
-                        #end
                     #end
+                    if vmin is not None:
+                        vminTemp = vmin
+                    else:
+                        vminTemp = np.amin(values[...,comp])
+
                     mapper = bm.LogColorMapper(palette='Inferno256',
                                             low=MinimumValue, 
                                             high=MaximumValue) 
@@ -436,46 +474,16 @@ def blot(gdata, args=(),
         #end
 
         # cax.grid(True)
-        if legend:
-            if len(idxComps) > 1:
-                if labelPrefix == "":
-                    label = str(comp)
-                else:
-                    label = '{:s}_c{:d}'.format(labelPrefix, comp)
-                #end
-            else:
-                label = labelPrefix
-            #end
-            if numDims == 1 and label != '':
-                pass
-            else:
-                legend_number = bm.Label(x=lower[0]+(upper[0]-lower[0])*0.025,
-                                     y=upper[1]-(upper[1]-lower[1])*0.115, 
-                                        text=label, render_mode='css',
-                                        background_fill_color='white', 
-                                        background_fill_alpha=0.9, 
-                                        border_line_cap='round')
-                fig[comp].add_layout(legend_number)
-            #end
+        if legend is False:
+            fig[comp].legend.visible = False
         #end
     #end
-        # if logx:
-        #     cax.set_xscale('log')
-        # #end
-        # if logy:
-        #     cax.set_yscale('log')
-        # #end
-        # if numDims == 1:
-        #     if vmin is not None and vmax is not None:
-        #         cax.set_ylim(vmin, vmax)
-        #     #end
-        #     plt.autoscale(enable=True, axis='x', tight=True)
-        # elif numDims == 2:
-        #     if fixaspect:
-        #         plt.setp(cax, aspect=1.0)
-        #     #end
-        # #end
-    #end
+        if logx:
+            pass
+        #end
+        if logy:
+            pass
+        #end
     #for i in range(numComps, len(ax)):
     #    ax[i].axis('off')
     ##end
