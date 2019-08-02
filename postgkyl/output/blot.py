@@ -410,6 +410,11 @@ def blot(gdata, args=(),
                         vminTemp = vmin
                     else:
                         vminTemp = np.amin(values[...,comp])
+                    #end
+                    if vmax is not None:
+                        vmaxTemp = vmax
+                    else:
+                        vmaxTemp = np.amax(values[...,comp])
 
                     mapper = bm.LogColorMapper(palette='Inferno256',
                                             low=MinimumValue, 
