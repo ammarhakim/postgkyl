@@ -23,5 +23,6 @@ from .write import write
 from . import temp
 from .agyro import agyro
 
+from .initpolar import initpolar
 #from postgkyl.commands import cglpressure
 
