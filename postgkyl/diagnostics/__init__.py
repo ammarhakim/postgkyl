@@ -1,7 +1,6 @@
 from .calculus import integrate
 
 from .fft import fft
-from .initpolar import initpolar
 
 # import correlation functions
 #from .fieldParticleCorrelation import Ce
