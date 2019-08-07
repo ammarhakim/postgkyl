@@ -8,7 +8,7 @@ import numpy as np
 @click.command(help='Find the binning to convert to polar spectrum')
 @click.pass_context
 
-def init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar):
+def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
     #if 2D, nkz and kz = 0
     
     if nkpolar == 0: 
