@@ -449,7 +449,10 @@ class GInterpModal(GInterp):
             raise ValueError('GInterpNodal: basis type is neither specified nor stored in the output file')
         #end
         self.periodic = periodic
-        self.numInterp = numInterp
+        if numInterp is not None or self.polyOrder > 1:
+            self.numInterp = numInterp
+        else:
+            self.numInterp = self.polyOrder + 1
         self.read = read
         numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
         GInterp.__init__(self, data, numNodes)
