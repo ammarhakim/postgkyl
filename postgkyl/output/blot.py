@@ -158,6 +158,40 @@ def blot(gdata, args=(),
                                       min_border_left=70,
                                       min_border_right=40,
                                       min_border_bottom=10))
+                        
+    #-- Preparing the Axes -------------------------------------------
+    for comp in idxComps:
+        fig[comp].xaxis.minor_tick_line_color = None #deleting minor ticks
+        fig[comp].yaxis.minor_tick_line_color = None
+
+        fig[comp].xaxis.major_label_text_font_size = '12pt' #tick font size adjustment
+        fig[comp].yaxis.major_label_text_font_size = '12pt'
+
+        fig[comp].xaxis.axis_label_text_font_size = '12pt' #label font size adjustment
+        fig[comp].yaxis.axis_label_text_font_size = '12pt'
+
+        fig[comp].xaxis.formatter = bm.BasicTickFormatter(precision=1)#adjust floating numbers of ticks
+        fig[comp].yaxis.formatter = bm.BasicTickFormatter(precision=1)
+
+        if numDims != 1:
+            if comp % numCols != 0: #hiding labels for unnecessary locations
+                fig[comp].yaxis.major_label_text_font_size = '0pt'
+            #end
+            if comp < (numRows-1) * numCols:
+                fig[comp].xaxis.major_label_text_font_size = '0pt'
+            #end
+        #end
+
+        if comp >= (numRows-1) * numCols:
+            fig[comp].xaxis.axis_label = axLabel[0]
+        #end
+
+        if numDims == 2:
+            if comp % numCols == 0:
+                fig[comp].yaxis.axis_label = axLabel[1]
+            #end
+        #end
+    #end
 
     #-- Main Plotting Loop -------------------------------------------
     for comp in idxComps:
@@ -169,6 +203,8 @@ def blot(gdata, args=(),
         #end
         else:
             label = labelPrefix
+        #end
+
         #end
         # Special plots
         if numDims == 1:
@@ -337,52 +373,24 @@ def blot(gdata, args=(),
                 fig[comp].y_range.range_padding = 0
             #end
         #end
-
-        fig[comp].xaxis.minor_tick_line_color = None #deleting minor ticks
-        fig[comp].yaxis.minor_tick_line_color = None
-
-        fig[comp].xaxis.major_label_text_font_size = '12pt' #tick font size adjustment
-        fig[comp].yaxis.major_label_text_font_size = '12pt'
-
-        fig[comp].xaxis.axis_label_text_font_size = '12pt' #label font size adjustment
-        fig[comp].yaxis.axis_label_text_font_size = '12pt'
-
-        fig[comp].xaxis.formatter = bm.BasicTickFormatter(precision=1)#adjust floating numbers of ticks
-        fig[comp].yaxis.formatter = bm.BasicTickFormatter(precision=1)
-
-        if numDims != 1:
-            if comp % numCols != 0: #hiding labels for unnecessary locations
-                fig[comp].yaxis.major_label_text_font_size = '0pt'
+        
+        if legend:
+            if numDims == 2:
+                x_range = grid[0]*xscale
+                y_range = grid[1]*yscale
+                legend_number = bm.Label(x=x_range[0]+(x_range[-1]-x_range[0])*0.005,
+                                    y=y_range[-1]-(y_range[-1]-y_range[0])*0.115, 
+                                    text=label, render_mode='css',
+                                    background_fill_color='white', 
+                                    background_fill_alpha=0.9, 
+                                    border_line_cap='round')
+                fig[comp].add_layout(legend_number)
             #end
-            if comp < (numRows-1) * numCols:
-                fig[comp].xaxis.major_label_text_font_size = '0pt'
+
+        if not legend:
+            if numDims == 1:
+                fig[comp].legend.visible = False
             #end
-        #end
-
-        if comp >= (numRows-1) * numCols:
-            fig[comp].xaxis.axis_label = axLabel[0]
-        #end
-
-        if numDims == 2:
-            if comp % numCols == 0:
-                fig[comp].yaxis.axis_label = axLabel[1]
-            #end
-        #end
-    #end
-        if numDims == 2:
-            x_range = grid[0]*xscale
-            y_range = grid[1]*yscale
-            legend_number = bm.Label(x=x_range[0]+(x_range[-1]-x_range[0])*0.005,
-                                y=y_range[-1]-(y_range[-1]-y_range[0])*0.115, 
-                                text=label, render_mode='css',
-                                background_fill_color='white', 
-                                background_fill_alpha=0.9, 
-                                border_line_cap='round')
-            fig[comp].add_layout(legend_number)
-        #end
-
-        if legend is False:
-            fig[comp].legend.visible = False
         #end
     gp = bl.gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
 
