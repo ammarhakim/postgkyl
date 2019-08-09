@@ -408,11 +408,6 @@ def blot(gdata, args=(),
                 fig[comp].legend.visible = False
             #end
         #end
-        if logx and logy:
-            fig[comp].xaxis.x_axis_type= 'log'
-            fig[comp].y_axis_type = 'log'
-        #end
-
 
     gp = bl.gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
 
