@@ -130,7 +130,7 @@ def blot(gdata, args=(),
                                       frame_width=int(600.0/numRows),
                                       outline_line_color='black',
                                       min_border_left=70,
-                                      min_border_right=40,
+                                      min_border_right=50,
                                       min_border_bottom=10))
             elif logx:
                 fig.append(blt.figure(tooltips=tooltips,
@@ -139,7 +139,7 @@ def blot(gdata, args=(),
                                       frame_width=int(600.0/numRows),
                                       outline_line_color='black',
                                       min_border_left=70,
-                                      min_border_right=40,
+                                      min_border_right=50,
                                       min_border_bottom=10)) #adjust spacings betweewn subplots to be aligned
             elif logy:
                 fig.append(blt.figure(tooltips=tooltips,
@@ -148,7 +148,7 @@ def blot(gdata, args=(),
                                           frame_width=int(600.0/numRows),
                                           outline_line_color='black',
                                           min_border_left=70,
-                                          min_border_right=40,
+                                          min_border_right=50,
                                           min_border_bottom=10))
             else:
                 fig.append(blt.figure(tooltips=tooltips,
@@ -156,7 +156,7 @@ def blot(gdata, args=(),
                                       frame_width=int(600.0/numRows),
                                       outline_line_color='black',
                                       min_border_left=70,
-                                      min_border_right=40,
+                                      min_border_right=60,
                                       min_border_bottom=10))
                         
     #-- Preparing the Axes -------------------------------------------
@@ -181,14 +181,22 @@ def blot(gdata, args=(),
                 fig[comp].xaxis.major_label_text_font_size = '0pt'
             #end
         #end
-
         if comp >= (numRows-1) * numCols:
-            fig[comp].xaxis.axis_label = axLabel[0]
+            if xlabel is None:
+                fig[comp].xaxis.axis_label = axLabel[0]
+            else: #if there is xlabel to be specified
+                fig[comp].xaxis.axis_label = xlabel
+            #end
+            #end
         #end
 
-        if numDims == 2:
-            if comp % numCols == 0:
-                fig[comp].yaxis.axis_label = axLabel[1]
+        if comp % numCols == 0:
+            if ylabel is None:
+                if numDims == 2:
+                    fig[comp].yaxis.axis_label = axLabel[1]
+                #end
+            else:
+                fig[comp].yaxis.axis_label = ylabel
             #end
         #end
     #end
@@ -254,7 +262,7 @@ def blot(gdata, args=(),
                 y_range = gridCC[1]*yscale #setting y coordinates
                 dx = grid[0][1]-grid[0][0]
                 dy = grid[1][1]-grid[1][0]
-                freq = 3
+                freq = 7
                 v_x = values[..., 2*comp].transpose()
                 v_y = values[..., 2*comp+1].transpose()
                 X, Y = np.meshgrid(x_range, y_range)
@@ -289,7 +297,7 @@ def blot(gdata, args=(),
                                     location=(0,0), 
                                     formatter=bm.BasicTickFormatter(precision=1), #deleting unnecessary floating numbers
                                     ticker=bm.BasicTicker(desired_num_ticks=4), 
-                                    label_standoff=13,
+                                    label_standoff=14,
                                     major_label_text_font_size='12pt',
                                     border_line_color=None,
                                     padding=2,
@@ -378,20 +386,34 @@ def blot(gdata, args=(),
             if numDims == 2:
                 x_range = grid[0]*xscale
                 y_range = grid[1]*yscale
-                legend_number = bm.Label(x=x_range[0]+(x_range[-1]-x_range[0])*0.005,
+                #The legends are not embedded into the plot but the text numbers on the top of plots. Refer to 1D line plot.
+                legend_number = bm.Label(x=x_range[0]+(x_range[-1]-x_range[0])*0.005, 
                                     y=y_range[-1]-(y_range[-1]-y_range[0])*0.115, 
                                     text=label, render_mode='css',
                                     background_fill_color='white', 
                                     background_fill_alpha=0.9, 
                                     border_line_cap='round')
+                        
                 fig[comp].add_layout(legend_number)
             #end
+        #end
+        if title:
+            if comp < numCols:
+                fig[comp].title.text = title
+            #end
+        #end
 
         if not legend:
             if numDims == 1:
                 fig[comp].legend.visible = False
             #end
         #end
+        if logx and logy:
+            fig[comp].xaxis.x_axis_type= 'log'
+            fig[comp].y_axis_type = 'log'
+        #end
+
+
     gp = bl.gridplot(children=fig, toolbar_location='right', ncols=numCols, merge_tools=True)
 
     return gp

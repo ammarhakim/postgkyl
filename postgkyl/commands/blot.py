@@ -31,10 +31,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set y-axis to log scale.")
 @click.option('--logz', is_flag=True,
               help="Set values of 2D plot to log scale.")
-# @click.option('--xscale', default=1.0, type=click.FLOAT,
-#               help="Scalar value to scale the x-axis (default: 1.0).")
-# @click.option('--yscale', default=1.0, type=click.FLOAT,
-#               help="Scalar value to scale the y-axis (default: 1.0).")
+@click.option('--xscale', default=1.0, type=click.FLOAT,
+              help="Scalar value to scale the x-axis (default: 1.0).")
+@click.option('--yscale', default=1.0, type=click.FLOAT,
+              help="Scalar value to scale the y-axis (default: 1.0).")
 # @click.option('--vmax', default=None, type=click.FLOAT,
 #               help="Set maximal value for plots.")
 # @click.option('--vmin', default=None, type=click.FLOAT,
@@ -47,14 +47,14 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turn showing of the plot ON and OFF (default: ON).")
 # #@click.option('--color', type=click.STRING,
 # #              help="Set color when available.")
-# @click.option('-x', '--xlabel', type=click.STRING,
-#               help="Specify a x-axis label.")
-# @click.option('-y', '--ylabel', type=click.STRING,
-#               help="Specify a y-axis label.")
-# @click.option('-t', '--title', type=click.STRING,
-#               help="Specify a title label.")
+@click.option('-x', '--xlabel', type=click.STRING,
+              help="Specify a x-axis label.")
+@click.option('-y', '--ylabel', type=click.STRING,
+              help="Specify a y-axis label.")
+@click.option('-t', '--title', type=click.STRING,
+              help="Specify a title label.")
 # @click.option('--save', is_flag=True,
-#               help="Save figure as PNG.")
+#              help="Save figure as PNG.")
 # @click.option('--saveas', type=click.STRING, default=None,
 #               help="Name to save the plot as.")
 # @click.option('--dpi', type=click.INT, default=200,
