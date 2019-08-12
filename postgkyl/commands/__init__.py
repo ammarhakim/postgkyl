@@ -1,6 +1,7 @@
 from . import util
 from . import ev_cmd
 from .animate import animate
+from .trajectory import trajectory
 from .blot import blot
 from .collect import collect
 from .differentiate import differentiate
