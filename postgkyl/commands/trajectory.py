@@ -7,12 +7,26 @@ import click
 import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
-def update(i, ax, dat):
-    time = dat.getGrid()[0]
-    coords = dat.getValues()
+def update(i, ax, ctx):
+    colors = ['C0', 'C1', 'C2', 'C3', 'C4',
+              'C5', 'C6', 'C7', 'C8', 'C9']
     plt.cla()
-    ax.plot(coords[:, 0], coords[:, 1], coords[:, 2])
-    ax.scatter(coords[i, 0], coords[i, 1], coords[i, 2])
+    for s in ctx.obj['sets']:
+        dat = ctx.obj['dataSets'][s]
+        time = dat.getGrid()[0]
+        dt = dat.getGrid()[0][1] - dat.getGrid()[0][0]
+        coords = dat.getValues()
+        ax.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=colors[s%10])
+        ax.scatter(coords[i, 0], coords[i, 1], coords[i, 2], color=colors[s%10])
+        if dat.getNumComps() == 6:
+            dx = coords[i, 3]*5*dt
+            dy = coords[i, 4]*5*dt
+            dz = coords[i, 5]*5*dt
+            ax.plot([coords[i, 0], coords[i, 0]+dx], 
+                    [coords[i, 1], coords[i, 1]+dy],
+                    [coords[i, 2], coords[i, 2]+dz], color=colors[s%10])
+        #end
+    #end
     plt.title('T: {:.4e}'.format(time[i]))
     ax.set_xlabel('$z_0$')
     ax.set_ylabel('$z_1$')
@@ -81,7 +95,7 @@ def trajectory(ctx, **kwargs):
     numPos = dat.getNumCells()[0]
    
     anim = FuncAnimation(fig, update, numPos,
-                         fargs=(ax, dat,),
+                         fargs=(ax, ctx,),
                          interval=kwargs['interval'])
 
     ax.view_init(elev=kwargs['elevation'], azim=kwargs['azimuth'])
