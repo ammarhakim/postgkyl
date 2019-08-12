@@ -34,8 +34,8 @@ def update(i, ax, dat):
 #               help="Switch to diverging colormesh mode.")
 # @click.option('--style',
 #               help="Specify Matplotlib style file (default: Postgkyl).")
-# @click.option('--fix-aspect', 'fixaspect', is_flag=True,
-#               help="Enforce the same scaling on both axes.")
+@click.option('--fix-aspect', 'fixaspect', is_flag=True,
+              help="Enforce the same scaling on both axes.")
 # @click.option('--logx', is_flag=True,
 #               help="Set x-axis to log scale.")
 # @click.option('--logy', is_flag=True,
@@ -62,6 +62,10 @@ def update(i, ax, dat):
               help="Name to save the plot as.")
 # @click.option('-e', '--edgecolors', type=click.STRING,
 #               help="Set color for cell edges (default: None)")
+@click.option('-e', '--elevation', type=click.FLOAT,
+              help="Set elevation")
+@click.option('-a', '--azimuth', type=click.FLOAT,
+              help="Set azimuth")
 @click.pass_context
 def trajectory(ctx, **kwargs):
     vlog(ctx, 'Starting trajectory')
@@ -79,6 +83,11 @@ def trajectory(ctx, **kwargs):
     anim = FuncAnimation(fig, update, numPos,
                          fargs=(ax, dat,),
                          interval=kwargs['interval'])
+
+    ax.view_init(elev=kwargs['elevation'], azim=kwargs['azimuth'])
+
+    if kwargs['fixaspect']:
+        plt.setp(ax, aspect=1.0)
 
     fName = 'anim.mp4'
     if kwargs['saveas']:
