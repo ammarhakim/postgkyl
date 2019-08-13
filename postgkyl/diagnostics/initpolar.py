@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import click
 import numpy as np
 
 def init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar):
