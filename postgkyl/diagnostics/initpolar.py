@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import numpy as np
 
-def init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar):
+def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
     #if 2D, nkz and kz = 0
     
     if nkpolar == 0: 
