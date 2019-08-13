@@ -1,11 +1,10 @@
 from . import util
 from . import ev_cmd
 from .animate import animate
-from .trajectory import trajectory
 from .blot import blot
 from .collect import collect
-from .differentiate import differentiate
 from .dataset import dataset
+from .differentiate import differentiate
 from .euler import euler
 from .ev import ev
 from .extractinput import extractinput
@@ -19,6 +18,7 @@ from .pr import pr
 from .recovery import recovery
 from .select import select
 from .tenmoment import tenmoment
+from .trajectory import trajectory
 from .write import write
 
 from . import temp
