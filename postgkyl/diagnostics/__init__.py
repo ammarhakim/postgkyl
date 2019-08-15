@@ -24,3 +24,6 @@ from .primitive import getKE
 from .primitive import getMach
 
 from .initpolar import initpolar
+from .calc_enstrophy import calc_enstrophy
+from .calc_ke_dke import calc_ke_dke
+from .polar_isotropic import polar_isotropic
