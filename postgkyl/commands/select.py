@@ -5,17 +5,17 @@ import postgkyl.data.select
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Subselect data set(s)')
-@click.option('--c0', default=None,
+@click.option('--c0', '--z0',  default=None,
               help="Indices for 0th coord (either int, float, or slice)")
-@click.option('--c1', default=None,
+@click.option('--c1', '--z1', default=None,
               help="Indices for 1st coord (either int, float, or slice)")
-@click.option('--c2', default=None,
+@click.option('--c2', '--z2', default=None,
               help="Indices for 2nd coord (either int, float, or slice)")
-@click.option('--c3', default=None,
+@click.option('--c3', '--z3', default=None,
               help="Indices for 3rd coord (either int, float, or slice)")
-@click.option('--c4', default=None,
+@click.option('--c4', '--z4', default=None,
               help="Indices for 4th coord (either int, float, or slice)")
-@click.option('--c5',  default=None,
+@click.option('--c5',  '--z5', default=None,
               help="Indices for 5th coord (either int, float, or slice)")
 @click.option('--comp', '-c', default=None,
               help="Indices for components (either int, slice, or coma-separated)")
