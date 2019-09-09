@@ -18,9 +18,12 @@ def info(ctx, **kwargs):
         vlog(ctx, ("Printing the current top of stack "
                    "information (active data sets):"))
         sets = ctx.obj['sets']
+    #end
         
     for s in sets:
-        click.echo("Dataset #{:d}".format(ctx.obj['setIds'][s]))
+        click.echo("Dataset #{:d}".format(s))
         click.echo(ctx.obj['dataSets'][s].info() + "\n")
+    #end
 
     vlog(ctx, 'Finishing info')
+#end

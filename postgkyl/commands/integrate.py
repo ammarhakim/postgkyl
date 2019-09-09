@@ -13,5 +13,7 @@ def integrate(ctx, **kwargs):
     for s in ctx.obj['sets']:
         data = ctx.obj['dataSets'][s]
         diag.integrate(data, kwargs['axis'], stack=True)
+    #end
         
     vlog(ctx, 'Finishing integrate')
+#end
