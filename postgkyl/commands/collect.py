@@ -93,6 +93,7 @@ def collect(ctx, **kwargs):
             ctx.obj['labels'].append(st)
             ctx.obj['dataSets'][idx].pushGrid(grid)
             ctx.obj['dataSets'][idx].pushValues(values[i])
+            ctx.obj['dataSets'][idx].time = 0.5*(time[i][0]+time[i][-1])
             ctx.obj['dataSets'][idx].fName = st
             vlog(ctx, 'collect: activated data set #{:d}'.format(idx))
             activeSets.append(idx)

@@ -51,7 +51,7 @@ def integrate(data, axis, stack=False):
     #end
 
     for ax in sorted(axis):
-        grid[ax] = np.array([0])
+        grid[ax] = np.array([grid[ax].mean()])
         values = np.expand_dims(values, ax)
     #end
 
