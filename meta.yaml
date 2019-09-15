@@ -6,7 +6,7 @@ source:
   path: ./
 
 build:
-  number: 20190829
+  number: 20190909
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
@@ -29,6 +29,7 @@ requirements:
     - click
     - sympy
     - adiospy
+    - bokeh
 
 test:
   imports:
