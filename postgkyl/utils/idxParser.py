@@ -61,9 +61,12 @@ def idxParser(value, array=None, nodal=True):
                 if idxs[1] == '':
                    idxs[1] = str(len(array))
                 #end
-                if int(idxs[1]) < 0:
-                   idxs[1] = str(len(array) + int(idxs[1]) + 1)
-                #end
+                try:
+                    if int(idxs[1]) < 0:
+                        idxs[1] = str(len(array) + int(idxs[1]) + 1)
+                    #end
+                except ValueError:
+                    pass
                 idx = slice(_stringToIndex(idxs[0], array, nodal),
                             _stringToIndex(idxs[1], array, nodal))
             else:
