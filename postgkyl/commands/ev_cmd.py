@@ -102,6 +102,11 @@ def sq(inGrid, inValues):
     outValues = inValues[0]**2
     return [outGrid], [outValues]
 
+def exp(inGrid, inValues):
+    outGrid = inGrid[0]
+    outValues = np.exp(inValues[0])
+    return [outGrid], [outValues]
+
 
 def length(inGrid, inValues):
     ax = int(inValues[0])
@@ -260,6 +265,7 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          'len' : { 'numIn' : 2, 'numOut' : 1, 'func' : length },
          'pow' : { 'numIn' : 2, 'numOut' : 1, 'func' : power },
          'sq' : { 'numIn' : 1, 'numOut' : 1, 'func' : sq },
+         'exp' : { 'numIn' : 1, 'numOut' : 1, 'func' : exp },
          'grad' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad },
          'int' : { 'numIn' : 2, 'numOut' : 1, 'func' : integrate },
          'div' : { 'numIn' : 1, 'numOut' : 1, 'func' : divergence },
