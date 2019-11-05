@@ -75,6 +75,7 @@ class GData(object):
         self.polyOrder = None
         self.basisType = None
         self.inputfile = None
+        self.modal = None
 
         self.fName = fName
         if fName is not None:
@@ -190,8 +191,10 @@ class GData(object):
             #end
             if 'inputfile' in fh.attrs.keys():
                 self.inputfile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
-            #end            
-            self.modal = True
+            #end
+            if self.basisType is not None:
+                self.modal = True
+            #end
 
             # Load data ...
             var = adios.var(fh, 'CartGridField')
