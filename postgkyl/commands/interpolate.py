@@ -27,9 +27,9 @@ def interpolate(ctx, **inputs):
     else:
         basisType = None
     #end
-
+    
     for s in ctx.obj['sets']:
-        if ctx.obj['dataSets'][s].modal:
+        if ctx.obj['dataSets'][s].modal or inputs['basistype'] == 'ms' or inputs['basistype'] == 'mo':
             dg = GInterpModal(ctx.obj['dataSets'][s],
                               inputs['polyorder'], basisType, 
                               inputs['interp'], inputs['read'])
