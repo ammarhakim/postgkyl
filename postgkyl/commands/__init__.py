@@ -13,6 +13,7 @@ from .growth import growth
 from .info import info
 from .integrate import integrate
 from .interpolate import interpolate
+from .mask import mask
 from .plot import plot
 from .pr import pr
 from .recovery import recovery
