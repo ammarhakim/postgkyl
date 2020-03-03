@@ -5,13 +5,20 @@ from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Mask data with specified Gkeyll mask file.')
-@click.argument('filenm', nargs=1,  type=click.STRING)
+@click.option('--filename', '-f', type=click.STRING,
+              help="Specify the file with a mask")
+@click.option('--lower', '-l', type=click.FLOAT,
+              help="Specify the lower theshold to be masked out.")
+@click.option('--upper', '-u', type=click.FLOAT,
+              help="Specify the upper theshold to be masked out.")
 @click.pass_context
 def mask(ctx, **kwargs):
     vlog(ctx, 'Starting mask')
     pushChain(ctx, 'mask', **kwargs)
 
-    maskFld = GData(kwargs['filenm']).getValues()
+    if kwargs['filename']:
+        maskFld = GData(kwargs['filename']).getValues()
+    #end
 
     for s in ctx.obj['sets']:
         data = ctx.obj['dataSets'][s]
@@ -19,8 +26,20 @@ def mask(ctx, **kwargs):
         values = data.getValues()
 
         data.pushGrid(grid)
-        maskFldRep = np.repeat(maskFld, data.getNumComps(), axis=-1)
-        data.pushValues(np.ma.masked_where(maskFldRep < 0.0, values))
+
+        if kwargs['filename']:
+            maskFldRep = np.repeat(maskFld, data.getNumComps(), axis=-1)
+            data.pushValues(np.ma.masked_where(maskFldRep < 0.0, values))
+        elif kwargs['lower'] and kwargs['upper']:
+            data.pushValues(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']))
+        elif kwargs['lower']:
+            data.pushValues(np.ma.masked_less(values, kwargs['lower']))
+        elif kwargs['upper']:
+            data.pushValues(np.ma.masked_greater(values, kwargs['upper']))
+        else:
+            data.pushValues(values, kwargs['lower'])
+            click.echo(click.style("WARNING in 'mask': No masking information specified.", fg='yellow'))
+        #end
     #end
         
     vlog(ctx, 'Finishing mask')
