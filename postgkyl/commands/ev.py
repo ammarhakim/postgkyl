@@ -29,12 +29,12 @@ if userCommands:
 #end
 
 def _copyMeta(meta, data):
-    if meta["modal"] is None:
-        meta["modal"] = data.modal
-    elif meta["modal"] == data.modal:
+    if meta["isModal"] is None:
+        meta["isModal"] = data.isModal
+    elif meta["isModal"] == data.isModal:
         pass
     else:
-        meta["modal"] = 'mixed'
+        meta["isModal"] = False
     #end
     if meta["polyOrder"] is None:
         meta["polyOrder"] = data.polyOrder
@@ -48,7 +48,7 @@ def _copyMeta(meta, data):
     elif meta["basisType"] == data.basisType:
         pass
     else:
-        meta["basisType"] = 'mixed'
+        meta["basisType"] = 'unknown'
     #end
     return meta
 #end
@@ -205,7 +205,7 @@ def ev(ctx, **kwargs):
     chainSplit = kwargs['chain'].split(' ')
     chainSplit = list(filter(None, chainSplit))
     meta = {
-        "modal" : None,
+        "isModal" : None,
         "polyOrder" : None,
         "basisType" : None
     }
@@ -235,8 +235,7 @@ def ev(ctx, **kwargs):
         ctx.obj['dataSets'][idx].pushGrid(gridStack[0][-1])
         ctx.obj['dataSets'][idx].pushValues(evalStack[0][-1])
         ctx.obj['dataSets'][idx].name = 'ev'
-        if meta['modal'] is not 'mixed':
-            ctx.obj['dataSets'][idx].modal = meta['modal']
+        ctx.obj['dataSets'][idx].isModal = meta['isModal']
         #end
         if meta['polyOrder'] is not 'mixed':
             ctx.obj['dataSets'][idx].polyOrder = meta['polyOrder']
