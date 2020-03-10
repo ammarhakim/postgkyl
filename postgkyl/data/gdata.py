@@ -18,7 +18,7 @@ class GData(object):
     command line mode.
 
     Init Args:
-        fName (str): String with either full file name of or a
+        fileName (str): String with either full file name of or a
             fragment (for history loading).  Currently supports only
             'h5' and 'bp' files. Empty GData object is created when
             not specified
@@ -57,15 +57,15 @@ class GData(object):
         data = postgkyl.GData('file.bp', comp=1)
     """
 
-    def __init__(self, fName=None, stack=False, comp=None,
+    def __init__(self, fileName=None, stack=False, comp=None,
                  coord0=None, coord1=None, coord2=None,
                  coord3=None, coord4=None, coord5=None,
                  compgrid=False):
-        self._stack = stack  # Turn OFF the stack
+        self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
-        self._grid = []  # cell centered grid
-        self._gridType = "uniform" # type of grid
-        self._gridFile = "grid" # name of grid file
+        self._grid = []
+        self._gridType = "uniform" 
+        self._gridFile = None
         self._values = []  # (N+1)D narray of values 
         self.time = None
         self.frame = 0
@@ -74,15 +74,15 @@ class GData(object):
         self.builddate = None
         self.polyOrder = None
         self.basisType = None
-        self.inputfile = None
-        self.modal = None
+        self.isModal = None
+        self.inputFile = None
 
-        self.fName = fName
-        if fName is not None:
-            # Sequence load typically cancatenates multiple files
+        self.fileName = fileName
+        if fileName is not None:
+            # Sequence load typically concatenates multiple files
             # When the sequence is in just a single file, _loadFrame will
             # fail and _loadSequence is called instead
-            if isfile(self.fName):
+            if isfile(self.fileName):
                 coords = (coord0, coord1, coord2, coord3, coord4, coord5)
                 self._loadFrame(coords, comp)
             else:
@@ -139,10 +139,9 @@ class GData(object):
 
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
-        extension = self.fName.split('.')[-1]
-        # Gkeyll HDF5 frame load
+        extension = self.fileName.split('.')[-1]
         if extension == 'h5':
-            fh = tables.open_file(self.fName, 'r')
+            fh = tables.open_file(self.fileName, 'r')
             if not '/StructGridField' in fh:
                 fh.close()
                 self._loadSequence()
@@ -153,7 +152,6 @@ class GData(object):
             lower = fh.root.StructGrid._v_attrs.vsLowerBounds
             upper = fh.root.StructGrid._v_attrs.vsUpperBounds
             cells = fh.root.StructGrid._v_attrs.vsNumCells
-            self.modal = False
             # Load data ...
             self._values.append(fh.root.StructGridField.read())
             # ... and the time-stamp
@@ -161,9 +159,8 @@ class GData(object):
                 self.time = fh.root.timeData._v_attrs.vsTime
             #end
             fh.close()
-        # Gkyl ADIOS frame load
         elif extension == 'bp':
-            fh = adios.file(self.fName)
+            fh = adios.file(self.fileName)
             if not 'CartGridField' in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
                 fh.close()
@@ -185,15 +182,14 @@ class GData(object):
             #end
             if 'polyOrder' in fh.attrs.keys():
                 self.polyOrder = adios.attr(fh, 'polyOrder').value
+                self.isModal = True
             #end
             if 'basisType' in fh.attrs.keys():
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
+                self.isModal = True
             #end
             if 'inputfile' in fh.attrs.keys():
-                self.inputfile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
-            #end
-            if self.basisType is not None:
-                self.modal = True
+                self.inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
             #end
 
             # Load data ...
@@ -296,18 +292,18 @@ class GData(object):
 
     def _loadSequence(self):
         # Sequence load typically cancatenates multiple files
-        files = glob('{:s}*'.format(self.fName))
+        files = glob('{:s}*'.format(self.fileName))
         if not files:
             raise NameError(
                 "File(s) '{:s}' not found or empty.".
-                format(self.fName))
+                format(self.fileName))
 
         cnt = 0  # Counter for the number of loaded files
-        for fName in files:
-            extension = fName.split('.')[-1]
-            # Gkeyll HDF5 history load
+        for fileName in files:
+            extension = fileName.split('.')[-1]
             if extension == 'h5':
-                fh = tables.open_file(fName, 'r')
+                self.fileType = 'hdf5'
+                fh = tables.open_file(fileName, 'r')
                 if '/DataStruct/data' in fh and \
                    '/DataStruct/timeMesh' in fh:
                     grid = fh.root.DataStruct.timeMesh.read()
@@ -317,9 +313,9 @@ class GData(object):
                     fh.close()
                     continue
                 #end
-            # Gkyl ADIOS history load
             elif extension == 'bp':
-                fh =  adios.file(fName)
+                self.fileType = 'adios'
+                fh =  adios.file(fileName)
                 if 'Data' in fh.vars and 'TimeMesh' in fh.vars:
                     values = adios.var(fh, 'Data').read()
                     grid = adios.var(fh, 'TimeMesh').read()
@@ -345,7 +341,7 @@ class GData(object):
         if cnt == 0:  # No files loaded
             raise NameError(
                 "File(s) '{:s}' not found or empty.".
-                format(self.fName))
+                format(self.fileName))
         #end
         # Squeeze the time coordinate ...
         if len(self._grid[0].shape) > 1:
@@ -534,7 +530,11 @@ class GData(object):
             if self.polyOrder is not None and self.basisType is not None:
                 output += "\n- DG info:\n"
                 output += "  - Polynomial Order: {:d}\n".format(self.polyOrder)
-                output += "  - Basis Type: {:s}".format(self.basisType)
+                if self.isModal:
+                    output += "  - Basis Type: {:s} (modal)".format(self.basisType)
+                else:
+                    output += "  - Basis Type: {:s}".format(self.basisType)
+                #end
             if self.changeset is not None and self.builddate is not None:
                 output += "\n- Created with Gkeyll:\n"
                 output += "  - Changeset: {:s}\n".format(self.changeset)
@@ -549,7 +549,7 @@ class GData(object):
 
     #-----------------------------------------------------------------
     #-- Write --------------------------------------------------------
-    def write(self, bufferSize=1000, fName=None, txt=False):
+    def write(self, bufferSize=1000, outName=None, txt=False):
         """Writes data in ADIOS .bp file or ASCII .txt file
         """
         if txt:
@@ -558,19 +558,19 @@ class GData(object):
             mode = 'bp'
         #end
         # Create output file name
-        if fName is None:
-            if self.fName is not None:
-                fn = self.fName
-                fName = fn.split('.')[0].strip('_') + '_mod.' + mode
+        if outName is None:
+            if self.fileName is not None:
+                fn = self.fileName
+                outName = fn.split('.')[0].strip('_') + '_mod.' + mode
             else:
-                fName = "gdata." + mode
+                outName = "gdata." + mode
             #end
         else:
-            if not isinstance(fName, str):
-                raise TypeError("'fName' must be a string")
+            if not isinstance(outName, str):
+                raise TypeError("'outName' must be a string")
             #end
-            if fName.split('.')[-1] != mode:
-                fileName += '.' + mode
+            if outName.split('.')[-1] != mode:
+                outName += '.' + mode
             #end
         #end
 
@@ -609,7 +609,7 @@ class GData(object):
                              sNumCells, sNumCells, sOffsets)
 
             # Write the data and finalize
-            fh = adios.open("CartField", fName, 'w')
+            fh = adios.open("CartField", outName, 'w')
             if self.time is not None:
                 adios.write(fh, "time", self.time)
             #end
@@ -618,13 +618,13 @@ class GData(object):
             adios.finalize()
 
             # Cheating
-            if len(fName.split('/')) > 1:
-                nm = fName.split('/')[-1]
+            if len(outName.split('/')) > 1:
+                nm = outName.split('/')[-1]
             else:
-                nm = fName
+                nm = outName
             #end
-            shutil.move(fName + '.dir/' + nm + '.0', fName)
-            shutil.rmtree(fName + '.dir')
+            shutil.move(outName + '.dir/' + nm + '.0', outName)
+            shutil.rmtree(outName + '.dir')
         elif mode == 'txt':
             numRows = int(numCells.prod())
             grid = self.getGrid()
@@ -635,7 +635,7 @@ class GData(object):
                 basis[d] = numCells[(d+1):].prod()
             #end
 
-            fh = open(fName, 'w')
+            fh = open(outName, 'w')
             for i in range(numRows):
                 idx = i
                 idxs = np.zeros(numDims, np.int)

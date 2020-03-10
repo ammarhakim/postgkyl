@@ -6,7 +6,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Interpolate DG data on a uniform mesh')
 @click.option('--basistype', '-b',
-              type=click.Choice(['ms', 'ns', 'mo']),
+              type=click.Choice(['ms', 'ns', 'mo', 'mt']),
               help='Specify DG basis')
 @click.option('--polyorder', '-p', type=click.INT,
               help='Specify polynomial order')
@@ -19,20 +19,34 @@ def interpolate(ctx, **inputs):
     vlog(ctx, 'Starting interpolate')
     pushChain(ctx, 'interpolate', **inputs)
 
+    basisType = None
+    isModal = None
     if inputs['basistype'] is not None:
-        if inputs['basistype'] == 'ms' or inputs['basistype'] == 'ns':
+        if inputs['basistype'] == 'ms':
             basisType = 'serendipity'
+            isModal = True
+        elif inputs['basistype'] == 'ns':
+            basisType = 'serendipity'
+            isModal = False
         elif inputs['basistype'] == 'mo':
             basisType = 'maximal-order'
-    else:
-        basisType = None
+            isModal = True
+        elif inputs['basistype'] == 'mt':
+            basisType = 'tensor'
+            isModal = True
+        #end
     #end
     
-    for s in ctx.obj['sets']:
-        if ctx.obj['dataSets'][s].modal or inputs['basistype'] == 'ms' or inputs['basistype'] == 'mo':
+    for i, s in enumerate(ctx.obj['sets']):
+        if inputs['basistype'] is None and ctx.obj['dataSets'][s].basisType is None:
+            click.echo(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:d} does not have required metadata".format(i), fg='red'))
+            ctx.exit()
+        #end
+
+        if isModal or ctx.obj['dataSets'][s].isModal:
             dg = GInterpModal(ctx.obj['dataSets'][s],
-                              inputs['polyorder'], basisType, 
-                              inputs['interp'], inputs['read'])
+                                  inputs['polyorder'], basisType, 
+                                  inputs['interp'], inputs['read'])
         else:
             dg = GInterpNodal(ctx.obj['dataSets'][s],
                               inputs['polyorder'], basisType,

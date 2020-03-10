@@ -27,20 +27,31 @@ def _getNumNodes(dim, polyOrder, basisType):
                                     [5, 15, 35,  70],
                                     [6, 21, 56, 126]])
         numNodes = numNodesMaximal[dim-1, polyOrder-1]
+    elif basisType.lower() == 'tensor':
+        numNodesMaximal = np.array([[ 2,   3,    4,    5],
+                                    [ 4,   9,   16,   25],
+                                    [ 8,  27,   64,  125],
+                                    [16,  81,  256,  625],
+                                    [32, 343, 1024, 3125]])
+        numNodes = numNodesMaximal[dim-1, polyOrder-1]
     else:
         raise NameError(
             "GInterp: Basis '{:s}' is not supported!\n"
             "Supported basis are currently 'ns' (Nodal Serendipity),"
-            " 'ms' (Modal Serendipity), and 'mo' (Modal Maximal Order)".
+            " 'ms' (Modal Serendipity), 'mt' (Modal Tensor product),"
+            " and 'mo' (Modal maximal Order)".
             format(basisType))
     #end
     return numNodes
 #end
 
 
-def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal=True):
+def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal):
     if interp is not None and read is None:
         mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal)
+        return mat
+    elif basisType=='tensor':
+        mat = createInterpMatrix(dim, polyOrder, 'tensor', polyOrder+1, True)
         return mat
     elif read is not None:
         fileNameGeneral = postgkylPath + '/interpMatrix.h5'
@@ -440,13 +451,13 @@ class GInterpModal(GInterp):
                 self.basisType = 'serendipity'
             elif basisType == 'mo':
                 self.basisType = 'maximal-order'
-            else:
-                self.basisType = basisType
+            elif basisType == 'mt':
+                self.basisType = 'tensor'
             #end
         elif data.basisType is not None:
             self.basisType = data.basisType
         else:
-            raise ValueError('GInterpNodal: basis type is neither specified nor stored in the output file')
+            raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
         #end
         self.periodic = periodic
         if numInterp is not None or self.polyOrder > 1:

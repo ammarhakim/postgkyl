@@ -224,9 +224,12 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
         nameComps = np.zeros(cnt, np.int)
         names = []
         for sIdx in range(cnt):
-            fName = ctx.obj['dataSets'][sIdx].fName
-            fName = fName.split('.')[0]
-            names.append(fName.split('_'))
+            fileName = ctx.obj['dataSets'][sIdx].fileName
+            extLength = len(fileName.split('.')[-1])
+            fileName = fileName[:-(extLength+1)]
+            # only remove the file extension but take into account
+            # that the file name might start with '../'
+            names.append(fileName.split('_'))
             nameComps[sIdx] = len(names[sIdx])
             ctx.obj['labels'].append('')
         #end
