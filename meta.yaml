@@ -6,7 +6,7 @@ source:
   path: ./
 
 build:
-  number: 20200115
+  number: 20200331
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
@@ -36,6 +36,6 @@ test:
     - postgkyl
 
 about:
-  home: https://bitbucket.org/ammarhakim/postgkyl
+  home: https://github.com/ammarhakim/postgkyl
   license: BSD
   license_file: LICENSE

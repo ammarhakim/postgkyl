@@ -1,4 +1,6 @@
 import click
+import numpy as np
+np.set_printoptions(precision=16)
 
 from postgkyl.commands.util import vlog, pushChain
 
