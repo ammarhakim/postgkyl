@@ -28,8 +28,8 @@ def _printVersion(ctx, param, value):
         #end
     #end
     click.echo('Postgkyl 1.3 {:s} ({:s})'.format(date, sys.platform))
-    click.echo(sys.version)
-    click.echo('Copyright 2016-2018 Gkeyll Team')
+    click.echo('Python version: {:s}'.format(sys.version))
+    click.echo('Copyright 2016-2020 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
     click.echo('national laboratories, and other non-profit institutions.')
     click.echo('There is NO warranty. SPAM!\n')
