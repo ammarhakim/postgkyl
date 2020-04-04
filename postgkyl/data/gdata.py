@@ -320,6 +320,21 @@ class GData(object):
                     values = adios.var(fh, 'Data').read()
                     grid = adios.var(fh, 'TimeMesh').read()
                     fh.close()
+                elif 'Data0' in fh.vars and 'TimeMesh0' in fh.vars:
+                    values = adios.var(fh, 'Data0').read()
+                    grid = adios.var(fh, 'TimeMesh0').read()
+                    varCnt = 1
+                    for v in fh.vars:
+                        if v == 'Data{:d}'.format(varCnt):
+                            values = np.append(values,
+                                               adios.var(fh, 'Data{:d}'.format(varCnt)).read(),
+                                               axis=0)
+                            grid = np.append(grid,
+                                             adios.var(fh, 'TimeMesh{:d}'.format(varCnt)).read(),
+                                             axis=0)
+                            varCnt = varCnt+1
+                        #end
+                    #end
                 else:
                     fh.close()
                     continue
