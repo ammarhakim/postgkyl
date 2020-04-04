@@ -324,8 +324,8 @@ class GData(object):
                     values = adios.var(fh, 'Data0').read()
                     grid = adios.var(fh, 'TimeMesh0').read()
                     varCnt = 1
-                    for v in fh.vars:
-                        if v == 'Data{:d}'.format(varCnt):
+                    while True:
+                        try:
                             values = np.append(values,
                                                adios.var(fh, 'Data{:d}'.format(varCnt)).read(),
                                                axis=0)
@@ -333,6 +333,8 @@ class GData(object):
                                              adios.var(fh, 'TimeMesh{:d}'.format(varCnt)).read(),
                                              axis=0)
                             varCnt = varCnt+1
+                        except AssertionError:
+                            break
                         #end
                     #end
                 else:
