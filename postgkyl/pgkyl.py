@@ -27,7 +27,7 @@ def _printVersion(ctx, param, value):
                                            struct.tm_mday)
         #end
     #end
-    click.echo('Postgkyl 1.3.2 {:s} ({:s})'.format(date, sys.platform))
+    click.echo('Postgkyl 1.5.2 {:s} ({:s})'.format(date, sys.platform))
     click.echo('Python version: {:s}'.format(sys.version))
     click.echo('Copyright 2016-2020 Gkeyll Team')
     click.echo('Gkeyll can be used freely for research at universities,')
