@@ -26,7 +26,7 @@ def collect(ctx, **kwargs):
     
     if group:
         for s in ctx.obj['sets']:
-            stem = "_".join(ctx.obj['dataSets'][s].fName.split("_")[:-1])
+            stem = "_".join(ctx.obj['dataSets'][s].fileName.split("_")[:-1])
             if not stem in stems:
                 stems.append(stem)
             #end
@@ -45,7 +45,7 @@ def collect(ctx, **kwargs):
         cnt = 0
 
         for s in ctx.obj['sets']:
-            stem = "_".join(ctx.obj['dataSets'][s].fName.split("_")[:-1])
+            stem = "_".join(ctx.obj['dataSets'][s].fileName.split("_")[:-1])
             if st == stem or not group:
                 cnt = cnt + 1
                 if kwargs['chunk'] is not None and cnt > kwargs['chunk']:
@@ -94,7 +94,7 @@ def collect(ctx, **kwargs):
             ctx.obj['dataSets'][idx].pushGrid(grid)
             ctx.obj['dataSets'][idx].pushValues(values[i])
             ctx.obj['dataSets'][idx].time = 0.5*(time[i][0]+time[i][-1])
-            ctx.obj['dataSets'][idx].fName = st
+            ctx.obj['dataSets'][idx].fileName = st
             vlog(ctx, 'collect: activated data set #{:d}'.format(idx))
             activeSets.append(idx)
         #end
