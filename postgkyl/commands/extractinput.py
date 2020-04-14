@@ -12,7 +12,7 @@ def extractinput(ctx, **kwargs):
     sets = ctx.obj['sets']
         
     for s in sets:
-        encInp = ctx.obj['dataSets'][s].inputfile
+        encInp = ctx.obj['dataSets'][s].getInputFile()
         if encInp:
             inpfile = base64.decodebytes(encInp.encode('utf-8')).decode('utf-8')
             click.echo(inpfile)

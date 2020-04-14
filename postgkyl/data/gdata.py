@@ -75,7 +75,6 @@ class GData(object):
         self.polyOrder = None
         self.basisType = None
         self.isModal = None
-        self.inputFile = None
 
         self.fileName = fileName
         if fileName is not None:
@@ -187,9 +186,6 @@ class GData(object):
             if 'basisType' in fh.attrs.keys():
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
                 self.isModal = True
-            #end
-            if 'inputfile' in fh.attrs.keys():
-                self.inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
             #end
 
             # Load data ...
@@ -372,6 +368,14 @@ class GData(object):
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
+    def getInputFile(self):
+        fh = adios.file(self.fileName)
+        inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
+        fh.close()
+        return inputFile
+    #end
+
+    
     def getNumCells(self):
         if len(self._values) > 0:
             numDims = len(self._values[-1].shape)-1
