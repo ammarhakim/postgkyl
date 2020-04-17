@@ -45,7 +45,7 @@ def interpolate(ctx, **inputs):
 
         if isModal or ctx.obj['dataSets'][s].isModal:
             dg = GInterpModal(ctx.obj['dataSets'][s],
-                                  inputs['polyorder'], basisType, 
+                                  inputs['polyorder'], inputs['basistype'], 
                                   inputs['interp'], inputs['read'])
         else:
             dg = GInterpNodal(ctx.obj['dataSets'][s],
