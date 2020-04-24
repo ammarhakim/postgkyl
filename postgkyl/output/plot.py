@@ -44,6 +44,7 @@ def _gridNodalToCellCentered(grid, cells):
 
 def plot(gdata, args=(),
          figure=None, squeeze=False,
+         numAxes=None, startAxes=0, 
          streamline=False, quiver=False, contour=False,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
@@ -102,8 +103,13 @@ def plot(gdata, args=(),
     else:
         step = 1
     #end
+
     idxComps = range(int(np.floor(numComps/step)))
-    numComps = len(idxComps)
+    if numAxes:
+        numComps = numAxes
+    else:
+        numComps = len(idxComps)
+    #end
 
     if xscale != 1.0:
         axLabel[0] = axLabel[0] + r' $\times$ {:.3e}'.format(xscale)
@@ -158,6 +164,7 @@ def plot(gdata, args=(),
             #end
         else:  # Plotting each components into its own subplot
             sr = np.sqrt(numComps)
+            #end
             if sr == np.ceil(sr):
                 numRows = int(sr)
                 numCols = int(sr)
@@ -213,7 +220,7 @@ def plot(gdata, args=(),
         if squeeze:
             cax = ax[0]
         else:
-            cax = ax[comp]
+            cax = ax[comp+startAxes]
         #end
         if len(idxComps) > 1:
             if labelPrefix == "":

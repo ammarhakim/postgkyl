@@ -10,6 +10,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify figure to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
+@click.option('--subplots', '-b', is_flag=True,
+              help="Make subplots from multiple datasets.")
 @click.option('-a', '--arg', type=click.STRING,
               help="Additional plotting arguments like '*--'.")
 @click.option('-c', '--contour', is_flag=True,
@@ -70,7 +72,20 @@ def plot(ctx, **kwargs):
     if kwargs['group'] is not None:
         kwargs['group'] = int(kwargs['group'])
     #end
-    
+
+    kwargs['numAxes'] = None
+    if kwargs['subplots']:
+        kwargs['numAxes'] = 0
+        kwargs['startAxes'] = 0
+        for s in ctx.obj['sets']:
+            dat = ctx.obj['dataSets'][s]
+            kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
+        #end
+        if kwargs['figure'] is None:
+            kwargs['figure'] = 0
+        #end
+    #end
+
     fName = ""
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
@@ -85,6 +100,9 @@ def plot(ctx, **kwargs):
         else:
             gplot(dat, labelPrefix=label,
                  **kwargs)
+        #end
+        if kwargs['subplots']:
+            kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
         #end
 
         if (kwargs['save'] or kwargs['saveas']):
