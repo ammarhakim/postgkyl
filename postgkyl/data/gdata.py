@@ -1,5 +1,5 @@
 from glob import glob
-from os.path import isfile
+from os import path
 import adios
 import numpy as np
 import shutil
@@ -81,7 +81,7 @@ class GData(object):
             # Sequence load typically concatenates multiple files
             # When the sequence is in just a single file, _loadFrame will
             # fail and _loadSequence is called instead
-            if isfile(self.fileName):
+            if path.isfile(self.fileName):
                 coords = (coord0, coord1, coord2, coord3, coord4, coord5)
                 self._loadFrame(coords, comp)
             else:
@@ -138,6 +138,7 @@ class GData(object):
 
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
+        self.fileDir = path.dirname(path.realpath(self.fileName))
         extension = self.fileName.split('.')[-1]
         if extension == 'h5':
             fh = tables.open_file(self.fileName, 'r')
@@ -209,9 +210,9 @@ class GData(object):
                 pass # nothing to do for uniform grids
             elif self._gridType == "mapped":
                 if "grid" in fh.attrs.keys():
-                    gridNm = adios.attr(fh, "grid").value.decode('UTF-8')
+                    gridNm = self.fileDir + '/' +adios.attr(fh, "grid").value.decode('UTF-8')
                 else:
-                    gridNm = "grid"  
+                    gridNm = self.fileDir + "/grid"  
                 #end
                 with adios.file(gridNm) as gridFh:
                     gridVar = adios.var(gridFh, 'CartGridField')
