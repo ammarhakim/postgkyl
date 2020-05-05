@@ -15,7 +15,7 @@ def write(ctx, **kwargs):
     pushChain(ctx, 'write', **kwargs)
 
     for s in ctx.obj['sets']:
-        ctx.obj['dataSets'][s].write(fName=kwargs['filename'],
+        ctx.obj['dataSets'][s].write(outName=kwargs['filename'],
                                      txt=kwargs['txt'],
                                      bufferSize=kwargs['buffersize'])
     vlog(ctx, 'Finishing write')

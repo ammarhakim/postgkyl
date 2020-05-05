@@ -665,7 +665,7 @@ class GData(object):
                 for d in range(numDims-1):
                     line += "{:e}, ".format(grid[d][idxs[d]])
                 #end
-                line += "{:e}; ".format(grid[numDims-1][idxs[numDims-1]])
+                line += "{:e}, ".format(grid[numDims-1][idxs[numDims-1]])
                 for c in range(numComps-1):
                     line += "{:e}, ".format(values[tuple(idxs)][c])
                 #end
