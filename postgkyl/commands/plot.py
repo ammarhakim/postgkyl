@@ -112,8 +112,8 @@ def plot(ctx, **kwargs):
                 if fName != "":
                     fName = fName + "_"
                     #end
-                if dat.fName:
-                    fName = fName + dat.fName.split('.')[0]
+                if dat.fileName:
+                    fName = fName + dat.fileName.split('.')[0]
                 else:
                     fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
                 #end
