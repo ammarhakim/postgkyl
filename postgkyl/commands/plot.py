@@ -64,6 +64,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="DPI for output")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
+@click.option('--showgrid/--no-showgrid', default=True,
+              help="Show grid-lines (default: True)")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')

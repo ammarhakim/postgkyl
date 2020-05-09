@@ -53,6 +53,7 @@ def plot(gdata, args=(),
          logx=False, logy=False, logz=False,
          color=None, fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
+         showgrid=True,
          **kwargs):
     """Plots Gkeyll data
 
@@ -341,7 +342,7 @@ def plot(gdata, args=(),
 
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
-        cax.grid(True)
+        cax.grid(showgrid)
         # Legend
         if legend:
             if numDims == 1 and label != '':
