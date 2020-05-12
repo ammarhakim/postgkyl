@@ -87,7 +87,7 @@ def plot(ctx, **kwargs):
             kwargs['figure'] = 0
         #end
     #end
-
+ 
     fName = ""
     for s in ctx.obj['sets']:
         dat = ctx.obj['dataSets'][s]
@@ -98,10 +98,10 @@ def plot(ctx, **kwargs):
         #end
         if kwargs['arg'] is not None:
             gplot(dat, kwargs['arg'], labelPrefix=label, 
-                 **kwargs)
+                  **kwargs)
         else:
             gplot(dat, labelPrefix=label,
-                 **kwargs)
+                  **kwargs)
         #end
         if kwargs['subplots']:
             kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()

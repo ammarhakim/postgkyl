@@ -7,15 +7,15 @@ import numpy as np
 import os.path
 
 # Helper functions
-def _colorbar(obj, fig, ax, label="", extend=None):
+def _colorbar(obj, fig, cax, label="", extend=None):
     from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="3%", pad=0.05)
+    divider = make_axes_locatable(cax)
+    cax2 = divider.append_axes("right", size="3%", pad=0.05)
     if extend is not None:
-        return fig.colorbar(obj, cax=cax, label=label, extend=extend)
+        return fig.colorbar(obj, cax=cax2, label=label, extend=extend)
     else:
-        return fig.colorbar(obj, cax=cax, label=label)
+        return fig.colorbar(obj, cax=cax2, label=label)
     #end
 #end
 
@@ -62,6 +62,7 @@ def plot(gdata, args=(),
 
     Args:
     """
+
     # Load Postgkyl style
     if style is None:
         plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
@@ -98,13 +99,14 @@ def plot(gdata, args=(),
             axLabel = np.delete(axLabel, idx)
             values = np.squeeze(values, tuple(idx)) 
         #end
-    numComps = values.shape[-1]
+    #end
+    
     if streamline or quiver:
         step = 2
     else:
         step = 1
     #end
-
+    numComps = values.shape[-1]
     idxComps = range(int(np.floor(numComps/step)))
     if numAxes:
         numComps = numAxes
@@ -134,7 +136,7 @@ def plot(gdata, args=(),
     #end
 
     #-----------------------------------------------------------------
-    #-- Preparing the Axes -------------------------------------------
+    #-- Preparing/loading Axes ---------------------------------------
     if fig.axes:
         ax = fig.axes
         if squeeze is False and numComps > len(ax):
@@ -187,29 +189,33 @@ def plot(gdata, args=(),
                              num=fig.number)
             #end
             ax = fig.axes
+            # Removing extra axes
+            for i in range(numComps, len(ax)):
+                ax[i].axis('off')
+            #end
             # Adding labels only to the right subplots
-            for comp in idxComps:
-                if comp >= (numRows-1) * numCols:
+            for axIdx in range(len(ax)):
+                if axIdx >= (numRows-1) * numCols:
                     if xlabel is None:
-                        ax[comp].set_xlabel(axLabel[0])
+                        ax[axIdx].set_xlabel(axLabel[0])
                         if group == 1:
-                            ax[comp].set_xlabel(axLabel[1])
+                            ax[axIdx].set_xlabel(axLabel[1])
                         #end
                     else:
-                        ax[comp].set_xlabel(xlabel)
+                        ax[axIdx].set_xlabel(xlabel)
                     #end
                 #end
-                if comp % numCols == 0:
+                if axIdx % numCols == 0:
                     if ylabel is None:
                         if numDims == 2 and group is None:
-                            ax[comp].set_ylabel(axLabel[1])
+                            ax[axIdx].set_ylabel(axLabel[1])
                         #end
                     else:
-                        ax[comp].set_ylabel(ylabel)
+                        ax[axIdx].set_ylabel(ylabel)
                     #end
                 #end
-                if comp < numCols and title is not None:
-                    ax[comp].set_title(title, y=1.08)
+                if axIdx < numCols and title is not None:
+                    ax[axIdx].set_title(title, y=1.08)
                 #end
             #end
         #end
@@ -232,7 +238,6 @@ def plot(gdata, args=(),
         else:
             label = labelPrefix
         #end
-        # Special plots:
         if numDims == 1:
             gridCC = _gridNodalToCellCentered(grid, cells)
             im = cax.plot(gridCC[0]*xscale,
@@ -266,7 +271,7 @@ def plot(gdata, args=(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
                                     color=magnitude.transpose())
-                cb = _colorbar(im.lines, fig, cax)
+                _colorbar(im.lines, fig, cax)
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
                 im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
@@ -275,12 +280,13 @@ def plot(gdata, args=(),
                                     cmap='RdBu_r',
                                     edgecolors=edgecolors, linewidth=0.1,
                                     *args)
-                cb = _colorbar(im, fig, cax)
+                _colorbar(im, fig, cax)
             elif group is not None:  #--------------------------------
                 if group == 0:
                     numLines = values.shape[1]
                 else:
                     numLines = values.shape[0]
+                #end
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 for l in range(numLines):
                     idx = [slice(0, u) for u in values.shape]
@@ -295,7 +301,7 @@ def plot(gdata, args=(),
                         im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
                                       *args, color=color)
                 legend = False
-            else:  # Basic plots -------------------------------------
+            else:
                 extend = None
                 if vmin is not None and vmax is not None:
                     extend = 'both'
@@ -331,15 +337,14 @@ def plot(gdata, args=(),
                                         vmin=vmin, vmax=vmax,
                                         edgecolors=edgecolors,
                                         linewidth=0.1,
-                                        *args) 
+                                        *args)
                 #end
-                cb = _colorbar(im, fig, cax, extend=extend)
+                _colorbar(im, fig, cax, extend=extend)
             #end
         else:
             raise ValueError("{:d}D data not yet supported".
                              format(numDims))
         #end
-
         #-------------------------------------------------------------
         #-- Additional Formatting ------------------------------------
         cax.grid(showgrid)
@@ -373,10 +378,6 @@ def plot(gdata, args=(),
             #end
         #end
     #end
-    for i in range(numComps, len(ax)):
-        ax[i].axis('off')
-    #end
-
     plt.tight_layout()
     return im
 #end
