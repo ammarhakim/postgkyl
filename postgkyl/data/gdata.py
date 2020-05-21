@@ -663,13 +663,13 @@ class GData(object):
                 #end
                 line = ""
                 for d in range(numDims-1):
-                    line += "{:e}, ".format(grid[d][idxs[d]])
+                    line += "{:.15e}, ".format(grid[d][idxs[d]])
                 #end
-                line += "{:e}, ".format(grid[numDims-1][idxs[numDims-1]])
+                line += "{:.15e}, ".format(grid[numDims-1][idxs[numDims-1]])
                 for c in range(numComps-1):
-                    line += "{:e}, ".format(values[tuple(idxs)][c])
+                    line += "{:.15e}, ".format(values[tuple(idxs)][c])
                 #end
-                line += "{:e}\n".format(values[tuple(idxs)][numComps-1])
+                line += "{:.15e}\n".format(values[tuple(idxs)][numComps-1])
                 fh.write(line)
             #end
             fh.close()
