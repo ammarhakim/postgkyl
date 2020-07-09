@@ -322,13 +322,17 @@ class GData(object):
                     grid = adios.var(fh, 'TimeMesh0').read()
                     varCnt = 1
                     while 'Data'+str(varCnt) in fh.vars:
-                        values = np.append(values,
-                                           adios.var(fh, 'Data{:d}'.format(varCnt)).read(),
-                                           axis=0)
-                        grid = np.append(grid,
-                                         adios.var(fh, 'TimeMesh{:d}'.format(varCnt)).read(),
-                                         axis=0)
-                        varCnt = varCnt+1
+                        try:
+                           values = np.append(values,
+                                              adios.var(fh, 'Data{:d}'.format(varCnt)).read(),
+                                              axis=0)
+                           grid = np.append(grid,
+                                            adios.var(fh, 'TimeMesh{:d}'.format(varCnt)).read(),
+                                            axis=0)
+                           varCnt = varCnt+1
+                        except:
+                           varCnt = varCnt+1
+                           continue
                     #end
                 else:
                     fh.close()
