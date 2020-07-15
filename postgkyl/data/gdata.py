@@ -255,6 +255,38 @@ class GData(object):
                 #end
             #end
             fh.close()
+        elif extension == 'gkyl':
+            dti8 = np.dtype("i8")
+            dtf8 = np.dtype("f8")
+            
+            # read grid dimensions
+            numDims = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
+            offset = 8
+            
+            # read grid shape
+            cells = np.fromfile(self.fileName, dtype=dti8, count=numDims, offset=offset)
+            offset += numDims*8
+            
+            # read lower/upper
+            lower = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
+            offset += numDims*8
+
+            upper = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
+            offset += numDims*8
+
+            # read array rank
+            arank = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
+            offset += 8
+
+            # read array shape
+            ashape = np.fromfile(self.fileName, dtype=dti8, count=arank, offset=offset)
+            offset += arank*8
+
+            adata = np.fromfile(self.fileName, dtype=dtf8, offset=offset)
+            cshape = ashape[:-1]
+            cshape[-1] = cshape[-1]*ashape[-1]
+                        
+            self._values.append(adata.reshape(cshape))
         else:
             raise NameError(
                 "File extension '{:s}' is not supported".
