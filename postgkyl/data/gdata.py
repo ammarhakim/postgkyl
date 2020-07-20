@@ -283,10 +283,13 @@ class GData(object):
             offset += arank*8
 
             adata = np.fromfile(self.fileName, dtype=dtf8, offset=offset)
-            cshape = ashape[:-1]
-            cshape[-1] = cshape[-1]*ashape[-1]
-                        
-            self._values.append(adata.reshape(cshape))
+            gshape = np.ones(numDims+1, dtype=np.dtype("i8"))
+            for d in range(numDims):
+                gshape[d] = ashape[d]
+            #end
+            numComp = np.prod(ashape)/np.prod(gshape)
+            gshape[-1] = int(numComp)
+            self._values.append(adata.reshape(gshape))
         else:
             raise NameError(
                 "File extension '{:s}' is not supported".
