@@ -12,7 +12,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
               help="Make subplots from multiple datasets.")
-@click.option('-a', '--arg', type=click.STRING,
+@click.option('--arg', type=click.STRING,
               help="Additional plotting arguments like '*--'.")
 @click.option('-c', '--contour', is_flag=True,
               help="Switch to contour mode.")
@@ -26,7 +26,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Switch to group mode.")
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
-@click.option('--fix-aspect', 'fixaspect', is_flag=True,
+@click.option('-a', '--fix-aspect', 'fixaspect', is_flag=True,
               help="Enforce the same scaling on both axes.")
 @click.option('--logx', is_flag=True,
               help="Set x-axis to log scale.")
