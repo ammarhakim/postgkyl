@@ -4,6 +4,8 @@ import numpy as np
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
 
+from postgkyl.modalDG import interpolate as interpFn
+
 @click.command(help='Interpolate DG data on a uniform mesh')
 @click.option('--basistype', '-b',
               type=click.Choice(['ms', 'ns', 'mo', 'mt']),
@@ -14,6 +16,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Interpolation onto a general mesh of specified amount')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file')
+@click.option('-n', '--new', is_flag=True,
+              help="for testing purposes")
 @click.pass_context
 def interpolate(ctx, **inputs):
     vlog(ctx, 'Starting interpolate')
@@ -42,21 +46,26 @@ def interpolate(ctx, **inputs):
             click.echo(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:d} does not have required metadata".format(i), fg='red'))
             ctx.exit()
         #end
-
+        
         if isModal or ctx.obj['dataSets'][s].isModal:
             dg = GInterpModal(ctx.obj['dataSets'][s],
-                                  inputs['polyorder'], inputs['basistype'], 
-                                  inputs['interp'], inputs['read'])
+                              inputs['polyorder'], inputs['basistype'], 
+                              inputs['interp'], inputs['read'])
         else:
             dg = GInterpNodal(ctx.obj['dataSets'][s],
                               inputs['polyorder'], basisType,
                               inputs['interp'], inputs['read'])
         #end
+            
         numNodes = dg.numNodes
         numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
-
+        
         vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
-        dg.interpolate(tuple(range(numComps)), stack=True)
+        if not inputs['new']:
+            dg.interpolate(tuple(range(numComps)), stack=True)
+        else:
+            interpFn(ctx.obj['dataSets'][s], inputs['polyorder'])
+        #end
     #end
     vlog(ctx, 'Finishing interpolate')
 #end

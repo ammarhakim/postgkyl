@@ -1,5 +1,5 @@
 # import data handler
-from .gdata import GData 
+from .data import Data 
 # import interpolators
 #from .dg import GInterpZeroOrder
 from .dg import GInterpNodal
@@ -11,3 +11,7 @@ from . import computeDerivativeMatrices
 from .select import select
 
 from . import recovData
+
+
+# legacy calls
+from .data import Data as GData

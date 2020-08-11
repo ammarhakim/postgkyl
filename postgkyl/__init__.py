@@ -22,7 +22,7 @@ Sub-modules:
     tools: miscellaneous tools
 
 .. _documentation:
-    http://gkyl.readthedocs.io/en/latest/
+    http://gkeyll.readthedocs.io/en/latest/
 """
 
 __version__ = '1.0'
@@ -33,11 +33,17 @@ from . import diagnostics
 from . import tools
 from . import output
 from . import utils
+from . import modalDG
 
 # import selected classes to the root
-from .data.gdata import GData
+from .data.data import Data
 from .data.dg import GInterpNodal
 from .data.dg import GInterpModal
 
 # link the command line executable to the system
 from . import pgkyl
+
+
+
+# legacy call
+from .data.data import Data as GData
