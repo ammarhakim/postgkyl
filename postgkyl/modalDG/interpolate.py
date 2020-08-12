@@ -70,7 +70,7 @@ def interpolate(data, polyOrder=None, nodes=None):
                 for k, z in enumerate(nodes):
                     for l, r in enumerate(nodes):
                         for m, s in enumerate(nodes):
-                            intValues[i::len(nodes), j::len(nodes), k::len(nodes), l::len(nodes), m::len(nodes), 0] = expand_5d[int(polyOrder-1)](values, x, y, z, w, r, s)
+                            intValues[i::len(nodes), j::len(nodes), k::len(nodes), l::len(nodes), m::len(nodes), 0] = expand_5d[int(polyOrder-1)](values, x, y, z, r, s)
                          #end       
                     #end
                 #end
@@ -85,7 +85,7 @@ def interpolate(data, polyOrder=None, nodes=None):
                     for l, r in enumerate(nodes):
                         for m, s in enumerate(nodes):
                             for n, t in enumerate(nodes):
-                                intValues[i::len(nodes), j::len(nodes), k::len(nodes), l::len(nodes), m::len(nodes), n::len(nodes), 0] = expand_6d[int(polyOrder-1)(values, x, y, z, w, r, s, t)]
+                                intValues[i::len(nodes), j::len(nodes), k::len(nodes), l::len(nodes), m::len(nodes), n::len(nodes), 0] = expand_6d[int(polyOrder-1)](values, x, y, z, r, s, t)
                          #end       
                     #end
                 #end
