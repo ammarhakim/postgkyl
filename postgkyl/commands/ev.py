@@ -192,7 +192,7 @@ def _command(ctx, gridStack, evalStack, s):
     return True
 #end
 
-@click.command(help="Evaluate stuff using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1])
+@click.command(help="Evaluate expression using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1])
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.option('--label', '-l',
               help="Specify a custom label for the result.")

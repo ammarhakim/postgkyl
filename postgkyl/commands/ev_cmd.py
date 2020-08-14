@@ -54,6 +54,20 @@ def sqrt(inGrid, inValues):
     outValues = np.sqrt(inValues[0])
     return [outGrid], [outValues]
 
+def psin(inGrid, inValues):
+    outGrid = inGrid[0]
+    outValues = np.sin(inValues[0])
+    return [outGrid], [outValues]
+
+def pcos(inGrid, inValues):
+    outGrid = inGrid[0]
+    outValues = np.cos(inValues[0])
+    return [outGrid], [outValues]
+
+def ptan(inGrid, inValues):
+    outGrid = inGrid[0]
+    outValues = np.tan(inValues[0])
+    return [outGrid], [outValues]
 
 def absolute(inGrid, inValues):
     outGrid = inGrid[0]
@@ -255,6 +269,9 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          '*' : { 'numIn' : 2, 'numOut' : 1, 'func' : mult },
          '/' : { 'numIn' : 2, 'numOut' : 1, 'func' : divide },
          'sqrt' : { 'numIn' : 1, 'numOut' : 1, 'func' : sqrt },
+         'sin' : { 'numIn' : 1, 'numOut' : 1, 'func' : psin },
+         'cos' : { 'numIn' : 1, 'numOut' : 1, 'func' : pcos },
+         'tan' : { 'numIn' : 1, 'numOut' : 1, 'func' : ptan },
          'abs' : { 'numIn' : 1, 'numOut' : 1, 'func' : absolute },
          'avg' : { 'numIn' : 2, 'numOut' : 1, 'func' : average },
          'log' : { 'numIn' : 1, 'numOut' : 1, 'func' : log },
