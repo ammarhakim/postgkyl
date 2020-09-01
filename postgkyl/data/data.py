@@ -9,7 +9,7 @@ import tables
 from postgkyl.utils import idxParser
 
 
-class GData(object):
+class Data(object):
     """Provides interface to Gkeyll output data.
 
     GData serves as a baseline interface to Gkeyll 1 and 2 output

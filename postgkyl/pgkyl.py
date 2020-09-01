@@ -8,7 +8,7 @@ import click
 import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import GData
+from postgkyl.data import Data
 import postgkyl.commands as cmd
 
 # Version print helper
@@ -162,12 +162,12 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
             try:
-                ctx.obj['dataSets'].append(GData(filename[s], comp=comp[s],
-                                                 coord0=c0[s], coord1=c1[s],
-                                                 coord2=c2[s], coord3=c3[s],
-                                                 coord4=c4[s], coord5=c5[s],
-                                                 stack=stack,
-                                                 compgrid=compgrid))
+                ctx.obj['dataSets'].append(Data(filename[s], comp=comp[s],
+                                                coord0=c0[s], coord1=c1[s],
+                                                coord2=c2[s], coord3=c3[s],
+                                                coord4=c4[s], coord5=c5[s],
+                                                stack=stack,
+                                                compgrid=compgrid))
             except NameError:
                 click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
                 ctx.exit()
@@ -193,14 +193,14 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                 try:
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
-                    ctx.obj['dataSets'].append(GData(fn, comp=comp[s],
-                                                     coord0=c0[s],
-                                                     coord1=c1[s],
-                                                     coord2=c2[s],
-                                                     coord3=c3[s],
-                                                     coord4=c4[s],
-                                                     coord5=c5[s],
-                                                     stack=stack))
+                    ctx.obj['dataSets'].append(Data(fn, comp=comp[s],
+                                                    coord0=c0[s],
+                                                    coord1=c1[s],
+                                                    coord2=c2[s],
+                                                    coord3=c3[s],
+                                                    coord4=c4[s],
+                                                    coord5=c5[s],
+                                                    stack=stack))
                     ctx.obj['setIds'].append(cnt)
                     cnt += 1
                 except:
