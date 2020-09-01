@@ -16,8 +16,31 @@ def val2coord(ctx, **kwargs):
 
     activeSets = []
 
-    xComps = kwargs['x'].split(',')
-    yComps = kwargs['y'].split(',')
+    if len(kwargs['x'].split(',')) > 1:
+        xComps = np.array(kwargs['x'].split(','), np.int)
+    elif len(kwargs['x'].split(':')) == 2:
+        xComps = np.arange(int(kwargs['x'].split(':')[0]),
+                          int(kwargs['x'].split(':')[1]))
+    elif len(kwargs['x'].split(':')) == 3:
+        xComps = np.arange(int(kwargs['x'].split(':')[0]),
+                          int(kwargs['x'].split(':')[1]),
+                          int(kwargs['x'].split(':')[2]))
+    else:
+        xComps = np.array([int(kwargs['x'])])
+    #end
+    if len(kwargs['y'].split(',')) > 1:
+        yComps = np.array(kwargs['y'].split(','), np.int)
+    elif len(kwargs['y'].split(':')) == 2:
+        yComps = np.arange(int(kwargs['y'].split(':')[0]),
+                          int(kwargs['y'].split(':')[1]))
+    elif len(kwargs['y'].split(':')) == 3:
+        yComps = np.arange(int(kwargs['y'].split(':')[0]),
+                          int(kwargs['y'].split(':')[1]),
+                          int(kwargs['y'].split(':')[2]))
+    else:
+        yComps = np.array([int(kwargs['y'])])
+    #end
+    
     if len(xComps) > 1 and len(xComps) != len(yComps):
         click.echo(click.style("ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(len(xComps), len(yComps)), fg='red'))
         ctx.exit()
@@ -25,11 +48,10 @@ def val2coord(ctx, **kwargs):
     
     for s in ctx.obj['sets']:
         for i, yc in enumerate(yComps):
-            yc = int(yc)
             if len(xComps) > 1:
-                xc = int(xComps[i])
+                xc = xComps[i]
             else:
-                xc = int(xComps[0])
+                xc = xComps[0]
             #end
             
             values = ctx.obj['dataSets'][s].getValues()

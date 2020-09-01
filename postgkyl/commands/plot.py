@@ -68,6 +68,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set color for cell edges (default: None)")
 @click.option('--showgrid/--no-showgrid', default=True,
               help="Show grid-lines (default: True)")
+@click.option('--xkcd', is_flag=True,
+              help="Turns on the xkcd style!")
+@click.option('--hashtag', is_flag=True,
+              help="Turns on the pgkyl hashtag!")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')

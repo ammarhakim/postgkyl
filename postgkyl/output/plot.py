@@ -55,6 +55,7 @@ def plot(gdata, args=(),
          color=None, fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
          showgrid=True,
+         hashtag=False, xkcd=False,
          **kwargs):
     """Plots Gkeyll data
 
@@ -70,6 +71,11 @@ def plot(gdata, args=(),
                       + "/postgkyl.mplstyle")
     else:
         plt.style.use(style)
+    #end
+
+    # The most important thing
+    if xkcd:
+        plt.xkcd()
     #end
 
     #-----------------------------------------------------------------
@@ -367,6 +373,14 @@ def plot(gdata, args=(),
                          horizontalalignment='left',
                          transform=cax.transAxes)
             #end
+        #end
+        if hashtag:
+            cax.text(0.88, 0.06, '#pgkyl',
+                     bbox=dict(facecolor='w', edgecolor='w', alpha=0.8,
+                               boxstyle="round"),
+                     verticalalignment='top',
+                     horizontalalignment='left',
+                     transform=cax.transAxes)
         #end
         if logx:
             cax.set_xscale('log')
