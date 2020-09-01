@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import GData
+from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Collect data from the active datasets')
@@ -89,7 +89,7 @@ def collect(ctx, **kwargs):
             vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
             idx = len(ctx.obj['dataSets'])
             ctx.obj['setIds'].append(idx)
-            ctx.obj['dataSets'].append(GData())
+            ctx.obj['dataSets'].append(Data())
             ctx.obj['labels'].append(st)
             ctx.obj['dataSets'][idx].pushGrid(grid)
             ctx.obj['dataSets'][idx].pushValues(values[i])
