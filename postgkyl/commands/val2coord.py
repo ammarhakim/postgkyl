@@ -1,6 +1,7 @@
 import click
 import numpy as np
 
+from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Creates new dataset(s) from values of curent dataset(s), i.e., turns some values into grid')
@@ -38,8 +39,8 @@ def val2coord(ctx, **kwargs):
 
             idx = len(ctx.obj['dataSets'])
             ctx.obj['setIds'].append(idx)
-            ctx.obj['dataSets'].append(GData())
-            ctx.obj['labels'].append(st)
+            ctx.obj['dataSets'].append(Data())
+            ctx.obj['labels'].append('val2coord_{:d}'.format(i))
             ctx.obj['dataSets'][idx].pushGrid([x])
             ctx.obj['dataSets'][idx].pushValues(y)
             ctx.obj['dataSets'][idx].time = None

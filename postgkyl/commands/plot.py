@@ -20,6 +20,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Switch to quiver mode.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Switch to streamline mode.")
+@click.option('-s', '--scatter', is_flag=True,
+              help="Switch to scatter mode.")
 @click.option('-d', '--diverging', is_flag=True,
               help="Switch to diverging colormesh mode.")
 @click.option('-g', '--group', type=click.Choice(['0', '1']),

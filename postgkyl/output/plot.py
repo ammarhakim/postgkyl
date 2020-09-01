@@ -44,7 +44,8 @@ def _gridNodalToCellCentered(grid, cells):
 
 def plot(gdata, args=(),
          figure=None, squeeze=False,
-         numAxes=None, startAxes=0, 
+         numAxes=None, startAxes=0,
+         scatter=False,
          streamline=False, quiver=False, contour=False,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
@@ -239,10 +240,16 @@ def plot(gdata, args=(),
             label = labelPrefix
         #end
         if numDims == 1:
-            gridCC = _gridNodalToCellCentered(grid, cells)
-            im = cax.plot(gridCC[0]*xscale,
-                          values[..., comp],
-                          *args, label=label)
+            if scatter: #---------------------------------------------
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                im = cax.plot(gridCC[0]*xscale,
+                              values[..., comp],
+                              '.', label=label)
+            else: #---------------------------------------------------
+                gridCC = _gridNodalToCellCentered(grid, cells)
+                im = cax.plot(gridCC[0]*xscale,
+                              values[..., comp],
+                              *args, label=label)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
