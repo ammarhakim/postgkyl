@@ -47,6 +47,7 @@ def collect(ctx, **kwargs):
         for s in ctx.obj['sets']:
             stem = "_".join(ctx.obj['dataSets'][s].fileName.split("_")[:-1])
             if st == stem or not group:
+                # we are looping through all sets, and if group, only want to work on ones matching stem
                 cnt = cnt + 1
                 if kwargs['chunk'] is not None and cnt > kwargs['chunk']:
                     chunkIdx = chunkIdx + 1
@@ -63,6 +64,9 @@ def collect(ctx, **kwargs):
                 else:
                     values[chunkIdx].append(v)
                 #end
+
+                # need to assign grid in this block so that each stem group has its own grid
+                grid = list(ctx.obj['dataSets'][s].getGrid())
             #end
         #end
 
@@ -81,8 +85,6 @@ def collect(ctx, **kwargs):
             if kwargs['sumdata']:
                 grid = [time[i]]
             else:
-                s = ctx.obj['sets'][0]
-                grid = list(ctx.obj['dataSets'][s].getGrid())
                 grid.insert(0, time[i])
             #end
 
