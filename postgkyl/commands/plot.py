@@ -50,8 +50,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Force legend even when plotting a single dataset.")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
-#@click.option('--color', type=click.STRING,
-#              help="Set color when available.")
+@click.option('--color', type=click.STRING,
+              help="Set color when available.")
 @click.option('-x', '--xlabel', type=click.STRING,
               help="Specify a x-axis label.")
 @click.option('-y', '--ylabel', type=click.STRING,
@@ -72,6 +72,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turns on the xkcd style!")
 @click.option('--hashtag', is_flag=True,
               help="Turns on the pgkyl hashtag!")
+@click.option('--markersize', type=click.FLOAT,
+              help="Set a markersize value.")
 @click.pass_context
 def plot(ctx, **kwargs):
     vlog(ctx, 'Starting plot')
@@ -79,6 +81,10 @@ def plot(ctx, **kwargs):
 
     if kwargs['group'] is not None:
         kwargs['group'] = int(kwargs['group'])
+    #end
+
+    if kwargs['scatter']:
+        kwargs['args'] = '.'
     #end
 
     kwargs['numAxes'] = None

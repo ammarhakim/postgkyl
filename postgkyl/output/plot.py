@@ -52,10 +52,11 @@ def plot(data, args=(),
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, title=None,
          logx=False, logy=False, logz=False,
-         color=None, fixaspect=False,
+         fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
          showgrid=True,
          hashtag=False, xkcd=False,
+         color=None, markersize=None,
          **kwargs):
     """Plots Gkeyll data
 
@@ -250,16 +251,11 @@ def plot(data, args=(),
             if color is not None:
                 cl = color
             #end
-            if scatter: #---------------------------------------------
-                gridCC = _gridNodalToCellCentered(grid, cells)
-                im = cax.plot(gridCC[0]*xscale,
-                              values[..., comp],
-                              '.', label=label, color=cl)
-            else: #---------------------------------------------------
-                gridCC = _gridNodalToCellCentered(grid, cells)
-                im = cax.plot(gridCC[0]*xscale,
-                              values[..., comp],
-                              *args, label=label, color=cl)
+            gridCC = _gridNodalToCellCentered(grid, cells)
+            im = cax.plot(gridCC[0]*xscale,
+                          values[..., comp],
+                          *args, label=label,
+                          color=cl, markersize=markersize)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)

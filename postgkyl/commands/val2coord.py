@@ -76,7 +76,11 @@ def val2coord(ctx, **kwargs):
             newSetIdx = len(ctx.obj['dataSets'])
             ctx.obj['setIds'].append(newSetIdx)
             ctx.obj['dataSets'].append(Data())
-            ctx.obj['labels'].append('val2coord_{:d}'.format(i))
+            if i == 1:
+                ctx.obj['labels'].append(ctx.obj['labels'][setIdx])
+            else:
+                ctx.obj['labels'].append("")
+            #end
             ctx.obj['dataSets'][newSetIdx].pushGrid([x])
             ctx.obj['dataSets'][newSetIdx].pushValues(y)
             ctx.obj['dataSets'][newSetIdx].time = None
