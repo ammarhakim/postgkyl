@@ -88,6 +88,8 @@ class Data(object):
                 self._loadSequence()
             #end
         #end
+
+        self.color = None
     #end
 
     #-----------------------------------------------------------------

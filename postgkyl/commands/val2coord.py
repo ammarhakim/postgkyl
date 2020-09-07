@@ -4,6 +4,40 @@ import numpy as np
 from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
+def _getRange(strIn, length):
+    if len(strIn.split(',')) > 1:
+        return np.array(strIn.split(','), np.int)
+    elif strIn.find(':') >= 0:
+        strSplit = strIn.split(':')
+        
+        if strSplit[0] == '':
+            sIdx = 0
+        else:
+            sIdx = int(strSplit[0])
+            if sIdx < 0:
+                sIdx = length+sIdx
+            #end
+        #end
+        
+        if strSplit[1] == '':
+            eIdx = length
+        else:
+            eIdx = int(strSplit[1])
+            if eIdx < 0:
+                eIdx = length+eIdx
+            #end
+        #end
+
+        inc = 1
+        if len(strSplit) > 2 and strSplit[2] != '':
+            inc = int(strSplit[2])
+        #end
+        return np.arange(sIdx, eIdx, inc)
+    else:
+        return np.array([int(strIn)])
+    #end
+#end
+
 @click.command(help='Creates new dataset(s) from values of curent dataset(s), i.e., turns some values into grid')
 @click.option('-x', type=click.STRING,
               help="Select components that will became the grid of the new dataset.")
@@ -15,38 +49,18 @@ def val2coord(ctx, **kwargs):
     pushChain(ctx, 'val2coord', **kwargs)
 
     activeSets = []
+    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
+    
+    for setIdx, s in enumerate(ctx.obj['sets']):
+        values = ctx.obj['dataSets'][s].getValues()
+        xComps = _getRange(kwargs['x'], len(values[0, :]))
+        yComps = _getRange(kwargs['y'], len(values[0, :]))
 
-    if len(kwargs['x'].split(',')) > 1:
-        xComps = np.array(kwargs['x'].split(','), np.int)
-    elif len(kwargs['x'].split(':')) == 2:
-        xComps = np.arange(int(kwargs['x'].split(':')[0]),
-                          int(kwargs['x'].split(':')[1]))
-    elif len(kwargs['x'].split(':')) == 3:
-        xComps = np.arange(int(kwargs['x'].split(':')[0]),
-                          int(kwargs['x'].split(':')[1]),
-                          int(kwargs['x'].split(':')[2]))
-    else:
-        xComps = np.array([int(kwargs['x'])])
-    #end
-    if len(kwargs['y'].split(',')) > 1:
-        yComps = np.array(kwargs['y'].split(','), np.int)
-    elif len(kwargs['y'].split(':')) == 2:
-        yComps = np.arange(int(kwargs['y'].split(':')[0]),
-                          int(kwargs['y'].split(':')[1]))
-    elif len(kwargs['y'].split(':')) == 3:
-        yComps = np.arange(int(kwargs['y'].split(':')[0]),
-                          int(kwargs['y'].split(':')[1]),
-                          int(kwargs['y'].split(':')[2]))
-    else:
-        yComps = np.array([int(kwargs['y'])])
-    #end
-    
-    if len(xComps) > 1 and len(xComps) != len(yComps):
-        click.echo(click.style("ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(len(xComps), len(yComps)), fg='red'))
-        ctx.exit()
-    #end
-    
-    for s in ctx.obj['sets']:
+        if len(xComps) > 1 and len(xComps) != len(yComps):
+            click.echo(click.style("ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(len(xComps), len(yComps)), fg='red'))
+            ctx.exit()
+        #end
+        
         for i, yc in enumerate(yComps):
             if len(xComps) > 1:
                 xc = xComps[i]
@@ -59,16 +73,17 @@ def val2coord(ctx, **kwargs):
             x = values[..., xc]
             y = values[..., yc, np.newaxis]
 
-            idx = len(ctx.obj['dataSets'])
-            ctx.obj['setIds'].append(idx)
+            newSetIdx = len(ctx.obj['dataSets'])
+            ctx.obj['setIds'].append(newSetIdx)
             ctx.obj['dataSets'].append(Data())
             ctx.obj['labels'].append('val2coord_{:d}'.format(i))
-            ctx.obj['dataSets'][idx].pushGrid([x])
-            ctx.obj['dataSets'][idx].pushValues(y)
-            ctx.obj['dataSets'][idx].time = None
-            ctx.obj['dataSets'][idx].fileName = None
-            vlog(ctx, 'val2coord: activated data set #{:d}'.format(idx))
-            activeSets.append(idx)
+            ctx.obj['dataSets'][newSetIdx].pushGrid([x])
+            ctx.obj['dataSets'][newSetIdx].pushValues(y)
+            ctx.obj['dataSets'][newSetIdx].time = None
+            ctx.obj['dataSets'][newSetIdx].fileName = None
+            ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]
+            vlog(ctx, 'val2coord: activated data set #{:d}'.format(newSetIdx))
+            activeSets.append(newSetIdx)
         #end
     #end
     ctx.obj['sets'] = activeSets

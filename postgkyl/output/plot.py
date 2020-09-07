@@ -42,7 +42,7 @@ def _gridNodalToCellCentered(grid, cells):
 #end
 
 
-def plot(gdata, args=(),
+def plot(data, args=(),
          figure=None, squeeze=False,
          numAxes=None, startAxes=0,
          scatter=False,
@@ -80,15 +80,15 @@ def plot(gdata, args=(),
 
     #-----------------------------------------------------------------
     #-- Data Loading -------------------------------------------------
-    numDims = gdata.getNumDims(squeeze=True)
+    numDims = data.getNumDims(squeeze=True)
     if numDims > 2:
         raise Exception('Only 1D and 2D plots are currently supported')
     #end    
     # Get the handles on the grid and values
-    grid = gdata.getGrid()
-    values = gdata.getValues()
-    lower, upper = gdata.getBounds()
-    cells = gdata.getNumCells()
+    grid = data.getGrid()
+    values = data.getValues()
+    lower, upper = data.getBounds()
+    cells = data.getNumCells()
     # Squeeze the data (get rid of "collapsed" dimensions)
     axLabel = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']
     if len(grid) > numDims:
@@ -246,16 +246,20 @@ def plot(gdata, args=(),
             label = labelPrefix
         #end
         if numDims == 1:
+            cl = data.color
+            if color is not None:
+                cl = color
+            #end
             if scatter: #---------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.plot(gridCC[0]*xscale,
                               values[..., comp],
-                              '.', label=label)
+                              '.', label=label, color=cl)
             else: #---------------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.plot(gridCC[0]*xscale,
                               values[..., comp],
-                              *args, label=label)
+                              *args, label=label, color=cl)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
@@ -375,11 +379,11 @@ def plot(gdata, args=(),
             #end
         #end
         if hashtag:
-            cax.text(0.88, 0.06, '#pgkyl',
+            cax.text(0.97, 0.03, '#pgkyl',
                      bbox=dict(facecolor='w', edgecolor='w', alpha=0.8,
                                boxstyle="round"),
-                     verticalalignment='top',
-                     horizontalalignment='left',
+                     verticalalignment='bottom',
+                     horizontalalignment='right',
                      transform=cax.transAxes)
         #end
         if logx:
