@@ -54,6 +54,7 @@ def plot(data, args=(),
          logx=False, logy=False, logz=False,
          fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
+         xlim=None, ylim=None,
          showgrid=True,
          hashtag=False, xkcd=False,
          color=None, markersize=None,
@@ -397,6 +398,14 @@ def plot(data, args=(),
             if fixaspect:
                 plt.setp(cax, aspect=1.0)
             #end
+        #end
+        if xlim is not None:
+            limSplit = xlim.split(',')
+            cax.set_xlim(float(limSplit[0]), float(limSplit[1]))
+        #end
+        if ylim is not None:
+            limSplit = ylim.split(',')
+            cax.set_ylim(float(limSplit[0]), float(limSplit[1]))
         #end
     #end
     plt.tight_layout()

@@ -44,6 +44,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set maximal value for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,
               help="Set minimal value for plots.")
+@click.option('--xlim', default=None, type=click.STRING,
+              help="Set limits for the x-coordinate.")
+@click.option('--ylim', default=None, type=click.STRING,
+              help="Set limits for the y-coordinate.")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
 @click.option('--force-legend', 'forcelegend', is_flag=True,
