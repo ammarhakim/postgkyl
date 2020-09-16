@@ -74,7 +74,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(cls=AliasedGroup, chain=True,
                context_settings=CONTEXT_SETTINGS)
 @click.option('--filename', '-f', multiple=True,
-              help="Specify dataset files to work with. This flag can be used repeatedly to specify multiple files.")
+              help="Specify dataset files to work with. This flag can be used repeatedly to specify multiple files. To load a large number of datasets wildcards or regular expressions can be used.")
 @click.option('--label', '-l', multiple=True,
               help="Specify a custom label for each dataset.")
 @click.option('--savechain', '-s', is_flag=True,
@@ -107,6 +107,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.pass_context
 def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
         c0, c1, c2, c3, c4, c5, comp, compgrid):
+    """Postprocessing and plotting tool for Gkeyll 1.0 and 2.0
+    data. Datasets can be loaded, processed and plotted using a
+    command chaining mechanism. For full documentation see the Gkeyll
+    documentation webpages. Help for individual commands can be
+    obtained using the --help option for that command.
+
+    """
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
     if verbose:

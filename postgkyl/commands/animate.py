@@ -23,7 +23,7 @@ def update(i, ctx, kwargs):
     #end
 #end
 
-@click.command(help='Animate the data')
+@click.command()
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('-a', '--arg', type=click.STRING,
@@ -59,7 +59,7 @@ def update(i, ctx, kwargs):
 @click.option('-i', '--interval', default=100,
               help="Specify the animation interval.")
 @click.option('-f', '--float', is_flag=True,
-              help="Choose min/max levels based on current frame")
+              help="Choose min/max levels based on current frame (i.e. each frame uses a different color range).")
 @click.option('--save', is_flag=True,
               help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
@@ -68,6 +68,12 @@ def update(i, ctx, kwargs):
               help="Set color for cell edges (default: None)")
 @click.pass_context
 def animate(ctx, **kwargs):
+    r"""Animate the actively loaded dataset and show resulting plots in a
+    loop. Typically, the datasets are loaded using wildcard/regex
+    feature of the -f option to the main pgkyl executable. To save the
+    animation ffmpeg needs to be installed.
+
+    """
     vlog(ctx, 'Starting animate')
     pushChain(ctx, 'animate', **kwargs)
 
