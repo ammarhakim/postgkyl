@@ -4,7 +4,7 @@ import numpy as np
 import postgkyl.data.select 
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Subselect data set(s)')
+@click.command()
 @click.option('--z0',  default=None,
               help="Indices for 0th coord (either int, float, or slice)")
 @click.option('--z1', default=None,
@@ -21,6 +21,12 @@ from postgkyl.commands.util import vlog, pushChain
               help="Indices for components (either int, slice, or coma-separated)")
 @click.pass_context
 def select(ctx, **kwargs):
+    r"""Subselect data from the active dataset(s). This command allows, for
+    example, to choose a specific component of a multi-component
+    dataset, select a index or coordinate range. Index ranges can also
+    be specified using python slice notation (start:end:stride).
+
+    """
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select', **kwargs)
     for s in ctx.obj['sets']:

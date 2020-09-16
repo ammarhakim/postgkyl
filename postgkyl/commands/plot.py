@@ -81,7 +81,9 @@ from postgkyl.commands.util import vlog, pushChain
 @click.pass_context
 def plot(ctx, **kwargs):
     """Plot active datasets, optionally displaying the plot and/or saving
-    it to PNG files. 
+    it to PNG files. Plot labels can use a sub-set of LaTeX math
+    commands placed between dollar ($) signs.
+
     """
     vlog(ctx, 'Starting plot')
     pushChain(ctx, 'plot', **kwargs)
