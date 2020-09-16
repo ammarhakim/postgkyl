@@ -3,13 +3,18 @@ import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Select data sets(s)')
+@click.command()
 @click.option('-i', '--idx', type=click.STRING,
               help='Data set indices')
 @click.option('-a', '--allsets', is_flag=True,
               help='All data sets')
 @click.pass_context
 def dataset(ctx, **kwargs):
+    """Select datasets(s) to pass further down the command chain. Datasets
+    are indexed starting 0. Multiple datasets can be selected using a
+    comma separated list or a range specifier.
+
+    """
     idx = kwargs['idx']
     if kwargs['allsets']:
         vlog(ctx, 'Selecting all datasets')

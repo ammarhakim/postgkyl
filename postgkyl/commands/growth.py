@@ -7,7 +7,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
-@click.command(help='Fit e^(2x) to the data')
+@click.command()
 @click.option('-g', '--guess', default=(1.0, 0.1),
               help='Specify initial guess')
 @click.option('-p', '--plot', is_flag=True,
@@ -20,6 +20,10 @@ from postgkyl.commands.util import vlog, pushChain
               help='Plot instantaneous growth rate vs time')
 @click.pass_context
 def growth(ctx, **inputs):
+    """Attempts to compute growth rate (i.e. fit e^(2x)) from DynVector
+    data, typically an integrated quantity like electric or magnetic
+    field energy.
+    """
     vlog(ctx, 'Starting growth')
     pushChain( ctx, 'growth', **inputs) 
 

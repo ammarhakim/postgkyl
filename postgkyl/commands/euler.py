@@ -4,7 +4,7 @@ import numpy as np
 import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Extract Euler (five-moment) variables from fluid simulation')
+@click.command()
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
@@ -12,6 +12,10 @@ from postgkyl.commands.util import vlog, pushChain
                                  "zvel", "vel", "pressure", "ke", "mach"]))
 @click.pass_context
 def euler(ctx, **kwargs):
+    """Compute Euler (five-moment) primitive and some derived variables
+    from fluid conserved variables.
+
+    """
     vlog(ctx, 'Starting euler')
     pushChain(ctx, 'euler', **kwargs)
 

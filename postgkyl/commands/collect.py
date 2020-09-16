@@ -4,7 +4,7 @@ import numpy as np
 from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Collect data from the active datasets')
+@click.command()
 @click.option('-s', '--sumdata', is_flag=True,
               help="Sum data in the collected datasets (retain components)")
 @click.option('-p', '--period', type=click.FLOAT,
@@ -17,6 +17,13 @@ from postgkyl.commands.util import vlog, pushChain
               help="Separately collect matching files into different sets")
 @click.pass_context
 def collect(ctx, **kwargs):
+    """Collect data from the active datasets and create a new combined
+    dataset. The time-stamp in each of the active datasets is
+    collected and used as the new X-axis. Data can be collected in
+    chunks, in which case several datasets are created, each with the
+    chunk-sized pieces collected into each new dataset.
+
+    """
     vlog(ctx, 'Starting collect')
     pushChain(ctx, 'collect', **kwargs)
     stems = []

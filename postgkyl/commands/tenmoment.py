@@ -4,7 +4,7 @@ import numpy as np
 import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Extract ten-moment primitive variables from fluid simulation')
+@click.command()
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "pressureTensor",
@@ -13,6 +13,10 @@ from postgkyl.commands.util import vlog, pushChain
               ]))
 @click.pass_context
 def tenmoment(ctx, **kwargs):
+    """Extract ten-moment primitive variables from ten-moment conserved
+    variables.
+
+    """
     vlog(ctx, 'Starting tenmoment')
     pushChain(ctx, 'tenmoment', **kwargs)
 

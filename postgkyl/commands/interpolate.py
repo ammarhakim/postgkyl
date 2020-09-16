@@ -6,7 +6,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 from postgkyl.modalDG import interpolate as interpFn
 
-@click.command(help='Interpolate DG data on a uniform mesh')
+@click.command(help='Interpolate DG data onto a uniform mesh.')
 @click.option('--basistype', '-b',
               type=click.Choice(['ms', 'ns', 'mo', 'mt']),
               help='Specify DG basis')
