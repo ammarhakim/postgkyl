@@ -74,7 +74,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(cls=AliasedGroup, chain=True,
                context_settings=CONTEXT_SETTINGS)
 @click.option('--filename', '-f', multiple=True,
-              help="Specify one or more files to work with.")
+              help="Specify dataset files to work with. This flag can be used repeatedly to specify multiple files.")
 @click.option('--label', '-l', multiple=True,
               help="Specify a custom label for each dataset.")
 @click.option('--savechain', '-s', is_flag=True,

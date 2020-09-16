@@ -7,7 +7,7 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
 @click.option('--figure', '-f', default=None,
-              help="Specify figure to plot in.")
+              help="Specify figure (integer) to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
@@ -15,15 +15,17 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('--arg', type=click.STRING,
               help="Additional plotting arguments like '*--'.")
 @click.option('-c', '--contour', is_flag=True,
-              help="Switch to contour mode.")
+              help="Draw contour plot.")
 @click.option('-q', '--quiver', is_flag=True,
-              help="Switch to quiver mode.")
+              help="Draw quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
-              help="Switch to streamline mode.")
+              help="Make streamline plot.")
 @click.option('-s', '--scatter', is_flag=True,
-              help="Switch to scatter mode.")
+              help="Plot data in scatter-plot mode.")
+@click.option('--markersize', type=click.FLOAT,
+              help="Set marker size for scatter plots.")
 @click.option('-d', '--diverging', is_flag=True,
-              help="Switch to diverging colormesh mode.")
+              help="Switch to inverted color mode.")
 @click.option('-g', '--group', type=click.Choice(['0', '1']),
               help="Switch to group mode.")
 @click.option('--style',
@@ -37,17 +39,17 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('--logz', is_flag=True,
               help="Set values of 2D plot to log scale.")
 @click.option('--xscale', default=1.0, type=click.FLOAT,
-              help="Scalar value to scale the x-axis (default: 1.0).")
+              help="Value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
-              help="Scalar value to scale the y-axis (default: 1.0).")
+              help="Value to scale the y-axis (default: 1.0).")
 @click.option('--vmax', default=None, type=click.FLOAT,
-              help="Set maximal value for plots.")
+              help="Set maximal value of data for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,
-              help="Set minimal value for plots.")
+              help="Set minimal value of data for plots.")
 @click.option('--xlim', default=None, type=click.STRING,
-              help="Set limits for the x-coordinate.")
+              help="Set limits for the x-coordinate (lower,upper)")
 @click.option('--ylim', default=None, type=click.STRING,
-              help="Set limits for the y-coordinate.")
+              help="Set limits for the y-coordinate (lower,upper).")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
 @click.option('--force-legend', 'forcelegend', is_flag=True,
@@ -61,25 +63,26 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-y', '--ylabel', type=click.STRING,
               help="Specify a y-axis label.")
 @click.option('-t', '--title', type=click.STRING,
-              help="Specify a title label.")
+              help="Specify a title.")
 @click.option('--save', is_flag=True,
-              help="Save figure as PNG.")
+              help="Save figure as PNG file.")
 @click.option('--saveas', type=click.STRING, default=None,
-              help="Name to save the plot as.")
+              help="Name of figure file.")
 @click.option('--dpi', type=click.INT, default=200,
-              help="DPI for output")
+              help="DPI (resolution) for output")
 @click.option('-e', '--edgecolors', type=click.STRING,
-              help="Set color for cell edges (default: None)")
+              help="Set color for cell edges to show grid outline (default: None)")
 @click.option('--showgrid/--no-showgrid', default=True,
               help="Show grid-lines (default: True)")
 @click.option('--xkcd', is_flag=True,
               help="Turns on the xkcd style!")
 @click.option('--hashtag', is_flag=True,
               help="Turns on the pgkyl hashtag!")
-@click.option('--markersize', type=click.FLOAT,
-              help="Set a markersize value.")
 @click.pass_context
 def plot(ctx, **kwargs):
+    """Plot active datasets, optionally displaying the plot and/or saving
+    it to PNG files. 
+    """
     vlog(ctx, 'Starting plot')
     pushChain(ctx, 'plot', **kwargs)
 
