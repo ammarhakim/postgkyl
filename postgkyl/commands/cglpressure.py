@@ -52,11 +52,19 @@ def getAgyro(pij, B):
 
     return tmp
 
-@click.command(help=r'Extract parallel and perpendicular pressures from pressure-tensor and magnetic field. Pressure-tensor must be the first dataset and magnetic field the second dataset. A two component field (parallel, perpendicular) is returned. Optionally, the command can extract the six components of the agyrotropic part of the pressure tensor.')
+@click.command()
 @click.option('--agyro', is_flag=True, default=False,
               help='Compute the agyrotropic part of pressure tensor instead')
 @click.pass_context
 def cglpressure(ctx, **inputs):
+    """Extract parallel and perpendicular pressures from pressure-tensor
+    and magnetic field. Pressure-tensor must be the first dataset and
+    magnetic field the second dataset. A two component field
+    (parallel, perpendicular) is returned. Optionally, the command can
+    extract the six components of the agyrotropic part of the pressure
+    tensor.
+
+    """
     vlog(ctx, 'Starting CGL pressure')
     pushChain(ctx, 'cglpressure.cglpressure', **inputs)
 

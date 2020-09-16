@@ -192,10 +192,10 @@ def _command(ctx, gridStack, evalStack, s):
     return True
 #end
 
-@click.command(help="Evaluate expression using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1])
+@click.command(help="Manipulate dataset using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1] + ". User-specifed commands can also be used.")
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.option('--label', '-l',
-              help="Specify a custom label for the result.")
+              help="Specify a custom label for the dataset resulting from the expression.")
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
