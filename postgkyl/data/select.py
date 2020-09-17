@@ -4,8 +4,8 @@ from postgkyl.utils import idxParser
 
 
 def select(data, comp=None, stack=False,
-           coord0=None, coord1=None, coord2=None,
-           coord3=None, coord4=None, coord5=None):
+           z0=None, z1=None, z2=None,
+           z3=None, z4=None, z5=None):
     """Selects parts of the GData.
 
     Allows to select only a part of GData (both coordinates and
@@ -14,10 +14,10 @@ def select(data, comp=None, stack=False,
 
     Atributes:
         data (GData)
-        coord0-5 (index, value, or slice (e.g. '1:5')
+        z0-5 (index, value, or slice (e.g. '1:5')
         comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
     """
-    coords = (coord0, coord1, coord2, coord3, coord4, coord5)
+    zs = (z0, z1, z2, z3, z4, z5)
     grid = data.getGrid()
     grid = list(grid)  # copy the grid
     values = data.getValues()
@@ -25,13 +25,13 @@ def select(data, comp=None, stack=False,
     idxValues = [slice(0, values.shape[d]) for d in range(numDims+1)]
     
     # Loop for coordinates
-    for d, coord in enumerate(coords):
-        if d < numDims and coord is not None:
+    for d, z in enumerate(zs):
+        if d < numDims and z is not None:
             if values.shape[d] == len(grid[d]):
                 nodal = False
             else:
                 nodal = True
-            idx = idxParser(coord, grid[d], nodal)
+            idx = idxParser(z, grid[d], nodal)
             if isinstance(idx, int):
                 # when 'slice' is used instead of an integer
                 # number, numpy array is not squeezed after

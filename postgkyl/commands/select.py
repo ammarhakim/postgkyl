@@ -31,9 +31,9 @@ def select(ctx, **kwargs):
     pushChain(ctx, 'select', **kwargs)
     for s in ctx.obj['sets']:
         postgkyl.data.select(ctx.obj['dataSets'][s], stack=True,
-                             coord0=kwargs['z0'], coord1=kwargs['z1'],
-                             coord2=kwargs['z2'], coord3=kwargs['z3'],
-                             coord4=kwargs['z4'], coord5=kwargs['z5'],
+                             z0=kwargs['z0'], z1=kwargs['z1'],
+                             z2=kwargs['z2'], z3=kwargs['z3'],
+                             z4=kwargs['z4'], z5=kwargs['z5'],
                              comp=kwargs['comp'])
     #end
     vlog(ctx, 'Finishing select')
