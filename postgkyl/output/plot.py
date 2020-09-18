@@ -257,6 +257,8 @@ def plot(data, args=(),
                           values[..., comp],
                           *args, label=label,
                           color=cl, markersize=markersize)
+            xmin = min(gridCC[0]*xscale)
+            xmax = max(gridCC[0]*xscale)
         elif numDims == 2: 
             if contour:  #--------------------------------------------
                 gridCC = _gridNodalToCellCentered(grid, cells)
@@ -393,7 +395,6 @@ def plot(data, args=(),
             if vmin is not None and vmax is not None:
                 cax.set_ylim(vmin, vmax)
             #end
-            plt.autoscale(enable=True, axis='x', tight=True)
         elif numDims == 2:
             if fixaspect:
                 plt.setp(cax, aspect=1.0)
@@ -402,11 +403,14 @@ def plot(data, args=(),
         if xlim is not None:
             limSplit = xlim.split(',')
             cax.set_xlim(float(limSplit[0]), float(limSplit[1]))
+        else:
+            cax.set_xlim(xmin, xmax)
         #end
         if ylim is not None:
             limSplit = ylim.split(',')
             cax.set_ylim(float(limSplit[0]), float(limSplit[1]))
         #end
+        plt.autoscale(enable=True, axis='x', tight=True)
     #end
     plt.tight_layout()
     return im
