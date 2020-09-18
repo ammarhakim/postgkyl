@@ -45,6 +45,7 @@ def _gridNodalToCellCentered(grid, cells):
 def plot(data, args=(),
          figure=None, squeeze=False,
          numAxes=None, startAxes=0,
+         nSubplotRow=None, nSubplotCol=None,
          scatter=False,
          streamline=False, quiver=False, contour=False,
          diverging=False, group=None,
@@ -175,17 +176,24 @@ def plot(data, args=(),
                 ax[0].set_title(title, y=1.08)
             #end
         else:  # Plotting each components into its own subplot
-            sr = np.sqrt(numComps)
-            #end
-            if sr == np.ceil(sr):
-                numRows = int(sr)
-                numCols = int(sr)
-            elif np.ceil(sr) * np.floor(sr) >= numComps:
-                numRows = int(np.floor(sr))
-                numCols = int(np.ceil(sr))
+            if nSubplotRow is not None:
+                numRows = nSubplotRow
+                numCols = int(np.ceil(numComps/numRows))
+            elif nSubplotCol is not None:
+                numCols = nSubplotCol
+                numRows = int(np.ceil(numComps/numCols))
             else:
-                numRows = int(np.ceil(sr))
-                numCols = int(np.ceil(sr))
+                sr = np.sqrt(numComps)
+                if sr == np.ceil(sr):
+                    numRows = int(sr)
+                    numCols = int(sr)
+                elif np.ceil(sr) * np.floor(sr) >= numComps:
+                    numRows = int(np.floor(sr))
+                    numCols = int(np.ceil(sr))
+                else:
+                    numRows = int(np.ceil(sr))
+                    numCols = int(np.ceil(sr))
+                #end
             #end
 
             if numDims == 1 or group is not None: 

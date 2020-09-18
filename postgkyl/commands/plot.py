@@ -12,6 +12,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
               help="Make subplots from multiple datasets.")
+@click.option('--nsubplotrow', 'nSubplotRow', type=click.INT,
+              help="Manually set the number of rows for subplots.")
+@click.option('--nsubplotcol', 'nSubplotCol', type=click.INT,
+              help="Manually set the number of columns for subplots.")
 @click.option('--arg', type=click.STRING,
               help="Additional plotting arguments like '*--'.")
 @click.option('-c', '--contour', is_flag=True,
