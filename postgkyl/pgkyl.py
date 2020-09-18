@@ -88,17 +88,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--version', is_flag=True, callback=_printVersion,
               expose_value=False, is_eager=True,
               help="Print the version information.")
-@click.option('--c0', multiple=True,
+@click.option('--z0', multiple=True,
               help="Partial file load: 0th coord (either int or slice)")
-@click.option('--c1', multiple=True,
+@click.option('--z1', multiple=True,
               help="Partial file load: 1st coord (either int or slice)")
-@click.option('--c2', multiple=True,
+@click.option('--z2', multiple=True,
               help="Partial file load: 2nd coord (either int or slice)")
-@click.option('--c3', multiple=True,
+@click.option('--z3', multiple=True,
               help="Partial file load: 3rd coord (either int or slice)")
-@click.option('--c4', multiple=True,
+@click.option('--z4', multiple=True,
               help="Partial file load: 4th coord (either int or slice)")
-@click.option('--c5', multiple=True,
+@click.option('--z5', multiple=True,
               help="Partial file load: 5th coord (either int or slice)")
 @click.option('--comp', '-c', multiple=True,
               help="Partial file load: comps (either int or slice)")
@@ -106,7 +106,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Disregard the mapped grid information")
 @click.pass_context
 def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
-        c0, c1, c2, c3, c4, c5, comp, compgrid):
+        z0, z1, z2, z3, z4, z5, comp, compgrid):
     """Postprocessing and plotting tool for Gkeyll 1.0 and 2.0
     data. Datasets can be loaded, processed and plotted using a
     command chaining mechanism. For full documentation see the Gkeyll
@@ -155,12 +155,12 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
     ctx.obj['ax'] = ''
 
     # Expand indices for easy looping
-    c0 = _expandPartialLoadIdx(numFiles, c0)
-    c1 = _expandPartialLoadIdx(numFiles, c1)
-    c2 = _expandPartialLoadIdx(numFiles, c2)
-    c3 = _expandPartialLoadIdx(numFiles, c3)
-    c4 = _expandPartialLoadIdx(numFiles, c4)
-    c5 = _expandPartialLoadIdx(numFiles, c5)
+    z0 = _expandPartialLoadIdx(numFiles, z0)
+    z1 = _expandPartialLoadIdx(numFiles, z1)
+    z2 = _expandPartialLoadIdx(numFiles, z2)
+    z3 = _expandPartialLoadIdx(numFiles, z3)
+    z4 = _expandPartialLoadIdx(numFiles, z4)
+    z5 = _expandPartialLoadIdx(numFiles, z5)
     comp = _expandPartialLoadIdx(numFiles, comp)
 
     cnt = 0 # Counter for number of loaded files
@@ -170,9 +170,9 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                  format(filename[s], cnt))
             try:
                 ctx.obj['dataSets'].append(Data(filename[s], comp=comp[s],
-                                                coord0=c0[s], coord1=c1[s],
-                                                coord2=c2[s], coord3=c3[s],
-                                                coord4=c4[s], coord5=c5[s],
+                                                z0=z0[s], z1=z1[s],
+                                                z2=z2[s], z3=z3[s],
+                                                z4=z4[s], z5=z5[s],
                                                 stack=stack,
                                                 compgrid=compgrid))
             except NameError:
@@ -201,12 +201,9 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                     vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                          format(fn, cnt))
                     ctx.obj['dataSets'].append(Data(fn, comp=comp[s],
-                                                    coord0=c0[s],
-                                                    coord1=c1[s],
-                                                    coord2=c2[s],
-                                                    coord3=c3[s],
-                                                    coord4=c4[s],
-                                                    coord5=c5[s],
+                                                    z0=z0[s], z1=z1[s],
+                                                    z2=z2[s], z3=z3[s],
+                                                    z4=z4[s], z5=z5[s],
                                                     stack=stack))
                     ctx.obj['setIds'].append(cnt)
                     cnt += 1

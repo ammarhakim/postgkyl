@@ -391,25 +391,28 @@ def plot(data, args=(),
         if logy:
             cax.set_yscale('log')
         #end
+
+        if xlim is not None:
+            limSplit = xlim.split(',')
+            cax.set_xlim(float(limSplit[0]), float(limSplit[1]))
+        #end
+        if ylim is not None:
+            limSplit = ylim.split(',')
+            cax.set_ylim(float(limSplit[0]), float(limSplit[1]))
+        #end
         if numDims == 1:
             if vmin is not None and vmax is not None:
                 cax.set_ylim(vmin, vmax)
+            #end
+            if xlim is  None:
+                cax.set_xlim(xmin, xmax)
             #end
         elif numDims == 2:
             if fixaspect:
                 plt.setp(cax, aspect=1.0)
             #end
         #end
-        if xlim is not None:
-            limSplit = xlim.split(',')
-            cax.set_xlim(float(limSplit[0]), float(limSplit[1]))
-        else:
-            cax.set_xlim(xmin, xmax)
-        #end
-        if ylim is not None:
-            limSplit = ylim.split(',')
-            cax.set_ylim(float(limSplit[0]), float(limSplit[1]))
-        #end
+  
         plt.autoscale(enable=True, axis='x', tight=True)
     #end
     plt.tight_layout()

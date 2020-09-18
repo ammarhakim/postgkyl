@@ -26,17 +26,17 @@ class Data(object):
             (False) (default: True)
         comp (int or 'int:int'): Preselect a componend index (or a
             slice) for the partial load of data
-        coord0 (int or 'int:int'): Preselect an index (or a slice) for
+        z0 (int or 'int:int'): Preselect an index (or a slice) for
             the first coordinate for the partial load of data
-        coord1 (int or 'int:int'): Preselect an index (or a slice) for
+        z1 (int or 'int:int'): Preselect an index (or a slice) for
             the second coordinate for the partial load of data
-        coord2 (int or 'int:int'): Preselect an index (or a slice) for
+        z2 (int or 'int:int'): Preselect an index (or a slice) for
             the third coordinate for the partial load of data
-        coord3 (int or 'int:int'): Preselect an index (or a slice) for
+        z3 (int or 'int:int'): Preselect an index (or a slice) for
             the fourth coordinate for the partial load of data
-        coord4 (int or 'int:int'): Preselect an index (or a slice) for
+        z4 (int or 'int:int'): Preselect an index (or a slice) for
             the fifth coordinate for the partial load of data
-        coord5 (int or 'int:int'): Preselect an index (or a slice) for
+        z5 (int or 'int:int'): Preselect an index (or a slice) for
             the sixth coordinate for the partial load of data
 
     Raises:
@@ -48,8 +48,8 @@ class Data(object):
           Postgkyl tries opening it as a history data before throwing
           an exception
         - Preselection coordinate indices for higher dimension than
-          included in the data are safelly disregarded (i.e., coord2,
-          coord3, coord4, and coord5 for 2D data).
+          included in the data are safelly disregarded (i.e., z2,
+          z3, z4, and z5 for 2D data).
         - postgkyl.GData is a shortcut for postgkyl.data.GData
 
     Examples:
@@ -58,8 +58,8 @@ class Data(object):
     """
 
     def __init__(self, fileName=None, stack=False, comp=None,
-                 coord0=None, coord1=None, coord2=None,
-                 coord3=None, coord4=None, coord5=None,
+                 z0=None, z1=None, z2=None,
+                 z3=None, z4=None, z5=None,
                  compgrid=False):
         self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
@@ -82,8 +82,8 @@ class Data(object):
             # When the sequence is in just a single file, _loadFrame will
             # fail and _loadSequence is called instead
             if path.isfile(self.fileName):
-                coords = (coord0, coord1, coord2, coord3, coord4, coord5)
-                self._loadFrame(coords, comp)
+                zs = (z0, z1, z2, z3, z4, z5)
+                self._loadFrame(zs, comp)
             else:
                 self._loadSequence()
             #end
@@ -94,23 +94,23 @@ class Data(object):
 
     #-----------------------------------------------------------------
     #-- File Loading -------------------------------------------------
-    def _createOffsetCountBp(self, bpVar, coords, comp):
+    def _createOffsetCountBp(self, bpVar, zs, comp):
         numDims = len(bpVar.dims)
         count = np.array(bpVar.dims)
         offset = np.zeros(numDims, np.int)
         cnt = 0
 
-        for d, coord in enumerate(coords):
-            if d < numDims-1 and coord is not None:  # Last dim stores comp
-                coord = idxParser(coord)
-                if isinstance(coord, int):
-                    offset[d] = coord
+        for d, z in enumerate(zs):
+            if d < numDims-1 and z is not None:  # Last dim stores comp
+                z = idxParser(z)
+                if isinstance(z, int):
+                    offset[d] = z
                     count[d] = 1
-                elif isinstance(coord, slice):
-                    offset[d] = coord.start
-                    count[d] = coord.stop - coord.start
+                elif isinstance(z, slice):
+                    offset[d] = z.start
+                    count[d] = z.stop - z.start
                 else:
-                    raise TypeError("'coord' is neither number or slice")
+                    raise TypeError("'z' is neither number or slice")
                 #end
                 cnt = cnt + 1
             #end
