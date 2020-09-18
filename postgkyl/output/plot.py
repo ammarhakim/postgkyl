@@ -404,7 +404,7 @@ def plot(data, args=(),
             if vmin is not None and vmax is not None:
                 cax.set_ylim(vmin, vmax)
             #end
-            if xlim is  None:
+            if xlim is None:
                 cax.set_xlim(xmin, xmax)
             #end
         elif numDims == 2:
@@ -412,8 +412,9 @@ def plot(data, args=(),
                 plt.setp(cax, aspect=1.0)
             #end
         #end
-  
-        plt.autoscale(enable=True, axis='x', tight=True)
+        if xlim is None:
+            plt.autoscale(enable=True, axis='x', tight=True)
+        #end
     #end
     plt.tight_layout()
     return im
