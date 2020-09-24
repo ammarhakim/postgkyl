@@ -8,7 +8,7 @@ except (IOError, ImportError):
    long_description = ''
 
 setup(name='postgkyl',
-      version='1.5.3',
+      version='1.5.4',
       description='Postrocessing utilities for Gkeyll simulation framework',
       long_description=long_description,
       url='https://github.com/ammarhakim/postgkyl',
@@ -19,7 +19,8 @@ setup(name='postgkyl',
                 'postgkyl.tools',
                 'postgkyl.commands',
                 'postgkyl.utils',
-                'postgkyl.modalDG'],
+                'postgkyl.modalDG',
+                'postgkyl.modalDG.kernels'],
       package_data={'': ['data/*.h5',
                          'output/postgkyl.mplstyle']},
       include_package_data=True,
