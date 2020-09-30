@@ -600,6 +600,31 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
         else:
             raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))
 
+    elif dim == 6:
+        x = Symbol('x')
+        y = Symbol('y')
+        z = Symbol('z')
+        w = Symbol('w')
+        v = Symbol('v')
+        u = Symbol('u')
+        if modal and basisType == 'serendipity':
+            if order == 1:
+                functionVector =  Matrix([[0.125], [0.2165063509461096*x], [0.2165063509461096*y], [0.2165063509461096*z], [0.2165063509461096*w], [0.2165063509461096*v], [0.2165063509461096*u], [0.375*x*y], [0.375*x*z], [0.375*y*z], [0.375*x*w], [0.375*y*w], [0.375*z*w], [0.375*x*v], [0.375*y*v], [0.375*z*v], [0.375*w*v], [0.375*x*u], [0.375*y*u], [0.375*z*u], [0.375*w*u], [0.375*v*u], [0.6495190528383289*x*y*z], [0.6495190528383289*x*y*w], [0.6495190528383289*x*z*w], [0.6495190528383289*y*z*w], [0.6495190528383289*x*y*v], [0.6495190528383289*x*z*v], [0.6495190528383289*y*z*v], [0.6495190528383289*x*w*v], [0.6495190528383289*y*w*v], [0.6495190528383289*z*w*v], [0.6495190528383289*x*y*u], [0.6495190528383289*x*z*u], [0.6495190528383289*y*z*u], [0.6495190528383289*x*w*u], [0.6495190528383289*y*w*u], [0.6495190528383289*z*w*u], [0.6495190528383289*x*v*u], [0.6495190528383289*y*v*u], [0.6495190528383289*z*v*u], [0.6495190528383289*w*v*u], [1.125*x*y*z*w], [1.125*x*y*z*v], [1.125*x*y*w*v], [1.125*x*z*w*v], [1.125*y*z*w*v], [1.125*x*y*z*u], [1.125*x*y*w*u], [1.125*x*z*w*u], [1.125*y*z*w*u], [1.125*x*y*v*u], [1.125*x*z*v*u], [1.125*y*z*v*u], [1.125*x*w*v*u], [1.125*y*w*v*u], [1.125*z*w*v*u], [1.948557158514986*x*y*z*w*v], [1.948557158514986*x*y*z*w*u], [1.948557158514986*x*y*z*v*u], [1.948557158514986*x*y*w*v*u], [1.948557158514986*x*z*w*v*u], [1.948557158514986*y*z*w*v*u], [3.375*x*y*z*w*v*u]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, interpList.shape[0]):
+                            for l in range(0, interpList.shape[0]):
+                                for m in range(0, interpList.shape[0]):
+                                    for n in range(0, interpList.shape[0]):
+                                        for o in range(0, functionVector.shape[0]):
+                                            interpMatrix[n+m*interpList.shape[0]+l*interpList.shape[0]*interpList.shape[0]+k*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], o] = functionVector[o].subs(x, interpList[n]).subs(y, interpList[m]).subs(z, interpList[l]).subs(w, interpList[k]).subs(v, interpList[j]).subs(u, interpList[i])
+            else:
+                raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be 1 for modal Serendipity in 6D".format(order))
+
+        else:
+            raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'modal Serendipity' in 6D".format(basisType))
+
     else:
         raise NameError("interpMatrix: Dimension {} is not supported.".format(dim))
 

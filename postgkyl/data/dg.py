@@ -18,21 +18,24 @@ def _getNumNodes(dim, polyOrder, basisType):
                                         [ 4,   8,  12,  17],
                                         [ 8,  20,  32,  50],
                                         [16,  48,  80, 136],
-                                        [32, 112, 192, 352]])
+                                        [32, 112, 192, 352],
+                                        [64, 256, 448, 880]])
         numNodes = numNodesSerendipity[dim-1, polyOrder-1]
     elif basisType.lower() == 'maximal-order':
         numNodesMaximal = np.array([[2,  3,  4,   5],
                                     [3,  6, 10,  15],
                                     [4, 10, 20,  35],
                                     [5, 15, 35,  70],
-                                    [6, 21, 56, 126]])
+                                    [6, 21, 56, 126]],
+                                    [7, 28, 84, 210])
         numNodes = numNodesMaximal[dim-1, polyOrder-1]
     elif basisType.lower() == 'tensor':
         numNodesMaximal = np.array([[ 2,   3,    4,    5],
                                     [ 4,   9,   16,   25],
                                     [ 8,  27,   64,  125],
                                     [16,  81,  256,  625],
-                                    [32, 343, 1024, 3125]])
+                                    [32, 343, 1024, 3125],
+                                    [64, 729, 4096, 15625]])
         numNodes = numNodesMaximal[dim-1, polyOrder-1]
     else:
         raise NameError(
