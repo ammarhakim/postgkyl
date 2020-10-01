@@ -11,29 +11,25 @@ conda build . --python=3.7
 conda build . --python=3.8
 
 # Convert
-set OS (uname)
-set pkg36 (conda build . --python=3.6 --output)
-set pkg37 (conda build . --python=3.7 --output)
-set pkg38 (conda build . --python=3.8 --output)
+OS=$(uname)
+PKG36=$(conda build . --python=3.6 --output)
+PKG37=$(conda build . --python=3.7 --output)
+PKG38=$(conda build . --python=3.8 --output)
 if [ $OS="Linux" ]
-then
-    conda convert --platform osx-64 pkg36
-    conda convert --platform osx-64 pkg37
-    conda convert --platform osx-64 pkg38
+then 
+    conda convert --platform osx-64 $PKG36
+    conda convert --platform osx-64 $PKG37
+    conda convert --platform osx-64 $PKG38
     cd osx-64
-    anaconda upload pkg36
-    anaconda upload pkg37
-    anaconda upload pkg38
+    anaconda upload * --force
     cd ..
     rm -rf osx-64
 else
-    conda convert --platform linux-64 pkg36
-    conda convert --platform linux-64 pkg37
-    conda convert --platform linux-64 pkg38
+    conda convert --platform linux-64 $PKG36
+    conda convert --platform linux-64 $PKG37
+    conda convert --platform linux-64 $PKG38
     cd linux-64
-    anaconda upload pkg36
-    anaconda upload pkg37
-    anaconda upload pkg38
+    anaconda upload * --force
     cd ..
     rm -rf linux-64
 fi
