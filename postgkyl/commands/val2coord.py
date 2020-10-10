@@ -45,11 +45,12 @@ def _getRange(strIn, length):
               help="Select components that will became the values of the new dataset.")
 @click.pass_context
 def val2coord(ctx, **kwargs):
-    """Given a DynVector dataset select columns from it to create new
-    datasets. For example, you can choose say column 1 to be the
-    X-axis of the new dataset and column 2 to be the Y-axis. Multiple
-    columns can be choosen using range specifiers and as many datasets
-    are then created.
+    """Given a dataset (typically a DynVector) selects columns from it to
+    create new datasets. For example, you can choose say column 1 to
+    be the X-axis of the new dataset and column 2 to be the
+    Y-axis. Multiple columns can be choosen using range specifiers and
+    as many datasets are then created.
+
     """
     vlog(ctx, 'Starting val2coord')
     pushChain(ctx, 'val2coord', **kwargs)

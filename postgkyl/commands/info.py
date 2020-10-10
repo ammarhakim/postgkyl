@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command(help='Print info of the current top of stack')
+@click.command(help='Print info of active datasets')
 @click.option('-a', '--allsets', is_flag=True,
               help='All data sets')
 @click.pass_context
