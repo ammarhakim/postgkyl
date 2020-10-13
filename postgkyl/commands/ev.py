@@ -232,8 +232,7 @@ def ev(ctx, **kwargs):
         idx = len(ctx.obj['dataSets'])
         ctx.obj['setIds'].append(idx)
         ctx.obj['dataSets'].append(GData())
-        ctx.obj['dataSets'][idx].pushGrid(gridStack[0][-1])
-        ctx.obj['dataSets'][idx].pushValues(evalStack[0][-1])
+        ctx.obj['dataSets'][idx].push(evalStack[0][-1], gridStack[0][-1])
         ctx.obj['dataSets'][idx].name = 'ev'
         ctx.obj['dataSets'][idx].isModal = meta['isModal']
         #end
@@ -254,8 +253,7 @@ def ev(ctx, **kwargs):
         #end
     else:
         for i, setIdx in enumerate(ctx.obj['sets']):
-            ctx.obj['dataSets'][setIdx].pushGrid(gridStack[i][-1])
-            ctx.obj['dataSets'][setIdx].pushValues(evalStack[i][-1])
+            ctx.obj['dataSets'][setIdx].push(evalStack[i][-1], gridStack[i][-1])
         #end
     #end
 

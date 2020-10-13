@@ -87,8 +87,7 @@ def val2coord(ctx, **kwargs):
             else:
                 ctx.obj['labels'].append("")
             #end
-            ctx.obj['dataSets'][newSetIdx].pushGrid([x])
-            ctx.obj['dataSets'][newSetIdx].pushValues(y)
+            ctx.obj['dataSets'][newSetIdx].push(y, [x])
             ctx.obj['dataSets'][newSetIdx].time = None
             ctx.obj['dataSets'][newSetIdx].fileName = None
             ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]

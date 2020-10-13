@@ -381,8 +381,7 @@ class GInterpNodal(GInterp):
         if stack is False:
             return grid, values
         else:
-            self.data.pushGrid(grid)
-            self.data.pushValues(values)
+            self.data.push(values, grid)
         #end
     #end
 
@@ -406,8 +405,7 @@ class GInterpNodal(GInterp):
         if stack is False:
             return grid, values
         else:
-            self.data.pushGrid(grid)
-            self.data.pushValues(values)
+            self.data.push(values, grid)
         #end
     #end
 #end
@@ -503,8 +501,7 @@ class GInterpModal(GInterp):
         if stack is False:
             return grid, values
         else:
-            self.data.pushGrid(grid)
-            self.data.pushValues(values)
+            self.data.push(values, grid)
         #end
     #end
 
@@ -530,8 +527,7 @@ class GInterpModal(GInterp):
         if stack is False:
             return grid, values
         else:
-            self.data.pushGrid(grid)
-            self.data.pushValues(values)
+            self.data.push(values, grid)
         #end
     #end
 
@@ -587,8 +583,7 @@ class GInterpModal(GInterp):
         if stack is False:
             return grid, values
         else:
-            self.data.pushGrid(grid)
-            self.data.pushValues(values)
+            self.data.push(values, grid)
         #end
     #end
 #end

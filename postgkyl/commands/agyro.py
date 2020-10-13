@@ -80,8 +80,7 @@ def agyro(ctx, **kwargs):
 
     ctx.obj['dataSets'].append(GData())
     idx = len(ctx.obj['dataSets'])-1
-    ctx.obj['dataSets'][idx].pushGrid(grid, lo, up)
-    ctx.obj['dataSets'][idx].pushValues(tmp)
+    ctx.obj['dataSets'][idx].push(tmp, grid)
     ctx.obj['sets'] = [idx]
 
     vlog(ctx, 'Finishing agyro')

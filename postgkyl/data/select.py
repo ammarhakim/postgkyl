@@ -31,6 +31,7 @@ def select(data, comp=None, stack=False,
                 nodal = False
             else:
                 nodal = True
+            #end
             idx = idxParser(z, grid[d], nodal)
             if isinstance(idx, int):
                 # when 'slice' is used instead of an integer
@@ -42,21 +43,26 @@ def select(data, comp=None, stack=False,
                     # grid[d] = grid[d][slice(idx, idx+2)]
                 else:
                     gIdx = vIdx
-            
+                #end
             elif isinstance(idx, slice):
                 vIdx = idx
                 if nodal:
                     gIdx = slice(idx.start, idx.stop+1)
                 else:
                     gIdx = vIdx
+                #end
             else:
                 raise TypeError("The coordinate select can be only single index (int) or a slice")
+            #end
             grid[d] = grid[d][gIdx]
             idxValues[d] = vIdx
+        #end
+    #end
 
     # Select components
     if comp is not None:
         idxValues[-1] = idxParser(comp)
+    #end
     valuesOut = values[tuple(idxValues)]
 
     # Adding a dummy dimension indicies
@@ -66,10 +72,11 @@ def select(data, comp=None, stack=False,
     # # Ddding a dummy component index
     if numDims == len(valuesOut.shape):
         valuesOut = valuesOut[..., np.newaxis]
+    #end
 
     if stack:
-        data.pushGrid(grid)
-        data.pushValues(valuesOut)
+        data.push(valuesOut, grid)
     else:
         return grid, valuesOut
-                
+    #end
+#end

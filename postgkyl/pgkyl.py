@@ -335,7 +335,6 @@ cli.add_command(cmd.temp.norm)
 #cli.add_command(cmd.transform.curl)
 #cli.add_command(cmd.transform.div)
 #cli.add_command(cmd.transform.grad)
-#cli.add_command(cmd.transform.mask)
 
 if __name__ == '__main__':
     cli()

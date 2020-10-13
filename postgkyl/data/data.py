@@ -486,39 +486,25 @@ class Data(object):
         #end
     #end
 
-    def popGrid(self, nodal=False):
+    def pop(self, nodal=False):
         if len(self._grid) > 0:
-            return self._grid.pop()
+            return self._grid.pop(), self._values.pop()
         else:
-            return []
+            return [], np.array([])
         #end
     #end
 
-    def popValues(self):
-        if len(self._values) > 0:
-            return self._values.pop()
-        else:
-            return np.array([])
-        #end
-    #end
-
-    def pushGrid(self, grid=None):
+    def push(self, values, grid=None):
         if not self._stack:
             if grid is not None:
                 self._grid.append(grid)
             else:
                 self._grid.append(self._grid[-1])
             #end
-        else:
-            self._grid[0] = grid
-        #end
-    #end
-
-    def pushValues(self, values):
-        if not self._stack:
             self._values.append(values)
         else:
             self._values[0] = values
+            self._grid[0] = grid
         #end
     #end
 
