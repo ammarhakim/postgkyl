@@ -4,10 +4,19 @@ from matplotlib.animation import FuncAnimation
 import click
 
 import postgkyl.output.plot as gplot
+from postgkyl.data import Data
+import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 
 def update(i, ctx, kwargs):
-    dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
+    if kwargs['collected']:
+        grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
+        dat = Data()
+        dat.push(vals, grid=grid)
+        dat.frame = i
+        dat.time = grid[0][0]
+    else:
+        dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
     plt.clf()
     kwargs['title'] = ''
     if dat.frame is not None:
@@ -70,6 +79,8 @@ def update(i, ctx, kwargs):
               help="Set maximal value of data for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,
               help="Set minimal value of data for plots.")
+@click.option('--collected', is_flag=True,
+              help="Animate a dataset that has been collected, i.e. a single dataset with time taken to be the first index.")
 @click.pass_context
 def animate(ctx, **kwargs):
     r"""Animate the actively loaded dataset and show resulting plots in a
@@ -100,7 +111,10 @@ def animate(ctx, **kwargs):
         #end
     #end
 
-    numSets = len(ctx.obj['sets'])
+    if kwargs['collected']:
+        numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
+    else:
+        numSets = len(ctx.obj['sets'])
     fig = plt.figure()
     kwargs['figure'] = fig
     kwargs['legend'] = False
