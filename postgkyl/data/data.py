@@ -171,7 +171,7 @@ class Data(object):
             #end
 
             # Get the atributes
-            # Postgkyl conventions require the atribuest to be
+            # Postgkyl conventions require the attributes to be
             # narrays even for 1D data
             lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
             upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
@@ -189,6 +189,12 @@ class Data(object):
             if 'basisType' in fh.attrs.keys():
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
                 self.isModal = True
+            #end
+
+            # read all attributes and store them
+            self.attrsList = { }
+            for k in fh.attrs.keys():
+                self.attrsList[k] = 0
             #end
 
             # Load data ...
@@ -585,6 +591,12 @@ class Data(object):
                 output += "  - Changeset: {:s}\n".format(self.changeset)
                 output += "  - Build Date: {:s}".format(self.builddate)
             #end
+
+            #output += "\n- Contains attributes:\n  "
+            #for k in self.attrsList:
+            #    output += "{:s} ".format(k)
+            #end
+            
             return output
         else:
             return "No data"

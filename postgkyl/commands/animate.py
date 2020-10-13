@@ -44,12 +44,10 @@ def update(i, ctx, kwargs):
               help="Set x-axis to log scale.")
 @click.option('--logy', is_flag=True,
               help="Set y-axis to log scale.")
-# @click.option('--legend/--no-legend', default=True,
-#               help="Show legend.")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
-#@click.option('--color', type=click.STRING,
-#              help="Set color when available.")
+@click.option('--color', type=click.STRING,
+              help="Set color when available.")
 @click.option('-x', '--xlabel', type=click.STRING,
               help="Specify a x-axis label.")
 @click.option('-y', '--ylabel', type=click.STRING,
@@ -64,8 +62,14 @@ def update(i, ctx, kwargs):
               help="Save figure as PNG.")
 @click.option('--saveas', type=click.STRING, default=None,
               help="Name to save the plot as.")
+@click.option('--fps', type=click.INT,
+              help="Specify frames per second for saving.")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
+@click.option('--vmax', default=None, type=click.FLOAT,
+              help="Set maximal value of data for plots.")
+@click.option('--vmin', default=None, type=click.FLOAT,
+              help="Set minimal value of data for plots.")
 @click.pass_context
 def animate(ctx, **kwargs):
     r"""Animate the actively loaded dataset and show resulting plots in a
@@ -88,8 +92,12 @@ def animate(ctx, **kwargs):
             if vmax < val.max():
                 vmax = val.max()
             #end
-        kwargs['vmin'] = vmin
-        kwargs['vmax'] = vmax
+        if kwargs['vmin'] is None:
+            kwargs['vmin'] = vmin
+        #end
+        if kwargs['vmax'] is None:
+            kwargs['vmax'] = vmax
+        #end
     #end
 
     numSets = len(ctx.obj['sets'])
@@ -106,7 +114,7 @@ def animate(ctx, **kwargs):
         fName = str(kwargs['saveas'])
     #end
     if kwargs['save'] or kwargs['saveas']:
-        anim.save(fName, writer='ffmpeg')
+        anim.save(fName, writer='ffmpeg', fps=kwargs['fps'])
     #end
     
     if kwargs['show']:
