@@ -38,6 +38,7 @@ class Data(object):
             the fifth coordinate for the partial load of data
         z5 (int or 'int:int'): Preselect an index (or a slice) for
             the sixth coordinate for the partial load of data
+        varName (str): allows to specify Adios variable; default is CartGridField
 
     Raises:
         NameError: when file name does not exist or is empty/corrupted.
@@ -60,7 +61,8 @@ class Data(object):
     def __init__(self, fileName=None, stack=False, comp=None,
                  z0=None, z1=None, z2=None,
                  z3=None, z4=None, z5=None,
-                 compgrid=False):
+                 compgrid=False,
+                 varName='CartGridField'):
         self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
         self._grid = []
@@ -75,6 +77,8 @@ class Data(object):
         self.polyOrder = None
         self.basisType = None
         self.isModal = None
+        
+        self.varName = varName
 
         self.fileName = fileName
         if fileName is not None:
@@ -163,7 +167,7 @@ class Data(object):
             fh.close()
         elif extension == 'bp':
             fh = adios.file(self.fileName)
-            if not 'CartGridField' in fh.vars:
+            if not self.varName in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
                 fh.close()
                 self._loadSequence()  
@@ -198,7 +202,7 @@ class Data(object):
             #end
 
             # Load data ...
-            var = adios.var(fh, 'CartGridField')
+            var = adios.var(fh, self.varName)
             offset, count = self._createOffsetCountBp(var, axes, comp)
             self._values.append(var.read(offset=offset, count=count))
             # ... and the time-stamp
@@ -223,7 +227,7 @@ class Data(object):
                     gridNm = self.fileDir + "/grid"  
                 #end
                 with adios.file(gridNm) as gridFh:
-                    gridVar = adios.var(gridFh, 'CartGridField')
+                    gridVar = adios.var(gridFh, self.varName)
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
@@ -661,7 +665,7 @@ class Data(object):
                 adios.define_var(groupId, "time", "",
                                  adios.DATATYPE.double, "", "", "")
             #end
-            adios.define_var(groupId, "CartGridField", "",
+            adios.define_var(groupId, self.varName, "",
                              adios.DATATYPE.double,
                              sNumCells, sNumCells, sOffsets)
 
@@ -670,7 +674,7 @@ class Data(object):
             if self.time is not None:
                 adios.write(fh, "time", self.time)
             #end
-            adios.write(fh, "CartGridField", self.getValues())
+            adios.write(fh, self.varName, self.getValues())
             adios.close(fh)
             adios.finalize()
 

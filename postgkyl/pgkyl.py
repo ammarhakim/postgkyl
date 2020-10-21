@@ -23,8 +23,8 @@ def _printVersion(ctx, param, value):
             latest = os.path.getmtime(f)
             struct = time.gmtime(latest)
             date = "{:d}-{:02d}-{:02d}".format(struct.tm_year,
-                                           struct.tm_mon,
-                                           struct.tm_mday)
+                                               struct.tm_mon,
+                                               struct.tm_mday)
         #end
     #end
     click.echo('Postgkyl 1.5.3 {:s} ({:s})'.format(date, sys.platform))
@@ -104,9 +104,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Partial file load: comps (either int or slice)")
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
+@click.option('--varname', '-d', default='CartGridField',
+              help="Allows to specify the Adios variable name (default is 'CartGridField')")
 @click.pass_context
 def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
-        z0, z1, z2, z3, z4, z5, comp, compgrid):
+        z0, z1, z2, z3, z4, z5, comp, compgrid, varname):
     """Postprocessing and plotting tool for Gkeyll 1.0 and 2.0
     data. Datasets can be loaded, processed and plotted using a
     command chaining mechanism. For full documentation see the Gkeyll
@@ -162,7 +164,6 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
     z4 = _expandPartialLoadIdx(numFiles, z4)
     z5 = _expandPartialLoadIdx(numFiles, z5)
     comp = _expandPartialLoadIdx(numFiles, comp)
-
     cnt = 0 # Counter for number of loaded files
     for s in range(numFiles):
         if "*" not in filename[s] and "?" not in filename[s] and "!" not in filename[s]:
@@ -174,7 +175,8 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                                                 z2=z2[s], z3=z3[s],
                                                 z4=z4[s], z5=z5[s],
                                                 stack=stack,
-                                                compgrid=compgrid))
+                                                compgrid=compgrid,
+                                                varName=varname))
             except NameError:
                 click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
                 ctx.exit()
@@ -204,7 +206,8 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                                                     z0=z0[s], z1=z1[s],
                                                     z2=z2[s], z3=z3[s],
                                                     z4=z4[s], z5=z5[s],
-                                                    stack=stack))
+                                                    stack=stack,
+                                                    varName=varname))
                     ctx.obj['setIds'].append(cnt)
                     cnt += 1
                 except:
