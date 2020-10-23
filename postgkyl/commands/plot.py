@@ -18,6 +18,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Manually set the number of columns for subplots.")
 @click.option('--arg', type=click.STRING,
               help="Additional plotting arguments like '*--'.")
+@click.option('--transpose', is_flag=True,
+              help="Transpose axes.")
 @click.option('-c', '--contour', is_flag=True,
               help="Draw contour plot.")
 @click.option('-q', '--quiver', is_flag=True,

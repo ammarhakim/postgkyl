@@ -59,6 +59,7 @@ def plot(data, args=(),
          showgrid=True,
          hashtag=False, xkcd=False,
          color=None, markersize=None,
+         transpose=False,
          **kwargs):
     """Plots Gkeyll data
 
@@ -355,6 +356,13 @@ def plot(data, args=(),
                                         edgecolors=edgecolors,
                                         linewidth=0.1,
                                         *args)
+                elif transpose:
+                    im = cax.pcolormesh(grid[1]*xscale, grid[0]*yscale,
+                                        values[..., comp],
+                                        vmin=vmin, vmax=vmax,
+                                        edgecolors=edgecolors,
+                                        linewidth=0.1,
+                                        *args) 
                 else:
                     im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                                         values[..., comp].transpose(),
