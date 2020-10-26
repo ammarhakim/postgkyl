@@ -58,10 +58,9 @@ def integrate(data, axis, stack=False):
     if stack is False:
         return grid, values
     else:
-        data.pushGrid(grid)
-        data.pushValues(values)
+        data.push(values, grid)
     #end
-
+#end
 
 def grad(data):
     pass
