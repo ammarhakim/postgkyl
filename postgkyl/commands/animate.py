@@ -73,6 +73,8 @@ def update(i, ctx, kwargs):
               help="Name to save the plot as.")
 @click.option('--fps', type=click.INT,
               help="Specify frames per second for saving.")
+@click.option('--dpi', type=click.INT,
+              help="Specify DPI for saving.")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges (default: None)")
 @click.option('--vmax', default=None, type=click.FLOAT,
@@ -128,7 +130,8 @@ def animate(ctx, **kwargs):
         fName = str(kwargs['saveas'])
     #end
     if kwargs['save'] or kwargs['saveas']:
-        anim.save(fName, writer='ffmpeg', fps=kwargs['fps'])
+        anim.save(fName, writer='ffmpeg',
+                  fps=kwargs['fps'], dpi=kwargs['dpi'])
     #end
     
     if kwargs['show']:

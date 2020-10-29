@@ -89,7 +89,7 @@ def plot(data, args=(),
         raise Exception('Only 1D and 2D plots are currently supported')
     #end    
     # Get the handles on the grid and values
-    grid = data.getGrid()
+    grid = data.getGrid().copy()
     values = data.getValues()
     lower, upper = data.getBounds()
     cells = data.getNumCells()
