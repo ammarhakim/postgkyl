@@ -81,7 +81,7 @@ def plot(data, args=(),
     if xkcd:
         plt.xkcd()
     #end
-
+    
     #-----------------------------------------------------------------
     #-- Data Loading -------------------------------------------------
     numDims = data.getNumDims(squeeze=True)
@@ -103,15 +103,16 @@ def plot(data, args=(),
             #end
         #end
         if idx:
-            grid = np.delete(grid, idx)
+            for i in reversed(idx):
+                grid.pop(i)
+            #end
             lower = np.delete(lower, idx)
             upper = np.delete(upper, idx)
             cells = np.delete(cells, idx)
             axLabel = np.delete(axLabel, idx)
-            values = np.squeeze(values, tuple(idx)) 
+            values = np.squeeze(values, tuple(idx))
         #end
     #end
-    
     if streamline or quiver:
         step = 2
     else:
