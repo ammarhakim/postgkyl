@@ -516,6 +516,7 @@ class Data(object):
             self._values[0] = values
             self._grid[0] = grid
         #end
+        return self
     #end
 
     # legacy function
