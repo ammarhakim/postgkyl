@@ -73,7 +73,7 @@ def collect(ctx, **kwargs):
                 #end
 
                 # need to assign grid in this block so that each stem group has its own grid
-                grid = list(ctx.obj['dataSets'][s].getGrid())
+                grid = ctx.obj['dataSets'][s].getGrid().copy()
             #end
         #end
 

@@ -16,7 +16,6 @@ def _gridCheck(grid0, grid1):
             return grid0
         else:
             return grid1
-        print(cnt0, cnt1)
     elif grid0 != []:
         return grid0
     elif grid1 != []:
@@ -164,7 +163,7 @@ def grad(inGrid, inValues):
 
 
 def integrate(inGrid, inValues, avg=False):
-    grid = np.array(inGrid[1])
+    grid = inGrid[1].copy()
     values = np.array(inValues[1])
 
     axis = inValues[0]
