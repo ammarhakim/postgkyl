@@ -360,27 +360,19 @@ class Data(object):
             elif extension == 'bp':
                 self.fileType = 'adios'
                 fh =  adios.file(fileName)
-                if 'Data' in fh.vars and 'TimeMesh' in fh.vars:
-                    values = adios.var(fh, 'Data').read()
-                    grid = adios.var(fh, 'TimeMesh').read()
-                    fh.close()
-                elif 'Data0' in fh.vars and 'TimeMesh0' in fh.vars:
-                    values = adios.var(fh, 'Data0').read()
-                    grid = adios.var(fh, 'TimeMesh0').read()
-                    varCnt = 1
-                    while 'Data'+str(varCnt) in fh.vars:
-                        try:
-                           values = np.append(values,
-                                              adios.var(fh, 'Data{:d}'.format(varCnt)).read(),
-                                              axis=0)
-                           grid = np.append(grid,
-                                            adios.var(fh, 'TimeMesh{:d}'.format(varCnt)).read(),
-                                            axis=0)
-                           varCnt = varCnt+1
-                        except:
-                           varCnt = varCnt+1
-                           continue
+                timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
+                dataList = [key for key, val in fh.vars.items() if 'Data' in key]
+                if len(dataList) > 0:
+                    for i in range(len(dataList)):
+                        if i==0:
+                            values = adios.var(fh, dataList[i]).read()
+                            grid = adios.var(fh, timeMeshList[i]).read()
+                        else:
+                            values = np.append(values, adios.var(fh, dataList[i]).read(),axis=0)
+                            grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
+                        #end
                     #end
+                    fh.close()
                 else:
                     fh.close()
                     continue
