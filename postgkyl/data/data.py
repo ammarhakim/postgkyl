@@ -611,14 +611,9 @@ class Data(object):
 
     #-----------------------------------------------------------------
     #-- Write --------------------------------------------------------
-    def write(self, bufferSize=1000, outName=None, txt=False):
-        """Writes data in ADIOS .bp file or ASCII .txt file
+    def write(self, bufferSize=1000, outName=None, mode='bp'):
+        """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
         """
-        if txt:
-            mode = 'txt'
-        else:
-            mode = 'bp'
-        #end
         # Create output file name
         if outName is None:
             if self.fileName is not None:
@@ -717,6 +712,10 @@ class Data(object):
                 fh.write(line)
             #end
             fh.close()
+        elif mode == 'npy':
+            values = self.getValues()
+
+            np.save(outName, values.squeeze())
         #end
     #end
 #end
