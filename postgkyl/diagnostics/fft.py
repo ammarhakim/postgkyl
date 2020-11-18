@@ -34,8 +34,7 @@ def fft(data, psd=False, stack=False):
     if stack:
         lo = np.array([freq[0][0]])
         up = np.array([freq[0][-1]])
-        data.pushGrid(freq)#, lo, up)
-        data.pushValues(ftValues)
+        data.push(ftValues, grid=freq)
     else:
         return freq, ftValues
         

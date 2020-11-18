@@ -548,8 +548,7 @@ class GInterpModal(GInterp):
         #end
 
         numCells = self.data.getNumCells()
-        grid = [np.linspace(self.Xc[d][0], self.Xc[d][-1],
-                            numCells*N+1)
+        grid = [np.linspace(self.Xc[int(d)][0], self.Xc[int(d)][-1], int(numCells*N+1))
                 for d in range(self.numDims)]
 
         values = np.zeros(numCells*N)
