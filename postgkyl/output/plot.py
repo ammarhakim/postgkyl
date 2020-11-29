@@ -2,7 +2,7 @@ import click
 import matplotlib.cm as cm
 import matplotlib.figure
 import matplotlib.pyplot as plt
-import matplotlib.colors as cl
+import matplotlib.colors as colors
 import numpy as np
 import os.path
 
@@ -350,7 +350,7 @@ def plot(data, args=(),
                             #end
                         #end
                     #end
-                    norm = cl.LogNorm(vmin=vmin, vmax=vmax)
+                    norm = colors.LogNorm(vmin=vmin, vmax=vmax)
                     im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                                         tmp.transpose(),
                                         norm=norm,# vmin=vmin, vmax=vmax,
