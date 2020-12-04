@@ -317,18 +317,18 @@ def plot(data, args=(),
                 for l in range(numLines):
                     idx = [slice(0, u) for u in values.shape]
                     idx[-1] = comp
-                    color = cm.inferno(l / (numLines-1))
+                    color = cm.viridis(l / (numLines-1))
                     if group == 0:
                         idx[1] = l
                         im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
                                       *args, color=color)
-                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[1][0]*yscale,vmax=gridCC[1][-1]*yscale,clip=False), cmap=cm.inferno)
+                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[1][0]*yscale,vmax=gridCC[1][-1]*yscale,clip=False), cmap=cm.viridis)
                         label = clabel or 'Z1' 
                     else:
                         idx[0] = l
                         im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
                                       *args, color=color)
-                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[0][0]*xscale,vmax=gridCC[0][-1]*xscale,clip=False), cmap=cm.inferno)
+                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[0][0]*xscale,vmax=gridCC[0][-1]*xscale,clip=False), cmap=cm.viridis)
                         label = clabel or 'Z0' 
                 fig.colorbar(mappable, ax=cax, label=label)
                 legend = False
