@@ -274,7 +274,7 @@ class Data(object):
             # read grid dimensions
             numDims = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
             offset = 8
-            
+
             # read grid shape
             cells = np.fromfile(self.fileName, dtype=dti8, count=numDims, offset=offset)
             offset += numDims*8
@@ -286,20 +286,20 @@ class Data(object):
             upper = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
             offset += numDims*8
 
-            # read array rank
-            arank = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
+            # read array elemEz (the div by 8 is as elemSz includes sizeof(double) = 8)
+            elemSz = int(np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]/8)
             offset += 8
 
-            # read array shape
-            ashape = np.fromfile(self.fileName, dtype=dti8, count=arank, offset=offset)
-            offset += arank*8
+            # read array size
+            asize = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
+            offset += 8
 
             adata = np.fromfile(self.fileName, dtype=dtf8, offset=offset)
             gshape = np.ones(numDims+1, dtype=np.dtype("i8"))
             for d in range(numDims):
-                gshape[d] = ashape[d]
+                gshape[d] = cells[d]
             #end
-            numComp = np.prod(ashape)/np.prod(gshape)
+            numComp = elemSz
             gshape[-1] = int(numComp)
             self._values.append(adata.reshape(gshape))
         else:
