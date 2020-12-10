@@ -178,20 +178,23 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
         if "*" not in filename[s] and "?" not in filename[s] and "!" not in filename[s]:
             vlog(ctx, "Loading '{:s}\' as data set #{:d}".
                  format(filename[s], cnt))
-            try:
-                ctx.obj['dataSets'].append(Data(filename[s], comp=comp[s],
-                                                z0=z0[s], z1=z1[s],
-                                                z2=z2[s], z3=z3[s],
-                                                z4=z4[s], z5=z5[s],
-                                                stack=stack,
-                                                compgrid=compgrid,
-                                                varName=varNames[s]))
-            except NameError:
-                click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
-                ctx.exit()
+            vn = varNames[s].split(',')
+            for i in range(len(vn)):
+                try:
+                    ctx.obj['dataSets'].append(Data(filename[s], comp=comp[s],
+                                                    z0=z0[s], z1=z1[s],
+                                                    z2=z2[s], z3=z3[s],
+                                                    z4=z4[s], z5=z5[s],
+                                                    stack=stack,
+                                                    compgrid=compgrid,
+                                                    varName=vn[i]))
+                except NameError:
+                    click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
+                    ctx.exit()
+                #end
+                ctx.obj['setIds'].append(cnt)
+                cnt += 1
             #end
-            ctx.obj['setIds'].append(cnt)
-            cnt += 1
         else:  # Postgkyl allows for wild-card loading (requires quotes)
             files = glob(str(filename[s]))
             files = [f for f in files if f.find("restart") < 0]
