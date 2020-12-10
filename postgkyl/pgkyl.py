@@ -104,7 +104,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help="Partial file load: comps (either int or slice)")
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
-@click.option('--varname', '-d', default='CartGridField',
+@click.option('--varname', '-d', multiple=True,
               help="Allows to specify the Adios variable name (default is 'CartGridField')")
 @click.pass_context
 def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
@@ -156,6 +156,15 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
 
+    varNames = []
+    for i in range(numFiles):
+        if i < len(varname):
+            varNames.append(varname[i])
+        else:
+            varNames.append('CartGridField')
+        #end
+    #end
+            
     # Expand indices for easy looping
     z0 = _expandPartialLoadIdx(numFiles, z0)
     z1 = _expandPartialLoadIdx(numFiles, z1)
@@ -176,7 +185,7 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                                                 z4=z4[s], z5=z5[s],
                                                 stack=stack,
                                                 compgrid=compgrid,
-                                                varName=varname))
+                                                varName=varNames[s]))
             except NameError:
                 click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
                 ctx.exit()
