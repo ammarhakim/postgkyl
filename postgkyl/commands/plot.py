@@ -68,6 +68,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify a x-axis label.")
 @click.option('-y', '--ylabel', type=click.STRING,
               help="Specify a y-axis label.")
+@click.option('--clabel', type=click.STRING,
+              help="Specify a label for colorbar.")
 @click.option('-t', '--title', type=click.STRING,
               help="Specify a title.")
 @click.option('--save', is_flag=True,

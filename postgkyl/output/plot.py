@@ -13,9 +13,9 @@ def _colorbar(obj, fig, cax, label="", extend=None):
     divider = make_axes_locatable(cax)
     cax2 = divider.append_axes("right", size="3%", pad=0.05)
     if extend is not None:
-        return fig.colorbar(obj, cax=cax2, label=label, extend=extend)
+        return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
     else:
-        return fig.colorbar(obj, cax=cax2, label=label)
+        return fig.colorbar(obj, cax=cax2, label=label or "")
     #end
 #end
 
@@ -51,7 +51,7 @@ def plot(data, args=(),
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
-         xlabel=None, ylabel=None, title=None,
+         xlabel=None, ylabel=None, clabel=None, title=None,
          logx=False, logy=False, logz=False,
          fixaspect=False,
          vmin=None, vmax=None, edgecolors=None,
@@ -275,7 +275,7 @@ def plot(data, args=(),
                 im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
                                  values[..., comp].transpose(),
                                  *args)
-                cb = _colorbar(im, fig, cax)
+                cb = _colorbar(im, fig, cax, label=clabel)
             elif quiver:  #-------------------------------------------
                 skip = int(np.max((len(grid[0]), len(grid[1])))//15)
                 skip2 = int(skip//2)
@@ -297,7 +297,7 @@ def plot(data, args=(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
                                     color=magnitude.transpose())
-                _colorbar(im.lines, fig, cax)
+                _colorbar(im.lines, fig, cax, label=clabel)
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
                 im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
@@ -306,7 +306,7 @@ def plot(data, args=(),
                                     cmap='RdBu_r',
                                     edgecolors=edgecolors, linewidth=0.1,
                                     *args)
-                _colorbar(im, fig, cax)
+                _colorbar(im, fig, cax, label=clabel)
             elif group is not None:  #--------------------------------
                 if group == 0:
                     numLines = values.shape[1]
@@ -317,15 +317,20 @@ def plot(data, args=(),
                 for l in range(numLines):
                     idx = [slice(0, u) for u in values.shape]
                     idx[-1] = comp
-                    color = cm.inferno(l / (numLines-1))
+                    color = cm.viridis(l / (numLines-1))
                     if group == 0:
                         idx[1] = l
                         im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
                                       *args, color=color)
+                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[1][0]*yscale,vmax=gridCC[1][-1]*yscale,clip=False), cmap=cm.viridis)
+                        label = clabel or 'Z1' 
                     else:
                         idx[0] = l
                         im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
                                       *args, color=color)
+                        mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[0][0]*xscale,vmax=gridCC[0][-1]*xscale,clip=False), cmap=cm.viridis)
+                        label = clabel or 'Z0' 
+                fig.colorbar(mappable, ax=cax, label=label)
                 legend = False
             else:
                 extend = None
@@ -372,7 +377,7 @@ def plot(data, args=(),
                                         linewidth=0.1,
                                         *args)
                 #end
-                _colorbar(im, fig, cax, extend=extend)
+                _colorbar(im, fig, cax, extend=extend, label=clabel)
             #end
         else:
             raise ValueError("{:d}D data not yet supported".
