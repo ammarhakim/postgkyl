@@ -211,19 +211,22 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
             #end
             
             for fn in files:
-                try:
-                    vlog(ctx, "Loading '{:s}\' as data set #{:d}".
-                         format(fn, cnt))
-                    ctx.obj['dataSets'].append(Data(fn, comp=comp[s],
-                                                    z0=z0[s], z1=z1[s],
-                                                    z2=z2[s], z3=z3[s],
-                                                    z4=z4[s], z5=z5[s],
-                                                    stack=stack,
-                                                    varName=varname))
-                    ctx.obj['setIds'].append(cnt)
-                    cnt += 1
-                except:
-                    pass
+                vn = varNames[s].split(',')
+                for i in range(len(vn)):
+                    try:
+                        vlog(ctx, "Loading '{:s}\' as data set #{:d}".
+                             format(fn, cnt))
+                        ctx.obj['dataSets'].append(Data(fn, comp=comp[s],
+                                                        z0=z0[s], z1=z1[s],
+                                                        z2=z2[s], z3=z3[s],
+                                                        z4=z4[s], z5=z5[s],
+                                                        stack=stack,
+                                                        varName=vn[i]))
+                        ctx.obj['setIds'].append(cnt)
+                        cnt += 1
+                    except:
+                        pass
+                    #end
                 #end
             #end
         #end
