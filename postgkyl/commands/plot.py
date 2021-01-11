@@ -16,26 +16,26 @@ from postgkyl.commands.util import vlog, pushChain
               help="Manually set the number of rows for subplots.")
 @click.option('--nsubplotcol', 'nSubplotCol', type=click.INT,
               help="Manually set the number of columns for subplots.")
-@click.option('--arg', type=click.STRING,
-              help="Additional plotting arguments like '*--'.")
 @click.option('--transpose', is_flag=True,
               help="Transpose axes.")
 @click.option('-c', '--contour', is_flag=True,
-              help="Draw contour plot.")
+              help="Make contour plot.")
 @click.option('-q', '--quiver', is_flag=True,
-              help="Draw quiver plot.")
+              help="Make quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Make streamline plot.")
-@click.option('-s', '--scatter', is_flag=True,
-              help="Plot data in scatter-plot mode.")
-@click.option('--markersize', type=click.FLOAT,
-              help="Set marker size for scatter plots.")
-@click.option('-d', '--diverging', is_flag=True,
-              help="Switch to inverted color mode.")
 @click.option('-g', '--group', type=click.Choice(['0', '1']),
               help="Switch to group mode.")
+@click.option('-s', '--scatter', is_flag=True,
+              help="Make scatter plot.")
+@click.option('--markersize', type=click.FLOAT,
+              help="Set marker size for scatter plots.")
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
+@click.option('-d', '--diverging', is_flag=True,
+              help="Switch to diverging color map.")
+@click.option('--arg', type=click.STRING,
+              help="Additional plotting arguments, e.g., '*--'.")
 @click.option('-a', '--fix-aspect', 'fixaspect', is_flag=True,
               help="Enforce the same scaling on both axes.")
 @click.option('--logx', is_flag=True,
@@ -60,8 +60,6 @@ from postgkyl.commands.util import vlog, pushChain
               help="Show legend.")
 @click.option('--force-legend', 'forcelegend', is_flag=True,
               help="Force legend even when plotting a single dataset.")
-@click.option('--show/--no-show', default=True,
-              help="Turn showing of the plot ON and OFF (default: ON).")
 @click.option('--color', type=click.STRING,
               help="Set color when available.")
 @click.option('-x', '--xlabel', type=click.STRING,
@@ -77,7 +75,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('--saveas', type=click.STRING, default=None,
               help="Name of figure file.")
 @click.option('--dpi', type=click.INT, default=200,
-              help="DPI (resolution) for output")
+              help="DPI (resolution) for output.")
 @click.option('-e', '--edgecolors', type=click.STRING,
               help="Set color for cell edges to show grid outline (default: None)")
 @click.option('--showgrid/--no-showgrid', default=True,
@@ -86,6 +84,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turns on the xkcd style!")
 @click.option('--hashtag', is_flag=True,
               help="Turns on the pgkyl hashtag!")
+@click.option('--show/--no-show', default=True,
+              help="Turn showing of the plot ON and OFF (default: ON).")
 @click.pass_context
 def plot(ctx, **kwargs):
     """Plot active datasets, optionally displaying the plot and/or saving
