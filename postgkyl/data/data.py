@@ -368,7 +368,12 @@ class Data(object):
                             values = adios.var(fh, dataList[i]).read()
                             grid = adios.var(fh, timeMeshList[i]).read()
                         else:
-                            values = np.append(values, adios.var(fh, dataList[i]).read(),axis=0)
+                            newvals = adios.var(fh, dataList[i]).read()
+                            # deal with weird behavior after restart where some data doesn't have second dimension
+                            if len(newvals.shape) < 2:
+                               newvals = np.expand_dims(newvals, axis=1)
+                            #end
+                            values = np.append(values, newvals,axis=0)
                             grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
                         #end
                     #end
