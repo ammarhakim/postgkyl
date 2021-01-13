@@ -69,11 +69,11 @@ def load(ctx, **kwargs):
     elif ctx.obj['globalVarNames']:
         varNames = ctx.obj['globalVarNames']
     else:
-        varName = ['CartGridField']
+        varNames = ['CartGridField']
     #end
-
+    
     cnt = len(ctx.obj['dataSets'])
-    for var in kwargs['varname']:
+    for var in varNames:
         for fn in files:
             try:
                 ctx.obj['dataSets'].append(Data(fileName=fn,
