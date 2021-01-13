@@ -68,7 +68,7 @@ class PgkylCommandGroup(click.Group):
 @click.command(cls=PgkylCommandGroup, chain=True,
                context_settings=dict(help_option_names=['-h', '--help']))
 @click.option('--filename', '-f', multiple=True,
-              help="DEPRECATED Specify dataset files to work with. This flag can be used repeatedly to specify multiple files. To load a large number of datasets wildcards or regular expressions can be used.")
+              help="DEPRECATED Filenames should now be specified without the '-f'")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
 @click.option('--savechainas', 
@@ -99,8 +99,7 @@ class PgkylCommandGroup(click.Group):
 @click.option('--varname', '-d', multiple=True,
               help="Allows to specify the Adios variable name (default is 'CartGridField')")
 @click.pass_context
-def cli(ctx, filename, savechain, savechainas, stack, verbose,
-        z0, z1, z2, z3, z4, z5, component, compgrid, varname):
+def cli(ctx, **kwargs):
     """Postprocessing and plotting tool for Gkeyll 
     data. Datasets can be loaded, processed and plotted using a
     command chaining mechanism. For full documentation see the Gkeyll
@@ -110,7 +109,7 @@ def cli(ctx, filename, savechain, savechainas, stack, verbose,
     """
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
-    if verbose:
+    if kwargs['verbose']:
         ctx.obj['verbose'] = True
         # Monty Python references should be a part of Python code
         vlog(ctx, 'This is Postgkyl running in verbose mode!')
@@ -122,7 +121,7 @@ def cli(ctx, filename, savechain, savechainas, stack, verbose,
     
     home = os.path.expanduser('~')
     ctx.obj['savechainPath'] = (home + '/.pgkyl/pgkylchain')
-    if savechain or savechainas is not None:
+    if kwargs['savechain'] or kwargs['savechainas'] is not None:
         ctx.obj['savechain'] = True
         try:
             os.makedirs(home + "/.pgkyl")
@@ -130,7 +129,7 @@ def cli(ctx, filename, savechain, savechainas, stack, verbose,
             # directory already exists
             pass
         #end
-        if savechainas is not None:
+        if kwargs['savechainas'] is not None:
             ctx.obj['savechainPath'] = (home + '/.pgkyl/' + str(savechainas))
         #end
         fh = open(ctx.obj['savechainPath'], 'w')  # The default chain name
@@ -139,13 +138,9 @@ def cli(ctx, filename, savechain, savechainas, stack, verbose,
         ctx.obj['savechain'] = False
     #end
 
-    ctx.obj['files'] = filename
-
-    
     ctx.obj['inDataStrings'] = []
     ctx.obj['inDataStringsLoaded'] = 0
     
-    numFiles = len(filename)
     ctx.obj['dataSets'] = []
     ctx.obj['labels'] = []
     ctx.obj['setIds'] = []
@@ -153,62 +148,58 @@ def cli(ctx, filename, savechain, savechainas, stack, verbose,
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
 
-    varNames = []
-    for i in range(numFiles):
-        if i < len(varname):
-            varNames.append(varname[i])
-        else:
-            varNames.append('CartGridField')
-        #end
-    #end
-            
-    cnt = 0 # Counter for number of loaded files
-        
-    ctx.obj['sets'] = range(cnt)
-
+    ctx.obj['compgrid'] = kwargs['compgrid']
+    ctx.obj['stack'] =kwargs['stack']
+    ctx.obj['globalVarNames'] = kwargs['varname']    
+    ctx.obj['globalCuts'] = (kwargs['z0'], kwargs['z1'],
+                             kwargs['z2'], kwargs['z3'],
+                             kwargs['z4'], kwargs['z5'],
+                             kwargs['component'])
+                             
+    
     # Automatically set label from unique parts of the file names
-    if cnt > 0:
-        nameComps = np.zeros(cnt, np.int)
-        names = []
-        for sIdx in range(cnt):
-            fileName = ctx.obj['dataSets'][sIdx].fileName
-            extLength = len(fileName.split('.')[-1])
-            fileName = fileName[:-(extLength+1)]
-            # only remove the file extension but take into account
-            # that the file name might start with '../'
-            names.append(fileName.split('_'))
-            nameComps[sIdx] = len(names[sIdx])
-            ctx.obj['labels'].append('')
-        #end
-        maxComps = np.max(nameComps)
-        idxMaxComps = np.argmax(nameComps)
-        for i in range(maxComps): 
-            unique = True
-            compStr = names[idxMaxComps][i]
-            for sIdx in range(cnt):
-                if i < len(names[sIdx]) and sIdx != idxMaxComps:
-                    if names[sIdx][i] == compStr:
-                        unique = False
-                    #end
-                #end
-            #end
-            if unique:
-                for sIdx in range(cnt):
-                    if i < len(names[sIdx]):
-                        if ctx.obj['labels'][sIdx] == "":
-                            ctx.obj['labels'][sIdx] += names[sIdx][i]
-                        else:
-                            ctx.obj['labels'][sIdx] += '_{:s}'.format(names[sIdx][i])
-                        #end
-                    #end
-                #end
-            #end
-            # User specified labels
-            for sIdx, l in enumerate(label):
-                ctx.obj['labels'][sIdx] = l
-            #end
-        #end
-    #end
+    # if cnt > 0:
+    #     nameComps = np.zeros(cnt, np.int)
+    #     names = []
+    #     for sIdx in range(cnt):
+    #         fileName = ctx.obj['dataSets'][sIdx].fileName
+    #         extLength = len(fileName.split('.')[-1])
+    #         fileName = fileName[:-(extLength+1)]
+    #         # only remove the file extension but take into account
+    #         # that the file name might start with '../'
+    #         names.append(fileName.split('_'))
+    #         nameComps[sIdx] = len(names[sIdx])
+    #         ctx.obj['labels'].append('')
+    #     #end
+    #     maxComps = np.max(nameComps)
+    #     idxMaxComps = np.argmax(nameComps)
+    #     for i in range(maxComps): 
+    #         unique = True
+    #         compStr = names[idxMaxComps][i]
+    #         for sIdx in range(cnt):
+    #             if i < len(names[sIdx]) and sIdx != idxMaxComps:
+    #                 if names[sIdx][i] == compStr:
+    #                     unique = False
+    #                 #end
+    #             #end
+    #         #end
+    #         if unique:
+    #             for sIdx in range(cnt):
+    #                 if i < len(names[sIdx]):
+    #                     if ctx.obj['labels'][sIdx] == "":
+    #                         ctx.obj['labels'][sIdx] += names[sIdx][i]
+    #                     else:
+    #                         ctx.obj['labels'][sIdx] += '_{:s}'.format(names[sIdx][i])
+    #                     #end
+    #                 #end
+    #             #end
+    #         #end
+    #         # User specified labels
+    #         for sIdx, l in enumerate(label):
+    #             ctx.obj['labels'][sIdx] = l
+    #         #end
+    #     #end
+    # #end
 #end
 
 @click.command(help='Run the saved command chain')
