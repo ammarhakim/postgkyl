@@ -22,6 +22,7 @@ from .tenmoment import tenmoment
 from .trajectory import trajectory
 from .val2coord import val2coord
 from .write import write
+from .load import load
 
 from . import temp
 from .agyro import agyro

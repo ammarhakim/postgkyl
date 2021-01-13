@@ -3,6 +3,7 @@ from glob import glob
 import os
 import time
 import sys
+from os import path
 
 import click
 import numpy as np
@@ -27,56 +28,47 @@ def _printVersion(ctx, param, value):
                                                struct.tm_mday)
         #end
     #end
-    click.echo('Postgkyl 1.5.3 {:s} ({:s})'.format(date, sys.platform))
+    click.echo('Postgkyl 1.6.0 {:s} ({:s})'.format(date, sys.platform))
     click.echo('Python version: {:s}'.format(sys.version))
-    click.echo('Copyright 2016-2020 Gkeyll Team')
-    click.echo('Gkeyll can be used freely for research at universities,')
+    click.echo('Copyright 2016-2021 Gkeyll Team')
+    click.echo('Postgkyl can be used freely for research at universities,')
     click.echo('national laboratories, and other non-profit institutions.')
-    click.echo('There is NO warranty. SPAM!\n')
+    click.echo('There is NO warranty.\n')
+    click.echo('Spam, egg, sausage, and spam.')
     ctx.exit()
+#end
 
-# Helper for expanding the partial load indices for easier looping
-def _expandPartialLoadIdx(numFiles, idx):
-    if not idx:
-        idxOut = [None for _ in range(numFiles)]
-    elif len(idx) == 1:
-        idxOut = [idx[0] for _ in range(numFiles)]
-    elif len(idx) > 1 and len(idx) != numFiles:
-        raise IndexError("Partial load indices mismatch")
-    else:
-        idxOut = idx
-    return idxOut
-
-class AliasedGroup(click.Group):
-
+class PgkylCommandGroup(click.Group):
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
+        # cmd_name is a full name of a pgkyl command
         if rv is not None:
             return rv
+        #end
+
+        # cmd_name is an abreviation of a pgkyl command
         matches = [x for x in self.list_commands(ctx)
                    if x.startswith(cmd_name)]
-        if not matches:
-            return None
-        elif len(matches) == 1:
+        if matches and len(matches) == 1:
             return click.Group.get_command(self, ctx, matches[0])
-        ctx.fail('Too many matches: %s' % ', '.join(sorted(matches)))
+        elif matches:
+            ctx.fail("Too many matches for '{:s}': {:s}".format(cmd_name, ', '.join(sorted(matches))))
+        #end
 
- 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-
-# # Modifying the docstring for the main file
-# fName = os.path.dirname(os.path.realos.path(__file__)) + '/pgkyl.rst'
-# with open(fName, 'r') as file:
-#     docString = file.read()
+        # cmd_name is a data set
+        if glob(cmd_name):
+            ctx.obj['inDataStrings'].append(cmd_name)
+            return click.Group.get_command(self, ctx, 'load')
+        #end
+        ctx.fail("'{:s}' does not match either command name nor a data file".format(cmd_name))
+    #end
+#end
 
 # The command line mode entry command
-#@click.group(chain=True)
-@click.command(cls=AliasedGroup, chain=True,
-               context_settings=CONTEXT_SETTINGS)
+@click.command(cls=PgkylCommandGroup, chain=True,
+               context_settings=dict(help_option_names=['-h', '--help']))
 @click.option('--filename', '-f', multiple=True,
-              help="Specify dataset files to work with. This flag can be used repeatedly to specify multiple files. To load a large number of datasets wildcards or regular expressions can be used.")
-@click.option('--label', '-l', multiple=True,
-              help="Specify a custom label for each dataset.")
+              help="DEPRECATED Specify dataset files to work with. This flag can be used repeatedly to specify multiple files. To load a large number of datasets wildcards or regular expressions can be used.")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
 @click.option('--savechainas', 
@@ -88,28 +80,28 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--version', is_flag=True, callback=_printVersion,
               expose_value=False, is_eager=True,
               help="Print the version information.")
-@click.option('--z0', multiple=True,
+@click.option('--z0',
               help="Partial file load: 0th coord (either int or slice)")
-@click.option('--z1', multiple=True,
+@click.option('--z1',
               help="Partial file load: 1st coord (either int or slice)")
-@click.option('--z2', multiple=True,
+@click.option('--z2',
               help="Partial file load: 2nd coord (either int or slice)")
-@click.option('--z3', multiple=True,
+@click.option('--z3',
               help="Partial file load: 3rd coord (either int or slice)")
-@click.option('--z4', multiple=True,
+@click.option('--z4',
               help="Partial file load: 4th coord (either int or slice)")
-@click.option('--z5', multiple=True,
+@click.option('--z5',
               help="Partial file load: 5th coord (either int or slice)")
-@click.option('--comp', '-c', multiple=True,
+@click.option('--component', '-c',
               help="Partial file load: comps (either int or slice)")
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
               help="Allows to specify the Adios variable name (default is 'CartGridField')")
 @click.pass_context
-def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
-        z0, z1, z2, z3, z4, z5, comp, compgrid, varname):
-    """Postprocessing and plotting tool for Gkeyll 1.0 and 2.0
+def cli(ctx, filename, savechain, savechainas, stack, verbose,
+        z0, z1, z2, z3, z4, z5, component, compgrid, varname):
+    """Postprocessing and plotting tool for Gkeyll 
     data. Datasets can be loaded, processed and plotted using a
     command chaining mechanism. For full documentation see the Gkeyll
     documentation webpages. Help for individual commands can be
@@ -148,6 +140,11 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
     #end
 
     ctx.obj['files'] = filename
+
+    
+    ctx.obj['inDataStrings'] = []
+    ctx.obj['inDataStringsLoaded'] = 0
+    
     numFiles = len(filename)
     ctx.obj['dataSets'] = []
     ctx.obj['labels'] = []
@@ -165,80 +162,8 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
         #end
     #end
             
-    # Expand indices for easy looping
-    z0 = _expandPartialLoadIdx(numFiles, z0)
-    z1 = _expandPartialLoadIdx(numFiles, z1)
-    z2 = _expandPartialLoadIdx(numFiles, z2)
-    z3 = _expandPartialLoadIdx(numFiles, z3)
-    z4 = _expandPartialLoadIdx(numFiles, z4)
-    z5 = _expandPartialLoadIdx(numFiles, z5)
-    comp = _expandPartialLoadIdx(numFiles, comp)
     cnt = 0 # Counter for number of loaded files
-    for s in range(numFiles):
-        if "*" not in filename[s] and "?" not in filename[s] and "!" not in filename[s]:
-            vlog(ctx, "Loading '{:s}\' as data set #{:d}".
-                 format(filename[s], cnt))
-            vn = varNames[s].split(',')
-            for i in range(len(vn)):
-                try:
-                    ctx.obj['dataSets'].append(Data(filename[s], comp=comp[s],
-                                                    z0=z0[s], z1=z1[s],
-                                                    z2=z2[s], z3=z3[s],
-                                                    z4=z4[s], z5=z5[s],
-                                                    stack=stack,
-                                                    compgrid=compgrid,
-                                                    varName=vn[i]))
-                except NameError:
-                    click.echo(click.style("ERROR: File(s) '{:s}' not found or empty".format(filename[s]), fg='red'))
-                    ctx.exit()
-                #end
-                ctx.obj['setIds'].append(cnt)
-                cnt += 1
-            #end
-        else:  # Postgkyl allows for wild-card loading (requires quotes)
-            files = glob(str(filename[s]))
-            files = [f for f in files if f.find("restart") < 0]
-            def crush(s):                             
-                splitted = s.split('_')
-                tmp = splitted[-1].split('.')
-                splitted[-1] = int(tmp[0])
-                splitted.append(tmp[1])
-                return tuple(splitted)
-            try:
-                files = sorted(files, key=crush)
-            except Exception:
-                click.echo(click.style("WARNING: The loaded files appear to be of different types. Sorting is turned off.", fg='yellow'))
-            #end
-            
-            for fn in files:
-                vn = varNames[s].split(',')
-                for i in range(len(vn)):
-                    try:
-                        vlog(ctx, "Loading '{:s}\' as data set #{:d}".
-                             format(fn, cnt))
-                        ctx.obj['dataSets'].append(Data(fn, comp=comp[s],
-                                                        z0=z0[s], z1=z1[s],
-                                                        z2=z2[s], z3=z3[s],
-                                                        z4=z4[s], z5=z5[s],
-                                                        stack=stack,
-                                                        varName=vn[i]))
-                        ctx.obj['setIds'].append(cnt)
-                        cnt += 1
-                    except:
-                        pass
-                    #end
-                #end
-            #end
-        #end
-    #end
-    
-    # It is possite to run pgkyl without any file (e.e., for getting a
-    # holp for a command; however, it will fail if files are specified
-    # but not loaded
-    if numFiles > 0 and cnt == 0:
-        click.echo(click.style("ERROR: No files loaded",fg='red'))
-        ctx.exit()
-    #end
+        
     ctx.obj['sets'] = range(cnt)
 
     # Automatically set label from unique parts of the file names
@@ -283,7 +208,7 @@ def cli(ctx, filename, label, savechain, savechainas, stack, verbose,
                 ctx.obj['labels'][sIdx] = l
             #end
         #end
-    #end    
+    #end
 #end
 
 @click.command(help='Run the saved command chain')
@@ -342,6 +267,7 @@ cli.add_command(cmd.select)
 cli.add_command(cmd.tenmoment)
 cli.add_command(cmd.val2coord)
 cli.add_command(cmd.write)
+cli.add_command(cmd.load)
 cli.add_command(pop)
 cli.add_command(runchain)
 
@@ -349,7 +275,6 @@ cli.add_command(cmd.agyro)
 cli.add_command(cmd.temp.norm)
 
 #cli.add_command(cmd.cglpressure.cglpressure)
-
 #cli.add_command(cmd.transform.curl)
 #cli.add_command(cmd.transform.div)
 #cli.add_command(cmd.transform.grad)
