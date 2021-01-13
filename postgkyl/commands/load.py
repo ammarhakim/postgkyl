@@ -34,7 +34,6 @@ def load(ctx, **kwargs):
     else:
          files = [inDataString]
     #end
-    print(files)
 
     cnt = len(ctx.obj['dataSets'])
     for var in kwargs['varname']:
