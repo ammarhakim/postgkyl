@@ -40,8 +40,8 @@ def _printVersion(ctx, param, value):
 
 class PgkylCommandGroup(click.Group):
     def get_command(self, ctx, cmd_name):
-        rv = click.Group.get_command(self, ctx, cmd_name)
         # cmd_name is a full name of a pgkyl command
+        rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
         #end
@@ -60,15 +60,40 @@ class PgkylCommandGroup(click.Group):
             ctx.obj['inDataStrings'].append(cmd_name)
             return click.Group.get_command(self, ctx, 'load')
         #end
+        
         ctx.fail("'{:s}' does not match either command name nor a data file".format(cmd_name))
     #end
+#end
+
+class DataSpace(object):
+    def __init__(self):
+        self._datasetDict = {}
+    #end
+
+    # Adding datasets
+    def add(self, data):
+        tagNm = data.getTag()
+        if tagNm in self._datasetDict:
+            self._datasetDict[tagNm].append(data)
+        else:
+            self._datasetDict[tagNm] = [data]
+        #end
+    #end
+    
+    # Iterators
+    def tagIterator(self, tagNm):
+        for i in range(len(self._datasetDict[tagNm])):
+            yield self._datasetDict[tagNm][i]
+        #end
+    #end
+    
 #end
 
 # The command line mode entry command
 @click.command(cls=PgkylCommandGroup, chain=True,
                context_settings=dict(help_option_names=['-h', '--help']))
 @click.option('--filename', '-f', multiple=True,
-              help="DEPRECATED Filenames should now be specified without the '-f'")
+              help="DEPRECATED File names should now be specified without the '-f'")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
 @click.option('--savechainas', 
@@ -80,18 +105,12 @@ class PgkylCommandGroup(click.Group):
 @click.option('--version', is_flag=True, callback=_printVersion,
               expose_value=False, is_eager=True,
               help="Print the version information.")
-@click.option('--z0',
-              help="Partial file load: 0th coord (either int or slice)")
-@click.option('--z1',
-              help="Partial file load: 1st coord (either int or slice)")
-@click.option('--z2',
-              help="Partial file load: 2nd coord (either int or slice)")
-@click.option('--z3',
-              help="Partial file load: 3rd coord (either int or slice)")
-@click.option('--z4',
-              help="Partial file load: 4th coord (either int or slice)")
-@click.option('--z5',
-              help="Partial file load: 5th coord (either int or slice)")
+@click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
+@click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
+@click.option('--z2', help="Partial file load: 2nd coord (either int or slice)")
+@click.option('--z3', help="Partial file load: 3rd coord (either int or slice)")
+@click.option('--z4', help="Partial file load: 4th coord (either int or slice)")
+@click.option('--z5', help="Partial file load: 5th coord (either int or slice)")
 @click.option('--component', '-c',
               help="Partial file load: comps (either int or slice)")
 @click.option('--compgrid', is_flag=True,
@@ -141,9 +160,7 @@ def cli(ctx, **kwargs):
     ctx.obj['inDataStrings'] = []
     ctx.obj['inDataStringsLoaded'] = 0
     
-    ctx.obj['dataSets'] = []
-    ctx.obj['labels'] = []
-    ctx.obj['setIds'] = []
+    ctx.obj['data'] = DataSpace()
 
     ctx.obj['fig'] = ''
     ctx.obj['ax'] = ''
@@ -264,11 +281,6 @@ cli.add_command(runchain)
 
 cli.add_command(cmd.agyro)
 cli.add_command(cmd.temp.norm)
-
-#cli.add_command(cmd.cglpressure.cglpressure)
-#cli.add_command(cmd.transform.curl)
-#cli.add_command(cmd.transform.div)
-#cli.add_command(cmd.transform.grad)
 
 if __name__ == '__main__':
     cli()

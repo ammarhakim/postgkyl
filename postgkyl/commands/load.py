@@ -7,20 +7,16 @@ from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
 
 @click.command()
-@click.option('--z0',
-              help="Partial file load: 0th coord (either int or slice)")
-@click.option('--z1',
-              help="Partial file load: 1st coord (either int or slice)")
-@click.option('--z2',
-              help="Partial file load: 2nd coord (either int or slice)")
-@click.option('--z3',
-              help="Partial file load: 3rd coord (either int or slice)")
-@click.option('--z4',
-              help="Partial file load: 4th coord (either int or slice)")
-@click.option('--z5',
-              help="Partial file load: 5th coord (either int or slice)")
+@click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
+@click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
+@click.option('--z2', help="Partial file load: 2nd coord (either int or slice)")
+@click.option('--z3', help="Partial file load: 3rd coord (either int or slice)")
+@click.option('--z4', help="Partial file load: 4th coord (either int or slice)")
+@click.option('--z5', help="Partial file load: 5th coord (either int or slice)")
 @click.option('--component', '-c',
               help="Partial file load: comps (either int or slice)")
+@click.option('--tag', '-t', default="default",
+              help="Specily tag for data (default: \"default\")")
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
@@ -72,24 +68,20 @@ def load(ctx, **kwargs):
         varNames = ['CartGridField']
     #end
     
-    cnt = len(ctx.obj['dataSets'])
     for var in varNames:
         for fn in files:
             try:
-                ctx.obj['dataSets'].append(Data(fileName=fn,
-                                                stack=ctx.obj['stack'],
-                                                compgrid=ctx.obj['compgrid'],
-                                                z0=z0, z1=z1, z2=z2,
-                                                z3=z3, z4=z4, z5=z5,
-                                                comp=comp, varName=var))
-                ctx.obj['setIds'].append(cnt)
-                cnt = cnt + 1
+                ctx.obj['data'].add(Data(fileName=fn, tag=kwargs['tag'],
+                                         stack=ctx.obj['stack'],
+                                         compgrid=ctx.obj['compgrid'],
+                                         z0=z0, z1=z1, z2=z2,
+                                         z3=z3, z4=z4, z5=z5,
+                                         comp=comp, varName=var))
             except NameError:
                 click.fail(click.style("ERROR: File(s) '{:s}' not found or empty".format(fn), fg='red'))
             #end
         #end
     #end
-    ctx.obj['sets'] = range(cnt)
 
     ctx.obj['inDataStringsLoaded'] = ctx.obj['inDataStringsLoaded'] + 1
     vlog(ctx, 'Finishing load')
@@ -105,7 +97,7 @@ def _pickCut(ctx, kwargs, zn):
                                fg='yellow'))
         return kwargs[nm]
     elif kwargs[nm]:
-        return kwarg[nm]
+        return kwargs[nm]
     elif ctx.obj['globalCuts'][zn]:
         return ctx.obj['globalCuts'][zn]
     else:

@@ -10,19 +10,24 @@ def info(ctx, **kwargs):
     vlog(ctx, 'Starting info')
     pushChain(ctx, 'info', **kwargs)
 
-    if kwargs['allsets'] is True:
-        vlog(ctx, ("Printing the current top of stack "
-                   "information (all data sets):"))
-        sets = range(ctx.obj['numSets'])
-    else:
-        vlog(ctx, ("Printing the current top of stack "
-                   "information (active data sets):"))
-        sets = ctx.obj['sets']
-    #end
+    # if kwargs['allsets'] is True:
+    #     vlog(ctx, ("Printing the current top of stack "
+    #                "information (all data sets):"))
+    #     sets = range(ctx.obj['numSets'])
+    # else:
+    #     vlog(ctx, ("Printing the current top of stack "
+    #                "information (active data sets):"))
+    #     sets = ctx.obj['sets']
+    # #end
         
-    for s in sets:
-        click.echo("Dataset #{:d}".format(s))
-        click.echo(ctx.obj['dataSets'][s].info() + "\n")
+    # for s in sets:
+    #     click.echo("Dataset #{:d}".format(s))
+    #     click.echo(ctx.obj['dataSets'][s].info() + "\n")
+    # #end
+
+    for dat in ctx.obj['data'].tagIterator('default'):
+        click.echo("Dataset")
+        click.echo(dat.info() + "\n")
     #end
 
     vlog(ctx, 'Finishing info')

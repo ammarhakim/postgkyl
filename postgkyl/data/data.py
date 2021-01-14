@@ -62,7 +62,8 @@ class Data(object):
                  z0=None, z1=None, z2=None,
                  z3=None, z4=None, z5=None,
                  compgrid=False,
-                 varName='CartGridField'):
+                 varName='CartGridField', tag='default'):
+        self._tag = tag
         self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
         self._grid = []
@@ -414,6 +415,10 @@ class Data(object):
         self._values[0] = self._values[0][sortIdx, ...]
     #end
 
+
+    def getTag(self):
+        return self._tag
+    #end
 
     #-----------------------------------------------------------------
     #-- Stack Control ------------------------------------------------
