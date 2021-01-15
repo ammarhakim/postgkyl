@@ -3,7 +3,6 @@ import numpy as np
 class DataSpace(object):
     def __init__(self):
         self._datasetDict = {}
-        self._numDatasets = 0
     #end
 
     #-----------------------------------------------------------------
@@ -75,12 +74,19 @@ class DataSpace(object):
         else:
             self._datasetDict[tagNm] = [data]
         #end
-        self._numDatasets += 1
     #end
     
     #-----------------------------------------------------------------
     # Stuff
-    def getNumDatasets(self):
-        return self._numDatasets
+    def getNumDatasets(self, tag=None):
+        numDatasets = 0
+        if tag:
+            numDatasets = len(self._datasetDict[tag])
+        else:
+            for t in self._datasetDict:
+                numDatasets += len(self._datasetDict[t])
+            #end
+        #end
+        return numDatasets
     #end
 #end

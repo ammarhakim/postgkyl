@@ -9,15 +9,16 @@ from postgkyl.data import Data
 import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 
-def update(i, ctx, kwargs):
-    if kwargs['collected']:
-        grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
-        dat = Data()
-        dat.push(vals, grid=grid)
-        dat.frame = i
-        dat.time = grid[0][0]
-    else:
-        dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
+def update(i, ctx, tag, kwargs):
+    # if kwargs['collected']:
+    #     grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
+    #     dat = Data()
+    #     dat.push(vals, grid=grid)
+    #     dat.frame = i
+    #     dat.time = grid[0][0]
+    # else:
+    #     dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
+    dat = ctx.obj['data']._datasetDict[tag][i]
     plt.clf()
     kwargs['title'] = ''
     if dat.frame is not None:
@@ -34,6 +35,8 @@ def update(i, ctx, kwargs):
 #end
 
 @click.command()
+@click.option('--tag', '-t', default=None,
+              help="Specify a tag to plot.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
@@ -94,7 +97,7 @@ def update(i, ctx, kwargs):
               help="Specify a y-axis label.")
 @click.option('--clabel', type=click.STRING,
               help="Specify a label for colorbar.")
-@click.option('-t', '--title', type=click.STRING,
+@click.option('--title', type=click.STRING,
               help="Specify a title.")
 @click.option('-i', '--interval', default=100,
               help="Specify the animation interval.")
@@ -130,12 +133,11 @@ def animate(ctx, **kwargs):
     if not kwargs['float']:
         vmin = float('inf')
         vmax = float('-inf')
-        for s in ctx.obj['sets']:
-            val = ctx.obj['dataSets'][s].getValues()
+        for dat in ctx.obj['data'].iterator(kwargs['tag']):
+            val = dat.getValues()
             if kwargs['logz']:
                 val = np.log(val)
             #end
-            print(np.nanmin(val))
             if vmin > np.nanmin(val):
                 vmin = np.nanmin(val)
             #end
@@ -156,16 +158,18 @@ def animate(ctx, **kwargs):
         #end
     #end
 
-    if kwargs['collected']:
-        numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
-    else:
-        numSets = len(ctx.obj['sets'])
+    # if kwargs['collected']:
+    #     numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
+    # else:
+    #     numSets = len(ctx.obj['sets'])
+    numSets = ctx.obj['data'].getNumDatasets(kwargs['tag'])
+
     fig = plt.figure()
     kwargs['figure'] = fig
     kwargs['legend'] = False
    
     anim = FuncAnimation(fig, update, numSets,
-                         fargs=(ctx, kwargs),
+                         fargs=(ctx, kwargs['tag'], kwargs),
                          interval=kwargs['interval'], blit=False)
 
     fName = 'anim.mp4'

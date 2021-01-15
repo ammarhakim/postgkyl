@@ -31,6 +31,7 @@ from .load import load
 from . import temp
 from .agyro import agyro
 
+from .velocity import velocity
 
 #from postgkyl.commands import cglpressure
 

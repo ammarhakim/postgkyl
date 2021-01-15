@@ -6,6 +6,8 @@ import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--tag', '-t', default=None,
+              help="Specify the tag to plot.")
 @click.option('--figure', '-f', default=None,
               help="Specify figure (integer) to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
@@ -68,7 +70,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify a y-axis label.")
 @click.option('--clabel', type=click.STRING,
               help="Specify a label for colorbar.")
-@click.option('-t', '--title', type=click.STRING,
+@click.option('--title', type=click.STRING,
               help="Specify a title.")
 @click.option('--save', is_flag=True,
               help="Save figure as PNG file.")
@@ -117,7 +119,7 @@ def plot(ctx, **kwargs):
     #end
  
     fName = ""
-    for dat in ctx.obj['data'].iterator():
+    for dat in ctx.obj['data'].iterator(kwargs['tag']):
         if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
             label = dat.getLabel()
         else:
