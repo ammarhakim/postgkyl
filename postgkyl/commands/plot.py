@@ -108,8 +108,7 @@ def plot(ctx, **kwargs):
     if kwargs['subplots']:
         kwargs['numAxes'] = 0
         kwargs['startAxes'] = 0
-        for s in ctx.obj['sets']:
-            dat = ctx.obj['dataSets'][s]
+        for dat in ctx.obj['data'].indexer():
             kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
         #end
         if kwargs['figure'] is None:
@@ -118,10 +117,9 @@ def plot(ctx, **kwargs):
     #end
  
     fName = ""
-    for s in ctx.obj['sets']:
-        dat = ctx.obj['dataSets'][s]
-        if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
-            label = ctx.obj['labels'][s]
+    for dat in ctx.obj['data'].iterator():
+        if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
+            label = dat.getLabel()
         else:
             label = ''
         #end

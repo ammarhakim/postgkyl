@@ -6,6 +6,24 @@ import numpy as np
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
 
+def _pickCut(ctx, kwargs, zn):
+    nm = 'z{:d}'.format(zn)
+    if zn == 6: # This little hack allows to apply the same function for components as well
+        nm = 'component'
+    #end
+    if kwargs[nm] and ctx.obj['globalCuts'][zn]:
+        click.echo(click.style("WARNING: The local '{:s}' is overwriting the global '{:s}'".format(nm, nm),
+                               fg='yellow'))
+        return kwargs[nm]
+    elif kwargs[nm]:
+        return kwargs[nm]
+    elif ctx.obj['globalCuts'][zn]:
+        return ctx.obj['globalCuts'][zn]
+    else:
+        return None
+    #end
+#end
+
 @click.command()
 @click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
 @click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
@@ -21,6 +39,8 @@ from postgkyl.data import Data
               help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
               help="Allows to specify the Adios variable name (default is 'CartGridField')")
+@click.option('--label', '-l',
+              help="Allows to specify the custom label")
 @click.pass_context
 def load(ctx, **kwargs):
     vlog(ctx, 'Starting load')
@@ -76,31 +96,16 @@ def load(ctx, **kwargs):
                                          compgrid=ctx.obj['compgrid'],
                                          z0=z0, z1=z1, z2=z2,
                                          z3=z3, z4=z4, z5=z5,
-                                         comp=comp, varName=var))
+                                         comp=comp, varName=var,
+                                         label=kwargs['label']))
             except NameError:
                 click.fail(click.style("ERROR: File(s) '{:s}' not found or empty".format(fn), fg='red'))
             #end
         #end
     #end
 
-    ctx.obj['inDataStringsLoaded'] = ctx.obj['inDataStringsLoaded'] + 1
-    vlog(ctx, 'Finishing load')
-#end
+    ctx.obj['data'].setUniqueLabels()
 
-def _pickCut(ctx, kwargs, zn):
-    nm = 'z{:d}'.format(zn)
-    if zn == 6: # This little hack allows to apply the same function for components as well
-        nm = 'component'
-    #end
-    if kwargs[nm] and ctx.obj['globalCuts'][zn]:
-        click.echo(click.style("WARNING: The local '{:s}' is overwriting the global '{:s}'".format(nm, nm),
-                               fg='yellow'))
-        return kwargs[nm]
-    elif kwargs[nm]:
-        return kwargs[nm]
-    elif ctx.obj['globalCuts'][zn]:
-        return ctx.obj['globalCuts'][zn]
-    else:
-        return None
-    #end
+    ctx.obj['inDataStringsLoaded'] += 1
+    vlog(ctx, 'Finishing load')
 #end

@@ -1,3 +1,5 @@
+from .data_space import DataSpace
+
 from . import util
 from . import ev_cmd
 from .animate import animate
@@ -15,8 +17,10 @@ from .integrate import integrate
 from .interpolate import interpolate
 from .mask import mask
 from .plot import plot
+from .pop import pop
 from .pr import pr
 from .recovery import recovery
+from .runchain import runchain
 from .select import select
 from .tenmoment import tenmoment
 from .trajectory import trajectory

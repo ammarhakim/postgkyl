@@ -8,6 +8,7 @@ from os import path
 import click
 import numpy as np
 
+from postgkyl.commands import DataSpace
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
 import postgkyl.commands as cmd
@@ -38,6 +39,9 @@ def _printVersion(ctx, param, value):
     ctx.exit()
 #end
 
+# Custom click class that allows to
+#   a) use shortened versions of command names
+#   b) use a file name as a command
 class PgkylCommandGroup(click.Group):
     def get_command(self, ctx, cmd_name):
         # cmd_name is a full name of a pgkyl command
@@ -63,30 +67,6 @@ class PgkylCommandGroup(click.Group):
         
         ctx.fail("'{:s}' does not match either command name nor a data file".format(cmd_name))
     #end
-#end
-
-class DataSpace(object):
-    def __init__(self):
-        self._datasetDict = {}
-    #end
-
-    # Adding datasets
-    def add(self, data):
-        tagNm = data.getTag()
-        if tagNm in self._datasetDict:
-            self._datasetDict[tagNm].append(data)
-        else:
-            self._datasetDict[tagNm] = [data]
-        #end
-    #end
-    
-    # Iterators
-    def tagIterator(self, tagNm):
-        for i in range(len(self._datasetDict[tagNm])):
-            yield self._datasetDict[tagNm][i]
-        #end
-    #end
-    
 #end
 
 # The command line mode entry command
@@ -172,91 +152,12 @@ def cli(ctx, **kwargs):
                              kwargs['z2'], kwargs['z3'],
                              kwargs['z4'], kwargs['z5'],
                              kwargs['component'])
-                             
-    
-    # Automatically set label from unique parts of the file names
-    # if cnt > 0:
-    #     nameComps = np.zeros(cnt, np.int)
-    #     names = []
-    #     for sIdx in range(cnt):
-    #         fileName = ctx.obj['dataSets'][sIdx].fileName
-    #         extLength = len(fileName.split('.')[-1])
-    #         fileName = fileName[:-(extLength+1)]
-    #         # only remove the file extension but take into account
-    #         # that the file name might start with '../'
-    #         names.append(fileName.split('_'))
-    #         nameComps[sIdx] = len(names[sIdx])
-    #         ctx.obj['labels'].append('')
-    #     #end
-    #     maxComps = np.max(nameComps)
-    #     idxMaxComps = np.argmax(nameComps)
-    #     for i in range(maxComps): 
-    #         unique = True
-    #         compStr = names[idxMaxComps][i]
-    #         for sIdx in range(cnt):
-    #             if i < len(names[sIdx]) and sIdx != idxMaxComps:
-    #                 if names[sIdx][i] == compStr:
-    #                     unique = False
-    #                 #end
-    #             #end
-    #         #end
-    #         if unique:
-    #             for sIdx in range(cnt):
-    #                 if i < len(names[sIdx]):
-    #                     if ctx.obj['labels'][sIdx] == "":
-    #                         ctx.obj['labels'][sIdx] += names[sIdx][i]
-    #                     else:
-    #                         ctx.obj['labels'][sIdx] += '_{:s}'.format(names[sIdx][i])
-    #                     #end
-    #                 #end
-    #             #end
-    #         #end
-    #         # User specified labels
-    #         for sIdx, l in enumerate(label):
-    #             ctx.obj['labels'][sIdx] = l
-    #         #end
-    #     #end
-    # #end
-#end
-
-@click.command(help='Run the saved command chain')
-@click.option('--filename', '-f',
-              help="Specify file with stored chain (default 'pgkylchain.dat')")
-@click.pass_context
-def runchain(ctx, filename):
-    if filename is None:
-        fn = ctx.obj['savechainPath']
-    else:
-        home = os.path.expanduser('~')
-        fn = home + '/.pgkyl/' + filename
-    #end
-    if os.path.isfile(fn):
-        fh = open(fn, 'r')
-        for line in fh.readlines():
-            eval('ctx.invoke(cmd.{:s})'.format(line))
-        fh.close()
-    else:
-        raise NameError("File with stored chain ({:s}) does not exist".
-                        format(filename))
-    #end
-#end
-
-@click.command(help='Pop the data stack')
-@click.pass_context
-def pop(ctx):
-    vlog(ctx, 'Poping the stack')
-    pushChain(ctx, 'pop')
-    for s in ctx.obj['sets']:
-        ctx.obj['dataSets'][s].popGrid()
-        ctx.obj['dataSets'][s].popValues()
-    #end
 #end
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.animate)
 cli.add_command(cmd.blot)
 cli.add_command(cmd.collect)
-cli.add_command(cmd.trajectory)
 cli.add_command(cmd.dataset)
 cli.add_command(cmd.differentiate)
 cli.add_command(cmd.euler)
@@ -267,17 +168,18 @@ cli.add_command(cmd.growth)
 cli.add_command(cmd.info)
 cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
+cli.add_command(cmd.load)
 cli.add_command(cmd.mask)
 cli.add_command(cmd.plot)
+cli.add_command(cmd.pop)
 cli.add_command(cmd.pr)
 cli.add_command(cmd.recovery)
+cli.add_command(cmd.runchain)
 cli.add_command(cmd.select)
 cli.add_command(cmd.tenmoment)
+cli.add_command(cmd.trajectory)
 cli.add_command(cmd.val2coord)
 cli.add_command(cmd.write)
-cli.add_command(cmd.load)
-cli.add_command(pop)
-cli.add_command(runchain)
 
 cli.add_command(cmd.agyro)
 cli.add_command(cmd.temp.norm)

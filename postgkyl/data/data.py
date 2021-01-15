@@ -62,7 +62,8 @@ class Data(object):
                  z0=None, z1=None, z2=None,
                  z3=None, z4=None, z5=None,
                  compgrid=False,
-                 varName='CartGridField', tag='default'):
+                 varName='CartGridField', tag='default',
+                 label=None):
         self._tag = tag
         self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
@@ -78,9 +79,10 @@ class Data(object):
         self.polyOrder = None
         self.basisType = None
         self.isModal = None
-        
-        self.varName = varName
 
+        self._label = ""
+        self._customLabel = label
+        self._varName = varName
         self.fileName = fileName
         if fileName is not None:
             # Sequence load typically concatenates multiple files
@@ -168,7 +170,7 @@ class Data(object):
             fh.close()
         elif extension == 'bp':
             fh = adios.file(self.fileName)
-            if not self.varName in fh.vars:
+            if not self._varName in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
                 fh.close()
                 self._loadSequence()  
@@ -203,7 +205,7 @@ class Data(object):
             #end
 
             # Load data ...
-            var = adios.var(fh, self.varName)
+            var = adios.var(fh, self._varName)
             offset, count = self._createOffsetCountBp(var, axes, comp)
             self._values.append(var.read(offset=offset, count=count))
             # ... and the time-stamp
@@ -228,7 +230,7 @@ class Data(object):
                     gridNm = self.fileDir + "/grid"  
                 #end
                 with adios.file(gridNm) as gridFh:
-                    gridVar = adios.var(gridFh, self.varName)
+                    gridVar = adios.var(gridFh, self._varName)
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
@@ -418,6 +420,17 @@ class Data(object):
 
     def getTag(self):
         return self._tag
+    #end
+
+    def setLabel(self, label):
+        self._label = label
+    #end
+    def getLabel(self):
+        if self._customLabel:
+            return self._customLabel
+        else:
+            return self._label
+        #end
     #end
 
     #-----------------------------------------------------------------
@@ -663,7 +676,7 @@ class Data(object):
                 adios.define_var(groupId, "time", "",
                                  adios.DATATYPE.double, "", "", "")
             #end
-            adios.define_var(groupId, self.varName, "",
+            adios.define_var(groupId, self._varName, "",
                              adios.DATATYPE.double,
                              sNumCells, sNumCells, sOffsets)
 
@@ -672,7 +685,7 @@ class Data(object):
             if self.time is not None:
                 adios.write(fh, "time", self.time)
             #end
-            adios.write(fh, self.varName, self.getValues())
+            adios.write(fh, self._varName, self.getValues())
             adios.close(fh)
             adios.finalize()
 
