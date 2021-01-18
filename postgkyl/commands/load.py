@@ -24,7 +24,7 @@ def _pickCut(ctx, kwargs, zn):
     #end
 #end
 
-@click.command()
+@click.command(hidden=True)
 @click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
 @click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
 @click.option('--z2', help="Partial file load: 2nd coord (either int or slice)")
