@@ -20,6 +20,11 @@ class DataSpace(object):
             #end
         #end
     #end
+    def tagIterator(self):
+        it = iter(self._datasetDict)
+        yield next(it)
+    #end
+        
 
     #-----------------------------------------------------------------
     # Labels
@@ -78,6 +83,10 @@ class DataSpace(object):
     
     #-----------------------------------------------------------------
     # Stuff
+    def getDataset(self, tag, idx):
+        return self._datasetDict[tag][idx]
+    #end
+        
     def getNumDatasets(self, tag=None):
         numDatasets = 0
         if tag:

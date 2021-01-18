@@ -43,29 +43,29 @@ def _printVersion(ctx, param, value):
 #   a) use shortened versions of command names
 #   b) use a file name as a command
 class PgkylCommandGroup(click.Group):
-    def get_command(self, ctx, cmd_name):
-        # cmd_name is a full name of a pgkyl command
-        rv = click.Group.get_command(self, ctx, cmd_name)
+    def get_command(self, ctx, cmdName):
+        # cmdName is a full name of a pgkyl command
+        rv = click.Group.get_command(self, ctx, cmdName)
         if rv is not None:
             return rv
         #end
 
-        # cmd_name is an abreviation of a pgkyl command
+        # cmdName is an abreviation of a pgkyl command
         matches = [x for x in self.list_commands(ctx)
-                   if x.startswith(cmd_name)]
+                   if x.startswith(cmdName)]
         if matches and len(matches) == 1:
             return click.Group.get_command(self, ctx, matches[0])
         elif matches:
-            ctx.fail("Too many matches for '{:s}': {:s}".format(cmd_name, ', '.join(sorted(matches))))
+            ctx.fail("Too many matches for '{:s}': {:s}".format(cmdName, ', '.join(sorted(matches))))
         #end
 
-        # cmd_name is a data set
-        if glob(cmd_name):
-            ctx.obj['inDataStrings'].append(cmd_name)
+        # cmdName is a data set
+        if glob(cmdName):
+            ctx.obj['inDataStrings'].append(cmdName)
             return click.Group.get_command(self, ctx, 'load')
         #end
         
-        ctx.fail("'{:s}' does not match either command name nor a data file".format(cmd_name))
+        ctx.fail("'{:s}' does not match either command name nor a data file".format(cmdName))
     #end
 #end
 

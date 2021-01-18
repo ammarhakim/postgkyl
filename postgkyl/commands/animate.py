@@ -18,7 +18,7 @@ def update(i, ctx, tag, kwargs):
     #     dat.time = grid[0][0]
     # else:
     #     dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
-    dat = ctx.obj['data']._datasetDict[tag][i]
+    dat = ctx.obj['data'].getDataset(tag, i)
     plt.clf()
     kwargs['title'] = ''
     if dat.frame is not None:
@@ -167,10 +167,19 @@ def animate(ctx, **kwargs):
     fig = plt.figure()
     kwargs['figure'] = fig
     kwargs['legend'] = False
-   
-    anim = FuncAnimation(fig, update, numSets,
-                         fargs=(ctx, kwargs['tag'], kwargs),
-                         interval=kwargs['interval'], blit=False)
+
+    anim = []
+    if kwargs['tag']:
+        anim.append(FuncAnimation(fig, update, numSets,
+                                  fargs=(ctx, kwargs['tag'], kwargs),
+                                  interval=kwargs['interval'], blit=False))
+    else:
+        for t in ctx.obj['data'].tagIterator():
+            anim.append(FuncAnimation(fig, update, numSets,
+                                      fargs=(ctx, t, kwargs),
+                                      interval=kwargs['interval'], blit=False))
+        #end
+    #end
 
     fName = 'anim.mp4'
     if kwargs['saveas']:

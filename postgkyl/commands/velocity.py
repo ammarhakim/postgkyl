@@ -28,6 +28,7 @@ def velocity(ctx, **kwargs):
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'])
         out.push(valsM1/valsM0, grid=grid)
+        
         ctx.obj['data'].add(out)
     #end
 
