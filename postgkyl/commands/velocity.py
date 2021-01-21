@@ -22,23 +22,29 @@ def velocity(ctx, **kwargs):
     pushChain(ctx, 'velocity', **kwargs)
     
     data = ctx.obj['data'] # shortcut
-    try:
-        for m0, m1 in zip(data.iterator(kwargs['density']),
-                          data.iterator(kwargs['momentum'])):
-            grid = m0.getGrid()        
-            valsM0 = m0.getValues()
-            valsM1 = m1.getValues()
-            
-            out = Data(tag=kwargs['outtag'],
-                       stack=ctx.obj['stack'],
-                       compgrid=ctx.obj['compgrid'],
-                       label=kwargs['label'])
-            out.push(valsM1/valsM0, grid)
-            data.add(out)
-        #end
-    except KeyError as err:
-        ctx.fail(click.style("Failed to load the specified/default tag {0}".format(err),
+
+    # Check for correct tags
+    if not kwargs['density'] in data.tagIterator():
+        ctx.fail(click.style("Failed to load the specified/default tag '{:s}'".format(kwargs['density']),
                              fg='red'))
+    #end
+    if not kwargs['momentum'] in data.tagIterator():
+        ctx.fail(click.style("Failed to load the specified/default tag '{:s}'".format(kwargs['momentum']),
+                             fg='red'))
+    #end
+    
+    for m0, m1 in zip(data.iterator(kwargs['density']),
+                      data.iterator(kwargs['momentum'])):
+        grid = m0.getGrid()        
+        valsM0 = m0.getValues()
+        valsM1 = m1.getValues()
+            
+        out = Data(tag=kwargs['outtag'],
+                   stack=ctx.obj['stack'],
+                   compgrid=ctx.obj['compgrid'],
+                   label=kwargs['label'])
+        out.push(valsM1/valsM0, grid)
+        data.add(out)
     #end
 
     vlog(ctx, 'Finishing velocity')
