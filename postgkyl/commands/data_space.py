@@ -21,8 +21,11 @@ class DataSpace(object):
         #end
     #end
     def tagIterator(self):
-        it = iter(self._datasetDict)
-        yield next(it)
+        tags = []
+        for t in self._datasetDict:
+            tags.append(t)
+        #end
+        return iter(tags)
     #end
         
 

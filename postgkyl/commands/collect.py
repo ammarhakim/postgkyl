@@ -5,16 +5,23 @@ from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
-@click.option('-s', '--sumdata', is_flag=True,
+@click.option('-s', '--sumdata',
+              is_flag=True,
               help="Sum data in the collected datasets (retain components)")
-@click.option('-p', '--period', type=click.FLOAT,
+@click.option('-p', '--period',
+              type=click.FLOAT,
               help="Specify a period to create epoch data instead of time data")
-@click.option('-o', '--offset', default=0.0, type=click.FLOAT,
-              help="Specify an offset to create epoch data instead of time data (default: 0)")
+@click.option('-o', '--offset',
+              default=0.0, type=click.FLOAT, show_default=True,
+              help="Specify an offset to create epoch data instead of time data")
 @click.option('-c', '--chunk', type=click.INT,
               help="Collect into chunks with specified length rather than into a single dataset")
-@click.option('-g', '--group', is_flag=True,
-              help="Separately collect matching files into different sets")
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('--outtag', '-o', default='collect',
+              help='Specify a \'tag\' for the result.')
+@click.option('--label', '-l', default='collect',
+              help="Specify the custom label for the result.")
 @click.pass_context
 def collect(ctx, **kwargs):
     """Collect data from the active datasets and create a new combined
@@ -26,54 +33,38 @@ def collect(ctx, **kwargs):
     """
     vlog(ctx, 'Starting collect')
     pushChain(ctx, 'collect', **kwargs)
-    stems = []
-    activeSets = []
-
-    group = kwargs['group']
+    data = ctx.obj['data']
     
-    if group:
-        for s in ctx.obj['sets']:
-            stem = "_".join(ctx.obj['dataSets'][s].fileName.split("_")[:-1])
-            if not stem in stems:
-                stems.append(stem)
-            #end
-        #end
+    if kwargs['tag']:
+        tagIterator = [kwargs['tag']]
     else:
-        stems = ['collect']
+        tagIterator = data.tagIterator()
     #end
-
-    for st in stems:
-        if group:
-            vlog(ctx, 'collect: collecting files matching stem {:s}'.format(st))
-        #end
+    for tag in tagIterator:
         time = [[]]
         values = [[]]
-        chunkIdx = 0
+        grid = [[]]
         cnt = 0
-
-        for s in ctx.obj['sets']:
-            stem = "_".join(ctx.obj['dataSets'][s].fileName.split("_")[:-1])
-            if st == stem or not group:
-                # we are looping through all sets, and if group, only want to work on ones matching stem
-                cnt = cnt + 1
-                if kwargs['chunk'] is not None and cnt > kwargs['chunk']:
-                    chunkIdx = chunkIdx + 1
-                    cnt = 1
-                    time.append([])
-                    values.append([])
-                #end
-                time[chunkIdx].append(ctx.obj['dataSets'][s].time)
-                v = ctx.obj['dataSets'][s].getValues()
-                if kwargs['sumdata']:
-                    numDims = ctx.obj['dataSets'][s].getNumDims()
-                    axis = tuple(range(numDims))
-                    values[chunkIdx].append(np.nansum(v, axis=axis))
-                else:
-                    values[chunkIdx].append(v)
-                #end
-
-                # need to assign grid in this block so that each stem group has its own grid
-                grid = ctx.obj['dataSets'][s].getGrid().copy()
+        
+        for d in data.iterator(tag):
+            cnt += 1
+            if kwargs['chunk'] and cnt > kwargs['chunk']:
+                cnt = 1
+                time.append([])
+                values.append([])
+                grid.append([])
+            #end
+            time[-1].append(d.time)
+            val = d.getValues()
+            if kwargs['sumdata']:
+                numDims = d.getNumDims()
+                axis = tuple(range(numDims))
+                values[-1].append(np.nansum(val, axis=axis))
+            else:
+                values[-1].append(val)
+            #end
+            if not grid[-1]:
+                grid[-1] = d.getGrid().copy()
             #end
         #end
 
@@ -90,24 +81,20 @@ def collect(ctx, **kwargs):
             values[i] = values[i][sortIdx]
 
             if kwargs['sumdata']:
-                grid = [time[i]]
+                grid[i] = [time[i]]
             else:
-                grid.insert(0, time[i])
+                grid[i].insert(0, np.array(time[i]))
             #end
 
-            vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
-            idx = len(ctx.obj['dataSets'])
-            ctx.obj['setIds'].append(idx)
-            ctx.obj['dataSets'].append(Data())
-            ctx.obj['labels'].append(st)
-            ctx.obj['dataSets'][idx].push(values[i], grid)
-            ctx.obj['dataSets'][idx].time = 0.5*(time[i][0]+time[i][-1])
-            ctx.obj['dataSets'][idx].fileName = st
-            vlog(ctx, 'collect: activated data set #{:d}'.format(idx))
-            activeSets.append(idx)
+            #vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
+            out = Data(tag=kwargs['outtag'],
+                       stack=ctx.obj['stack'],
+                       compgrid=ctx.obj['compgrid'],
+                       label=kwargs['label'])
+            out.push(values[i], grid[i])
+            data.add(out)
         #end
     #end
-    ctx.obj['sets'] = activeSets
 
     vlog(ctx, 'Finishing collect')
 #end

@@ -99,7 +99,7 @@ def load(ctx, **kwargs):
                                          comp=comp, varName=var,
                                          label=kwargs['label']))
             except NameError:
-                click.fail(click.style("ERROR: File(s) '{:s}' not found or empty".format(fn), fg='red'))
+                ctx.fail(click.style("Failed to load the variable '{:s}' from '{:s}'".format(var, fn), fg='red'))
             #end
         #end
     #end

@@ -19,6 +19,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Indices for 5th coord (either int, float, or slice)")
 @click.option('--comp', '-c', default=None,
               help="Indices for components (either int, slice, or coma-separated)")
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def select(ctx, **kwargs):
     r"""Subselect data from the active dataset(s). This command allows, for
@@ -29,8 +31,8 @@ def select(ctx, **kwargs):
     """
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select', **kwargs)
-    for s in ctx.obj['sets']:
-        postgkyl.data.select(ctx.obj['dataSets'][s], stack=True,
+    for dat in ctx.obj['data'].iterator(kwargs['tag']):
+        postgkyl.data.select(dat, stack=True,
                              z0=kwargs['z0'], z1=kwargs['z1'],
                              z2=kwargs['z2'], z3=kwargs['z3'],
                              z4=kwargs['z4'], z5=kwargs['z5'],
