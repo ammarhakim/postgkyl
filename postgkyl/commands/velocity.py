@@ -22,16 +22,6 @@ def velocity(ctx, **kwargs):
     pushChain(ctx, 'velocity', **kwargs)
     
     data = ctx.obj['data'] # shortcut
-
-    # Check for correct tags
-    if not kwargs['density'] in data.tagIterator():
-        ctx.fail(click.style("Failed to load the specified/default tag '{:s}'".format(kwargs['density']),
-                             fg='red'))
-    #end
-    if not kwargs['momentum'] in data.tagIterator():
-        ctx.fail(click.style("Failed to load the specified/default tag '{:s}'".format(kwargs['momentum']),
-                             fg='red'))
-    #end
     
     for m0, m1 in zip(data.iterator(kwargs['density']),
                       data.iterator(kwargs['momentum'])):

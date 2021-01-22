@@ -1,3 +1,4 @@
+import click
 import numpy as np
 
 class DataSpace(object):
@@ -14,14 +15,20 @@ class DataSpace(object):
             tags = list(self._datasetDict)
         #end
         for t in tags:
-            for i, dat in enumerate(self._datasetDict[t]):
-                if (not onlyActive) or dat.getStatus(): # implication
-                    if enum:
-                        yield i, dat
-                    else:
-                        yield dat
-                    #end
-                #end    
+            try:
+                for i, dat in enumerate(self._datasetDict[t]):
+                    if (not onlyActive) or dat.getStatus(): # implication
+                        if enum:
+                            yield i, dat
+                        else:
+                            yield dat
+                        #end
+                    #end    
+                #end
+            except KeyError as err:
+                click.echo(click.style("ERROR: Failed to load the specified/default tag {0}".format(err),
+                                       fg='red'))
+                quit()
             #end
         #end
     #end
