@@ -47,5 +47,8 @@ def velocity(ctx, **kwargs):
         data.add(out)
     #end
 
+    data.deactivateAll(tag=kwargs['density'])
+    data.deactivateAll(tag=kwargs['momentum'])
+
     vlog(ctx, 'Finishing velocity')
 #end

@@ -24,6 +24,7 @@ from postgkyl.modalDG import interpolate as interpFn
 def interpolate(ctx, **kwargs):
     vlog(ctx, 'Starting interpolate')
     pushChain(ctx, 'interpolate', **kwargs)
+    data = ctx.obj['data']
 
     basisType = None
     isModal = None
@@ -43,10 +44,9 @@ def interpolate(ctx, **kwargs):
         #end
     #end
     
-    for dat in ctx.obj['data'].iterator(kwargs['tag']):
+    for dat in data.iterator(kwargs['tag']):
         if kwargs['basistype'] is None and dat.basisType is None:
-            click.echo(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
-            ctx.exit()
+            ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
         #end
         
         if isModal or dat.isModal:

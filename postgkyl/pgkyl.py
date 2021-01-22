@@ -104,13 +104,12 @@ def cli(ctx, **kwargs):
     command chaining mechanism. For full documentation see the Gkeyll
     documentation webpages. Help for individual commands can be
     obtained using the --help option for that command.
-
     """
     ctx.obj = {}  # The main contex object
     ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
     if kwargs['verbose']:
         ctx.obj['verbose'] = True
-        # Monty Python references should be a part of Python code
+        # Monty Python references should be a part of any Python code
         vlog(ctx, 'This is Postgkyl running in verbose mode!')
         vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
         vlog(ctx, 'And now for something completelly different...')
@@ -158,7 +157,8 @@ def cli(ctx, **kwargs):
 cli.add_command(cmd.animate)
 #cli.add_command(cmd.blot)
 cli.add_command(cmd.collect)
-cli.add_command(cmd.dataset)
+cli.add_command(cmd.activate)
+cli.add_command(cmd.deactivate)
 #cli.add_command(cmd.differentiate)
 #cli.add_command(cmd.euler)
 cli.add_command(cmd.ev)

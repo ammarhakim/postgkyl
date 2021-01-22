@@ -6,31 +6,33 @@ class DataSpace(object):
     #end
 
     #-----------------------------------------------------------------
-    # Iterators  
-    def iterator(self, tag=None):
+    #-- Iterators ----------------------------------------------------
+    def iterator(self, tag=None, enum=False, onlyActive=True):
         if tag:
-            for i in range(len(self._datasetDict[tag])):
-                yield self._datasetDict[tag][i]
-            #end
+            tags = tag.split(",")
         else:
-            for t in self._datasetDict:
-                for i in range(len(self._datasetDict[t])):
-                    yield self._datasetDict[t][i]
-                #end
+            tags = list(self._datasetDict)
+        #end
+        for t in tags:
+            for i, dat in enumerate(self._datasetDict[t]):
+                if (not onlyActive) or dat.getStatus(): # implication
+                    if enum:
+                        yield i, dat
+                    else:
+                        yield dat
+                    #end
+                #end    
             #end
         #end
     #end
     def tagIterator(self):
-        tags = []
-        for t in self._datasetDict:
-            tags.append(t)
-        #end
+        tags = list(self._datasetDict)
         return iter(tags)
     #end
         
 
     #-----------------------------------------------------------------
-    # Labels
+    #-- Labels -------------------------------------------------------
     def setUniqueLabels(self):
         numComps = []
         names = []
@@ -68,13 +70,15 @@ class DataSpace(object):
                 #end
             #end
         #end
-        for idx, dat in enumerate(self.iterator()):
-            dat.setLabel(labels[idx])
+        cnt = 0
+        for dat in self.iterator():
+            dat.setLabel(labels[cnt])
+            cnt += 1
         #end
     #end
     
     #-----------------------------------------------------------------
-    # Adding datasets
+    #-- Adding datasets ----------------------------------------------
     def add(self, data):
         tagNm = data.getTag()
         if tagNm in self._datasetDict:
@@ -83,22 +87,31 @@ class DataSpace(object):
             self._datasetDict[tagNm] = [data]
         #end
     #end
+
+    #-----------------------------------------------------------------
+    #-- Staus control ------------------------------------------------
+    def activateAll(self, tag=None):
+        for dat in self.iterator(tag=tag, onlyActive=False):
+            dat.deactivate()
+        #end
+    #end
+    def deactivateAll(self, tag=None):
+        for dat in self.iterator(tag=tag, onlyActive=False):
+            dat.deactivate()
+        #end
+    #end
     
     #-----------------------------------------------------------------
-    # Stuff
+    #-- Stuff :-P ----------------------------------------------------
     def getDataset(self, tag, idx):
         return self._datasetDict[tag][idx]
     #end
         
-    def getNumDatasets(self, tag=None):
-        numDatasets = 0
-        if tag:
-            numDatasets = len(self._datasetDict[tag])
-        else:
-            for t in self._datasetDict:
-                numDatasets += len(self._datasetDict[t])
-            #end
+    def getNumDatasets(self, tag=None, onlyActive=True):
+        numSets = 0
+        for dat in self.iterator(tag=tag, onlyActive=onlyActive):
+            numSets += 1
         #end
-        return numDatasets
+        return numSets
     #end
 #end

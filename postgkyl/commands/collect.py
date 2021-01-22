@@ -29,14 +29,13 @@ def collect(ctx, **kwargs):
     collected and used as the new X-axis. Data can be collected in
     chunks, in which case several datasets are created, each with the
     chunk-sized pieces collected into each new dataset.
-
     """
     vlog(ctx, 'Starting collect')
     pushChain(ctx, 'collect', **kwargs)
     data = ctx.obj['data']
     
     if kwargs['tag']:
-        tagIterator = [kwargs['tag']]
+        tagIterator = kwargs['tag'].split(',')
     else:
         tagIterator = data.tagIterator()
     #end
@@ -94,6 +93,8 @@ def collect(ctx, **kwargs):
             out.push(values[i], grid[i])
             data.add(out)
         #end
+
+        data.deactivateAll(tag)
     #end
 
     vlog(ctx, 'Finishing collect')

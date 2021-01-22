@@ -97,6 +97,8 @@ class Data(object):
         #end
         
         self.color = None
+
+        self._status = True
     #end
 
     #-----------------------------------------------------------------
@@ -417,7 +419,8 @@ class Data(object):
         self._values[0] = self._values[0][sortIdx, ...]
     #end
 
-
+    #-----------------------------------------------------------------
+    #-- Stuff Control ------------------------------------------------
     def getTag(self):
         return self._tag
     #end
@@ -433,8 +436,16 @@ class Data(object):
         #end
     #end
 
-    #-----------------------------------------------------------------
-    #-- Stack Control ------------------------------------------------
+    def activate(self):
+        self._status = True
+    #end
+    def deactivate(self):
+        self._status = False
+    #end
+    def getStatus(self):
+        return self._status
+    #end
+
     def getInputFile(self):
         fh = adios.file(self.fileName)
         inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
@@ -511,7 +522,9 @@ class Data(object):
         #end
     #end
 
-    def pop(self, nodal=False):
+    #-----------------------------------------------------------------
+    #-- Stack Control ------------------------------------------------
+    def pop(self):
         if len(self._grid) > 0:
             return self._grid.pop(), self._values.pop()
         else:
@@ -569,47 +582,50 @@ class Data(object):
             output = ""
 
             if self.time is not None:
-                output += "- Time: {:e}\n".format(self.time)
+                output += "├─ Time: {:e}\n".format(self.time)
             #end
             if self.frame is not None:
-                output += "- Frame: {:d}\n".format(self.frame)
+                output += "├─ Frame: {:d}\n".format(self.frame)
             #end
-            output += "- Number of components: {:d}\n".format(numComps)
-            output += "- Number of dimensions: {:d}\n".format(numDims)
-            output += "- Grid: ({:s})\n".format(self._gridType)
-            for d in range(numDims):
-                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
+            output += "├─ Number of components: {:d}\n".format(numComps)
+            output += "├─ Number of dimensions: {:d}\n".format(numDims)
+            output += "├─ Grid: ({:s})\n".format(self._gridType)
+            for d in range(numDims-1):
+                output += "│  ├─ Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
             #end
+            output += "│  └─ Dim {:d}: Num. cells: {:d}; ".format(numDims-1, numCells[numDims-1])
+            output += "Lower: {:e}; Upper: {:e}\n".format(lower[numDims-1],
+                                                          upper[numDims-1])
             maximum = np.nanmax(values)
             maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
             minimum = np.nanmin(values)
             minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-            output += "- Maximum: {:e} at {:s}".format(maximum,
+            output += "├─ Maximum: {:e} at {:s}".format(maximum,
                                                        str(maxIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}\n".format(maxIdx[-1])
             else:
                 output += "\n"
             #end
-            output += "- Minimum: {:e} at {:s}".format(minimum,
+            output += "├─ Minimum: {:e} at {:s}".format(minimum,
                                                        str(minIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}".format(minIdx[-1])
             #end
             if self.polyOrder is not None and self.basisType is not None:
-                output += "\n- DG info:\n"
-                output += "  - Polynomial Order: {:d}\n".format(self.polyOrder)
+                output += "\n├─ DG info:\n"
+                output += "│  ├─ Polynomial Order: {:d}\n".format(self.polyOrder)
                 if self.isModal:
-                    output += "  - Basis Type: {:s} (modal)".format(self.basisType)
+                    output += "│  └─ Basis Type: {:s} (modal)".format(self.basisType)
                 else:
-                    output += "  - Basis Type: {:s}".format(self.basisType)
+                    output += "│  └─ Basis Type: {:s}".format(self.basisType)
                 #end
             if self.changeset is not None and self.builddate is not None:
-                output += "\n- Created with Gkeyll:\n"
-                output += "  - Changeset: {:s}\n".format(self.changeset)
-                output += "  - Build Date: {:s}".format(self.builddate)
+                output += "\n├─ Created with Gkeyll:\n"
+                output += "│  ├─ Changeset: {:s}\n".format(self.changeset)
+                output += "│  └─ Build Date: {:s}".format(self.builddate)
             #end
 
             #output += "\n- Contains attributes:\n  "

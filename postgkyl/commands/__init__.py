@@ -5,7 +5,7 @@ from . import ev_cmd
 from .animate import animate
 from .blot import blot
 from .collect import collect
-from .dataset import dataset
+#from .dataset import dataset
 from .differentiate import differentiate
 from .euler import euler
 from .ev import ev
@@ -27,6 +27,8 @@ from .trajectory import trajectory
 from .val2coord import val2coord
 from .write import write
 from .load import load
+from .status import activate
+from .status import deactivate
 
 from . import temp
 from .agyro import agyro

@@ -45,7 +45,8 @@ def _pickCut(ctx, kwargs, zn):
 def load(ctx, **kwargs):
     vlog(ctx, 'Starting load')
     pushChain(ctx, 'load', **kwargs)
-
+    data = ctx.obj['data']
+    
     idx = ctx.obj['inDataStringsLoaded']
     inDataString = ctx.obj['inDataStrings'][idx]
 
@@ -91,20 +92,20 @@ def load(ctx, **kwargs):
     for var in varNames:
         for fn in files:
             try:
-                ctx.obj['data'].add(Data(fileName=fn, tag=kwargs['tag'],
-                                         stack=ctx.obj['stack'],
-                                         compgrid=ctx.obj['compgrid'],
-                                         z0=z0, z1=z1, z2=z2,
-                                         z3=z3, z4=z4, z5=z5,
-                                         comp=comp, varName=var,
-                                         label=kwargs['label']))
+                data.add(Data(fileName=fn, tag=kwargs['tag'],
+                              stack=ctx.obj['stack'],
+                              compgrid=ctx.obj['compgrid'],
+                              z0=z0, z1=z1, z2=z2,
+                              z3=z3, z4=z4, z5=z5,
+                              comp=comp, varName=var,
+                              label=kwargs['label']))
             except NameError:
                 ctx.fail(click.style("Failed to load the variable '{:s}' from '{:s}'".format(var, fn), fg='red'))
             #end
         #end
     #end
 
-    ctx.obj['data'].setUniqueLabels()
+    data.setUniqueLabels()
 
     ctx.obj['inDataStringsLoaded'] += 1
     vlog(ctx, 'Finishing load')

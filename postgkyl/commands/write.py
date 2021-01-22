@@ -5,8 +5,8 @@ from postgkyl.commands.util import vlog, pushChain
 @click.command()
 @click.option('-f', '--filename', type=click.STRING,
               help="Output file name")
-@click.option('-m', '--mode', type=click.STRING, default='bp',
-              help="Output file mode. One of `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file)")
+@click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy']), default='bp', 
+              help="Output file mode. One of `bp` (ADIOS BP file; default), `txt` (ASCII text file), or `npy` (NumPy binary file)")
 @click.option('-b', '--buffersize', default=1000,
               help="Set the buffer size for ADIOS write (default: 1000 MB)")
 @click.pass_context
