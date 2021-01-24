@@ -23,6 +23,11 @@ from .primitive import getP
 from .primitive import getKE
 from .primitive import getMach
 
+from .accumulate_current import accumulate_current
+from .magsq import magsq
+from .parrotate import parrotate
+from .perprotate import perprotate
+
 from .initpolar import initpolar
 from .calc_enstrophy import calc_enstrophy
 from .calc_ke_dke import calc_ke_dke

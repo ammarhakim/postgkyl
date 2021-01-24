@@ -33,6 +33,12 @@ from .status import deactivate
 from . import temp
 from .agyro import agyro
 
+from .bparrotate import bparrotate
+from .bperprotate import bperprotate
+from .current import current
+from .magsq import magsq
+from .parrotate import parrotate
+from .perprotate import perprotate
 from .velocity import velocity
 
 #from postgkyl.commands import cglpressure

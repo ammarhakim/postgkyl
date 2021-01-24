@@ -13,9 +13,9 @@ def fft(ctx, **kwargs):
     """
     vlog(ctx, 'Starting FFT')
     pushChain(ctx, 'fft', **kwargs)
-
-    for s in ctx.obj['sets']:
-        data = ctx.obj['dataSets'][s]
-        diag.fft(data, kwargs['psd'], stack=True)
+    data = ctx.obj['data']
+    for dat in data.iterator(kwargs['tag']):
+        diag.fft(dat, kwargs['psd'], stack=True)
+    #end
         
     vlog(ctx, 'Finishing FFT')

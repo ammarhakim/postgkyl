@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Postgkyl module for field-particle correlations
+Postgkyl module for computing growth rates
 """
 import numpy
 import math
