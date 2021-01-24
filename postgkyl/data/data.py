@@ -199,6 +199,12 @@ class Data(object):
                 self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
                 self.isModal = True
             #end
+            if 'charge' in fh.attrs.keys():
+                self.charge = adios.attr(fh, 'charge').value
+            #end
+            if 'mass' in fh.attrs.keys():
+                self.mass = adios.attr(fh, 'mass').value
+            #end
 
             # read all attributes and store them
             self.attrsList = { }
