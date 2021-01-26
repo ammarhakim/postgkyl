@@ -29,6 +29,7 @@ from .write import write
 from .load import load
 from .status import activate
 from .status import deactivate
+from .listoutputs import listoutputs
 
 from . import temp
 from .agyro import agyro

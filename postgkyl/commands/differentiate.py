@@ -14,34 +14,46 @@ from postgkyl.commands.util import vlog, pushChain
               help='Interpolation onto a general mesh of specified amount')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file')
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
-def differentiate(ctx, **inputs):
+def differentiate(ctx, **kwargs):
     vlog(ctx, 'Starting differentiate')
-    pushChain(ctx, 'differentiate', **inputs)
+    pushChain(ctx, 'differentiate', **kwargs)
+    data = ctx.obj['data']
 
-    if inputs['basistype'] is not None:
-        if inputs['basistype'] == 'ms' or inputs['basistype'] == 'ns':
+    basisType = None
+    isModal = None
+    if kwargs['basistype'] is not None:
+        if kwargs['basistype'] == 'ms':
             basisType = 'serendipity'
-        elif inputs['basistype'] == 'mo':
+            isModal = True
+        elif kwargs['basistype'] == 'ns':
+            basisType = 'serendipity'
+            isModal = False
+        elif kwargs['basistype'] == 'mo':
             basisType = 'maximal-order'
-    else:
-        basisType = None
-    #end
-
-    for s in ctx.obj['sets']:
-        if ctx.obj['dataSets'][s].modal:
-            dg = GInterpModal(ctx.obj['dataSets'][s],
-                              inputs['polyorder'], basisType, 
-                              inputs['interp'], inputs['read'])
-        else:
-            dg = GInterpNodal(ctx.obj['dataSets'][s],
-                              inputs['polyorder'], basisType,
-                              inputs['interp'], inputs['read'])
+            isModal = True
+        elif kwargs['basistype'] == 'mt':
+            basisType = 'tensor'
+            isModal = True
         #end
-        numNodes = dg.numNodes
-        numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
-
-        vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
+    #end
+    
+    for dat in data.iterator(kwargs['tag']):
+        if kwargs['basistype'] is None and dat.basisType is None:
+            ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
+        #end
+        
+        if isModal or dat.isModal:
+            dg = GInterpModal(dat,
+                              kwargs['polyorder'], kwargs['basistype'], 
+                              kwargs['interp'], kwargs['read'])
+        else:
+            dg = GInterpNodal(dat,
+                              kwargs['polyorder'], basisType,
+                              kwargs['interp'], kwargs['read'])
+        #end
         dg.differentiate(stack=True)
     #end
     vlog(ctx, 'Finishing differentiate')

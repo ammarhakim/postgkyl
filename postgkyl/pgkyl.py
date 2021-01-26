@@ -155,15 +155,15 @@ def cli(ctx, **kwargs):
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.animate)
-#cli.add_command(cmd.blot)
+cli.add_command(cmd.blot)
 cli.add_command(cmd.collect)
 cli.add_command(cmd.current)
 cli.add_command(cmd.activate)
 cli.add_command(cmd.deactivate)
-#cli.add_command(cmd.differentiate)
+cli.add_command(cmd.differentiate)
 #cli.add_command(cmd.euler)
 #cli.add_command(cmd.ev)
-#cli.add_command(cmd.extractinput)
+cli.add_command(cmd.extractinput)
 #cli.add_command(cmd.fft)
 #cli.add_command(cmd.growth)
 cli.add_command(cmd.info)
@@ -182,6 +182,7 @@ cli.add_command(cmd.select)
 #cli.add_command(cmd.trajectory)
 #cli.add_command(cmd.val2coord)
 #cli.add_command(cmd.write)
+cli.add_command(cmd.listoutputs)
 
 cli.add_command(cmd.velocity)
 
