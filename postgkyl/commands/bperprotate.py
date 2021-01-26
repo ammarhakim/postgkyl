@@ -2,6 +2,7 @@ import click
 
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
+import postgkyl.diagnostics as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -29,17 +30,14 @@ def bperprotate(ctx, **kwargs):
     
     for a, rot in zip(data.iterator(kwargs['array']),
                       data.iterator(kwargs['field'])):
-        grid = a.getGrid()        
-        valsarray = a.getValues()
-        valsfield = field.getValues()
-        # Get the components from field for the magnetic field
-        B = valsfield[...,3:6]
-            
+        # Magnetic field is components 3, 4, & 5 in field array
+        grid, outrot = diag.perprotate(a, rot, '3:6')
+        # Create new GData structure with appropriate outtag and labels to store output.
         out = Data(tag=kwargs['outtag'],
                    stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'])
-        out.push(postgkyl.diagnostics.perprotate(valsarray, B), grid)
+        out.push(outrot, grid)
         data.add(out)
     #end
 

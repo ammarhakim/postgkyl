@@ -16,9 +16,10 @@ def magsq(data, stack=False):
     """
     grid = data.getGrid()
     values = data.getValues()
+    # Output is a scalar, so dimensionality should not include number of components.
     out = np.zeros(values[...,0].shape)
     out = np.sum(values*values, axis=-1)
-    out = out[...,np.newaxis]
+    out = out[..., np.newaxis]
     if stack:
         data.push(out, grid)
     else:

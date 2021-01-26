@@ -34,12 +34,6 @@ def current(ctx, **kwargs):
                    label=kwargs['label'])
         out.push(outcurrent, grid)
         data.add(out)
-
     #end
-    #out.push(outcurrent, grid)
-    #data.add(out)
-
-    #data.deactivateAll(tag=kwargs['tag'])
-
     vlog(ctx, 'Finishing current accumulation')
 #end

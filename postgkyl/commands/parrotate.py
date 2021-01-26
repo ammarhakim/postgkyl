@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
-import postgkyl.diagnostics.parrotate
+import postgkyl.diagnostics as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -32,15 +32,13 @@ def parrotate(ctx, **kwargs):
     
     for a, rot in zip(data.iterator(kwargs['array']),
                       data.iterator(kwargs['rotator'])):
-        grid = a.getGrid()        
-        valsarray = a.getValues()
-        valsrotator = rot.getValues()
-            
+        grid, outrot = diag.parrotate(a, rot)
+        # Create new GData structure with appropriate outtag and labels to store output.
         out = Data(tag=kwargs['outtag'],
                    stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'])
-        out.push(postgkyl.diagnostics.parrotate(valsarray, valsrotator), grid)
+        out.push(outrot, grid)
         data.add(out)
     #end
 
