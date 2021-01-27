@@ -4,7 +4,7 @@ import click
 import postgkyl.output.blot
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command()
+@click.command(hidden=True)
 @click.option('--tag', '-t', default=None,
               help="Specify the tag to plot.")
 # @click.option('--figure', '-f', default=None,

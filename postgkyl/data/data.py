@@ -63,22 +63,28 @@ class Data(object):
                  z3=None, z4=None, z5=None,
                  compgrid=False,
                  varName='CartGridField', tag='default',
-                 label=None):
+                 label=None, meta=None):
         self._tag = tag
         self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
         self._grid = []
         self._gridType = "uniform" 
         self._gridFile = None
-        self._values = []  # (N+1)D narray of values 
-        self.time = None
-        self.frame = 0
+        self._values = []  # (N+1)D narray of values
 
-        self.changeset = None
-        self.builddate = None
-        self.polyOrder = None
-        self.basisType = None
-        self.isModal = None
+        self.meta = {}
+        self.meta['time'] = None
+        self.meta['frame'] = None
+        self.meta['changeset'] = None
+        self.meta['builddate'] = None
+        self.meta['polyOrder'] = None
+        self.meta['basisType'] = None
+        self.meta['isModal'] = None
+        if meta:
+            for key in meta:
+                self.meta[key] = meta[key]
+            #end
+        #end
 
         self._label = ""
         self._customLabel = label
@@ -167,7 +173,7 @@ class Data(object):
             self._values.append(fh.root.StructGridField.read())
             # ... and the time-stamp
             if '/timeData' in fh:
-                self.time = fh.root.timeData._v_attrs.vsTime
+                self.meta['time'] = fh.root.timeData._v_attrs.vsTime
             #end
             fh.close()
         elif extension == 'bp':
@@ -180,48 +186,40 @@ class Data(object):
             #end
 
             # Get the atributes
+            self.attrsList = { }
+            for k in fh.attrs.keys():
+                self.attrsList[k] = 0
+            #end
             # Postgkyl conventions require the attributes to be
             # narrays even for 1D data
             lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
             upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
             cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
             if 'changeset' in fh.attrs.keys():
-                self.changeset = adios.attr(fh, 'changeset').value.decode('UTF-8')
+                self.meta['changeset'] = adios.attr(fh, 'changeset').value.decode('UTF-8')
             #end
             if 'builddate' in fh.attrs.keys():
-                self.builddate = adios.attr(fh, 'builddate').value.decode('UTF-8')
+                self.meta['builddate'] = adios.attr(fh, 'builddate').value.decode('UTF-8')
             #end
             if 'polyOrder' in fh.attrs.keys():
-                self.polyOrder = adios.attr(fh, 'polyOrder').value
-                self.isModal = True
+                self.meta['polyOrder'] = adios.attr(fh, 'polyOrder').value
+                self.meta['isModal'] = True
             #end
             if 'basisType' in fh.attrs.keys():
-                self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
-                self.isModal = True
+                self.meta['basisType'] = adios.attr(fh, 'basisType').value.decode('UTF-8')
+                self.meta['isModal'] = True
             #end
             if 'charge' in fh.attrs.keys():
-                self.charge = adios.attr(fh, 'charge').value
+                self.meta['charge'] = adios.attr(fh, 'charge').value
             #end
             if 'mass' in fh.attrs.keys():
-                self.mass = adios.attr(fh, 'mass').value
+                self.meta['mass'] = adios.attr(fh, 'mass').value
             #end
-
-            # read all attributes and store them
-            self.attrsList = { }
-            for k in fh.attrs.keys():
-                self.attrsList[k] = 0
-            #end
-
-            # Load data ...
-            var = adios.var(fh, self._varName)
-            offset, count = self._createOffsetCountBp(var, axes, comp)
-            self._values.append(var.read(offset=offset, count=count))
-            # ... and the time-stamp
             if 'time' in fh.vars:
-                self.time = adios.var(fh, 'time').read()
+                self.meta['time'] = adios.var(fh, 'time').read()
             #end
             if 'frame' in fh.vars:
-                self.frame = adios.var(fh, 'frame').read()
+                self.meta['frame'] = adios.var(fh, 'frame').read()
             #end
 
             # Check for mapped grid ...
@@ -249,6 +247,11 @@ class Data(object):
             else:
                 raise TypeError("Unsupported grid type info in field!")
             #end
+
+            # Load data
+            var = adios.var(fh, self._varName)
+            offset, count = self._createOffsetCountBp(var, axes, comp)
+            self._values.append(var.read(offset=offset, count=count))
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -587,11 +590,11 @@ class Data(object):
         if len(values) > 0:
             output = ""
 
-            if self.time is not None:
-                output += "├─ Time: {:e}\n".format(self.time)
+            if self.meta['time'] is not None:
+                output += "├─ Time: {:e}\n".format(self.meta['time'])
             #end
-            if self.frame is not None:
-                output += "├─ Frame: {:d}\n".format(self.frame)
+            if self.meta['frame'] is not None:
+                output += "├─ Frame: {:d}\n".format(self.meta['frame'])
             #end
             output += "├─ Number of components: {:d}\n".format(numComps)
             output += "├─ Number of dimensions: {:d}\n".format(numDims)
@@ -620,18 +623,18 @@ class Data(object):
             if numComps > 1:
                 output += " component {:d}".format(minIdx[-1])
             #end
-            if self.polyOrder is not None and self.basisType is not None:
+            if self.meta['polyOrder'] is not None and self.meta['basisType'] is not None:
                 output += "\n├─ DG info:\n"
-                output += "│  ├─ Polynomial Order: {:d}\n".format(self.polyOrder)
-                if self.isModal:
-                    output += "│  └─ Basis Type: {:s} (modal)".format(self.basisType)
+                output += "│  ├─ Polynomial Order: {:d}\n".format(self.meta['polyOrder'])
+                if self.meta['isModal']:
+                    output += "│  └─ Basis Type: {:s} (modal)".format(self.meta['basisType'])
                 else:
-                    output += "│  └─ Basis Type: {:s}".format(self.basisType)
+                    output += "│  └─ Basis Type: {:s}".format(self.meta['basisType'])
                 #end
-            if self.changeset is not None and self.builddate is not None:
+            if self.meta['changeset'] and self.meta['builddate']:
                 output += "\n├─ Created with Gkeyll:\n"
-                output += "│  ├─ Changeset: {:s}\n".format(self.changeset)
-                output += "│  └─ Build Date: {:s}".format(self.builddate)
+                output += "│  ├─ Changeset: {:s}\n".format(self.meta['changeset'])
+                output += "│  └─ Build Date: {:s}".format(self.meta['builddate'])
             #end
 
             #output += "\n- Contains attributes:\n  "

@@ -5,6 +5,8 @@ import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "pressureTensor",
@@ -19,39 +21,38 @@ def tenmoment(ctx, **kwargs):
     """
     vlog(ctx, 'Starting tenmoment')
     pushChain(ctx, 'tenmoment', **kwargs)
-
+    data = ctx.obj['data']
+    
     v = kwargs['variable_name']
-    for s in ctx.obj['sets']:
-        data = ctx.obj['dataSets'][s]
-
+    for dat in data.iterator(kwargs['data']):
         vlog(ctx, 'tenmoment: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
-            diag.getDensity(data, stack=True)
+            diag.getDensity(dat, stack=True)
         elif v == "xvel":
-            diag.getVx(data, stack=True)
+            diag.getVx(dat, stack=True)
         elif v == "yvel":
-            diag.getVy(data, stack=True)
+            diag.getVy(dat, stack=True)
         elif v == "zvel":
-            diag.getVz(data, stack=True)
+            diag.getVz(dat, stack=True)
         elif v == "vel":
-            diag.getVi(data, stack=True)
+            diag.getVi(dat, stack=True)
         elif v == "pxx":
-            diag.getPxx(data, stack=True)
+            diag.getPxx(dat, stack=True)
         elif v == "pxy":
-            diag.getPxy(data, stack=True)
+            diag.getPxy(dat, stack=True)
         elif v == "pxz":
-            diag.getPxz(data, stack=True)
+            diag.getPxz(dat, stack=True)
         elif v == "pyy":
-            diag.getPyy(data, stack=True)
+            diag.getPyy(dat, stack=True)
         elif v == "pyz":
-            diag.getPyz(data, stack=True)
+            diag.getPyz(dat, stack=True)
         elif v == "pzz":
-            diag.getPzz(data, stack=True)
+            diag.getPzz(dat, stack=True)
         elif v == "pressure":
-            diag.getP(data, numMoms=10, stack=True)
+            diag.getP(dat, numMoms=10, stack=True)
         elif v == "pressureTensor":
-            diag.getPij(data, stack=True)
-
+            diag.getPij(dat, stack=True)
+        #end
     vlog(ctx, 'Finishing tenmoment')
-
+#end
     

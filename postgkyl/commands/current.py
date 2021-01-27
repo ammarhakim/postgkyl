@@ -31,7 +31,8 @@ def current(ctx, **kwargs):
         out = Data(tag=kwargs['outtag'],
                    stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
-                   label=kwargs['label'])
+                   label=kwargs['label'],
+                   meta=dat.meta)
         out.push(outcurrent, grid)
         data.add(out)
     #end

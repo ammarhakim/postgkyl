@@ -31,7 +31,8 @@ def select(ctx, **kwargs):
     """
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select', **kwargs)
-    for dat in ctx.obj['data'].iterator(kwargs['tag']):
+    data = ctx.obj['data']
+    for dat in data.iterator(kwargs['tag']):
         postgkyl.data.select(dat, stack=True,
                              z0=kwargs['z0'], z1=kwargs['z1'],
                              z2=kwargs['z2'], z3=kwargs['z3'],

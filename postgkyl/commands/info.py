@@ -20,18 +20,18 @@ def info(ctx, **kwargs):
         onlyActive = True
     #end
 
-    for i, d in data.iterator(kwargs['tag'], enum=True, onlyActive=onlyActive):
-        if d.getStatus():
+    for i, dat in data.iterator(kwargs['tag'], enum=True, onlyActive=onlyActive):
+        if dat.getStatus():
             color = 'green'
             bold = True
         else:
             color = None
             bold = False
         #end
-        click.echo(click.style("Set {:s} ({:s}#{:d})".format(d.getLabel(), d.getTag(), i,),
+        click.echo(click.style("Set {:s} ({:s}#{:d})".format(dat.getLabel(), dat.getTag(), i,),
                                fg=color, bold=bold))
         if not kwargs['compact']:
-            click.echo(d.info() + "\n")
+            click.echo(dat.info() + "\n")
         #end
     #end
 

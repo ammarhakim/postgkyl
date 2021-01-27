@@ -21,11 +21,11 @@ def update(i, ctx, tag, kwargs):
     dat = ctx.obj['data'].getDataset(tag, i)
     plt.clf()
     kwargs['title'] = ''
-    if dat.frame is not None:
-        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.frame)
+    if dat.meta['frame'] is not None:
+        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
     #end
-    if dat.time is not None:
-        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.time)
+    if dat.meta['time'] is not None:
+        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
     #end
     if kwargs['arg'] is not None:
         return gplot(dat, kwargs['arg'], **kwargs)

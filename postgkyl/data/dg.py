@@ -442,8 +442,8 @@ class GInterpModal(GInterp):
         self.numDims = data.getNumDims()
         if polyOrder is not None:
             self.polyOrder = polyOrder
-        elif data.polyOrder is not None:
-            self.polyOrder = data.polyOrder
+        elif data.meta['polyOrder'] is not None:
+            self.polyOrder = data.meta['polyOrder']
         else:
             raise ValueError('GInterpNodal: polynomial order is neither specified nor stored in the output file')
         #end
@@ -455,8 +455,8 @@ class GInterpModal(GInterp):
             elif basisType == 'mt':
                 self.basisType = 'tensor'
             #end
-        elif data.basisType is not None:
-            self.basisType = data.basisType
+        elif data.meta['basisType'] is not None:
+            self.basisType = data.meta['basisType']
         else:
             raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
         #end

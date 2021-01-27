@@ -3,6 +3,8 @@ import click
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-f', '--filename', type=click.STRING,
               help="Output file name")
 @click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy']), default='bp', 
@@ -19,9 +21,12 @@ def write(ctx, **kwargs):
     """
     vlog(ctx, 'Starting write')
     pushChain(ctx, 'write', **kwargs)
-
-    for s in ctx.obj['sets']:
-        ctx.obj['dataSets'][s].write(outName=kwargs['filename'],
-                                     mode=kwargs['mode'],
-                                     bufferSize=kwargs['buffersize'])
+    data = ct.obj['data']
+    
+    for dat in data.iterator(kwargs['tag']):
+        dat.write(outName=kwargs['filename'],
+                  mode=kwargs['mode'],
+                  bufferSize=kwargs['buffersize'])
+    #end
     vlog(ctx, 'Finishing write')
+#end

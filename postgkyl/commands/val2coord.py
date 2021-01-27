@@ -39,6 +39,11 @@ def _getRange(strIn, length):
 #end
 
 @click.command()
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('--outtag', '-o',
+              default='val2coord', show_default=True,
+              help='Tag for the result')
 @click.option('-x', type=click.STRING,
               help="Select components that will became the grid of the new dataset.")
 @click.option('-y', type=click.STRING,
@@ -54,12 +59,13 @@ def val2coord(ctx, **kwargs):
     """
     vlog(ctx, 'Starting val2coord')
     pushChain(ctx, 'val2coord', **kwargs)
+    data = ctx.obj['data']
 
     activeSets = []
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
     
-    for setIdx, s in enumerate(ctx.obj['sets']):
-        values = ctx.obj['dataSets'][s].getValues()
+    for setIdx, dat in data.iterator(kwargs['tag'], enum=True):
+        values = dat.getValues()
         xComps = _getRange(kwargs['x'], len(values[0, :]))
         yComps = _getRange(kwargs['y'], len(values[0, :]))
 
@@ -74,28 +80,20 @@ def val2coord(ctx, **kwargs):
             else:
                 xc = xComps[0]
             #end
-            
-            values = ctx.obj['dataSets'][s].getValues()
 
             x = values[..., xc]
             y = values[..., yc, np.newaxis]
 
-            newSetIdx = len(ctx.obj['dataSets'])
-            ctx.obj['setIds'].append(newSetIdx)
-            ctx.obj['dataSets'].append(Data())
-            if i == 1:
-                ctx.obj['labels'].append(ctx.obj['labels'][setIdx])
-            else:
-                ctx.obj['labels'].append("")
-            #end
-            ctx.obj['dataSets'][newSetIdx].push(y, [x])
-            ctx.obj['dataSets'][newSetIdx].time = None
-            ctx.obj['dataSets'][newSetIdx].fileName = None
-            ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]
-            vlog(ctx, 'val2coord: activated data set #{:d}'.format(newSetIdx))
-            activeSets.append(newSetIdx)
+            out = Data(tag=kwargs['outtag'],
+                       stack=ctx.obj['stack'],
+                       compgrid=ctx.obj['compgrid'],
+                       meta=dat.meta)
+            out.push(y, [x])
+            data.add(out)
+
+            #ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]
+
         #end
     #end
-    ctx.obj['sets'] = activeSets
     vlog(ctx, 'Finishing val2coord')
 #end

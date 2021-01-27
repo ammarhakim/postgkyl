@@ -4,10 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from postgkyl.commands.util import vlog, pushChain
+from postgkyl.diagnostics.growth import fitGrowth, exp2
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
 @click.command()
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-g', '--guess', default=(1.0, 0.1),
               help='Specify initial guess')
 @click.option('-p', '--plot', is_flag=True,
@@ -26,16 +29,16 @@ def growth(ctx, **inputs):
     """
     vlog(ctx, 'Starting growth')
     pushChain( ctx, 'growth', **inputs) 
-
-    from postgkyl.diagnostics.growth import fitGrowth, exp2
-
-    for s in ctx.obj['sets']:
-        time = ctx.obj['dataSets'][s].getGrid()
-        values = ctx.obj['dataSets'][s].getValues()
-        numDims = ctx.obj['dataSets'][s].getNumDims()
+    data = ctx.obj['data']
+    
+    for dat in data.iterator(kwargs['key']):
+        time = dat.getGrid()
+        values = dat.getValues()
+        numDims = dat.getNumDims()
         if numDims > 1:
             click.echo(click.style("ERROR: 'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
             ctx.exit()
+        #end
         
         vlog(ctx, 'growth: Starting fit for data set #{:d}'.format(s))
         bestParams, bestR2, bestN = fitGrowth(time[0], values[..., 0],
@@ -53,6 +56,7 @@ def growth(ctx, **inputs):
             ax.plot(time[0], exp2(time[0], *bestParams))
             ax.grid(True)
             plt.show()
+        #end
 
         if inputs['instantaneous'] is True:
             vlog(ctx, 'growth: Plotting instantaneous growth rate')
@@ -68,4 +72,6 @@ def growth(ctx, **inputs):
             #ax.set_autoscale_on(False)
             ax.grid(True)
             plt.show()
+        #end
     vlog(ctx, 'Finishing growth')
+#end

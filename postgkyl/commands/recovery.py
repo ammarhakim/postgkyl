@@ -5,6 +5,8 @@ from postgkyl.data import GInterpModal
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Interpolate DG data on a uniform mesh')
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--basistype', '-b',
               type=click.Choice(['ms', 'ns', 'mo']),
               help='Specify DG basis')
@@ -17,23 +19,24 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-c', '--c1', is_flag=True,
               help='Enforce continuous first derivatives')
 @click.pass_context
-def recovery(ctx, **inputs):
+def recovery(ctx, **kwargs):
     vlog(ctx, 'Starting recovery')
-    pushChain(ctx, 'recovery', **inputs)
+    pushChain(ctx, 'recovery', **kwargs)
+    data = ctx.obj['data']
 
-    if inputs['basistype'] is not None:
-        if inputs['basistype'] == 'ms' or inputs['basistype'] == 'ns':
+    if kwargs['basistype'] is not None:
+        if kwargs['basistype'] == 'ms' or kwargs['basistype'] == 'ns':
             basisType = 'serendipity'
-        elif inputs['basistype'] == 'mo':
+        elif kwargs['basistype'] == 'mo':
             basisType = 'maximal-order'
     else:
         basisType = None
     #end
 
-    for s in ctx.obj['sets']:
-        dg = GInterpModal(ctx.obj['dataSets'][s],
-                          inputs['polyorder'], basisType, 
-                          inputs['interp'], inputs['periodic'])
+    for dat in data.iterator(kwargs['tag']):
+        dg = GInterpModal(dat,
+                          kwatgs['polyorder'], basisType, 
+                          kwargs['interp'], kwargs['periodic'])
         numNodes = dg.numNodes
         numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
 

@@ -5,7 +5,6 @@ from . import ev_cmd
 from .animate import animate
 from .blot import blot
 from .collect import collect
-#from .dataset import dataset
 from .differentiate import differentiate
 from .euler import euler
 from .ev import ev

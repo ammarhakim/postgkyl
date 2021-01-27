@@ -5,6 +5,8 @@ import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
@@ -18,29 +20,28 @@ def euler(ctx, **kwargs):
     """
     vlog(ctx, 'Starting euler')
     pushChain(ctx, 'euler', **kwargs)
-
+    data = ctx.obj['data']
+    
     v = kwargs['variable_name']
-    for s in ctx.obj['sets']:
-        data = ctx.obj['dataSets'][s]
-
+    for dat in data.iterator(kwargs['tag']):
         vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
-            diag.getDensity(data, stack=True)
+            diag.getDensity(dat, stack=True)
         elif v == "xvel":
-            diag.getVx(data, stack=True)
+            diag.getVx(dat, stack=True)
         elif v == "yvel":
-            diag.getVy(data, stack=True)
+            diag.getVy(dat, stack=True)
         elif v == "zvel":
-            diag.getVz(data, stack=True)
+            diag.getVz(dat, stack=True)
         elif v == "vel":
-            diag.getVi(data, stack=True)
+            diag.getVi(dat, stack=True)
         elif v == "pressure":
-            diag.getP(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+            diag.getP(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
         elif v == "ke":
-            diag.getKE(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+            diag.getKE(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
         elif v == "mach":
-            diag.getMach(data, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
-
+            diag.getMach(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+        #end
     vlog(ctx, 'Finishing euler')
-
+#end
     

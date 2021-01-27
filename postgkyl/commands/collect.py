@@ -45,7 +45,7 @@ def collect(ctx, **kwargs):
         grid = [[]]
         cnt = 0
         
-        for d in data.iterator(tag):
+        for i, dat in data.iterator(tag, enum=True):
             cnt += 1
             if kwargs['chunk'] and cnt > kwargs['chunk']:
                 cnt = 1
@@ -53,20 +53,30 @@ def collect(ctx, **kwargs):
                 values.append([])
                 grid.append([])
             #end
-            time[-1].append(d.time)
-            val = d.getValues()
+            if dat.meta['time']:
+                time[-1].append(dat.meta['time'])
+            elif dat.meta['frame']:
+                time[-1].append(dat.meta['frame'])
+            else:
+                time[-1].append(i)
+            #end
+            val = dat.getValues()
             if kwargs['sumdata']:
-                numDims = d.getNumDims()
+                numDims = dat.getNumDims()
                 axis = tuple(range(numDims))
                 values[-1].append(np.nansum(val, axis=axis))
             else:
                 values[-1].append(val)
             #end
             if not grid[-1]:
-                grid[-1] = d.getGrid().copy()
+                grid[-1] = dat.getGrid().copy()
             #end
         #end
 
+        if cnt == 0:
+            continue
+        #end
+        
         for i in range(len(time)):
             time[i] = np.array(time[i])
             values[i] = np.array(values[i])

@@ -19,3 +19,4 @@ def magsq(ctx, **kwargs):
     #end
         
     vlog(ctx, 'Finishing magnitude squared computation')
+#end

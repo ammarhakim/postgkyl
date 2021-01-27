@@ -41,11 +41,11 @@ def differentiate(ctx, **kwargs):
     #end
     
     for dat in data.iterator(kwargs['tag']):
-        if kwargs['basistype'] is None and dat.basisType is None:
+        if kwargs['basistype'] is None and dat.meta['basisType'] is None:
             ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
         #end
         
-        if isModal or dat.isModal:
+        if isModal or dat.meta['isModal']:
             dg = GInterpModal(dat,
                               kwargs['polyorder'], kwargs['basistype'], 
                               kwargs['interp'], kwargs['read'])

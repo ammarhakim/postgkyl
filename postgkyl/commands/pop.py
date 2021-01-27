@@ -1,12 +1,14 @@
 import click
 
 @click.command(help='Pop the data stack')
+@click.option('--tag', '-t',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def pop(ctx):
     vlog(ctx, 'Poping the stack')
     pushChain(ctx, 'pop')
-    for s in ctx.obj['sets']:
-        ctx.obj['dataSets'][s].popGrid()
-        ctx.obj['dataSets'][s].popValues()
+    data = ctx.obj['data']
+    for dat in data.iterator(kwargs['tag']):
+        dat.pop()
     #end
 #end
