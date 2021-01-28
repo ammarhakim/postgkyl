@@ -155,7 +155,7 @@ def cli(ctx, **kwargs):
 
 # Hook the individual commands into pgkyl
 #cli.add_command(cmd.ev)
-#cli.add_command(cmd.trajectory)
+cli.add_command(cmd.trajectory)
 cli.add_command(cmd.activate)
 cli.add_command(cmd.animate)
 cli.add_command(cmd.blot)

@@ -10,12 +10,12 @@ import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
 def update(i, ax, ctx, leap, vel,
-           xmin, xmax, ymin, ymax, zmin, zmax):
+           xmin, xmax, ymin, ymax, zmin, zmax,
+           tag):
     colors = ['C0', 'C1', 'C2', 'C3', 'C4',
               'C5', 'C6', 'C7', 'C8', 'C9']
     plt.cla()
-    for s in ctx.obj['sets']:
-        dat = ctx.obj['dataSets'][s]
+    for s, dat in ctx.obj['data'].iterator(tag, emum=True):
         time = dat.getGrid()[0]
         coords = dat.getValues()
         tIdx = int(i*leap)
@@ -139,7 +139,15 @@ def update(i, ax, ctx, leap, vel,
 def trajectory(ctx, **kwargs):
     vlog(ctx, 'Starting trajectory')
     pushChain(ctx, 'trajectory', **kwargs)
-
+    data = ctx.obj['data']
+    
+    tags = list(data.tagIterator(kwargs['tag']))
+    if len(tags) > 1:
+        ctx.fail(click.echo("'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)), fg='red'))
+    else:
+        tag = tags[0]
+    #end
+    
     numSets = len(ctx.obj['sets'])
     fig = plt.figure()
     ax = Axes3D(fig)
@@ -159,7 +167,8 @@ def trajectory(ctx, **kwargs):
                          fargs=(ax, ctx, jump, kwargs['velocity'],
                                 kwargs['xmin'], kwargs['xmax'],
                                 kwargs['ymin'], kwargs['ymax'],
-                                kwargs['zmin'], kwargs['zmax']),
+                                kwargs['zmin'], kwargs['zmax'],
+                                tag),
                          interval=kwargs['interval'])
 
     ax.view_init(elev=kwargs['elevation'], azim=kwargs['azimuth'])
