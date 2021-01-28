@@ -32,9 +32,20 @@ class DataSpace(object):
             #end
         #end
     #end
-    def tagIterator(self):
-        tags = list(self._datasetDict)
-        return iter(tags)
+    def tagIterator(self, tag=None, onlyActive=True):
+        if tag:
+            out = tag.split(',')
+        elif onlyActive:
+            out = []
+            for t in self._datasetDict:
+                if True in (dat.getStatus() for dat in self.iterator(t)):
+                    out.append(t)
+                #end
+            #end
+        else:
+            out = list(self._datasetDict)
+        #end
+        return iter(out)
     #end
         
 

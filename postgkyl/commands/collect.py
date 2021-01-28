@@ -34,12 +34,7 @@ def collect(ctx, **kwargs):
     pushChain(ctx, 'collect', **kwargs)
     data = ctx.obj['data']
     
-    if kwargs['tag']:
-        tagIterator = kwargs['tag'].split(',')
-    else:
-        tagIterator = data.tagIterator()
-    #end
-    for tag in tagIterator:
+    for tag in data.tagIterator(kwargs['tag']):
         time = [[]]
         values = [[]]
         grid = [[]]
@@ -71,10 +66,6 @@ def collect(ctx, **kwargs):
             if not grid[-1]:
                 grid[-1] = dat.getGrid().copy()
             #end
-        #end
-
-        if cnt == 0:
-            continue
         #end
         
         for i in range(len(time)):

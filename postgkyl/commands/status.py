@@ -71,15 +71,10 @@ def activate(ctx, **kwargs):
         data.deactivateAll()
     #end
 
-    if kwargs['tag']:
-        tagIterator = kwargs['tag'].split(',')
-    else:
-        tagIterator = data.tagIterator()
-    #end
-    for tag in tagIterator:
+    for tag in data.tagIterator(kwargs['tag']):
         numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
         for i, dat in data.iterator(tag=tag, enum=True, onlyActive=False):
-            if i in _getIterableIdx(kwargs['idx'], numFiles):
+            if i in _getIterableIdx(kwargs['index'], numFiles):
                 dat.activate()
             #end
         #end
@@ -119,15 +114,10 @@ def deactivate(ctx, **kwargs):
         data.activateAll()
     #end
 
-    if kwargs['tag']:
-        tagIterator = kwargs['tag'].split(',')
-    else:
-        tagIterator = data.tagIterator()
-    #end
-    for tag in tagIterator:
+    for tag in data.tagIterator(kwargs['tag']):
         numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
         for i, dat in data.iterator(tag=tag, enum=True, onlyActive=False):
-            if i in _getIterableIdx(kwargs['idx'], numFiles):
+            if i in _getIterableIdx(kwargs['index'], numFiles):
                 dat.deactivate()
             #end
         #end

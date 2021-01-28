@@ -9,7 +9,7 @@ from postgkyl.data import Data
 import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 
-def update(i, ctx, tag, kwargs):
+def update(i, ctx, tag, fig, kwargs):
     # if kwargs['collected']:
     #     grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
     #     dat = Data()
@@ -19,8 +19,10 @@ def update(i, ctx, tag, kwargs):
     # else:
     #     dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
     dat = ctx.obj['data'].getDataset(tag, i)
-    plt.clf()
+    fig.clear()
+    #plt.clf()
     kwargs['title'] = ''
+    kwargs['figure'] = fig
     if dat.meta['frame'] is not None:
         kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
     #end
@@ -129,6 +131,7 @@ def animate(ctx, **kwargs):
     """
     vlog(ctx, 'Starting animate')
     pushChain(ctx, 'animate', **kwargs)
+    data = ctx.obj['data']
 
     if not kwargs['float']:
         vmin = float('inf')
@@ -162,32 +165,26 @@ def animate(ctx, **kwargs):
     #     numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
     # else:
     #     numSets = len(ctx.obj['sets'])
-    numSets = ctx.obj['data'].getNumDatasets(kwargs['tag'])
+    #numSets = ctx.obj['data'].getNumDatasets(kwargs['tag'])
 
-    fig = plt.figure()
-    kwargs['figure'] = fig
+    anims = []
+    figs = []
     kwargs['legend'] = False
+    for tag in data.tagIterator(kwargs['tag']):
+        numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
+        figs.append(plt.figure())
+        anims.append(FuncAnimation(figs[-1], update, numFiles,
+                                   fargs=(ctx, tag, figs[-1], kwargs),
+                                   interval=kwargs['interval'], blit=False))
 
-    anim = []
-    if kwargs['tag']:
-        anim.append(FuncAnimation(fig, update, numSets,
-                                  fargs=(ctx, kwargs['tag'], kwargs),
-                                  interval=kwargs['interval'], blit=False))
-    else:
-        for t in ctx.obj['data'].tagIterator():
-            anim.append(FuncAnimation(fig, update, numSets,
-                                      fargs=(ctx, t, kwargs),
-                                      interval=kwargs['interval'], blit=False))
+        fName = 'anim_{:s}.mp4'.format(tag)
+        if kwargs['saveas']:
+            fName = str(kwargs['saveas'])
         #end
-    #end
-
-    fName = 'anim.mp4'
-    if kwargs['saveas']:
-        fName = str(kwargs['saveas'])
-    #end
-    if kwargs['save'] or kwargs['saveas']:
-        anim.save(fName, writer='ffmpeg',
-                  fps=kwargs['fps'], dpi=kwargs['dpi'])
+        if kwargs['save'] or kwargs['saveas']:
+            anims[-1].save(fName, writer='ffmpeg',
+                           fps=kwargs['fps'], dpi=kwargs['dpi'])
+        #end
     #end
     
     if kwargs['show']:
