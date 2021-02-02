@@ -71,14 +71,10 @@ def activate(ctx, **kwargs):
         data.deactivateAll()
     #end
 
-    for tag in data.tagIterator(kwargs['tag']):
-        numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
-        for i, dat in data.iterator(tag=tag, enum=True, onlyActive=False):
-            if i in _getIterableIdx(kwargs['index'], numFiles):
-                dat.activate()
-            #end
-        #end
+    for dat in data.iterator(tag=kwargs['tag'], onlyActive=False, select=kwargs['index']):
+        dat.activate()
     #end
+
     vlog(ctx, 'Finishing activate')
 #end
 
@@ -114,13 +110,9 @@ def deactivate(ctx, **kwargs):
         data.activateAll()
     #end
 
-    for tag in data.tagIterator(kwargs['tag']):
-        numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
-        for i, dat in data.iterator(tag=tag, enum=True, onlyActive=False):
-            if i in _getIterableIdx(kwargs['index'], numFiles):
-                dat.deactivate()
-            #end
-        #end
+    for dat in data.iterator(tag=kwargs['tag'], onlyActive=False, select=kwargs['index']):
+        dat.deactivate()
     #end
+
     vlog(ctx, 'Finishing deactivate')
 #end
