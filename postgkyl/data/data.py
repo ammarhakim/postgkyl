@@ -262,32 +262,44 @@ class Data(object):
             fh.close()
         elif extension == 'gkyl':
             dti8 = np.dtype("i8")
-            dtf8 = np.dtype("f8")
+            dtf = np.dtype("f8")
+            doffset = 8
+
+            offset = 0
+
+            # read real-type
+            realType = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
+            if realType == 1:
+                dtf = np.dtype("f4")
+                doffset = 4
+
+            offset += 8
             
             # read grid dimensions
-            numDims = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
-            offset = 8
+            numDims = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
+            offset += 8
 
             # read grid shape
             cells = np.fromfile(self.fileName, dtype=dti8, count=numDims, offset=offset)
             offset += numDims*8
-            
+
             # read lower/upper
-            lower = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
-            offset += numDims*8
+            lower = np.fromfile(self.fileName, dtype=dtf, count=numDims, offset=offset)
+            offset += numDims*doffset
 
-            upper = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
-            offset += numDims*8
+            upper = np.fromfile(self.fileName, dtype=dtf, count=numDims, offset=offset)
+            offset += numDims*doffset
 
-            # read array elemEz (the div by 8 is as elemSz includes sizeof(double) = 8)
-            elemSz = int(np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]/8)
+            # read array elemEz (the div by doffset is as elemSz includes sizeof(real_type) = doffset)
+            elemSzRaw = int(np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0])
+            elemSz = elemSzRaw/doffset
             offset += 8
 
             # read array size
             asize = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
             offset += 8
 
-            adata = np.fromfile(self.fileName, dtype=dtf8, offset=offset)
+            adata = np.fromfile(self.fileName, dtype=dtf, offset=offset)
             gshape = np.ones(numDims+1, dtype=np.dtype("i8"))
             for d in range(numDims):
                 gshape[d] = cells[d]
