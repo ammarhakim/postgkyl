@@ -8,7 +8,68 @@ class DataSpace(object):
 
     #-----------------------------------------------------------------
     #-- Iterators ----------------------------------------------------
-    def iterator(self, tag=None, enum=False, onlyActive=True):
+
+    def _getIterableIdx(idx, length):
+        def _int(i, length):
+            i = int(i)
+            if i >= 0:
+                return i
+            else:
+                return int(length + i)
+            #end
+        #end
+    
+        if idx is None:
+            return range(length)
+        elif ',' in idx:
+            s = idx.split(',')
+            return [_int(i, length) for i in s]
+        elif ':' in idx:
+            s = idx.split(':')
+            si = [0, length, 1]
+            if s[0]:
+                si[0] = _int(s[0], length)
+            if s[1]:
+                si[1] = _int(s[1], length)
+            if len(s) > 2:
+                si[2] = int(s[2])
+            return range(si[0], si[1], si[2])
+        else:
+            return [_int(idx, length)]
+        #end
+    #end
+    
+    def iterator(self, tag=None, enum=False, onlyActive=True, select=None):
+        # Process 'select'
+        if enum and select:
+            click.echo(click.style("Error: 'select' and 'enum' cannot be selected simultaneously", fg='red'))
+            quit()
+        #end
+        idxSel = slice(None, None)
+        if isinstance(select, int):
+            idxSel = [select]
+        elif isinstance(select, slice):
+            idxSel = select
+        elif isinstance(select, str):
+            if ':' in select:
+                lo = None
+                up = None
+                step = None
+                s = select.split(':')
+                if s[0]:
+                    lo = int(s[0])
+                #end
+                if s[1]:
+                    up = int(s[1])
+                #end
+                if len(s) > 2:
+                    step = int(s[2])
+                #end
+                idxSel = slice(lo, up, step)
+            else:
+                idxSel = list([int(s) for s in select.split(',')])
+        #end
+
         if tag:
             tags = tag.split(",")
         else:
@@ -16,14 +77,23 @@ class DataSpace(object):
         #end
         for t in tags:
             try:
-                for i, dat in enumerate(self._datasetDict[t]):
-                    if (not onlyActive) or dat.getStatus(): # implication
-                        if enum:
-                            yield i, dat
-                        else:
+                if not select or isinstance(idxSel, slice):
+                    for i, dat in enumerate(self._datasetDict[t][idxSel]):
+                        if (not onlyActive) or dat.getStatus(): # implication
+                            if enum:
+                                yield i, dat 
+                            else:
+                                yield dat
+                            #end
+                        #end    
+                    #end
+                else: #isinstance(idxSel, list)
+                    for i in idxSel:
+                        dat = self._datasetDict[t][i]
+                        if (not onlyActive) or dat.getStatus(): # implication
                             yield dat
-                        #end
-                    #end    
+                        #end    
+                    #end
                 #end
             except KeyError as err:
                 click.echo(click.style("ERROR: Failed to load the specified/default tag {0}".format(err),
@@ -32,6 +102,7 @@ class DataSpace(object):
             #end
         #end
     #end
+    
     def tagIterator(self, tag=None, onlyActive=True):
         if tag:
             out = tag.split(',')
