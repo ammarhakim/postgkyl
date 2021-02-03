@@ -4,7 +4,7 @@ Postgkyl module for computing the magnitude squared of an array
 """
 import numpy as np
 
-def magsq(data, stack=False):
+def magsq(data, overwrite=False):
     """Function to compute the magnitude squared of an array
 
     Parameters:
@@ -20,8 +20,8 @@ def magsq(data, stack=False):
     out = np.zeros(values[...,0].shape)
     out = np.sum(values*values, axis=-1)
     out = out[..., np.newaxis]
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end

@@ -26,21 +26,21 @@ def euler(ctx, **kwargs):
     for dat in data.iterator(kwargs['tag']):
         vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
-            diag.getDensity(dat, stack=True)
+            diag.getDensity(dat, overwrite=True)
         elif v == "xvel":
-            diag.getVx(dat, stack=True)
+            diag.getVx(dat, overwrite=True)
         elif v == "yvel":
-            diag.getVy(dat, stack=True)
+            diag.getVy(dat, overwrite=True)
         elif v == "zvel":
-            diag.getVz(dat, stack=True)
+            diag.getVz(dat, overwrite=True)
         elif v == "vel":
-            diag.getVi(dat, stack=True)
+            diag.getVi(dat, overwrite=True)
         elif v == "pressure":
-            diag.getP(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+            diag.getP(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         elif v == "ke":
-            diag.getKE(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+            diag.getKE(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         elif v == "mach":
-            diag.getMach(dat, gasGamma=kwargs['gas_gamma'], numMom=5, stack=True)
+            diag.getMach(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         #end
     vlog(ctx, 'Finishing euler')
 #end

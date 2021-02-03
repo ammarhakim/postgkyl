@@ -4,7 +4,7 @@ Postgkyl module for accumulating current
 """
 import numpy as np
 
-def accumulate_current(data, qbym=False, stack=False):
+def accumulate_current(data, qbym=False, overwrite=False):
     """Function to compute current from an arbitrary number of input species
 
     Parameters:
@@ -25,8 +25,8 @@ def accumulate_current(data, qbym=False, stack=False):
         factor = -1.0
     #end
     out = factor*values
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end

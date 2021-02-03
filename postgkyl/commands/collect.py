@@ -11,7 +11,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-p', '--period',
               type=click.FLOAT,
               help="Specify a period to create epoch data instead of time data")
-@click.option('-o', '--offset',
+@click.option('--offset',
               default=0.0, type=click.FLOAT, show_default=True,
               help="Specify an offset to create epoch data instead of time data")
 @click.option('-c', '--chunk', type=click.INT,
@@ -88,10 +88,9 @@ def collect(ctx, **kwargs):
 
             #vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
             out = Data(tag=kwargs['outtag'],
-                       stack=ctx.obj['stack'],
                        compgrid=ctx.obj['compgrid'],
                        label=kwargs['label'])
-            out.push(values[i], grid[i])
+            out.push( grid[i], values[i])
             data.add(out)
         #end
 

@@ -66,6 +66,7 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
                 tagNm = splits[0].split('.')[1]
             except IndexError:
                 ctx.fail(click.style("'t' requires a name to be specified in format 't[name]'", fg='red'))
+            #end
         else:
             tagNm = tags[0]
         #end

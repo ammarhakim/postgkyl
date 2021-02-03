@@ -16,6 +16,8 @@ from postgkyl.modalDG import interpolate as interpFn
               help='Interpolation onto a general mesh of specified amount.')
 @click.option('--tag', '-t',
               help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('--outtag', '-o',
+              help='Optional tag for the resulting array')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file.')
 @click.option('-n', '--new', is_flag=True,
@@ -63,7 +65,16 @@ def interpolate(ctx, **kwargs):
         numComps = int(dat.getNumComps() / numNodes)
         
         if not kwargs['new']:
-            dg.interpolate(tuple(range(numComps)), overwrite=True)
+            if kwargs['outtag']:
+                out = Data(tag=kwargs['outtag'],
+                           compgrid=ctx.obj['compgrid'],
+                           meta=dat.meta)
+                grid, values = dg.interpolate(tuple(range(numComps)))
+                out.push(grid, values)
+                data.add(out)
+            else:
+                dg.interpolate(tuple(range(numComps)), overwrite=True)
+            #end
         else:
             interpFn(dat, kwargs['polyorder'])
         #end

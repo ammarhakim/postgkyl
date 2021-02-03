@@ -4,39 +4,6 @@ import numpy as np
 from postgkyl.commands.util import vlog, pushChain
 
 #---------------------------------------------------------------------
-#-- Helper functions -------------------------------------------------
-
-def _getIterableIdx(idx, length):
-    def _int(i, length):
-        i = int(i)
-        if i >= 0:
-            return i
-        else:
-            return int(length + i)
-        #end
-    #end
-    
-    if idx is None:
-        return range(length)
-    elif ',' in idx:
-        s = idx.split(',')
-        return [_int(i, length) for i in s]
-    elif ':' in idx:
-        s = idx.split(':')
-        si = [0, length, 1]
-        if s[0]:
-            si[0] = _int(s[0], length)
-        if s[1]:
-            si[1] = _int(s[1], length)
-        if len(s) > 2:
-            si[2] = int(s[2])
-        return range(si[0], si[1], si[2])
-    else:
-        return [_int(idx, length)]
-    #end
-#end
-
-#---------------------------------------------------------------------
 #-- Main functions ---------------------------------------------------
 
 @click.command()

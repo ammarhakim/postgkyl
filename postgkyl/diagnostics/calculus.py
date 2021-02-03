@@ -1,6 +1,6 @@
 import numpy as np
 
-def integrate(data, axis, stack=False):
+def integrate(data, axis, overwrite=False):
     grid = list(data.getGrid())
     values = np.copy(data.getValues())
 
@@ -55,10 +55,10 @@ def integrate(data, axis, stack=False):
         values = np.expand_dims(values, ax)
     #end
 
-    if stack is False:
-        return grid, values
+    if overwrite:
+        data.push(grid, values)
     else:
-        data.push(values, grid)
+        return grid, values
     #end
 #end
 

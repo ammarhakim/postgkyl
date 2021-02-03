@@ -20,6 +20,6 @@ def extractinput(ctx, **kwargs):
         else:
             click.echo("No embedded input file!")
         #end
-
+    #end
     vlog(ctx, 'Finishing extractinput')
 #end

@@ -29,11 +29,10 @@ def current(ctx, **kwargs):
         outcurrent += postgkyl.diagnostics.accumulate_current(dat, kwargs['qbym'])
         dat.deactivate()
         out = Data(tag=kwargs['outtag'],
-                   stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=dat.meta)
-        out.push(outcurrent, grid)
+        out.push(grid, outcurrent)
         data.add(out)
     #end
     vlog(ctx, 'Finishing current accumulation')

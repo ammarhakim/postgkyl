@@ -16,6 +16,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Read from general interpolation file')
 @click.option('--tag', '-t',
               help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('--outtag', '-o',
+              help='Optional tag for the resulting array')
 @click.pass_context
 def differentiate(ctx, **kwargs):
     vlog(ctx, 'Starting differentiate')
@@ -54,7 +56,16 @@ def differentiate(ctx, **kwargs):
                               kwargs['polyorder'], basisType,
                               kwargs['interp'], kwargs['read'])
         #end
-        dg.differentiate(stack=True)
-    #end
+        
+        if kwargs['outtag']:
+            out = Data(tag=kwargs['outtag'],
+                       compgrid=ctx.obj['compgrid'],
+                       meta=dat.meta)
+            grid, values = dg.differentiate()
+            out.push(grid, values)
+            data.add(out)
+        else:
+            dg.differentiate(overwrite=True)
+        #end
     vlog(ctx, 'Finishing differentiate')
 #end

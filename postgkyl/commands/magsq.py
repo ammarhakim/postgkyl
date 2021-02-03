@@ -7,6 +7,8 @@ import postgkyl.diagnostics as diag
 @click.command(help='Magnitude squared of an input array |A|^2 = sum_i A_i^2')
 @click.option('--tag', '-t', default=None,
               help="Specify the tag to integrate")
+@click.option('--outtag', '-o', default=None,
+              help='Optional tag for the resulting array')
 @click.pass_context
 def magsq(ctx, **kwargs):
     """Calculate the magnitude squared of an input array
@@ -15,7 +17,16 @@ def magsq(ctx, **kwargs):
     pushChain(ctx, 'magsq', **kwargs)
     data = ctx.obj['data']
     for dat in data.iterator(kwargs['tag']):
-        diag.magsq(dat, stack=True)
+        if kwargs['outtag']:
+            out = Data(tag=kwargs['outtag'],
+                       compgrid=ctx.obj['compgrid'],
+                       meta=dat.meta)
+            grid, values = diag.magsq(dat)
+            out.push(grid, values)
+            data.add(out)
+        else:
+            diag.magsq(dat, overwrite=True)
+        #end
     #end
         
     vlog(ctx, 'Finishing magnitude squared computation')

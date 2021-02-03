@@ -36,8 +36,7 @@ def growth(ctx, **inputs):
         values = dat.getValues()
         numDims = dat.getNumDims()
         if numDims > 1:
-            click.echo(click.style("ERROR: 'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
-            ctx.exit()
+            click.fail(click.style("'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
         #end
         
         vlog(ctx, 'growth: Starting fit for data set #{:d}'.format(s))
@@ -73,5 +72,6 @@ def growth(ctx, **inputs):
             ax.grid(True)
             plt.show()
         #end
+    #end
     vlog(ctx, 'Finishing growth')
 #end

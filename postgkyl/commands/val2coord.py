@@ -85,10 +85,9 @@ def val2coord(ctx, **kwargs):
             y = values[..., yc, np.newaxis]
 
             out = Data(tag=kwargs['outtag'],
-                       stack=ctx.obj['stack'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
-            out.push(y, [x])
+            out.push([x], y)
             data.add(out)
 
             #ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]

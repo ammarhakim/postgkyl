@@ -10,6 +10,8 @@ from postgkyl.commands.util import vlog
               help='Output file extension')
 @click.pass_context
 def listoutputs(ctx, **kwargs):
+    """List Gkeyll filename stems in the current directory
+    """
     vlog(ctx, 'Starting listoutputs')
         
     files = glob('*[0-9].{:s}'.format(kwargs['extension']))

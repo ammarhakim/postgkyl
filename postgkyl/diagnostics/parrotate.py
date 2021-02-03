@@ -4,7 +4,7 @@ Postgkyl module for rotating an array into the coordinate system parallel to ano
 """
 import numpy as np
 
-def parrotate(data, rotator, rotateCoords='0:3', stack=False):
+def parrotate(data, rotator, rotateCoords='0:3', overwrite=False):
     """Function to rotate input array into coordinate system parallel to rotator array
     For two arrays u and v, where v is the rotator, operation is (u dot v_hat) v_hat.
 
@@ -36,8 +36,8 @@ def parrotate(data, rotator, rotateCoords='0:3', stack=False):
         print("parrotate: rotation failed due to different numbers of components, data numComponets = '{:d}', rotator numComponents = '{:d}'".format(values.shape[-1], rotator.shape[-1]))
         quit()
     #end
-    if stack:
-        data.push(outrot, grid)
+    if overwrite:
+        data.push(grid, outrot)
     else:
         return grid, outrot
     #end

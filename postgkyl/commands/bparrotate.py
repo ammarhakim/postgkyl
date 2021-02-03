@@ -36,11 +36,10 @@ def bparrotate(ctx, **kwargs):
         grid, outrot = diag.parrotate(a, rot, '3:6')
         # Create new GData structure with appropriate outtag and labels to store output.
         out = Data(tag=kwargs['outtag'],
-                   stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=a.meta)
-        out.push(outrot, grid)
+        out.push(grid, outrot)
         data.add(out)
     #end
 

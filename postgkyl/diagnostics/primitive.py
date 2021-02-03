@@ -1,6 +1,6 @@
 import numpy as np
 
-def getDensity(data, stack=False):
+def getDensity(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -8,14 +8,14 @@ def getDensity(data, stack=False):
 
     out[..., 0] = values[..., 0]
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getVx(data, stack=False):
+def getVx(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 1].shape)
@@ -23,14 +23,14 @@ def getVx(data, stack=False):
 
     out[..., 0] =  values[..., 1] / values[..., 0]
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getVy(data, stack=False):
+def getVy(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 2].shape)
@@ -38,14 +38,14 @@ def getVy(data, stack=False):
 
     out[..., 0] = values[..., 2] / values[..., 0]
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getVz(data, stack=False):
+def getVz(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 3].shape)
@@ -53,28 +53,28 @@ def getVz(data, stack=False):
 
     out[..., 0] = values[..., 3] / values[..., 0]
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getVi(data, stack=False):
+def getVi(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 1:4].shape)
 
     out[..., 0:3] = values[..., 1:4] / values[..., 0]
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPxx(data, stack=False):
+def getPxx(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 4].shape)
@@ -84,14 +84,14 @@ def getPxx(data, stack=False):
     grid, vx = getVx(data)
     out[..., 0] = values[..., 4] - rho*vx*vx
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPxy(data, stack=False):
+def getPxy(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 5].shape)
@@ -103,14 +103,14 @@ def getPxy(data, stack=False):
 
     out[..., 0] = values[..., 5] - rho*vx*vy
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPxz(data, stack=False):
+def getPxz(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 6].shape)
@@ -122,14 +122,14 @@ def getPxz(data, stack=False):
 
     out[..., 0] = values[..., 6] - rho*vx*vz
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPyy(data, stack=False):
+def getPyy(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 7].shape)
@@ -140,14 +140,14 @@ def getPyy(data, stack=False):
 
     out[..., 0] = values[..., 7] - rho*vy*vy
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPyz(data, stack=False):
+def getPyz(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 8].shape)
@@ -159,14 +159,14 @@ def getPyz(data, stack=False):
 
     out[..., 0] = values[..., 8] - rho*vy*vz
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPzz(data, stack=False):
+def getPzz(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 9].shape)
@@ -177,14 +177,14 @@ def getPzz(data, stack=False):
 
     out[..., 0] = values[..., 9] - rho*vz*vz
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getPij(data, stack=False):
+def getPij(data, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 4:10].shape)
@@ -203,14 +203,14 @@ def getPij(data, stack=False):
     out[..., 4] = np.squeeze(Pyz)
     out[..., 5] = np.squeeze(Pzz)
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getP(data, gasGamma=5.0/3.0, numMom=None, stack=False):
+def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -241,14 +241,14 @@ def getP(data, gasGamma=5.0/3.0, numMom=None, stack=False):
         out[..., 0] = (Pxx + Pyy + Pzz) / 3.0
     #end
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getKE(data, gasGamma=5.0/3, numMom=None, stack=False):
+def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -258,14 +258,14 @@ def getKE(data, gasGamma=5.0/3, numMom=None, stack=False):
 
     out[..., 0] = values[..., 4] - pr/(gasGamma-1)
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
 #end
 
-def getMach(data, gasGamma=5.0/3, numMom=None, stack=False):
+def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False):
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -281,8 +281,8 @@ def getMach(data, gasGamma=5.0/3, numMom=None, stack=False):
     # Sound speed cs = sqrt(gasGamma*pr/rho)
     out[..., 0] = np.sqrt(vx**2+vy**2+vz**2)/np.sqrt(gasGamma*pr/rho)
 
-    if stack:
-        data.push(out, grid)
+    if overwrite:
+        data.push(grid, out)
     else:
         return grid, out
     #end
