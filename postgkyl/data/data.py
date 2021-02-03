@@ -90,8 +90,15 @@ class Data(object):
         self._varName = varName
         self.fileName = fileName
         if fileName is not None:
-            zs = (z0, z1, z2, z3, z4, z5)
-            self._loadFrame(zs, comp)
+            # Sequence load typically concatenates multiple files
+            # When the sequence is in just a single file, _loadFrame will
+            # fail and _loadSequence is called instead
+            if path.isfile(self.fileName):
+                zs = (z0, z1, z2, z3, z4, z5)
+                self._loadFrame(zs, comp)
+            else:
+                self._loadSequence()
+            #end
         #end
         
         self.color = None
@@ -150,6 +157,11 @@ class Data(object):
         extension = self.fileName.split('.')[-1]
         if extension == 'h5':
             fh = tables.open_file(self.fileName, 'r')
+            if not '/StructGridField' in fh:
+                fh.close()
+                self._loadSequence()
+                return
+            #end
             
             # Get the atributes
             lower = fh.root.StructGrid._v_attrs.vsLowerBounds
@@ -272,6 +284,7 @@ class Data(object):
             if realType == 1:
                 dtf = np.dtype("f4")
                 doffset = 4
+            #end
 
             offset += 8
             
@@ -338,6 +351,87 @@ class Data(object):
             self._grid = grid
         #end
     #end
+
+    def _loadSequence(self):
+        # Sequence load typically cancatenates multiple files
+        files = glob('{:s}*'.format(self.fileName))
+        if not files:
+            raise NameError(
+                "File(s) '{:s}' not found or empty.".
+                format(self.fileName))
+
+        cnt = 0  # Counter for the number of loaded files
+        for fileName in files:
+            extension = fileName.split('.')[-1]
+            if extension == 'h5':
+                self.fileType = 'hdf5'
+                fh = tables.open_file(fileName, 'r')
+                if '/DataStruct/data' in fh and \
+                   '/DataStruct/timeMesh' in fh:
+                    grid = fh.root.DataStruct.timeMesh.read()
+                    values = fh.root.DataStruct.data.read()
+                    fh.close()
+                else:
+                    fh.close()
+                    continue
+                #end
+            elif extension == 'bp':
+                self.fileType = 'adios'
+                fh =  adios.file(fileName)
+                timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
+                dataList = [key for key, val in fh.vars.items() if 'Data' in key]
+                if len(dataList) > 0:
+                    for i in range(len(dataList)):
+                        if i==0:
+                            values = adios.var(fh, dataList[i]).read()
+                            grid = adios.var(fh, timeMeshList[i]).read()
+                        else:
+                            newvals = adios.var(fh, dataList[i]).read()
+                            # deal with weird behavior after restart where some data doesn't have second dimension
+                            if len(newvals.shape) < 2:
+                               newvals = np.expand_dims(newvals, axis=1)
+                            #end
+                            values = np.append(values, newvals,axis=0)
+                            grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
+                        #end
+                    #end
+                    fh.close()
+                else:
+                    fh.close()
+                    continue
+                #end
+            else:
+                continue
+            #end                    
+    
+            if cnt > 0:
+                self._grid = np.append(self._grid, grid, axis=0)
+                self._values = np.append(self._values, values, axis=0)
+            else:
+                self._grid = grid
+                self._values = values
+            #end
+            cnt += 1
+        #end
+
+        if cnt == 0:  # No files loaded
+            raise NameError(
+                "File(s) '{:s}' not found or empty.".
+                format(self.fileName))
+        #end
+        # Squeeze the time coordinate ...
+        if len(self._grid.shape) > 1:
+            self._grid = np.squeeze(self._grid)
+        #end
+        # ... and make it a list following the Postgkyl grid conventions
+        self._grid = [self._grid]
+
+        # glob() doesn't guarantee the right order
+        sortIdx = np.argsort(self._grid[0])
+        self._grid[0] = self._grid[0][sortIdx]
+        self._values = self._values[sortIdx, ...]
+    #end
+
 
     #-----------------------------------------------------------------
     #-- Stuff Control ------------------------------------------------
