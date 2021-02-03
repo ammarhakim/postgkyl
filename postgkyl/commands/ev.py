@@ -62,22 +62,20 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
     if strIn[0] == 'f' or strIn[0] == 't':
         splits = strIn.split('[')
         if strIn[0] == 't':
-            tagInc = 1
             try:
-                tagNm = splits[1].strip(']')
+                tagNm = splits[0].split('.')[1]
             except IndexError:
                 ctx.fail(click.style("'t' requires a name to be specified in format 't[name]'", fg='red'))
         else:
             tagNm = tags[0]
-            tagInc = 0
         #end
         setIdx = None
-        if len(splits) >= 2+tagInc:
-            setIdx = splits[1+tagInc].strip(']')
+        if len(splits) >= 2:
+            setIdx = splits[1].strip(']')
         #end
         compIdx = None
-        if len(splits) == 3+tagInc:
-            compIdx = splits[2+tagInc].strip(']') 
+        if len(splits) == 3:
+            compIdx = splits[2].strip(']') 
         #end
 
         gridStack.append([])
