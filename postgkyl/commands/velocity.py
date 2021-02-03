@@ -30,11 +30,10 @@ def velocity(ctx, **kwargs):
         valsM1 = m1.getValues()
             
         out = Data(tag=kwargs['outtag'],
-                   stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=m0.meta)
-        out.push(valsM1/valsM0, grid)
+        out.push(grid, valsM1/valsM0)
         data.add(out)
     #end
 

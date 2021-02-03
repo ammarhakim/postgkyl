@@ -33,7 +33,7 @@ def select(ctx, **kwargs):
     pushChain(ctx, 'select', **kwargs)
     data = ctx.obj['data']
     for dat in data.iterator(kwargs['tag']):
-        postgkyl.data.select(dat, stack=True,
+        postgkyl.data.select(dat, overwrite=True,
                              z0=kwargs['z0'], z1=kwargs['z1'],
                              z2=kwargs['z2'], z3=kwargs['z3'],
                              z4=kwargs['z4'], z5=kwargs['z5'],

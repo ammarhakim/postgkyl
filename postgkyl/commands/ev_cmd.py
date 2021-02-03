@@ -2,48 +2,48 @@ import click
 import numpy as np
 
 
-def _gridCheck(grid0, grid1):
-    if grid0 != [] and grid1 != []:
-        cnt0, cnt1 = 0, 0
-        for d in range(len(grid0)):
-            if len(grid0[d]) == 1:
-                cnt0 += 1
-        for d in range(len(grid1)):
-            if len(grid1[d]) == 1:
-                cnt1 += 1
+def _getGrid(grid0, grid1):
+    # if grid0 is not None and grid1 is not None:
+    #     cnt0, cnt1 = 0, 0
+    #     for d in range(len(grid0)):
+    #         if len(grid0[d]) == 1:
+    #             cnt0 += 1
+    #     for d in range(len(grid1)):
+    #         if len(grid1[d]) == 1:
+    #             cnt1 += 1
 
-        if cnt0 < cnt1:
-            return grid0
-        else:
-            return grid1
-    elif grid0 != []:
+    #     if cnt0 < cnt1:
+    #         return grid0
+    #     else:
+    #         return grid1
+    if grid0 is not None:
         return grid0
-    elif grid1 != []:
+    elif grid1 is not None:
         return grid1
     else:
-        return []
+        return None
 
 
 def add(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[0] + inValues[1]
     return [outGrid], [outValues]
 
 
 def subtract(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] - inValues[0]
     return [outGrid], [outValues]
 
 
 def mult(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] * inValues[0]
     return [outGrid], [outValues]
 
 
 def divide(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] / inValues[0]
     return [outGrid], [outValues]
 

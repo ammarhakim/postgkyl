@@ -78,8 +78,6 @@ class PgkylCommandGroup(click.Group):
               help="Save command chain for quick repetition.")
 @click.option('--savechainas', 
               help="Save command chain for quick repetition with specified name for multiple options")
-@click.option('--stack/--no-stack', default=False,
-              help="Turn the Postgkyl stack capabilities ON/OFF")
 @click.option('--verbose', '-v', is_flag=True,
               help="Turn on verbosity.")
 @click.option('--version', is_flag=True, callback=_printVersion,
@@ -145,7 +143,6 @@ def cli(ctx, **kwargs):
     ctx.obj['ax'] = ''
 
     ctx.obj['compgrid'] = kwargs['compgrid']
-    ctx.obj['stack'] =kwargs['stack']
     ctx.obj['globalVarNames'] = kwargs['varname']    
     ctx.obj['globalCuts'] = (kwargs['z0'], kwargs['z1'],
                              kwargs['z2'], kwargs['z3'],
@@ -154,8 +151,6 @@ def cli(ctx, **kwargs):
 #end
 
 # Hook the individual commands into pgkyl
-#cli.add_command(cmd.ev)
-cli.add_command(cmd.trajectory)
 cli.add_command(cmd.activate)
 cli.add_command(cmd.animate)
 cli.add_command(cmd.blot)
@@ -164,6 +159,7 @@ cli.add_command(cmd.current)
 cli.add_command(cmd.deactivate)
 cli.add_command(cmd.differentiate)
 cli.add_command(cmd.euler)
+cli.add_command(cmd.ev)
 cli.add_command(cmd.extractinput)
 cli.add_command(cmd.fft)
 cli.add_command(cmd.growth)
@@ -175,12 +171,13 @@ cli.add_command(cmd.load)
 cli.add_command(cmd.magsq)
 cli.add_command(cmd.mask)
 cli.add_command(cmd.plot)
-cli.add_command(cmd.pop)
+#cli.add_command(cmd.pop)
 cli.add_command(cmd.pr)
 cli.add_command(cmd.recovery)
 cli.add_command(cmd.runchain)
 cli.add_command(cmd.select)
 cli.add_command(cmd.tenmoment)
+cli.add_command(cmd.trajectory)
 cli.add_command(cmd.val2coord)
 cli.add_command(cmd.velocity)
 cli.add_command(cmd.write)

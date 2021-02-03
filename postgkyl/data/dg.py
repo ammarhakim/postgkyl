@@ -350,7 +350,7 @@ class GInterpNodal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, stack=False):
+    def interpolate(self, comp=0, overwrite=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -378,14 +378,14 @@ class GInterpNodal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def differentiate(self, direction, comp=0, stack=False):
+    def differentiate(self, direction, comp=0, overwrite=False):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, False)
@@ -402,10 +402,10 @@ class GInterpNodal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 #end
@@ -470,7 +470,7 @@ class GInterpModal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, stack=False):
+    def interpolate(self, comp=0, overwrite=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -498,14 +498,14 @@ class GInterpModal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def differentiate(self, direction=None, comp=0, stack=False):
+    def differentiate(self, direction=None, comp=0, overwrite=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, True)
@@ -524,14 +524,14 @@ class GInterpModal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def recovery(self, comp=0, c1=False, stack=False):
+    def recovery(self, comp=0, c1=False, overwrite=False):
         if isinstance(comp, int):
             q = self._getRawModal(comp)
         else:
@@ -579,10 +579,10 @@ class GInterpModal(GInterp):
         #end
 
         values = values[..., np.newaxis]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 #end

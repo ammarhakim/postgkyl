@@ -4,7 +4,8 @@ import importlib
 from os import path
 import sys
 
-from postgkyl.data import GData
+from postgkyl.data import Data
+from postgkyl.data import select as pselect
 from postgkyl.commands.util import vlog, pushChain
 
 # load base commands
@@ -28,130 +29,77 @@ if userCommands:
     #end
 #end
 
-def _copyMeta(meta, data):
-    if meta["isModal"] is None:
-        meta["isModal"] = data.isModal
-    elif meta["isModal"] == data.isModal:
-        pass
-    else:
-        meta["isModal"] = False
-    #end
-    if meta["polyOrder"] is None:
-        meta["polyOrder"] = data.polyOrder
-    elif meta["polyOrder"] == data.polyOrder:
-        pass
-    else:
-        meta["polyOrder"] = 'mixed'
-    #end
-    if meta["basisType"] is None:
-        meta["basisType"] = data.basisType
-    elif meta["basisType"] == data.basisType:
-        pass
-    else:
-        meta["basisType"] = 'unknown'
-    #end
-    return meta
-#end
+# def _copyMeta(meta, data):
+#     if meta["isModal"] is None:
+#         meta["isModal"] = data.isModal
+#     elif meta["isModal"] == data.isModal:
+#         pass
+#     else:
+#         meta["isModal"] = False
+#     #end
+#     if meta["polyOrder"] is None:
+#         meta["polyOrder"] = data.polyOrder
+#     elif meta["polyOrder"] == data.polyOrder:
+#         pass
+#     else:
+#         meta["polyOrder"] = 'mixed'
+#     #end
+#     if meta["basisType"] is None:
+#         meta["basisType"] = data.basisType
+#     elif meta["basisType"] == data.basisType:
+#         pass
+#     else:
+#         meta["basisType"] = 'unknown'
+#     #end
+#     return meta
+# #end
 
-def _data(ctx, gridStack, evalStack, s, meta):
-    if s[0] == 'f':
-        try:
-            if '[' in s:
-                setIdx = s[1:].split('[')[0]
-                compIdx = s.split('[')[1].split(']')[0]
-                if ':' in compIdx:
-                    tmp = compIdx.split(':')
-                    if tmp[0] == '':
-                        lo = None
-                    else:
-                        lo = int(tmp[0])
-                    if tmp[1] == '':
-                        up = None
-                    else:
-                        up = int(tmp[1])
-                    compIdx = slice(lo, up)
-                else:
-                    compIdx = int(compIdx)
-            else:
-                if len(s) == 1:
-                    setIdx = 0
-                else:
-                    setIdx = s[1:]
-                compIdx = None
-        except ValueError:
-            click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
-            ctx.exit()
-            
-        if setIdx == '*':
-            if len(gridStack) == 1: # switching stacks to "piece-wise" mode
-                for i in range(len(ctx.obj['sets'])-1):
-                    gridStack.append(list(gridStack[0]))
-                    evalStack.append(list(evalStack[0]))
-                #end
-            #end
-            for i, setIdx in enumerate(ctx.obj['sets']):
-                gridStack[i].append(ctx.obj['dataSets'][setIdx].getGrid())
-                values = ctx.obj['dataSets'][setIdx].getValues()
-                _copyMeta(meta, ctx.obj['dataSets'][setIdx])
-
-                if compIdx is not None:
-                    if type(compIdx) == int:
-                        values = values[..., compIdx, np.newaxis]
-                    else:
-                        values = values[..., compIdx]
-                    #end
-                evalStack[i].append(values)
-            #end
-        else:
+def _data(ctx, gridStack, valueStack, strIn, tags):
+    # Load individual filesets or tags
+    if strIn[0] == 'f' and len(tags) > 1:
+        ctx.fail(click.style("'f' cannot be used if there is more then one active tags ({:d} active)".format(len(tags)), fg='red'))
+    #end
+    if strIn[0] == 'f' or strIn[0] == 't':
+        splits = strIn.split('[')
+        if strIn[0] == 't':
+            tagInc = 1
             try:
-                setIdx = int(setIdx)
-            except ValueError:
-                click.echo(click.style("ERROR in 'ev': Data set name '{:s}' is not in right format. It needs to be 'f#', f#[#]', 'f*', or 'f*[#]'".format(s), fg='red'))
-                ctx.exit()
+                tagNm = splits[1].strip(']')
+            except IndexError:
+                ctx.fail(click.style("'t' requires a name to be specified in format 't[name]'", fg='red'))
+        else:
+            tagNm = tags[0]
+            tagInc = 0
+        #end
+        setIdx = None
+        if len(splits) >= 2+tagInc:
+            setIdx = splits[1+tagInc].strip(']')
+        #end
+        compIdx = None
+        if len(splits) == 3+tagInc:
+            compIdx = splits[2+tagInc].strip(']') 
+        #end
 
-            if setIdx >= len(ctx.obj['sets']):
-                click.echo(click.style("ERROR in 'ev': Data set index '{:d}' needs to be between 0 and {:d}".format(setIdx,  len(ctx.obj['sets'])-1), fg='red'))
-                ctx.exit()
-            #end
-
-            if setIdx < 0:
-                setIdx = len(ctx.obj['sets']) + setIdx
-            #end
-            
-            for i in range(len(gridStack)):
-                gridStack[i].append(ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getGrid())
-                values = ctx.obj['dataSets'][ctx.obj['sets'][setIdx]].getValues()
-                if compIdx is not None:
-                    if type(compIdx) == int:
-                        values = values[..., compIdx, np.newaxis]
-                    else:
-                        values = values[..., compIdx]
-                    #end
-                #end
-                evalStack[i].append(values)
-                _copyMeta(meta, ctx.obj['dataSets'][ctx.obj['sets'][setIdx]])
-            #end
-
-        return True
-    elif '(' in s or '[' in s:
-        for i in range(len(gridStack)):
-            evalStack[i].append(eval(s))
-            gridStack[i].append([])
+        gridStack.append([])
+        valueStack.append([])
+        for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx):
+            grid, values = pselect(dat, comp=compIdx)
+            gridStack[-1].append(grid)
+            valueStack[-1].append(values)
         #end
         return True
-    elif ':' in s or ',' in s:
-        for i in range(len(gridStack)):
-            evalStack[i].append(str(s))
-            gridStack[i].append([])
-        #end
+    elif '(' in strIn or '[' in strIn:
+        valueStack.append([eval(s)])
+        gridStack.append([None])
+        return True
+    elif ':' in strIn or ',' in strIn:
+        valueStack.append([str(s)])
+        gridStack.append([None])
         return True
     else:
         try:
-            num = float(s)
-            for i in range(len(gridStack)):
-                evalStack[i].append(num)
-                gridStack[i].append([])
-            #end
+            valueStack.append([np.array(float(strIn))])
+            gridStack.append([None])
             return True
         except Exception:
             return False
@@ -159,102 +107,97 @@ def _data(ctx, gridStack, evalStack, s, meta):
     #end
 #end
 
-def _command(ctx, gridStack, evalStack, s):
-    if userCommands and s in cmdUser.cmds:
-        numIn = cmdUser.cmds[s]['numIn']
-        numOut = cmdUser.cmds[s]['numOut']
-        func = cmdUser.cmds[s]['func']
-    elif s in cmdBase.cmds:
-        numIn = cmdBase.cmds[s]['numIn']
-        numOut = cmdBase.cmds[s]['numOut']
-        func = cmdBase.cmds[s]['func']
+def _command(ctx, gridStack, valueStack, strIn):
+    if userCommands and strIn in cmdUser.cmds:
+        numIn = cmdUser.cmds[strIn]['numIn']
+        numOut = cmdUser.cmds[strIn]['numOut']
+        func = cmdUser.cmds[strIn]['func']
+    elif strIn in cmdBase.cmds:
+        numIn = cmdBase.cmds[strIn]['numIn']
+        numOut = cmdBase.cmds[strIn]['numOut']
+        func = cmdBase.cmds[strIn]['func']
     else:
         return False
     #end
+    inGrid, inValues, numSets = [], [], []
+    for i in range(numIn):
+        inGrid.append(gridStack.pop())
+        inValues.append(valueStack.pop())
+        numSets.append(len(inValues[-1]))
+    #end
+    for i in range(numOut):
+        gridStack.append([])
+        valueStack.append([])
+    #end
 
-    for i in range(len(evalStack)):
-        inGrid, inValues = [], []
-        for j in range(numIn):
-            inGrid.append(gridStack[i].pop())
-            inValues.append(evalStack[i].pop())
+    for setIdx in range(max(numSets)):
+        tmpGrid, tmpValues = [], []
+        for i in range(numIn):
+            tmpGrid.append(inGrid[i][min(setIdx,numSets[i]-1)])
+            tmpValues.append(inValues[i][min(setIdx,numSets[i]-1)])
         #end
         try:
-            outGrid, outValues = func(inGrid, inValues)
+            outGrid, outValues = func(tmpGrid, tmpValues)
         except Exception as err:
-            click.echo(click.style("{}".format(err), fg='red'))
-            ctx.exit()
+            ctx.fail(click.style("{}".format(err), fg='red'))
         #end
-        for j in range(numOut):
-            gridStack[i].append(outGrid[j])
-            evalStack[i].append(outValues[j])
+        for i in range(numOut):
+            gridStack[-numOut+i].append(outGrid[i])
+            valueStack[-numOut+i].append(outValues[i])
         #end
     #end
     return True
 #end
 
-@click.command(help="Manipulate dataset using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1] + ". User-specifed commands can also be used.")
+@click.command(help="Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1] + ". User-specifed commands can also be used.")
 @click.argument('chain', nargs=1, type=click.STRING)
+@click.option('--outtag', '-o',
+              default='ev', show_default=True,
+              help='Tag for the result')
 @click.option('--label', '-l',
-              help="Specify a custom label for the dataset resulting from the expression.")
+              default='ev', show_default=True,
+              help="Custom label for the result")
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
     pushChain(ctx, 'ev', **kwargs)
-
-    gridStack, evalStack = [[]], [[]]
+    data = ctx.obj['data']
+    
+    gridStack, valueStack = [], []
     chainSplit = kwargs['chain'].split(' ')
     chainSplit = list(filter(None, chainSplit))
-    meta = {
-        "isModal" : None,
-        "polyOrder" : None,
-        "basisType" : None
-    }
+    # meta = {
+    #     "isModal" : None,
+    #     "polyOrder" : None,
+    #     "basisType" : None
+    # }
 
+    tags = list(data.tagIterator())
     for s in chainSplit:
-        isData = _data(ctx, gridStack, evalStack, s, meta)
+        isData = _data(ctx, gridStack, valueStack, s, tags)
         if not isData:
-            isCommand = _command(ctx, gridStack, evalStack, s)
+            isCommand = _command(ctx, gridStack, valueStack, s)
         #end
         if not isData and not isCommand:
-            click.echo(click.style("ERROR in 'ev': Evaluate input '{:s}' represents neither data nor commad".format(s), fg='red'))
-            ctx.exit()
+            ctx.fail(click.style("Evaluate input '{:s}' represents neither data nor commad".format(s), fg='red'))
         #end
     #end
 
-    if len(evalStack[0]) == 0:
-        click.echo(click.style("ERROR in 'ev': Evaluate stack is empty, there is nothing to return".format(s), fg='red'))
-        ctx.exit()
-    elif len(evalStack[0]) > 1:
-        click.echo(click.style("WARNING in 'ev': Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior".format(s), fg='yellow'))
+    if len(valueStack) == 0:
+        ctx.fail(click.style("Evaluate stack is empty, there is nothing to return".format(s), fg='red'))
+    elif len(valueStack) > 1:
+        click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior".format(s), fg='yellow'))
     #end
-    if len(evalStack) == 1:
-        vlog(ctx, 'ev: Creating new dataset')
-        idx = len(ctx.obj['dataSets'])
-        ctx.obj['setIds'].append(idx)
-        ctx.obj['dataSets'].append(GData())
-        ctx.obj['dataSets'][idx].push(evalStack[0][-1], gridStack[0][-1])
-        ctx.obj['dataSets'][idx].name = 'ev'
-        ctx.obj['dataSets'][idx].isModal = meta['isModal']
-        #end
-        if meta['polyOrder'] is not 'mixed':
-            ctx.obj['dataSets'][idx].polyOrder = meta['polyOrder']
-        #end
-        if meta['basisType'] is not 'mixed':
-            ctx.obj['dataSets'][idx].basisType = meta['basisType']
-        #end
 
-        vlog(ctx, 'ev: Active data set switched to #{:d}'.format(idx))
-        ctx.obj['sets'] = [idx]
+    data.deactivateAll()
 
-        if kwargs['label']:
-            ctx.obj['labels'].append(kwargs['label'])
-        else:
-            ctx.obj['labels'].append(kwargs['chain'])
-        #end
-    else:
-        for i, setIdx in enumerate(ctx.obj['sets']):
-            ctx.obj['dataSets'][setIdx].push(evalStack[i][-1], gridStack[i][-1])
-        #end
+    for grid, values in zip(gridStack[-1], valueStack[-1]):
+        out = Data(tag=kwargs['outtag'],
+                   compgrid=ctx.obj['compgrid'],
+                   label=kwargs['label'])
+                   #meta=m0.meta)
+        out.push(grid, values)
+        data.add(out)
     #end
 
     vlog(ctx, 'Finishing ev')

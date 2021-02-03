@@ -93,7 +93,6 @@ def load(ctx, **kwargs):
         for fn in files:
             try:
                 data.add(Data(fileName=fn, tag=kwargs['tag'],
-                              stack=ctx.obj['stack'],
                               compgrid=ctx.obj['compgrid'],
                               z0=z0, z1=z1, z2=z2,
                               z3=z3, z4=z4, z5=z5,

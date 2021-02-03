@@ -58,19 +58,18 @@ class Data(object):
         data = postgkyl.GData('file.bp', comp=1)
     """
 
-    def __init__(self, fileName=None, stack=False, comp=None,
+    def __init__(self, fileName=None, comp=None,
                  z0=None, z1=None, z2=None,
                  z3=None, z4=None, z5=None,
                  compgrid=False,
                  varName='CartGridField', tag='default',
                  label=None, meta=None):
         self._tag = tag
-        self._stack = stack  # default False
         self._compGrid = compgrid # disregard the mapped grid?
-        self._grid = []
+        self._grid = None
         self._gridType = "uniform" 
         self._gridFile = None
-        self._values = []  # (N+1)D narray of values
+        self._values = None # (N+1)D narray of values
 
         self.meta = {}
         self.meta['time'] = None
@@ -91,15 +90,8 @@ class Data(object):
         self._varName = varName
         self.fileName = fileName
         if fileName is not None:
-            # Sequence load typically concatenates multiple files
-            # When the sequence is in just a single file, _loadFrame will
-            # fail and _loadSequence is called instead
-            if path.isfile(self.fileName):
-                zs = (z0, z1, z2, z3, z4, z5)
-                self._loadFrame(zs, comp)
-            else:
-                self._loadSequence()
-            #end
+            zs = (z0, z1, z2, z3, z4, z5)
+            self._loadFrame(zs, comp)
         #end
         
         self.color = None
@@ -130,7 +122,7 @@ class Data(object):
                 cnt = cnt + 1
             #end
         #end
-                
+
         if comp is not None:
             comp = idxParser(comp)
             if isinstance(comp, int):
@@ -152,25 +144,19 @@ class Data(object):
         #end
     #end
 
-
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
         self.fileDir = path.dirname(path.realpath(self.fileName))
         extension = self.fileName.split('.')[-1]
         if extension == 'h5':
             fh = tables.open_file(self.fileName, 'r')
-            if not '/StructGridField' in fh:
-                fh.close()
-                self._loadSequence()
-                return
-            #end
             
             # Get the atributes
             lower = fh.root.StructGrid._v_attrs.vsLowerBounds
             upper = fh.root.StructGrid._v_attrs.vsUpperBounds
             cells = fh.root.StructGrid._v_attrs.vsNumCells
             # Load data ...
-            self._values.append(fh.root.StructGridField.read())
+            self._values = fh.root.StructGridField.read()
             # ... and the time-stamp
             if '/timeData' in fh:
                 self.meta['time'] = fh.root.timeData._v_attrs.vsTime
@@ -178,13 +164,6 @@ class Data(object):
             fh.close()
         elif extension == 'bp':
             fh = adios.file(self.fileName)
-            if not self._varName in fh.vars:
-                # Not a Gkyl "frame" data; trying to load as a sequence
-                fh.close()
-                self._loadSequence()  
-                return
-            #end
-
             # Get the atributes
             self.attrsList = { }
             for k in fh.attrs.keys():
@@ -251,7 +230,7 @@ class Data(object):
             # Load data
             var = adios.var(fh, self._varName)
             offset, count = self._createOffsetCountBp(var, axes, comp)
-            self._values.append(var.read(offset=offset, count=count))
+            self._values = var.read(offset=offset, count=count)
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -315,7 +294,7 @@ class Data(object):
             #end
             numComp = elemSz
             gshape[-1] = int(numComp)
-            self._values.append(adata.reshape(gshape))
+            self._values = adata.reshape(gshape)
         else:
             raise NameError(
                 "File extension '{:s}' is not supported".
@@ -326,106 +305,26 @@ class Data(object):
         dz = (upper - lower) / cells
         # Adjusts bounds in case ghost layer is included in data
         for d in range(numDims):
-            if cells[d] != self._values[0].shape[d]:
+            if cells[d] != self._values.shape[d]:
                 if self._gridType == "mapped":
                     raise ValueError("Data appears to include ghost cells which is not compatible with mapped grid. Use computational grid 'compgrid' instead.")
                 #end
-                ngl = int(np.floor((cells[d] - self._values[0].shape[d])*0.5))
-                ngu = int(np.ceil((cells[d] - self._values[0].shape[d])*0.5))
-                cells[d] = self._values[0].shape[d]
+                ngl = int(np.floor((cells[d] - self._values.shape[d])*0.5))
+                ngu = int(np.ceil((cells[d] - self._values.shape[d])*0.5))
+                cells[d] = self._values.shape[d]
                 lower[d] = lower[d] - ngl*dz[d]
                 upper[d] = upper[d] + ngu*dz[d]
             #end
         #end
 
         # Construct grids if not loaded already
-        if len(self._grid) == 0:
+        if not self._grid is not None:
             grid = [np.linspace(lower[d],
                                 upper[d],
                                 cells[d]+1)
                     for d in range(numDims)]
-            self._grid.append(grid)
+            self._grid = grid
         #end
-    #end
-
-    def _loadSequence(self):
-        # Sequence load typically cancatenates multiple files
-        files = glob('{:s}*'.format(self.fileName))
-        if not files:
-            raise NameError(
-                "File(s) '{:s}' not found or empty.".
-                format(self.fileName))
-
-        cnt = 0  # Counter for the number of loaded files
-        for fileName in files:
-            extension = fileName.split('.')[-1]
-            if extension == 'h5':
-                self.fileType = 'hdf5'
-                fh = tables.open_file(fileName, 'r')
-                if '/DataStruct/data' in fh and \
-                   '/DataStruct/timeMesh' in fh:
-                    grid = fh.root.DataStruct.timeMesh.read()
-                    values = fh.root.DataStruct.data.read()
-                    fh.close()
-                else:
-                    fh.close()
-                    continue
-                #end
-            elif extension == 'bp':
-                self.fileType = 'adios'
-                fh =  adios.file(fileName)
-                timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
-                dataList = [key for key, val in fh.vars.items() if 'Data' in key]
-                if len(dataList) > 0:
-                    for i in range(len(dataList)):
-                        if i==0:
-                            values = adios.var(fh, dataList[i]).read()
-                            grid = adios.var(fh, timeMeshList[i]).read()
-                        else:
-                            newvals = adios.var(fh, dataList[i]).read()
-                            # deal with weird behavior after restart where some data doesn't have second dimension
-                            if len(newvals.shape) < 2:
-                               newvals = np.expand_dims(newvals, axis=1)
-                            #end
-                            values = np.append(values, newvals,axis=0)
-                            grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
-                        #end
-                    #end
-                    fh.close()
-                else:
-                    fh.close()
-                    continue
-                #end
-            else:
-                continue
-            #end                    
-    
-            if cnt > 0:
-                self._grid[0] = np.append(self._grid[0], grid, axis=0)
-                self._values[0] = np.append(self._values[0], values, axis=0)
-            else:
-                self._grid.append(grid)
-                self._values.append(values)
-            #end
-            cnt += 1
-        #end
-
-        if cnt == 0:  # No files loaded
-            raise NameError(
-                "File(s) '{:s}' not found or empty.".
-                format(self.fileName))
-        #end
-        # Squeeze the time coordinate ...
-        if len(self._grid[0].shape) > 1:
-            self._grid[0] = np.squeeze(self._grid[0])
-        #end
-        # ... and make it a list following the Postgkyl grid conventions
-        self._grid[0] = [self._grid[0]]
-
-        # glob() doesn't guarantee the right order
-        sortIdx = np.argsort(self._grid[0][0])
-        self._grid[0][0] = self._grid[0][0][sortIdx]
-        self._values[0] = self._values[0][sortIdx, ...]
     #end
 
     #-----------------------------------------------------------------
@@ -464,11 +363,11 @@ class Data(object):
 
     
     def getNumCells(self):
-        if len(self._values) > 0:
-            numDims = len(self._values[-1].shape)-1
+        if self._values is not None:
+            numDims = len(self._values.shape)-1
             cells = np.zeros(numDims, np.int32)
             for d in range(numDims):
-                cells[d] = int(self._values[-1].shape[d])
+                cells[d] = int(self._values.shape[d])
             #end
             return cells
         else:
@@ -477,16 +376,16 @@ class Data(object):
     #end
 
     def getNumComps(self):
-        if len(self._values) > 0:
-            return int(self._values[-1].shape[-1])
+        if self._values is not None:
+            return int(self._values.shape[-1])
         else:
             return 0
         #end
     #end
 
     def getNumDims(self, squeeze=False):
-        if len(self._values) > 0:
-            numDims = int(len(self._values[-1].shape)-1)
+        if self._values is not None:
+            numDims = int(len(self._values.shape)-1)
             if squeeze:
                 cells = self.getNumCells()
                 for d in range(numDims):
@@ -502,12 +401,12 @@ class Data(object):
     #end
 
     def getBounds(self):
-        if len(self._grid) > 0:
-            numDims = len(self._values[-1].shape)-1
+        if self._grid is not None:
+            numDims = len(self._values.shape)-1
             lo, up = np.zeros(numDims), np.zeros(numDims)
             for d in range(numDims):
-                lo[d] = self._grid[-1][d].min()
-                up[d] = self._grid[-1][d].max()
+                lo[d] = self._grid[d].min()
+                up[d] = self._grid[d].max()
             #end
             return lo, up
         else:
@@ -516,54 +415,25 @@ class Data(object):
     #end
 
     def getGrid(self):
-        if len(self._values) > 0:
-            return self._grid[-1]
-        else:
-            return []
-        #end
+        return self._grid
     #end
 
     def getValues(self):
-        if len(self._values) > 0:
-            return self._values[-1]
-        else:
-            return np.array([])
-        #end
+        return self._values
     #end
 
-    #-----------------------------------------------------------------
-    #-- Stack Control ------------------------------------------------
-    def pop(self):
-        if len(self._grid) > 0:
-            return self._grid.pop(), self._values.pop()
-        else:
-            return [], np.array([])
-        #end
+    def setGrid(self, grid):
+        self._grid = grid
     #end
 
-    def push(self, values, grid=None):
-        if not self._stack:
-            if grid is not None:
-                self._grid.append(grid)
-            else:
-                self._grid.append(self._grid[-1])
-            #end
-            self._values.append(values)
-        else:
-            self._values[0] = values
-            self._grid[0] = grid
-        #end
+    def setValues(self, values):
+        self._values = values
+    #end                       
+
+    def push(self, grid, values):
+        self._values = values
+        self._grid = grid
         return self
-    #end
-
-    # legacy function
-    def peakGrid(self):
-        print("'peakGrid' is a legacy function; please switch to 'getGrid'")
-        return self.getGrid()
-    #end
-    def peakValues(self):
-        print("'peakValues' is a legacy function; please switch to 'getValues'")
-        return self.getValues()
     #end
 
     #-----------------------------------------------------------------

@@ -96,9 +96,12 @@ class DataSpace(object):
                     #end
                 #end
             except KeyError as err:
-                click.echo(click.style("ERROR: Failed to load the specified/default tag {0}".format(err),
-                                       fg='red'))
+                click.echo(click.style("ERROR: Failed to load the specified/default tag {0}".format(err), fg='red'))
                 quit()
+            except IndexError:
+                click.echo(click.style("ERROR: Index out of the dataset range", fg='red'))
+                quit()
+            #end
             #end
         #end
     #end

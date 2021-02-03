@@ -63,7 +63,7 @@ def interpolate(ctx, **kwargs):
         numComps = int(dat.getNumComps() / numNodes)
         
         if not kwargs['new']:
-            dg.interpolate(tuple(range(numComps)), stack=True)
+            dg.interpolate(tuple(range(numComps)), overwrite=True)
         else:
             interpFn(dat, kwargs['polyorder'])
         #end
