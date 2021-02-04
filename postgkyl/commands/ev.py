@@ -63,7 +63,7 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
         splits = strIn.split('[')
         if strIn[0] == 't':
             try:
-                tagNm = splits[0].split('.')[1]
+                tagNm = strIn.split('.')[1]
             except IndexError:
                 ctx.fail(click.style("'t' requires a name to be specified in format 't[name]'", fg='red'))
             #end
@@ -72,17 +72,37 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
         #end
         setIdx = None
         if len(splits) >= 2:
-            setIdx = splits[1].strip(']')
+            setIdx = splits[1].split(']')[0]
         #end
         compIdx = None
         if len(splits) == 3:
-            compIdx = splits[2].strip(']') 
+            compIdx = splits[2].split(']')[0]
+        #end
+
+        metaKey = None
+        if strIn[0] == 't':
+            if len(strIn.split('.')) == 3:
+                metaKey = strIn.split('.')[2]
+            #end
+        else:
+            if len(strIn.split('.')) == 2:
+                metaKey = strIn.split('.')[1]
+            #end
         #end
 
         gridStack.append([])
         valueStack.append([])
         for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx):
-            grid, values = pselect(dat, comp=compIdx)
+            if metaKey:
+                grid = None
+                if metaKey in dat.meta:
+                    values = np.array(dat.meta[metaKey])
+                else:
+                    ctx.fail(click.echo("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
+                #end
+            else:
+                grid, values = pselect(dat, comp=compIdx)
+            #end
             gridStack[-1].append(grid)
             valueStack[-1].append(values)
         #end
