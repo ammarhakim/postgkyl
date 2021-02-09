@@ -88,6 +88,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turns on the pgkyl hashtag!")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
+@click.option('--figsize',
+              help="Comma-separated values for x and y size.")
 @click.pass_context
 def plot(ctx, **kwargs):
     """Plot active datasets, optionally displaying the plot and/or saving
@@ -151,13 +153,13 @@ def plot(ctx, **kwargs):
             #end
         #end
         if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
-            fName = str(fName) + '.png'
+            fName = str(fName)
             plt.savefig(fName, dpi=kwargs['dpi'])
             fName = ""
         #end
     #end
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-        fName = str(fName) + '.png'
+        fName = str(fName)
         plt.savefig(fName, dpi=kwargs['dpi'])
     #end
 
