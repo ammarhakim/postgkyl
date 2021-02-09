@@ -176,6 +176,12 @@ class Data(object):
             fh.close()
         elif extension == 'bp':
             fh = adios.file(self.fileName)
+            if not self._varName in fh.vars:
+                # Not a Gkyl "frame" data; trying to load as a sequence
+                fh.close()
+                self._loadSequence()  
+                return
+            #end
             # Get the atributes
             self.attrsList = { }
             for k in fh.attrs.keys():
