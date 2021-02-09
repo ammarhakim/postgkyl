@@ -1,7 +1,8 @@
 import click
 import numpy as np
 
-import postgkyl.data.select 
+import postgkyl.data.select
+from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()

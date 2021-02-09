@@ -171,6 +171,8 @@ def integrate(inGrid, inValues, avg=False):
         axis = tuple([int(axis)])
     elif isinstance(axis, tuple):
         pass
+    elif isinstance(axis, np.ndarray):
+        axis = tuple([int(axis)])
     elif isinstance(axis, str):
         if len(axis.split(',')) > 1:
             axes = axis.split(',')
@@ -183,7 +185,8 @@ def integrate(inGrid, inValues, avg=False):
             axis = tuple(range(numDims))
     else:
             raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
-
+    #end
+    
     dz = []
     for d, coord in enumerate(grid):
         dz.append(coord[1:] - coord[:-1])
