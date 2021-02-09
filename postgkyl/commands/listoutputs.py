@@ -1,5 +1,5 @@
 import click
-
+import re
 from glob import glob
 
 from postgkyl.commands.util import vlog
@@ -14,13 +14,17 @@ def listoutputs(ctx, **kwargs):
     """
     vlog(ctx, 'Starting listoutputs')
         
-    files = glob('*[0-9].{:s}'.format(kwargs['extension']))
+    files = glob('*.{:s}'.format(kwargs['extension']))
     unique = []
     for fn in files:
-        # remove the frame number
-        ext = fn.split('_')[-1]
-        # get the stem
-        s = fn[:-(len(ext)+1)]
+        # remove extension
+        s = fn[:-(len(kwargs['extension'])+1)]
+        # strip "restart"
+        if s.endswith('_restart'):
+            s = s[:-8]
+        #end
+        #strip digits
+        s = re.sub(r'_\d+$', '', s)
         if s not in unique:
             unique.append(s)
         #end
