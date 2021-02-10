@@ -391,13 +391,13 @@ class GInterpNodal(GInterp):
                                      self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) * 2/(self.Xc[direction][1]-self.Xc[direction][0])
             values = values[..., np.newaxis]
         else:
             values = np.zeros(q.shape, self.numDims)
             for i in range(self.numDims):
                 values[:,i] = _interpOnMesh(cMat[:,:,i], q)
-                values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+                values[:,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
@@ -511,15 +511,15 @@ class GInterpModal(GInterp):
                                      self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) * 2/(self.Xc[direction][1]-self.Xc[direction][0])
             values = values[..., np.newaxis]
         else:
-            values = _interpOnMesh(cMat[:,:,0], q)
+            values = _interpOnMesh(cMat[...,0], q)
             values /= (self.Xc[0][1]-self.Xc[0][0])
             values = values[..., np.newaxis]
             for i in range(1, self.numDims):
-                values = np.append(values, _interpOnMesh(cMat[:,:,i], q)[...,np.newaxis], axis=2)
-                values[...,i] /= (self.Xc[i][1]-self.Xc[i][0])
+                values = np.append(values, _interpOnMesh(cMat[...,i], q)[...,np.newaxis], axis=self.numDims)
+                values[...,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])

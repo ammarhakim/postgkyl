@@ -3,6 +3,7 @@ import numpy as np
 
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
+from postgkyl.data import Data
 
 from postgkyl.modalDG import interpolate as interpFn
 

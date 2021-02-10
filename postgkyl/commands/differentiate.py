@@ -3,6 +3,7 @@ import numpy as np
 
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
+from postgkyl.data import Data
 
 @click.command(help='Interpolate a derivative of DG data on a uniform mesh')
 @click.option('--basistype', '-b',
@@ -12,6 +13,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Specify polynomial order')
 @click.option('--interp', '-i', type=click.INT,
               help='Interpolation onto a general mesh of specified amount')
+@click.option('--direction', '-d', type=click.INT,
+              help='Direction of the derivative (default: calculate all)')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file')
 @click.option('--tag', '-t',
@@ -61,11 +64,11 @@ def differentiate(ctx, **kwargs):
             out = Data(tag=kwargs['outtag'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
-            grid, values = dg.differentiate()
+            grid, values = dg.differentiate(direction=kwargs['direction'])
             out.push(grid, values)
             data.add(out)
         else:
-            dg.differentiate(overwrite=True)
+            dg.differentiate(direction=kwargs['direction'], overwrite=True)
         #end
     vlog(ctx, 'Finishing differentiate')
 #end

@@ -92,7 +92,7 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
 
         gridStack.append([])
         valueStack.append([])
-        for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx):
+        for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx, onlyActive=False):
             if metaKey:
                 grid = None
                 if metaKey in dat.meta:
@@ -171,7 +171,6 @@ def _command(ctx, gridStack, valueStack, strIn):
 @click.command(help="Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1] + ". User-specifed commands can also be used.")
 @click.argument('chain', nargs=1, type=click.STRING)
 @click.option('--outtag', '-o',
-              default='ev', show_default=True,
               help='Tag for the result')
 @click.option('--label', '-l',
               default='ev', show_default=True,
@@ -192,6 +191,15 @@ def ev(ctx, **kwargs):
     # }
 
     tags = list(data.tagIterator())
+    outTag = kwargs['outtag']
+    if outTag is None:
+        if len(tags) == 1 and tags[0] == 'default':
+            outTag = 'default'
+        else:
+            outTag = 'ev'
+        #end
+    #end
+            
     for s in chainSplit:
         isData = _data(ctx, gridStack, valueStack, s, tags)
         if not isData:
@@ -211,7 +219,7 @@ def ev(ctx, **kwargs):
     data.deactivateAll()
 
     for grid, values in zip(gridStack[-1], valueStack[-1]):
-        out = Data(tag=kwargs['outtag'],
+        out = Data(tag=outTag,
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'])
                    #meta=m0.meta)
