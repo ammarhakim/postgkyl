@@ -112,7 +112,7 @@ def plot(ctx, **kwargs):
     if kwargs['subplots']:
         kwargs['numAxes'] = 0
         kwargs['startAxes'] = 0
-        for dat in ctx.obj['data'].indexer():
+        for dat in ctx.obj['data'].iterator(kwargs['use']):
             kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
         #end
         if kwargs['figure'] is None:

@@ -96,11 +96,11 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
         #end
         return True
     elif '(' in strIn or '[' in strIn:
-        valueStack.append([eval(s)])
+        valueStack.append([eval(strIn)])
         gridStack.append([None])
         return True
     elif ':' in strIn or ',' in strIn:
-        valueStack.append([str(s)])
+        valueStack.append([str(strIn)])
         gridStack.append([None])
         return True
     else:
