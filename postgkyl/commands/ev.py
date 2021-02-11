@@ -178,7 +178,7 @@ def ev(ctx, **kwargs):
     #     "basisType" : None
     # }
 
-    tags = list(data.tagIterator())
+    tags = list(data.tagIterator(onlyActive=False))
     outTag = kwargs['tag']
     if outTag is None:
         if len(tags) == 1:
