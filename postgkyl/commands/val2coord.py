@@ -39,10 +39,9 @@ def _getRange(strIn, length):
 #end
 
 @click.command()
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o',
-              default='val2coord', show_default=True,
+@click.option('--tag', '-t',
               help='Tag for the result')
 @click.option('-x', type=click.STRING,
               help="Select components that will became the grid of the new dataset.")
@@ -63,8 +62,18 @@ def val2coord(ctx, **kwargs):
 
     activeSets = []
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
+
+    tags = list(data.tagIterator())
+    outTag = kwargs['tag']
+    if outTag is None:
+        if len(tags) == 1:
+            outTag = tags[0]
+        else:
+            outTag = 'val2coord'
+        #end
+    #end
     
-    for setIdx, dat in data.iterator(kwargs['tag'], enum=True):
+    for setIdx, dat in data.iterator(kwargs['use'], enum=True):
         values = dat.getValues()
         xComps = _getRange(kwargs['x'], len(values[0, :]))
         yComps = _getRange(kwargs['y'], len(values[0, :]))
@@ -84,7 +93,7 @@ def val2coord(ctx, **kwargs):
             x = values[..., xc]
             y = values[..., yc, np.newaxis]
 
-            out = Data(tag=kwargs['outtag'],
+            out = Data(tag=outTag,
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push([x], y)

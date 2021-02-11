@@ -5,7 +5,7 @@ from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Mask data with specified Gkeyll mask file.')
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--filename', '-f', type=click.STRING,
               help="Specify the file with a mask")
@@ -23,7 +23,7 @@ def mask(ctx, **kwargs):
         maskFld = Data(kwargs['filename']).getValues()
     #end
 
-    for dat in data.interator(kwargs['tag']):
+    for dat in data.interator(kwargs['use']):
         values = dat.getValues()
 
         if kwargs['filename']:

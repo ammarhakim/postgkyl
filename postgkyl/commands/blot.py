@@ -5,7 +5,7 @@ import postgkyl.output.blot
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(hidden=True)
-@click.option('--tag', '-t', default=None,
+@click.option('--use', '-u', default=None,
               help="Specify the tag to plot.")
 # @click.option('--figure', '-f', default=None,
 #               help="Specify figure to plot in.")
@@ -73,7 +73,7 @@ def blot(ctx, **kwargs):
     #end
     
     fName = ""
-    for dat in ctx.obj['data'].iterator(kwargs['tag']):
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
         # if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
         #     label = ctx.obj['labels'][s]
         # else:

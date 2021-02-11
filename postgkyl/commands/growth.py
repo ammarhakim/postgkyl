@@ -9,7 +9,7 @@ from postgkyl.diagnostics.growth import fitGrowth, exp2
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
 @click.command()
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-g', '--guess', default=(1.0, 0.1),
               help='Specify initial guess')
@@ -31,7 +31,7 @@ def growth(ctx, **inputs):
     pushChain( ctx, 'growth', **inputs) 
     data = ctx.obj['data']
     
-    for dat in data.iterator(kwargs['key']):
+    for dat in data.iterator(kwargs['use']):
         time = dat.getGrid()
         values = dat.getValues()
         numDims = dat.getNumDims()

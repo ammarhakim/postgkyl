@@ -5,7 +5,7 @@ import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
@@ -23,7 +23,7 @@ def euler(ctx, **kwargs):
     data = ctx.obj['data']
     
     v = kwargs['variable_name']
-    for dat in data.iterator(kwargs['tag']):
+    for dat in data.iterator(kwargs['use']):
         vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
             diag.getDensity(dat, overwrite=True)

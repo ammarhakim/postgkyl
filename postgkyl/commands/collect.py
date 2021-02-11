@@ -16,9 +16,9 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify an offset to create epoch data instead of time data")
 @click.option('-c', '--chunk', type=click.INT,
               help="Collect into chunks with specified length rather than into a single dataset")
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o', default='collect',
+@click.option('--tag', '-t',
               help='Specify a \'tag\' for the result.')
 @click.option('--label', '-l', default='collect',
               help="Specify the custom label for the result.")
@@ -33,8 +33,18 @@ def collect(ctx, **kwargs):
     vlog(ctx, 'Starting collect')
     pushChain(ctx, 'collect', **kwargs)
     data = ctx.obj['data']
+
+    tags = list(data.tagIterator())
+    outTag = kwargs['tag']
+    if outTag is None:
+        if len(tags) == 1:
+            outTag = tags[0]
+        else:
+            outTag = 'collect'
+        #end
+    #end
     
-    for tag in data.tagIterator(kwargs['tag']):
+    for tag in data.tagIterator(kwargs['use']):
         time = [[]]
         values = [[]]
         grid = [[]]
@@ -67,6 +77,8 @@ def collect(ctx, **kwargs):
                 grid[-1] = dat.getGrid().copy()
             #end
         #end
+
+        data.deactivateAll(tag)
         
         for i in range(len(time)):
             time[i] = np.array(time[i])
@@ -87,14 +99,12 @@ def collect(ctx, **kwargs):
             #end
 
             #vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
-            out = Data(tag=kwargs['outtag'],
+            out = Data(tag=outTag,
                        compgrid=ctx.obj['compgrid'],
                        label=kwargs['label'])
             out.push( grid[i], values[i])
             data.add(out)
         #end
-
-        data.deactivateAll(tag)
     #end
 
     vlog(ctx, 'Finishing collect')

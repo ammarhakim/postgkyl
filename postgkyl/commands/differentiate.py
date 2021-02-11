@@ -17,9 +17,9 @@ from postgkyl.data import Data
               help='Direction of the derivative (default: calculate all)')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file')
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.pass_context
 def differentiate(ctx, **kwargs):
@@ -45,7 +45,7 @@ def differentiate(ctx, **kwargs):
         #end
     #end
     
-    for dat in data.iterator(kwargs['tag']):
+    for dat in data.iterator(kwargs['use']):
         if kwargs['basistype'] is None and dat.meta['basisType'] is None:
             ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
         #end
@@ -60,8 +60,8 @@ def differentiate(ctx, **kwargs):
                               kwargs['interp'], kwargs['read'])
         #end
         
-        if kwargs['outtag']:
-            out = Data(tag=kwargs['outtag'],
+        if kwargs['tag']:
+            out = Data(tag=kwargs['tag'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = dg.differentiate(direction=kwargs['direction'])

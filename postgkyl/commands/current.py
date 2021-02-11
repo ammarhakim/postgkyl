@@ -9,9 +9,9 @@ import postgkyl.diagnostics.accumulate_current
 @click.option('--qbym', '-q',
               default=False, show_default=True,
               help="Flag for multiplying by charge/mass ratio instead of just charge")
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               default='current', show_default=True,
               help='Tag for the resulting current array')
 @click.option('--label', '-l',
@@ -23,12 +23,12 @@ def current(ctx, **kwargs):
     pushChain(ctx, 'current', **kwargs)
     data = ctx.obj['data']
 
-    for dat in data.iterator(kwargs['tag']):
+    for dat in data.iterator(kwargs['use']):
         grid = dat.getGrid()
         outcurrent = np.zeros(dat.getValues().shape)
         outcurrent += postgkyl.diagnostics.accumulate_current(dat, kwargs['qbym'])
         dat.deactivate()
-        out = Data(tag=kwargs['outtag'],
+        out = Data(tag=kwargs['tag'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=dat.meta)

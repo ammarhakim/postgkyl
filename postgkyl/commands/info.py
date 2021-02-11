@@ -3,7 +3,7 @@ import click
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Print info of active datasets.')
-@click.option('-t', '--tag',
+@click.option('-u', '--use',
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-c', '--compact', is_flag=True,
               help='Show in compact mode')
@@ -20,7 +20,7 @@ def info(ctx, **kwargs):
         onlyActive = True
     #end
 
-    for i, dat in data.iterator(kwargs['tag'], enum=True, onlyActive=onlyActive):
+    for i, dat in data.iterator(kwargs['use'], enum=True, onlyActive=onlyActive):
         if dat.getStatus():
             color = 'green'
             bold = True

@@ -6,7 +6,7 @@ import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
-@click.option('--tag', '-t', default=None,
+@click.option('--use', '-u', default=None,
               help="Specify the tag to plot.")
 @click.option('--figure', '-f', default=None,
               help="Specify figure (integer) to plot in.")
@@ -121,7 +121,7 @@ def plot(ctx, **kwargs):
     #end
  
     fName = ""
-    for dat in ctx.obj['data'].iterator(kwargs['tag']):
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
         if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
             label = dat.getLabel()
         else:

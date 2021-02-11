@@ -135,13 +135,15 @@ def update(i, ax, ctx, leap, vel,
               help="Minimum value of the z-coordinate")
 @click.option('--zmax', type=click.FLOAT,
               help="Maximum value of the z-coordinate")
+@click.option('--use', '-u',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def trajectory(ctx, **kwargs):
     vlog(ctx, 'Starting trajectory')
     pushChain(ctx, 'trajectory', **kwargs)
     data = ctx.obj['data']
     
-    tags = list(data.tagIterator(kwargs['tag']))
+    tags = list(data.tagIterator(kwargs['use']))
     if len(tags) > 1:
         ctx.fail(click.echo("'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)), fg='red'))
     else:
@@ -154,7 +156,7 @@ def trajectory(ctx, **kwargs):
     kwargs['figure'] = fig
     kwargs['legend'] = False
 
-    dat = ctx.obj['dataSets'][ctx.obj['sets'][0]]
+    dat = ctx.obj['data'].getDataset(tag, 0)
     numPos = dat.getNumCells()[0]
 
     jump = 1

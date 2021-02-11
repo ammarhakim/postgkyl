@@ -55,20 +55,14 @@ if userCommands:
 # #end
 
 def _data(ctx, gridStack, valueStack, strIn, tags):
-    # Load individual filesets or tags
-    if strIn[0] == 'f' and len(tags) > 1:
-        ctx.fail(click.style("'f' cannot be used if there is more then one active tags ({:d} active)".format(len(tags)), fg='red'))
-    #end
-    if strIn[0] == 'f' or strIn[0] == 't':
+    if strIn[0] == 'f' or strIn.split('[')[0] in tags:
         splits = strIn.split('[')
-        if strIn[0] == 't':
-            try:
-                tagNm = strIn.split('.')[1]
-            except IndexError:
-                ctx.fail(click.style("'t' requires a name to be specified in format 't[name]'", fg='red'))
-            #end
-        else:
+        if splits[0] in tags:
+            tagNm = splits[0]
+        elif strIn[0] == 'f' and len(tags) == 1:
             tagNm = tags[0]
+        else:
+            ctx.fail(click.style("'f' cannot be used if there is more then one active tags ({:d} active); use tag names instead.".format(len(tags)), fg='red'))
         #end
         setIdx = None
         if len(splits) >= 2:
@@ -80,14 +74,8 @@ def _data(ctx, gridStack, valueStack, strIn, tags):
         #end
 
         metaKey = None
-        if strIn[0] == 't':
-            if len(strIn.split('.')) == 3:
-                metaKey = strIn.split('.')[2]
-            #end
-        else:
-            if len(strIn.split('.')) == 2:
-                metaKey = strIn.split('.')[1]
-            #end
+        if len(strIn.split('.')) == 2:
+            metaKey = strIn.split('.')[1]
         #end
 
         gridStack.append([])
@@ -170,7 +158,7 @@ def _command(ctx, gridStack, valueStack, strIn):
 
 @click.command(help="Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:" + helpStr[:-1] + ". User-specifed commands can also be used.")
 @click.argument('chain', nargs=1, type=click.STRING)
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               help='Tag for the result')
 @click.option('--label', '-l',
               default='ev', show_default=True,
@@ -191,10 +179,10 @@ def ev(ctx, **kwargs):
     # }
 
     tags = list(data.tagIterator())
-    outTag = kwargs['outtag']
+    outTag = kwargs['tag']
     if outTag is None:
-        if len(tags) == 1 and tags[0] == 'default':
-            outTag = 'default'
+        if len(tags) == 1:
+            outTag = tags[0]
         else:
             outTag = 'ev'
         #end

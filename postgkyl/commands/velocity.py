@@ -10,7 +10,7 @@ from postgkyl.data import Data
 @click.option('--momentum', '-m',
               default='momentum', show_default=True,
               help="Tag for momentum")
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               default='velocity', show_default=True,
               help='Tag for the result')
 @click.option('--label', '-l',
@@ -29,7 +29,7 @@ def velocity(ctx, **kwargs):
         valsM0 = m0.getValues()
         valsM1 = m1.getValues()
             
-        out = Data(tag=kwargs['outtag'],
+        out = Data(tag=kwargs['tag'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=m0.meta)

@@ -11,7 +11,7 @@ import postgkyl.diagnostics as diag
 @click.option('--rotator', '-r',
               default='rotator', show_default=True,
               help="Tag for rotator (data used for the rotation)")
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               default='rotarrayperp', show_default=True,
               help='Tag for the resulting rotated array perpendicular to rotator')
 @click.option('--label', '-l',
@@ -31,8 +31,7 @@ def perprotate(ctx, **kwargs):
                       data.iterator(kwargs['rotator'])):
         grid, outrot = diag.perprotate(a, rot)
         # Create new GData structure with appropriate outtag and labels to store output.
-        out = Data(tag=kwargs['outtag'],
-                   stack=ctx.obj['stack'],
+        out = Data(tag=kwargs['tag'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=a.meta)

@@ -11,7 +11,7 @@ import postgkyl.diagnostics as diag
 @click.option('--field', '-r',
               default='field', show_default=True,
               help="Tag for EM field data (data used for the rotation)")
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               default='arrayBperp', show_default=True,
               help='Tag for the resulting rotated array perpendicular to magnetic field')
 @click.option('--label', '-l',
@@ -33,7 +33,7 @@ def bperprotate(ctx, **kwargs):
         # Magnetic field is components 3, 4, & 5 in field array
         grid, outrot = diag.perprotate(a, rot, '3:6')
         # Create new GData structure with appropriate outtag and labels to store output.
-        out = Data(tag=kwargs['outtag'],
+        out = Data(tag=kwargs['tag'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=a.meta)

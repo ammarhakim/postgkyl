@@ -20,9 +20,9 @@ from postgkyl.commands.util import vlog, pushChain
               help="Indices for 5th coord (either int, float, or slice)")
 @click.option('--comp', '-c', default=None,
               help="Indices for components (either int, slice, or coma-separated)")
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.pass_context
 def select(ctx, **kwargs):
@@ -36,9 +36,9 @@ def select(ctx, **kwargs):
     pushChain(ctx, 'select', **kwargs)
     data = ctx.obj['data']
     
-    for dat in data.iterator(kwargs['tag']):
-        if kwargs['outtag']:
-            out = Data(tag=kwargs['outtag'],
+    for dat in data.iterator(kwargs['use']):
+        if kwargs['tag']:
+            out = Data(tag=kwargs['tag'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = postgkyl.data.select(dat,

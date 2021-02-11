@@ -9,7 +9,7 @@ from postgkyl.data import Data
 import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 
-def update(i, ctx, tag, fig, kwargs):
+def update(i, data, fig, kwargs):
     # if kwargs['collected']:
     #     grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
     #     dat = Data()
@@ -18,7 +18,7 @@ def update(i, ctx, tag, fig, kwargs):
     #     dat.time = grid[0][0]
     # else:
     #     dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
-    dat = ctx.obj['data'].getDataset(tag, i)
+    dat = data[i]
     fig.clear()
     #plt.clf()
     kwargs['title'] = ''
@@ -37,7 +37,7 @@ def update(i, ctx, tag, fig, kwargs):
 #end
 
 @click.command()
-@click.option('--tag', '-t', default=None,
+@click.option('--use', '-u', default=None,
               help="Specify a tag to plot.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
@@ -136,7 +136,7 @@ def animate(ctx, **kwargs):
     if not kwargs['float']:
         vmin = float('inf')
         vmax = float('-inf')
-        for dat in ctx.obj['data'].iterator(kwargs['tag']):
+        for dat in ctx.obj['data'].iterator(kwargs['use']):
             val = dat.getValues()
             if kwargs['logz']:
                 val = np.log(val)
@@ -170,11 +170,12 @@ def animate(ctx, **kwargs):
     anims = []
     figs = []
     kwargs['legend'] = False
-    for tag in data.tagIterator(kwargs['tag']):
-        numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
+    for tag in data.tagIterator(kwargs['use']):
+        #numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
+        dataList = list(data.iterator(tag=tag))
         figs.append(plt.figure())
-        anims.append(FuncAnimation(figs[-1], update, numFiles,
-                                   fargs=(ctx, tag, figs[-1], kwargs),
+        anims.append(FuncAnimation(figs[-1], update, len(dataList),
+                                   fargs=(dataList, figs[-1], kwargs),
                                    interval=kwargs['interval'], blit=False))
 
         fName = 'anim_{:s}.mp4'.format(tag)

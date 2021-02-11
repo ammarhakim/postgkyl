@@ -5,7 +5,7 @@ import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-v', '--variable_name', help="Variable to plot", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
@@ -24,7 +24,7 @@ def tenmoment(ctx, **kwargs):
     data = ctx.obj['data']
     
     v = kwargs['variable_name']
-    for dat in data.iterator(kwargs['data']):
+    for dat in data.iterator(kwargs['use']):
         vlog(ctx, 'tenmoment: Extracting {:s} from data set #{:d}'.format(v, s))
         if v == "density":
             diag.getDensity(dat, stack=True)

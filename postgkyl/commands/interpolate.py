@@ -15,9 +15,9 @@ from postgkyl.modalDG import interpolate as interpFn
               help='Specify polynomial order.')
 @click.option('--interp', '-i', type=click.INT,
               help='Interpolation onto a general mesh of specified amount.')
-@click.option('--tag', '-t',
+@click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file.')
@@ -47,7 +47,7 @@ def interpolate(ctx, **kwargs):
         #end
     #end
     
-    for dat in data.iterator(kwargs['tag']):
+    for dat in data.iterator(kwargs['use']):
         if kwargs['basistype'] is None and dat.meta['basisType'] is None:
             ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
         #end
@@ -66,8 +66,8 @@ def interpolate(ctx, **kwargs):
         numComps = int(dat.getNumComps() / numNodes)
         
         if not kwargs['new']:
-            if kwargs['outtag']:
-                out = Data(tag=kwargs['outtag'],
+            if kwargs['tag']:
+                out = Data(tag=kwargs['tag'],
                            compgrid=ctx.obj['compgrid'],
                            meta=dat.meta)
                 grid, values = dg.interpolate(tuple(range(numComps)))

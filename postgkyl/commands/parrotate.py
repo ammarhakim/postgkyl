@@ -11,7 +11,7 @@ import postgkyl.diagnostics as diag
 @click.option('--rotator', '-r',
               default='rotator', show_default=True,
               help="Tag for rotator (data used for the rotation)")
-@click.option('--outtag', '-o',
+@click.option('--tag', '-t',
               default='rotarraypar', show_default=True,
               help='Tag for the resulting rotated array parallel to rotator')
 @click.option('--label', '-l',
@@ -34,7 +34,7 @@ def parrotate(ctx, **kwargs):
                       data.iterator(kwargs['rotator'])):
         grid, outrot = diag.parrotate(a, rot)
         # Create new GData structure with appropriate outtag and labels to store output.
-        out = Data(tag=kwargs['outtag'],
+        out = Data(tag=kwargs['tag'],
                    stack=ctx.obj['stack'],
                    compgrid=ctx.obj['compgrid'],
                    label=kwargs['label'],
