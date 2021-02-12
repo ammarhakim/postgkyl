@@ -236,13 +236,13 @@ def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False):
         grid, rho = getDensity(data)
         grid, vx = getVx(data)  
         grid, vy = getVy(data)  
-        grid, vz = getVz(data)        
-        out[..., 0] = (gasGamma - 1)*(values[..., 4] - 0.5*rho*(vx**2 + vy**2 + vz**2))
+        grid, vz = getVz(data)       
+        out[..., 0] = (gasGamma - 1)*(values[..., 4] - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2))
     elif numMom == 10:
         grid, Pxx = getPxx(data)  
         grid, Pyy = getPyy(data)  
         grid, Pzz = getPzz(data) 
-        out[..., 0] = (Pxx + Pyy + Pzz) / 3.0
+        out[..., 0] = (Pxx[..., 0] + Pyy[..., 0] + Pzz[..., 0]) / 3.0
     #end
 
     if overwrite:
@@ -260,7 +260,7 @@ def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False):
 
     grid, pr = getP(data, gasGamma, numMom)
 
-    out[..., 0] = values[..., 4] - pr/(gasGamma-1)
+    out[..., 0] = values[..., 4] - pr[..., 0]/(gasGamma-1)
 
     if overwrite:
         data.push(grid, out)
@@ -283,7 +283,7 @@ def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False):
     grid, pr = getP(data, gasGamma, numMom)
 
     # Sound speed cs = sqrt(gasGamma*pr/rho)
-    out[..., 0] = np.sqrt(vx**2+vy**2+vz**2)/np.sqrt(gasGamma*pr/rho)
+    out[..., 0] = np.sqrt(vx[..., 0]**2+vy[..., 0]**2+vz[..., 0]**2)/np.sqrt(gasGamma*pr[..., 0]/rho[..., 0])
 
     if overwrite:
         data.push(grid, out)

@@ -24,9 +24,11 @@ from .primitive import getKE
 from .primitive import getMach
 
 from .accumulate_current import accumulate_current
+from .energetics import energetics
 from .magsq import magsq
 from .parrotate import parrotate
 from .perprotate import perprotate
+from .rel_change import rel_change
 
 from .initpolar import initpolar
 from .calc_enstrophy import calc_enstrophy

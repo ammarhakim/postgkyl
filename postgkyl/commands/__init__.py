@@ -35,9 +35,11 @@ from .agyro import agyro
 from .bparrotate import bparrotate
 from .bperprotate import bperprotate
 from .current import current
+from .energetics import energetics
 from .magsq import magsq
 from .parrotate import parrotate
 from .perprotate import perprotate
+from .relchange import relchange
 from .velocity import velocity
 
 #from postgkyl.commands import cglpressure
