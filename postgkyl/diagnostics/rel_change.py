@@ -6,7 +6,7 @@ import numpy as np
 
 def rel_change(dataset0, dataset, comp=None, overwrite=False):
     """Function to compute the relative change in a dataset compared to another
-    dataset, i.e. |(dataset - dataset0)/dataset0|, where | . | is the absolute value
+    dataset, i.e. (dataset - dataset0)/dataset0
 
     Notes:
     Assumes user wishes to perform this operation component-wise.
