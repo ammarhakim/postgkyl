@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+"""
+Postgkyl module for computing primitive variables from conservative variables
+"""
 import numpy as np
 
 def getDensity(data, overwrite=False):

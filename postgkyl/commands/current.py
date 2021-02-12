@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.data import Data
-import postgkyl.diagnostics.accumulate_current
+import postgkyl.diagnostics as diag
 
 @click.command(help='Accumulate current, sum over species of charge multiplied by flow')
 @click.option('--qbym', '-q',
@@ -26,7 +26,7 @@ def current(ctx, **kwargs):
     for dat in data.iterator(kwargs['use']):
         grid = dat.getGrid()
         outcurrent = np.zeros(dat.getValues().shape)
-        outcurrent += postgkyl.diagnostics.accumulate_current(dat, kwargs['qbym'])
+        grid, outcurrent = diag.accumulate_current(dat, kwargs['qbym'])
         dat.deactivate()
         out = Data(tag=kwargs['tag'],
                    compgrid=ctx.obj['compgrid'],

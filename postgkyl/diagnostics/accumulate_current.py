@@ -14,6 +14,7 @@ def accumulate_current(data, qbym=False, overwrite=False):
             NOTE: Should be true for fluid data
 
     """
+    grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values.shape)
     factor = 0.0
