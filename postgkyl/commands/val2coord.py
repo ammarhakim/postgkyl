@@ -97,11 +97,10 @@ def val2coord(ctx, **kwargs):
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push([x], y)
+            out.color = 'C0'
             data.add(out)
-
-            #ctx.obj['dataSets'][newSetIdx].color = colors[setIdx]
-
         #end
+        dat.deactivate()
     #end
     vlog(ctx, 'Finishing val2coord')
 #end
