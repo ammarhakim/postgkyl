@@ -3,7 +3,7 @@
 Postgkyl module for separating different components of energy
 """
 import numpy as np
-import postgkyl.diagnostics as diag
+from .. import diagnostics as diag
 
 def energetics(dataElc, dataIon, dataField, overwrite=False):
     """Function to separate components of the energy of each species and EM fields into
