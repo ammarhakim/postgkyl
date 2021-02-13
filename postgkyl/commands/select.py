@@ -1,7 +1,8 @@
 import click
 import numpy as np
 
-import postgkyl.data.select 
+import postgkyl.data.select
+from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
@@ -19,6 +20,12 @@ from postgkyl.commands.util import vlog, pushChain
               help="Indices for 5th coord (either int, float, or slice)")
 @click.option('--comp', '-c', default=None,
               help="Indices for components (either int, slice, or coma-separated)")
+@click.option('--use', '-u',
+              help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('--tag', '-t',
+              help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.pass_context
 def select(ctx, **kwargs):
     r"""Subselect data from the active dataset(s). This command allows, for
@@ -29,12 +36,31 @@ def select(ctx, **kwargs):
     """
     vlog(ctx, 'Starting select')
     pushChain(ctx, 'select', **kwargs)
-    for s in ctx.obj['sets']:
-        postgkyl.data.select(ctx.obj['dataSets'][s], stack=True,
-                             z0=kwargs['z0'], z1=kwargs['z1'],
-                             z2=kwargs['z2'], z3=kwargs['z3'],
-                             z4=kwargs['z4'], z5=kwargs['z5'],
-                             comp=kwargs['comp'])
+    data = ctx.obj['data']
+    
+    for dat in data.iterator(kwargs['use']):
+        if kwargs['tag']:
+            out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
+                       compgrid=ctx.obj['compgrid'],
+                       meta=dat.meta)
+            grid, values = postgkyl.data.select(dat,
+                                                z0=kwargs['z0'],
+                                                z1=kwargs['z1'],
+                                                z2=kwargs['z2'],
+                                                z3=kwargs['z3'],
+                                                z4=kwargs['z4'],
+                                                z5=kwargs['z5'],
+                                                comp=kwargs['comp'])
+            out.push(grid, values)
+            data.add(out)
+        else:
+            postgkyl.data.select(dat, overwrite=True,
+                                 z0=kwargs['z0'], z1=kwargs['z1'],
+                                 z2=kwargs['z2'], z3=kwargs['z3'],
+                                 z4=kwargs['z4'], z5=kwargs['z5'],
+                                 comp=kwargs['comp'])
+        #end
     #end
     vlog(ctx, 'Finishing select')
 #end

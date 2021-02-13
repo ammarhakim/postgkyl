@@ -4,7 +4,9 @@ import click
 import postgkyl.output.blot
 from postgkyl.commands.util import vlog, pushChain
 
-@click.command()
+@click.command(hidden=True)
+@click.option('--use', '-u', default=None,
+              help="Specify the tag to plot.")
 # @click.option('--figure', '-f', default=None,
 #               help="Specify figure to plot in.")
 # @click.option('--squeeze', '-s', is_flag=True,
@@ -71,8 +73,7 @@ def blot(ctx, **kwargs):
     #end
     
     fName = ""
-    for s in ctx.obj['sets']:
-        dat = ctx.obj['dataSets'][s]
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
         # if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
         #     label = ctx.obj['labels'][s]
         # else:

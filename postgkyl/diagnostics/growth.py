@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Postgkyl module for field-particle correlations
+Postgkyl module for computing growth rates
 """
 import numpy
 import math
@@ -59,14 +59,16 @@ def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 0.1)):
                 bestR2 = R2
                 bestParams = params
                 bestN = n
+            #end
             percent = float(n-minN)/(maxN-minN)*100
             progress = '[' + int(percent/10)*'=' + (10-int(percent/10))*' ' + ']'
             sys.stdout.write(
-                '\rgamma = {:+.4e} (best {:+.5e}) R^2 = {:.3e}   {:6.2f}% done {}'.format(params[1], bestParams[1], R2, percent, progress))
+                '\rgamma = {:+.5e} (current {:+.3e} R^2={:.3e})   {:6.2f}% done {}'.format( bestParams[1], params[1], R2, percent, progress))
             sys.stdout.flush()
         except RuntimeError:
             print('fitGrowth: curve_fit failed for N = {}'.format(n))
-
-    print('\rgamma = {:+.4e} (best {:+.5e}) R^2 = {:.3e}   {:6.2f}% done {}'.
-          format(params[1], bestParams[1], R2, 100, '[==========]'))
+        #end
+    #end
+    print('\ngamma = {:+.5e}'.format(bestParams[1]))
     return bestParams, bestR2, bestN
+#end

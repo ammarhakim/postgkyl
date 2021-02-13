@@ -6,6 +6,8 @@ import postgkyl.output.plot as gplot
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--use', '-u', default=None,
+              help="Specify the tag to plot.")
 @click.option('--figure', '-f', default=None,
               help="Specify figure (integer) to plot in.")
 @click.option('--squeeze', '-s', is_flag=True,
@@ -68,7 +70,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify a y-axis label.")
 @click.option('--clabel', type=click.STRING,
               help="Specify a label for colorbar.")
-@click.option('-t', '--title', type=click.STRING,
+@click.option('--title', type=click.STRING,
               help="Specify a title.")
 @click.option('--save', is_flag=True,
               help="Save figure as PNG file.")
@@ -86,6 +88,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turns on the pgkyl hashtag!")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
+@click.option('--figsize',
+              help="Comma-separated values for x and y size.")
 @click.pass_context
 def plot(ctx, **kwargs):
     """Plot active datasets, optionally displaying the plot and/or saving
@@ -108,8 +112,7 @@ def plot(ctx, **kwargs):
     if kwargs['subplots']:
         kwargs['numAxes'] = 0
         kwargs['startAxes'] = 0
-        for s in ctx.obj['sets']:
-            dat = ctx.obj['dataSets'][s]
+        for dat in ctx.obj['data'].iterator(kwargs['use']):
             kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
         #end
         if kwargs['figure'] is None:
@@ -118,10 +121,9 @@ def plot(ctx, **kwargs):
     #end
  
     fName = ""
-    for s in ctx.obj['sets']:
-        dat = ctx.obj['dataSets'][s]
-        if len(ctx.obj['sets']) > 1 or kwargs['forcelegend']:
-            label = ctx.obj['labels'][s]
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
+        if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
+            label = dat.getLabel()
         else:
             label = ''
         #end
@@ -151,13 +153,13 @@ def plot(ctx, **kwargs):
             #end
         #end
         if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
-            fName = str(fName) + '.png'
+            fName = str(fName)
             plt.savefig(fName, dpi=kwargs['dpi'])
             fName = ""
         #end
     #end
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-        fName = str(fName) + '.png'
+        fName = str(fName)
         plt.savefig(fName, dpi=kwargs['dpi'])
     #end
 

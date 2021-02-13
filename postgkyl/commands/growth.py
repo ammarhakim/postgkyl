@@ -4,10 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from postgkyl.commands.util import vlog, pushChain
+from postgkyl.diagnostics.growth import fitGrowth, exp2
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
 @click.command()
+@click.option('--use', '-u',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-g', '--guess', default=(1.0, 0.1),
               help='Specify initial guess')
 @click.option('-p', '--plot', is_flag=True,
@@ -19,31 +22,29 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-i', '--instantaneous', is_flag=True,
               help='Plot instantaneous growth rate vs time')
 @click.pass_context
-def growth(ctx, **inputs):
+def growth(ctx, **kwargs):
     """Attempts to compute growth rate (i.e. fit e^(2x)) from DynVector
     data, typically an integrated quantity like electric or magnetic
     field energy.
     """
     vlog(ctx, 'Starting growth')
-    pushChain( ctx, 'growth', **inputs) 
-
-    from postgkyl.diagnostics.growth import fitGrowth, exp2
-
-    for s in ctx.obj['sets']:
-        time = ctx.obj['dataSets'][s].getGrid()
-        values = ctx.obj['dataSets'][s].getValues()
-        numDims = ctx.obj['dataSets'][s].getNumDims()
+    pushChain( ctx, 'growth', **kwargs) 
+    data = ctx.obj['data']
+    
+    for dat in data.iterator(kwargs['use']):
+        time = dat.getGrid()
+        values = dat.getValues()
+        numDims = dat.getNumDims()
         if numDims > 1:
-            click.echo(click.style("ERROR: 'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
-            ctx.exit()
+            click.fail(click.style("'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
+        #end
         
-        vlog(ctx, 'growth: Starting fit for data set #{:d}'.format(s))
         bestParams, bestR2, bestN = fitGrowth(time[0], values[..., 0],
-                                              minN=inputs['minn'],
-                                              maxN=inputs['maxn'],
-                                              p0=inputs['guess'])
+                                              minN=kwargs['minn'],
+                                              maxN=kwargs['maxn'],
+                                              p0=kwargs['guess'])
 
-        if inputs['plot'] is True:
+        if kwargs['plot'] is True:
             vlog(ctx, 'growth: Plotting data and fit')
             plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
                       + "/../output/postgkyl.mplstyle")
@@ -53,8 +54,9 @@ def growth(ctx, **inputs):
             ax.plot(time[0], exp2(time[0], *bestParams))
             ax.grid(True)
             plt.show()
+        #end
 
-        if inputs['instantaneous'] is True:
+        if kwargs['instantaneous'] is True:
             vlog(ctx, 'growth: Plotting instantaneous growth rate')
             gammas = []
             for i in range(1,len(time[0])-1):
@@ -68,4 +70,7 @@ def growth(ctx, **inputs):
             #ax.set_autoscale_on(False)
             ax.grid(True)
             plt.show()
+        #end
+    #end
     vlog(ctx, 'Finishing growth')
+#end

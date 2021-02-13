@@ -2,48 +2,48 @@ import click
 import numpy as np
 
 
-def _gridCheck(grid0, grid1):
-    if grid0 != [] and grid1 != []:
-        cnt0, cnt1 = 0, 0
-        for d in range(len(grid0)):
-            if len(grid0[d]) == 1:
-                cnt0 += 1
-        for d in range(len(grid1)):
-            if len(grid1[d]) == 1:
-                cnt1 += 1
+def _getGrid(grid0, grid1):
+    # if grid0 is not None and grid1 is not None:
+    #     cnt0, cnt1 = 0, 0
+    #     for d in range(len(grid0)):
+    #         if len(grid0[d]) == 1:
+    #             cnt0 += 1
+    #     for d in range(len(grid1)):
+    #         if len(grid1[d]) == 1:
+    #             cnt1 += 1
 
-        if cnt0 < cnt1:
-            return grid0
-        else:
-            return grid1
-    elif grid0 != []:
+    #     if cnt0 < cnt1:
+    #         return grid0
+    #     else:
+    #         return grid1
+    if grid0 is not None:
         return grid0
-    elif grid1 != []:
+    elif grid1 is not None:
         return grid1
     else:
-        return []
+        return None
 
 
 def add(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[0] + inValues[1]
     return [outGrid], [outValues]
 
 
 def subtract(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] - inValues[0]
     return [outGrid], [outValues]
 
 
 def mult(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] * inValues[0]
     return [outGrid], [outValues]
 
 
 def divide(inGrid, inValues):
-    outGrid = _gridCheck(inGrid[0], inGrid[1])
+    outGrid = _getGrid(inGrid[0], inGrid[1])
     outValues = inValues[1] / inValues[0]
     return [outGrid], [outValues]
 
@@ -134,33 +134,30 @@ def length(inGrid, inValues):
 def grad(inGrid, inValues):
     outGrid = inGrid[1]
     ax = inValues[0]
+    print(ax)
     if isinstance(ax, str) and ':' in ax:
         tmp = ax.split(':')
-        if tmp[0] == '':
-            lo = None
-        else:
-            lo = int(tmp[0])
-        if tmp[1] == '':
-            up = None
-        else:
-            up = int(tmp[1])
-        ax = slice(lo, up)
+        lo = int(tmp[0])
+        up = int(tmp[1])
+        rng = range(lo, up)
+    elif isinstance(ax, str):
+        rng = tuple((int(i) for i in ax.split(',')))
     else:
-        ax = int(ax)
-        lo = ax
-        up = ax+1
-
-    numDims = up-lo
+        rng = range(ax, ax+1)
+    #end
+    
+    numDims = len(rng)
     outShape = list(inValues[1].shape)
     numComps = inValues[1].shape[-1]
     outShape[-1] = outShape[-1]*numDims
     outValues = np.zeros(outShape)
     
-    for cnt, d in enumerate(range(lo, up)):
+    for cnt, d in enumerate(rng):
         zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
         outValues[...,cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1], zc, edge_order=2, axis=d)
+    #end
     return [outGrid], [outValues]
-
+#end
 
 def integrate(inGrid, inValues, avg=False):
     grid = inGrid[1].copy()
@@ -171,6 +168,8 @@ def integrate(inGrid, inValues, avg=False):
         axis = tuple([int(axis)])
     elif isinstance(axis, tuple):
         pass
+    elif isinstance(axis, np.ndarray):
+        axis = tuple([int(axis)])
     elif isinstance(axis, str):
         if len(axis.split(',')) > 1:
             axes = axis.split(',')
@@ -183,7 +182,8 @@ def integrate(inGrid, inValues, avg=False):
             axis = tuple(range(numDims))
     else:
             raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
-
+    #end
+    
     dz = []
     for d, coord in enumerate(grid):
         dz.append(coord[1:] - coord[:-1])

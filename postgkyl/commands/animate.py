@@ -9,22 +9,25 @@ from postgkyl.data import Data
 import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 
-def update(i, ctx, kwargs):
-    if kwargs['collected']:
-        grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
-        dat = Data()
-        dat.push(vals, grid=grid)
-        dat.frame = i
-        dat.time = grid[0][0]
-    else:
-        dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
-    plt.clf()
+def update(i, data, fig, kwargs):
+    # if kwargs['collected']:
+    #     grid, vals = select(ctx.obj['dataSets'][ctx.obj['sets'][0]],z0=i)
+    #     dat = Data()
+    #     dat.push(vals, grid=grid)
+    #     dat.frame = i
+    #     dat.time = grid[0][0]
+    # else:
+    #     dat = ctx.obj['dataSets'][ctx.obj['sets'][i]]
+    dat = data[i]
+    fig.clear()
+    #plt.clf()
     kwargs['title'] = ''
-    if dat.frame is not None:
-        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.frame)
+    kwargs['figure'] = fig
+    if dat.meta['frame'] is not None:
+        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
     #end
-    if dat.time is not None:
-        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.time)
+    if dat.meta['time'] is not None:
+        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
     #end
     if kwargs['arg'] is not None:
         return gplot(dat, kwargs['arg'], **kwargs)
@@ -34,6 +37,8 @@ def update(i, ctx, kwargs):
 #end
 
 @click.command()
+@click.option('--use', '-u', default=None,
+              help="Specify a tag to plot.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
@@ -94,7 +99,7 @@ def update(i, ctx, kwargs):
               help="Specify a y-axis label.")
 @click.option('--clabel', type=click.STRING,
               help="Specify a label for colorbar.")
-@click.option('-t', '--title', type=click.STRING,
+@click.option('--title', type=click.STRING,
               help="Specify a title.")
 @click.option('-i', '--interval', default=100,
               help="Specify the animation interval.")
@@ -126,16 +131,16 @@ def animate(ctx, **kwargs):
     """
     vlog(ctx, 'Starting animate')
     pushChain(ctx, 'animate', **kwargs)
+    data = ctx.obj['data']
 
     if not kwargs['float']:
         vmin = float('inf')
         vmax = float('-inf')
-        for s in ctx.obj['sets']:
-            val = ctx.obj['dataSets'][s].getValues()
+        for dat in ctx.obj['data'].iterator(kwargs['use']):
+            val = dat.getValues()
             if kwargs['logz']:
                 val = np.log(val)
             #end
-            print(np.nanmin(val))
             if vmin > np.nanmin(val):
                 vmin = np.nanmin(val)
             #end
@@ -156,25 +161,31 @@ def animate(ctx, **kwargs):
         #end
     #end
 
-    if kwargs['collected']:
-        numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
-    else:
-        numSets = len(ctx.obj['sets'])
-    fig = plt.figure()
-    kwargs['figure'] = fig
-    kwargs['legend'] = False
-   
-    anim = FuncAnimation(fig, update, numSets,
-                         fargs=(ctx, kwargs),
-                         interval=kwargs['interval'], blit=False)
+    # if kwargs['collected']:
+    #     numSets = len(ctx.obj['dataSets'][ctx.obj['sets'][0]].getGrid()[0])
+    # else:
+    #     numSets = len(ctx.obj['sets'])
+    #numSets = ctx.obj['data'].getNumDatasets(kwargs['tag'])
 
-    fName = 'anim.mp4'
-    if kwargs['saveas']:
-        fName = str(kwargs['saveas'])
-    #end
-    if kwargs['save'] or kwargs['saveas']:
-        anim.save(fName, writer='ffmpeg',
-                  fps=kwargs['fps'], dpi=kwargs['dpi'])
+    anims = []
+    figs = []
+    kwargs['legend'] = False
+    for tag in data.tagIterator(kwargs['use']):
+        #numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
+        dataList = list(data.iterator(tag=tag))
+        figs.append(plt.figure())
+        anims.append(FuncAnimation(figs[-1], update, len(dataList),
+                                   fargs=(dataList, figs[-1], kwargs),
+                                   interval=kwargs['interval'], blit=False))
+
+        fName = 'anim_{:s}.mp4'.format(tag)
+        if kwargs['saveas']:
+            fName = str(kwargs['saveas'])
+        #end
+        if kwargs['save'] or kwargs['saveas']:
+            anims[-1].save(fName, writer='ffmpeg',
+                           fps=kwargs['fps'], dpi=kwargs['dpi'])
+        #end
     #end
     
     if kwargs['show']:

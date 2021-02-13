@@ -1,136 +1,225 @@
+#!/usr/bin/env python
+"""
+Postgkyl module for computing primitive variables from conservative variables
+"""
 import numpy as np
 
-def getDensity(data, stack=False):
+def getDensity(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    out = values[..., 0, np.newaxis]
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
-    else:
-        return out
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
 
-def getVx(data, stack=False):
-    values = data.getValues()
-    out =  values[..., 1, np.newaxis] / values[..., 0, np.newaxis]
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
-    else:
-        return out
+    out[..., 0] = values[..., 0]
 
-def getVy(data, stack=False):
-    values = data.getValues()
-    out = values[..., 2, np.newaxis] / values[..., 0, np.newaxis]
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getVz(data, stack=False):
+def getVx(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    out = values[..., 3, np.newaxis] / values[..., 0, np.newaxis]
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 1].shape)
+    out = out[..., np.newaxis]
+
+    out[..., 0] =  values[..., 1] / values[..., 0]
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getVi(data, stack=False):
+def getVy(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    out = values[..., 1:4] / values[..., 0, np.newaxis]
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 2].shape)
+    out = out[..., np.newaxis]
+
+    out[..., 0] = values[..., 2] / values[..., 0]
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPxx(data, stack=False):
+def getVz(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vx = getVx(data)
-    out = values[..., 4, np.newaxis] - r*vx*vx
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 3].shape)
+    out = out[..., np.newaxis]
+
+    out[..., 0] = values[..., 3] / values[..., 0]
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPxy(data, stack=False):
+def getVi(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vx = getVx(data)
-    vy = getVy(data)
-    out = values[..., 5, np.newaxis] - r*vx*vy
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 1:4].shape)
+
+    out[..., 0:3] = values[..., 1:4] / values[..., 0]
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPxz(data, stack=False):
+def getPxx(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vx = getVx(data)
-    vz = getVz(data)
-    out = values[..., 6, np.newaxis] - r*vx*vz
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 4].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)
+    out[..., 0] = values[..., 4] - rho*vx*vx
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPyy(data, stack=False):
+def getPxy(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vy = getVy(data)
-    return values[..., 7, np.newaxis] - r*vy*vy
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 5].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)
+    grid, vy = getVy(data)
+
+    out[..., 0] = values[..., 5] - rho*vx*vy
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPyz(data, stack=False):
+def getPxz(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vy = getVy(data)
-    vz = getVz(data)
-    out = values[..., 8, np.newaxis] - r*vy*vz
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 6].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)
+    grid, vz = getVz(data)
+
+    out[..., 0] = values[..., 6] - rho*vx*vz
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPzz(data, stack=False):
+def getPyy(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    r = getDensity(data)
-    vz = getVz(data)
-    out = values[..., 9, np.newaxis] - r*vz*vz
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 7].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vy = getVy(data)
+
+    out[..., 0] = values[..., 7] - rho*vy*vy
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getPij(data, stack=False):
+def getPyz(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    out = np.copy(values[..., 4:10])
-    out[..., 0] = np.squeeze(getPxx(data))
-    out[..., 1] = np.squeeze(getPxy(data))
-    out[..., 2] = np.squeeze(getPxz(data))
-    out[..., 3] = np.squeeze(getPyy(data))
-    out[..., 4] = np.squeeze(getPyz(data))
-    out[..., 5] = np.squeeze(getPzz(data))
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
+    out = np.zeros(values[..., 8].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vy = getVy(data)
+    grid, vz = getVz(data)
+
+    out[..., 0] = values[..., 8] - rho*vy*vz
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return out
+        return grid, out
+    #end
+#end
 
-def getP(data, gasGamma=5.0/3, numMom=None, stack=False):
+def getPzz(data, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
+    out = np.zeros(values[..., 9].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vz = getVz(data)
+
+    out[..., 0] = values[..., 9] - rho*vz*vz
+
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
+
+def getPij(data, overwrite=False):
+    grid = data.getGrid()
+    values = data.getValues()
+    out = np.zeros(values[..., 4:10].shape)
+
+    grid, Pxx = getPxx(data)
+    grid, Pxy = getPxy(data)
+    grid, Pxz = getPxz(data)
+    grid, Pyy = getPyy(data)
+    grid, Pyz = getPyz(data)
+    grid, Pzz = getPzz(data)
+                        
+    out[..., 0] = np.squeeze(Pxx)
+    out[..., 1] = np.squeeze(Pxy)
+    out[..., 2] = np.squeeze(Pxz)
+    out[..., 3] = np.squeeze(Pyy)
+    out[..., 4] = np.squeeze(Pyz)
+    out[..., 5] = np.squeeze(Pzz)
+
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
+
+def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False):
+    grid = data.getGrid()
+    values = data.getValues()
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
+
     if numMom is None:
         if data.getNumComps() == 5:
             numMom = 5
@@ -140,45 +229,65 @@ def getP(data, gasGamma=5.0/3, numMom=None, stack=False):
             raise ValueError("Number of components appears to be {:d};"
                              "it needs to be specified using 'numMom' "
                              "(5 or 10)".format(data.getNumComps()))
+        #end
+    #end
 
     if numMom == 5:
-        out = (gasGamma - 1) \
-              * (values[..., 4, np.newaxis] \
-                 - 0.5*(getVx(data)**2 
-                        + getVy(data)**2
-                        + getVz(data)**2) * getDensity(data))
+        grid, rho = getDensity(data)
+        grid, vx = getVx(data)  
+        grid, vy = getVy(data)  
+        grid, vz = getVz(data)       
+        out[..., 0] = (gasGamma - 1)*(values[..., 4] - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2))
     elif numMom == 10:
-        out = (getPxx(data) + getPyy(data) + getPzz(data)) / 3.0
-    if stack:
-        data.pushGrid()
-        data.pushValues(out)
-    else:
-        return out
+        grid, Pxx = getPxx(data)  
+        grid, Pyy = getPyy(data)  
+        grid, Pzz = getPzz(data) 
+        out[..., 0] = (Pxx[..., 0] + Pyy[..., 0] + Pzz[..., 0]) / 3.0
+    #end
 
-def getKE(data, gasGamma=5.0/3, numMom=None, stack=False):
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
+
+def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    Er = values[..., 4, np.newaxis]
-    pr = getP(data, gasGamma)
-    ke = Er-pr/(gasGamma-1)
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
 
-    if stack:
-        data.pushGrid()
-        data.pushValues(ke)
+    grid, pr = getP(data, gasGamma, numMom)
+
+    out[..., 0] = values[..., 4] - pr[..., 0]/(gasGamma-1)
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return ke
+        return grid, out
+    #end
+#end
 
-def getMach(data, gasGamma=5.0/3, numMom=None, stack=False):
+def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False):
+    grid = data.getGrid()
     values = data.getValues()
-    vx = getVx(data)
-    vy = getVy(data)
-    vz = getVz(data)
-    rho = getDensity(data)
-    pr = getP(data, gasGamma)
-    cs = np.sqrt(gasGamma*pr/rho)
-    mach = np.sqrt(vx**2+vy**2+vz**2)/cs
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
 
-    if stack:
-        data.pushGrid()
-        data.pushValues(mach) 
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)  
+    grid, vy = getVy(data)  
+    grid, vz = getVz(data) 
+    grid, pr = getP(data, gasGamma, numMom)
+
+    # Sound speed cs = sqrt(gasGamma*pr/rho)
+    out[..., 0] = np.sqrt(vx[..., 0]**2+vy[..., 0]**2+vz[..., 0]**2)/np.sqrt(gasGamma*pr[..., 0]/rho[..., 0])
+
+    if overwrite:
+        data.push(grid, out)
     else:
-        return mach
+        return grid, out
+    #end
+#end

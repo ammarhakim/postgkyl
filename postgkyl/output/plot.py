@@ -60,6 +60,7 @@ def plot(data, args=(),
          hashtag=False, xkcd=False,
          color=None, markersize=None,
          transpose=False,
+         figsize=None,
          **kwargs):
     """Plots Gkeyll data
 
@@ -134,10 +135,14 @@ def plot(data, args=(),
     #end
 
     # Prepare the figure
+    if figsize:
+        figsize = (int(figsize.split(',')[0]),
+                   int(figsize.split(',')[1]))
+    #end
     if figure is None:
-        fig = plt.figure()
+        fig = plt.figure(figsize=figsize)
     elif isinstance(figure, int):
-        fig = plt.figure(figure)
+        fig = plt.figure(figure, figsize=figsize)
     elif isinstance(figure, matplotlib.figure.Figure):
         fig = figure
     elif isinstance(figure, str) or isinstance(figure, unicode):

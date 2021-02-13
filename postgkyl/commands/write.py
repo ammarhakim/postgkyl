@@ -3,10 +3,12 @@ import click
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
+@click.option('--use', '-u',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-f', '--filename', type=click.STRING,
               help="Output file name")
-@click.option('-m', '--mode', type=click.STRING, default='bp',
-              help="Output file mode. One of `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file)")
+@click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy']), default='bp', 
+              help="Output file mode. One of `bp` (ADIOS BP file; default), `txt` (ASCII text file), or `npy` (NumPy binary file)")
 @click.option('-b', '--buffersize', default=1000,
               help="Set the buffer size for ADIOS write (default: 1000 MB)")
 @click.pass_context
@@ -19,9 +21,12 @@ def write(ctx, **kwargs):
     """
     vlog(ctx, 'Starting write')
     pushChain(ctx, 'write', **kwargs)
-
-    for s in ctx.obj['sets']:
-        ctx.obj['dataSets'][s].write(outName=kwargs['filename'],
-                                     mode=kwargs['mode'],
-                                     bufferSize=kwargs['buffersize'])
+    data = ct.obj['data']
+    
+    for dat in data.iterator(kwargs['use']):
+        dat.write(outName=kwargs['filename'],
+                  mode=kwargs['mode'],
+                  bufferSize=kwargs['buffersize'])
+    #end
     vlog(ctx, 'Finishing write')
+#end

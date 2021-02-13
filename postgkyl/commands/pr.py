@@ -5,13 +5,16 @@ np.set_printoptions(precision=16)
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Print the data')
+@click.option('--use', '-u',
+              help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def pr(ctx, **kwargs):
     vlog(ctx, 'Starting pr')
-    pushChain(ctx, 'print', **kwargs)
-
-    for s in ctx.obj['sets']:
-        print(ctx.obj['dataSets'][s].getValues().squeeze())
+    pushChain(ctx, 'pr', **kwargs)
+    data = ctx.obj['data']
+    
+    for dat in data.iterator(kwargs['use']):
+        click.echo(dat.getValues().squeeze())
     #end
 
     vlog(ctx, 'Finishing pr')

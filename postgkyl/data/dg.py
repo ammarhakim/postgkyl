@@ -350,7 +350,7 @@ class GInterpNodal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, stack=False):
+    def interpolate(self, comp=0, overwrite=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -378,34 +378,34 @@ class GInterpNodal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def differentiate(self, direction, comp=0, stack=False):
+    def differentiate(self, direction, comp=0, overwrite=False):
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) * 2/(self.Xc[direction][1]-self.Xc[direction][0])
             values = values[..., np.newaxis]
         else:
             values = np.zeros(q.shape, self.numDims)
             for i in range(self.numDims):
                 values[:,i] = _interpOnMesh(cMat[:,:,i], q)
-                values[:,i] /= (self.Xc[i][1]-self.Xc[i][0])
+                values[:,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 #end
@@ -442,8 +442,8 @@ class GInterpModal(GInterp):
         self.numDims = data.getNumDims()
         if polyOrder is not None:
             self.polyOrder = polyOrder
-        elif data.polyOrder is not None:
-            self.polyOrder = data.polyOrder
+        elif data.meta['polyOrder'] is not None:
+            self.polyOrder = data.meta['polyOrder']
         else:
             raise ValueError('GInterpNodal: polynomial order is neither specified nor stored in the output file')
         #end
@@ -455,8 +455,8 @@ class GInterpModal(GInterp):
             elif basisType == 'mt':
                 self.basisType = 'tensor'
             #end
-        elif data.basisType is not None:
-            self.basisType = data.basisType
+        elif data.meta['basisType'] is not None:
+            self.basisType = data.meta['basisType']
         else:
             raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
         #end
@@ -470,7 +470,7 @@ class GInterpModal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, stack=False):
+    def interpolate(self, comp=0, overwrite=False):
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -498,40 +498,40 @@ class GInterpModal(GInterp):
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def differentiate(self, direction=None, comp=0, stack=False):
+    def differentiate(self, direction=None, comp=0, overwrite=False):
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
         if direction is not None:
-            values = _interpOnMesh(cMat[:, :, direction], q) / (self.Xc[direction][1] - self.Xc[direction][0])
+            values = _interpOnMesh(cMat[:, :, direction], q) * 2/(self.Xc[direction][1]-self.Xc[direction][0])
             values = values[..., np.newaxis]
         else:
-            values = _interpOnMesh(cMat[:,:,0], q)
+            values = _interpOnMesh(cMat[...,0], q)
             values /= (self.Xc[0][1]-self.Xc[0][0])
             values = values[..., np.newaxis]
             for i in range(1, self.numDims):
-                values = np.append(values, _interpOnMesh(cMat[:,:,i], q)[...,np.newaxis], axis=2)
-                values[...,i] /= (self.Xc[i][1]-self.Xc[i][0])
+                values = np.append(values, _interpOnMesh(cMat[...,i], q)[...,np.newaxis], axis=self.numDims)
+                values[...,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
         grid = [_makeMesh(nInterp, self.Xc[d])
                 for d in range(self.numDims)]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 
-    def recovery(self, comp=0, c1=False, stack=False):
+    def recovery(self, comp=0, c1=False, overwrite=False):
         if isinstance(comp, int):
             q = self._getRawModal(comp)
         else:
@@ -579,10 +579,10 @@ class GInterpModal(GInterp):
         #end
 
         values = values[..., np.newaxis]
-        if stack is False:
-            return grid, values
+        if overwrite:
+            self.data.push(grid, values)
         else:
-            self.data.push(values, grid)
+            return grid, values
         #end
     #end
 #end

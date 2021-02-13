@@ -58,28 +58,36 @@ class Data(object):
         data = postgkyl.GData('file.bp', comp=1)
     """
 
-    def __init__(self, fileName=None, stack=False, comp=None,
+    def __init__(self, fileName=None, comp=None,
                  z0=None, z1=None, z2=None,
                  z3=None, z4=None, z5=None,
                  compgrid=False,
-                 varName='CartGridField'):
-        self._stack = stack  # default False
+                 varName='CartGridField', tag='default',
+                 label=None, meta=None):
+        self._tag = tag
         self._compGrid = compgrid # disregard the mapped grid?
-        self._grid = []
+        self._grid = None
         self._gridType = "uniform" 
         self._gridFile = None
-        self._values = []  # (N+1)D narray of values 
-        self.time = None
-        self.frame = 0
+        self._values = None # (N+1)D narray of values
 
-        self.changeset = None
-        self.builddate = None
-        self.polyOrder = None
-        self.basisType = None
-        self.isModal = None
-        
-        self.varName = varName
+        self.meta = {}
+        self.meta['time'] = None
+        self.meta['frame'] = None
+        self.meta['changeset'] = None
+        self.meta['builddate'] = None
+        self.meta['polyOrder'] = None
+        self.meta['basisType'] = None
+        self.meta['isModal'] = None
+        if meta:
+            for key in meta:
+                self.meta[key] = meta[key]
+            #end
+        #end
 
+        self._label = ""
+        self._customLabel = label
+        self._varName = varName
         self.fileName = fileName
         if fileName is not None:
             # Sequence load typically concatenates multiple files
@@ -94,6 +102,8 @@ class Data(object):
         #end
         
         self.color = None
+
+        self._status = True
     #end
 
     #-----------------------------------------------------------------
@@ -119,7 +129,7 @@ class Data(object):
                 cnt = cnt + 1
             #end
         #end
-                
+
         if comp is not None:
             comp = idxParser(comp)
             if isinstance(comp, int):
@@ -141,7 +151,6 @@ class Data(object):
         #end
     #end
 
-
     def _loadFrame(self, axes=(None, None, None, None, None, None),
                    comp=None):
         self.fileDir = path.dirname(path.realpath(self.fileName))
@@ -159,58 +168,55 @@ class Data(object):
             upper = fh.root.StructGrid._v_attrs.vsUpperBounds
             cells = fh.root.StructGrid._v_attrs.vsNumCells
             # Load data ...
-            self._values.append(fh.root.StructGridField.read())
+            self._values = fh.root.StructGridField.read()
             # ... and the time-stamp
             if '/timeData' in fh:
-                self.time = fh.root.timeData._v_attrs.vsTime
+                self.meta['time'] = fh.root.timeData._v_attrs.vsTime
             #end
             fh.close()
         elif extension == 'bp':
             fh = adios.file(self.fileName)
-            if not self.varName in fh.vars:
+            if not self._varName in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
                 fh.close()
                 self._loadSequence()  
                 return
             #end
-
             # Get the atributes
+            self.attrsList = { }
+            for k in fh.attrs.keys():
+                self.attrsList[k] = 0
+            #end
             # Postgkyl conventions require the attributes to be
             # narrays even for 1D data
             lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
             upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
             cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
             if 'changeset' in fh.attrs.keys():
-                self.changeset = adios.attr(fh, 'changeset').value.decode('UTF-8')
+                self.meta['changeset'] = adios.attr(fh, 'changeset').value.decode('UTF-8')
             #end
             if 'builddate' in fh.attrs.keys():
-                self.builddate = adios.attr(fh, 'builddate').value.decode('UTF-8')
+                self.meta['builddate'] = adios.attr(fh, 'builddate').value.decode('UTF-8')
             #end
             if 'polyOrder' in fh.attrs.keys():
-                self.polyOrder = adios.attr(fh, 'polyOrder').value
-                self.isModal = True
+                self.meta['polyOrder'] = adios.attr(fh, 'polyOrder').value
+                self.meta['isModal'] = True
             #end
             if 'basisType' in fh.attrs.keys():
-                self.basisType = adios.attr(fh, 'basisType').value.decode('UTF-8')
-                self.isModal = True
+                self.meta['basisType'] = adios.attr(fh, 'basisType').value.decode('UTF-8')
+                self.meta['isModal'] = True
             #end
-
-            # read all attributes and store them
-            self.attrsList = { }
-            for k in fh.attrs.keys():
-                self.attrsList[k] = 0
+            if 'charge' in fh.attrs.keys():
+                self.meta['charge'] = adios.attr(fh, 'charge').value
             #end
-
-            # Load data ...
-            var = adios.var(fh, self.varName)
-            offset, count = self._createOffsetCountBp(var, axes, comp)
-            self._values.append(var.read(offset=offset, count=count))
-            # ... and the time-stamp
+            if 'mass' in fh.attrs.keys():
+                self.meta['mass'] = adios.attr(fh, 'mass').value
+            #end
             if 'time' in fh.vars:
-                self.time = adios.var(fh, 'time').read()
+                self.meta['time'] = adios.var(fh, 'time').read()
             #end
             if 'frame' in fh.vars:
-                self.frame = adios.var(fh, 'frame').read()
+                self.meta['frame'] = adios.var(fh, 'frame').read()
             #end
 
             # Check for mapped grid ...
@@ -227,7 +233,7 @@ class Data(object):
                     gridNm = self.fileDir + "/grid"  
                 #end
                 with adios.file(gridNm) as gridFh:
-                    gridVar = adios.var(gridFh, self.varName)
+                    gridVar = adios.var(gridFh, self._varName)
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
@@ -238,6 +244,11 @@ class Data(object):
             else:
                 raise TypeError("Unsupported grid type info in field!")
             #end
+
+            # Load data
+            var = adios.var(fh, self._varName)
+            offset, count = self._createOffsetCountBp(var, axes, comp)
+            self._values = var.read(offset=offset, count=count)
 
             # Adjust boundaries for 'offset' and 'count'
             numDims = len(cells)
@@ -269,39 +280,52 @@ class Data(object):
             fh.close()
         elif extension == 'gkyl':
             dti8 = np.dtype("i8")
-            dtf8 = np.dtype("f8")
+            dtf = np.dtype("f8")
+            doffset = 8
+
+            offset = 0
+
+            # read real-type
+            realType = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
+            if realType == 1:
+                dtf = np.dtype("f4")
+                doffset = 4
+            #end
+
+            offset += 8
             
             # read grid dimensions
-            numDims = np.fromfile(self.fileName, dtype=dti8, count=1)[0]
-            offset = 8
+            numDims = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
+            offset += 8
 
             # read grid shape
             cells = np.fromfile(self.fileName, dtype=dti8, count=numDims, offset=offset)
             offset += numDims*8
-            
+
             # read lower/upper
-            lower = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
-            offset += numDims*8
+            lower = np.fromfile(self.fileName, dtype=dtf, count=numDims, offset=offset)
+            offset += numDims*doffset
 
-            upper = np.fromfile(self.fileName, dtype=dtf8, count=numDims, offset=offset)
-            offset += numDims*8
+            upper = np.fromfile(self.fileName, dtype=dtf, count=numDims, offset=offset)
+            offset += numDims*doffset
 
-            # read array elemEz (the div by 8 is as elemSz includes sizeof(double) = 8)
-            elemSz = int(np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]/8)
+            # read array elemEz (the div by doffset is as elemSz includes sizeof(real_type) = doffset)
+            elemSzRaw = int(np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0])
+            elemSz = elemSzRaw/doffset
             offset += 8
 
             # read array size
             asize = np.fromfile(self.fileName, dtype=dti8, count=1, offset=offset)[0]
             offset += 8
 
-            adata = np.fromfile(self.fileName, dtype=dtf8, offset=offset)
+            adata = np.fromfile(self.fileName, dtype=dtf, offset=offset)
             gshape = np.ones(numDims+1, dtype=np.dtype("i8"))
             for d in range(numDims):
                 gshape[d] = cells[d]
             #end
             numComp = elemSz
             gshape[-1] = int(numComp)
-            self._values.append(adata.reshape(gshape))
+            self._values = adata.reshape(gshape)
         else:
             raise NameError(
                 "File extension '{:s}' is not supported".
@@ -312,25 +336,25 @@ class Data(object):
         dz = (upper - lower) / cells
         # Adjusts bounds in case ghost layer is included in data
         for d in range(numDims):
-            if cells[d] != self._values[0].shape[d]:
+            if cells[d] != self._values.shape[d]:
                 if self._gridType == "mapped":
                     raise ValueError("Data appears to include ghost cells which is not compatible with mapped grid. Use computational grid 'compgrid' instead.")
                 #end
-                ngl = int(np.floor((cells[d] - self._values[0].shape[d])*0.5))
-                ngu = int(np.ceil((cells[d] - self._values[0].shape[d])*0.5))
-                cells[d] = self._values[0].shape[d]
+                ngl = int(np.floor((cells[d] - self._values.shape[d])*0.5))
+                ngu = int(np.ceil((cells[d] - self._values.shape[d])*0.5))
+                cells[d] = self._values.shape[d]
                 lower[d] = lower[d] - ngl*dz[d]
                 upper[d] = upper[d] + ngu*dz[d]
             #end
         #end
 
         # Construct grids if not loaded already
-        if len(self._grid) == 0:
+        if not self._grid is not None:
             grid = [np.linspace(lower[d],
                                 upper[d],
                                 cells[d]+1)
                     for d in range(numDims)]
-            self._grid.append(grid)
+            self._grid = grid
         #end
     #end
 
@@ -387,11 +411,11 @@ class Data(object):
             #end                    
     
             if cnt > 0:
-                self._grid[0] = np.append(self._grid[0], grid, axis=0)
-                self._values[0] = np.append(self._values[0], values, axis=0)
+                self._grid = np.append(self._grid, grid, axis=0)
+                self._values = np.append(self._values, values, axis=0)
             else:
-                self._grid.append(grid)
-                self._values.append(values)
+                self._grid = grid
+                self._values = values
             #end
             cnt += 1
         #end
@@ -402,21 +426,46 @@ class Data(object):
                 format(self.fileName))
         #end
         # Squeeze the time coordinate ...
-        if len(self._grid[0].shape) > 1:
-            self._grid[0] = np.squeeze(self._grid[0])
+        if len(self._grid.shape) > 1:
+            self._grid = np.squeeze(self._grid)
         #end
         # ... and make it a list following the Postgkyl grid conventions
-        self._grid[0] = [self._grid[0]]
+        self._grid = [self._grid]
 
         # glob() doesn't guarantee the right order
-        sortIdx = np.argsort(self._grid[0][0])
-        self._grid[0][0] = self._grid[0][0][sortIdx]
-        self._values[0] = self._values[0][sortIdx, ...]
+        sortIdx = np.argsort(self._grid[0])
+        self._grid[0] = self._grid[0][sortIdx]
+        self._values = self._values[sortIdx, ...]
     #end
 
 
     #-----------------------------------------------------------------
-    #-- Stack Control ------------------------------------------------
+    #-- Stuff Control ------------------------------------------------
+    def getTag(self):
+        return self._tag
+    #end
+
+    def setLabel(self, label):
+        self._label = label
+    #end
+    def getLabel(self):
+        if self._customLabel:
+            return self._customLabel
+        else:
+            return self._label
+        #end
+    #end
+
+    def activate(self):
+        self._status = True
+    #end
+    def deactivate(self):
+        self._status = False
+    #end
+    def getStatus(self):
+        return self._status
+    #end
+
     def getInputFile(self):
         fh = adios.file(self.fileName)
         inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
@@ -426,11 +475,11 @@ class Data(object):
 
     
     def getNumCells(self):
-        if len(self._values) > 0:
-            numDims = len(self._values[-1].shape)-1
+        if self._values is not None:
+            numDims = len(self._values.shape)-1
             cells = np.zeros(numDims, np.int32)
             for d in range(numDims):
-                cells[d] = int(self._values[-1].shape[d])
+                cells[d] = int(self._values.shape[d])
             #end
             return cells
         else:
@@ -439,16 +488,16 @@ class Data(object):
     #end
 
     def getNumComps(self):
-        if len(self._values) > 0:
-            return int(self._values[-1].shape[-1])
+        if self._values is not None:
+            return int(self._values.shape[-1])
         else:
             return 0
         #end
     #end
 
     def getNumDims(self, squeeze=False):
-        if len(self._values) > 0:
-            numDims = int(len(self._values[-1].shape)-1)
+        if self._values is not None:
+            numDims = int(len(self._values.shape)-1)
             if squeeze:
                 cells = self.getNumCells()
                 for d in range(numDims):
@@ -464,12 +513,12 @@ class Data(object):
     #end
 
     def getBounds(self):
-        if len(self._grid) > 0:
-            numDims = len(self._values[-1].shape)-1
+        if self._grid is not None:
+            numDims = len(self._values.shape)-1
             lo, up = np.zeros(numDims), np.zeros(numDims)
             for d in range(numDims):
-                lo[d] = self._grid[-1][d].min()
-                up[d] = self._grid[-1][d].max()
+                lo[d] = self._grid[d].min()
+                up[d] = self._grid[d].max()
             #end
             return lo, up
         else:
@@ -478,52 +527,25 @@ class Data(object):
     #end
 
     def getGrid(self):
-        if len(self._values) > 0:
-            return self._grid[-1]
-        else:
-            return []
-        #end
+        return self._grid
     #end
 
     def getValues(self):
-        if len(self._values) > 0:
-            return self._values[-1]
-        else:
-            return np.array([])
-        #end
+        return self._values
     #end
 
-    def pop(self, nodal=False):
-        if len(self._grid) > 0:
-            return self._grid.pop(), self._values.pop()
-        else:
-            return [], np.array([])
-        #end
+    def setGrid(self, grid):
+        self._grid = grid
     #end
 
-    def push(self, values, grid=None):
-        if not self._stack:
-            if grid is not None:
-                self._grid.append(grid)
-            else:
-                self._grid.append(self._grid[-1])
-            #end
-            self._values.append(values)
-        else:
-            self._values[0] = values
-            self._grid[0] = grid
-        #end
+    def setValues(self, values):
+        self._values = values
+    #end                       
+
+    def push(self, grid, values):
+        self._values = values
+        self._grid = grid
         return self
-    #end
-
-    # legacy function
-    def peakGrid(self):
-        print("'peakGrid' is a legacy function; please switch to 'getGrid'")
-        return self.getGrid()
-    #end
-    def peakValues(self):
-        print("'peakValues' is a legacy function; please switch to 'getValues'")
-        return self.getValues()
     #end
 
     #-----------------------------------------------------------------
@@ -550,48 +572,51 @@ class Data(object):
         if len(values) > 0:
             output = ""
 
-            if self.time is not None:
-                output += "- Time: {:e}\n".format(self.time)
+            if self.meta['time'] is not None:
+                output += "├─ Time: {:e}\n".format(self.meta['time'])
             #end
-            if self.frame is not None:
-                output += "- Frame: {:d}\n".format(self.frame)
+            if self.meta['frame'] is not None:
+                output += "├─ Frame: {:d}\n".format(self.meta['frame'])
             #end
-            output += "- Number of components: {:d}\n".format(numComps)
-            output += "- Number of dimensions: {:d}\n".format(numDims)
-            output += "- Grid: ({:s})\n".format(self._gridType)
-            for d in range(numDims):
-                output += "  - Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
+            output += "├─ Number of components: {:d}\n".format(numComps)
+            output += "├─ Number of dimensions: {:d}\n".format(numDims)
+            output += "├─ Grid: ({:s})\n".format(self._gridType)
+            for d in range(numDims-1):
+                output += "│  ├─ Dim {:d}: Num. cells: {:d}; ".format(d, numCells[d])
                 output += "Lower: {:e}; Upper: {:e}\n".format(lower[d],
                                                               upper[d])
             #end
+            output += "│  └─ Dim {:d}: Num. cells: {:d}; ".format(numDims-1, numCells[numDims-1])
+            output += "Lower: {:e}; Upper: {:e}\n".format(lower[numDims-1],
+                                                          upper[numDims-1])
             maximum = np.nanmax(values)
             maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
             minimum = np.nanmin(values)
             minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-            output += "- Maximum: {:e} at {:s}".format(maximum,
+            output += "├─ Maximum: {:e} at {:s}".format(maximum,
                                                        str(maxIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}\n".format(maxIdx[-1])
             else:
                 output += "\n"
             #end
-            output += "- Minimum: {:e} at {:s}".format(minimum,
+            output += "├─ Minimum: {:e} at {:s}".format(minimum,
                                                        str(minIdx[:numDims]))
             if numComps > 1:
                 output += " component {:d}".format(minIdx[-1])
             #end
-            if self.polyOrder is not None and self.basisType is not None:
-                output += "\n- DG info:\n"
-                output += "  - Polynomial Order: {:d}\n".format(self.polyOrder)
-                if self.isModal:
-                    output += "  - Basis Type: {:s} (modal)".format(self.basisType)
+            if self.meta['polyOrder'] is not None and self.meta['basisType'] is not None:
+                output += "\n├─ DG info:\n"
+                output += "│  ├─ Polynomial Order: {:d}\n".format(self.meta['polyOrder'])
+                if self.meta['isModal']:
+                    output += "│  └─ Basis Type: {:s} (modal)".format(self.meta['basisType'])
                 else:
-                    output += "  - Basis Type: {:s}".format(self.basisType)
+                    output += "│  └─ Basis Type: {:s}".format(self.meta['basisType'])
                 #end
-            if self.changeset is not None and self.builddate is not None:
-                output += "\n- Created with Gkeyll:\n"
-                output += "  - Changeset: {:s}\n".format(self.changeset)
-                output += "  - Build Date: {:s}".format(self.builddate)
+            if self.meta['changeset'] and self.meta['builddate']:
+                output += "\n├─ Created with Gkeyll:\n"
+                output += "│  ├─ Changeset: {:s}\n".format(self.meta['changeset'])
+                output += "│  └─ Build Date: {:s}".format(self.meta['builddate'])
             #end
 
             #output += "\n- Contains attributes:\n  "
@@ -658,7 +683,7 @@ class Data(object):
                 adios.define_var(groupId, "time", "",
                                  adios.DATATYPE.double, "", "", "")
             #end
-            adios.define_var(groupId, self.varName, "",
+            adios.define_var(groupId, self._varName, "",
                              adios.DATATYPE.double,
                              sNumCells, sNumCells, sOffsets)
 
@@ -667,7 +692,7 @@ class Data(object):
             if self.time is not None:
                 adios.write(fh, "time", self.time)
             #end
-            adios.write(fh, self.varName, self.getValues())
+            adios.write(fh, self._varName, self.getValues())
             adios.close(fh)
             adios.finalize()
 

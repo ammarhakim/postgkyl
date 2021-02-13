@@ -3,7 +3,7 @@ import numpy as np
 from postgkyl.utils import idxParser
 
 
-def select(data, comp=None, stack=False,
+def select(data, comp=None, overwrite=False,
            z0=None, z1=None, z2=None,
            z3=None, z4=None, z5=None):
     """Selects parts of the GData.
@@ -74,8 +74,8 @@ def select(data, comp=None, stack=False,
         valuesOut = valuesOut[..., np.newaxis]
     #end
 
-    if stack:
-        data.push(valuesOut, grid)
+    if overwrite:
+        data.push(grid, valuesOut)
     else:
         return grid, valuesOut
     #end
