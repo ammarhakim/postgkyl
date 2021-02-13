@@ -72,8 +72,8 @@ class PgkylCommandGroup(click.Group):
 # The command line mode entry command
 @click.command(cls=PgkylCommandGroup, chain=True,
                context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('--filename', '-f', multiple=True,
-              help="DEPRECATED File names should now be specified without the '-f'")
+#@click.option('--filename', '-f', multiple=True,
+#              help="DEPRECATED File names should now be specified without the '-f'")
 @click.option('--savechain', '-s', is_flag=True,
               help="Save command chain for quick repetition.")
 @click.option('--savechainas', 

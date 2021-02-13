@@ -21,6 +21,8 @@ from postgkyl.data import Data
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.pass_context
 def differentiate(ctx, **kwargs):
     vlog(ctx, 'Starting differentiate')
@@ -62,6 +64,7 @@ def differentiate(ctx, **kwargs):
         
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = dg.differentiate(direction=kwargs['direction'])

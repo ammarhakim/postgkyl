@@ -9,6 +9,8 @@ import postgkyl.diagnostics as diag
               help="Specify the tag to integrate")
 @click.option('--tag', '-t', default=None,
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.pass_context
 def magsq(ctx, **kwargs):
     """Calculate the magnitude squared of an input array
@@ -20,6 +22,7 @@ def magsq(ctx, **kwargs):
     for dat in data.iterator(kwargs['use']):
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = diag.magsq(dat)

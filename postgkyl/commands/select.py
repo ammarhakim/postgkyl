@@ -24,6 +24,8 @@ from postgkyl.commands.util import vlog, pushChain
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.pass_context
 def select(ctx, **kwargs):
     r"""Subselect data from the active dataset(s). This command allows, for
@@ -39,6 +41,7 @@ def select(ctx, **kwargs):
     for dat in data.iterator(kwargs['use']):
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = postgkyl.data.select(dat,

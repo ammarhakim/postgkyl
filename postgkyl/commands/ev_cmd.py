@@ -134,33 +134,30 @@ def length(inGrid, inValues):
 def grad(inGrid, inValues):
     outGrid = inGrid[1]
     ax = inValues[0]
+    print(ax)
     if isinstance(ax, str) and ':' in ax:
         tmp = ax.split(':')
-        if tmp[0] == '':
-            lo = None
-        else:
-            lo = int(tmp[0])
-        if tmp[1] == '':
-            up = None
-        else:
-            up = int(tmp[1])
-        ax = slice(lo, up)
+        lo = int(tmp[0])
+        up = int(tmp[1])
+        rng = range(lo, up)
+    elif isinstance(ax, str):
+        rng = tuple((int(i) for i in ax.split(',')))
     else:
-        ax = int(ax)
-        lo = ax
-        up = ax+1
-
-    numDims = up-lo
+        rng = range(ax, ax+1)
+    #end
+    
+    numDims = len(rng)
     outShape = list(inValues[1].shape)
     numComps = inValues[1].shape[-1]
     outShape[-1] = outShape[-1]*numDims
     outValues = np.zeros(outShape)
     
-    for cnt, d in enumerate(range(lo, up)):
+    for cnt, d in enumerate(rng):
         zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
         outValues[...,cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1], zc, edge_order=2, axis=d)
+    #end
     return [outGrid], [outValues]
-
+#end
 
 def integrate(inGrid, inValues, avg=False):
     grid = inGrid[1].copy()

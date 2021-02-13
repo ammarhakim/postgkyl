@@ -43,6 +43,8 @@ def _getRange(strIn, length):
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--tag', '-t',
               help='Tag for the result')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.option('-x', type=click.STRING,
               help="Select components that will became the grid of the new dataset.")
 @click.option('-y', type=click.STRING,
@@ -94,6 +96,7 @@ def val2coord(ctx, **kwargs):
             y = values[..., yc, np.newaxis]
 
             out = Data(tag=outTag,
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push([x], y)

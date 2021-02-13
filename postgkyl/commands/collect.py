@@ -18,7 +18,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Collect into chunks with specified length rather than into a single dataset")
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--tag', '-t',
+@click.option('--tag', '-t', multiple=True,
               help='Specify a \'tag\' for the result.')
 @click.option('--label', '-l', default='collect',
               help="Specify the custom label for the result.")
@@ -36,7 +36,7 @@ def collect(ctx, **kwargs):
 
     tags = list(data.tagIterator())
     outTag = kwargs['tag']
-    if outTag is None:
+    if outTag == ():
         if len(tags) == 1:
             outTag = tags[0]
         else:
@@ -98,11 +98,16 @@ def collect(ctx, **kwargs):
                 grid[i].insert(0, np.array(time[i]))
             #end
 
-            #vlog(ctx, 'collect: Creating {:d}D data with shape {}'.format(len(grid), values[i].shape))
-            out = Data(tag=outTag,
-                       compgrid=ctx.obj['compgrid'],
-                       label=kwargs['label'])
-            out.push( grid[i], values[i])
+            tempTag = outTag
+            if isinstance(outTag, tuple) and len(outTag) > 1:
+                tempTag = outTag[i]
+            elif isinstance(outTag, tuple):
+                tempTag = outTag[0]
+            #end
+            out = Data(tag=tempTag,
+                       label=kwargs['label'],
+                       compgrid=ctx.obj['compgrid'])
+            out.push(grid[i], values[i])
             data.add(out)
         #end
     #end

@@ -10,6 +10,8 @@ from postgkyl.data import Data
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.option('--basistype', '-b',
               type=click.Choice(['ms', 'ns', 'mo']),
               help='Specify DG basis')
@@ -47,6 +49,7 @@ def recovery(ctx, **kwargs):
         #dg.recovery(tuple(range(numComps)), stack=True)
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = dg.recovery(0, inputs['c1'])

@@ -10,6 +10,8 @@ from postgkyl.data import Data
               help="Specify the tag to integrate")
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.pass_context
 def integrate(ctx, **kwargs):
     vlog(ctx, 'Starting integrate')
@@ -20,6 +22,7 @@ def integrate(ctx, **kwargs):
         if kwargs['tag']:
             grid, values = diag.integrate(dat, kwargs['axis'])
             out = Data(tag=kwargs['tag'],
+                       label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push(grid, values)

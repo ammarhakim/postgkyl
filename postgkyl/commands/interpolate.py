@@ -19,6 +19,8 @@ from postgkyl.modalDG import interpolate as interpFn
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
+@click.option('--label', '-l',
+              help="Custom label for the result")
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file.')
 @click.option('-n', '--new', is_flag=True,
@@ -68,6 +70,7 @@ def interpolate(ctx, **kwargs):
         if not kwargs['new']:
             if kwargs['tag']:
                 out = Data(tag=kwargs['tag'],
+                           label=kwargs['label'],
                            compgrid=ctx.obj['compgrid'],
                            meta=dat.meta)
                 grid, values = dg.interpolate(tuple(range(numComps)))
