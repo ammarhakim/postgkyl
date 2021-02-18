@@ -21,7 +21,7 @@ def write(ctx, **kwargs):
     """
     vlog(ctx, 'Starting write')
     pushChain(ctx, 'write', **kwargs)
-    data = ct.obj['data']
+    data = ctx.obj['data']
     
     for dat in data.iterator(kwargs['use']):
         dat.write(outName=kwargs['filename'],
