@@ -134,7 +134,6 @@ def length(inGrid, inValues):
 def grad(inGrid, inValues):
     outGrid = inGrid[1]
     ax = inValues[0]
-    print(ax)
     if isinstance(ax, str) and ':' in ax:
         tmp = ax.split(':')
         lo = int(tmp[0])
@@ -143,7 +142,7 @@ def grad(inGrid, inValues):
     elif isinstance(ax, str):
         rng = tuple((int(i) for i in ax.split(',')))
     else:
-        rng = range(ax, ax+1)
+        rng = range(int(ax), int(ax+1))
     #end
     
     numDims = len(rng)
