@@ -23,11 +23,13 @@ def update(i, data, fig, kwargs):
     #plt.clf()
     kwargs['title'] = ''
     kwargs['figure'] = fig
-    if dat.meta['frame'] is not None:
-        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
-    #end
-    if dat.meta['time'] is not None:
-        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
+    if not kwargs['notitle']:
+        if dat.meta['frame'] is not None:
+            kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
+        #end
+        if dat.meta['time'] is not None:
+            kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
+        #end
     #end
     if kwargs['arg'] is not None:
         return gplot(dat, kwargs['arg'], **kwargs)
@@ -101,6 +103,8 @@ def update(i, data, fig, kwargs):
               help="Specify a label for colorbar.")
 @click.option('--title', type=click.STRING,
               help="Specify a title.")
+@click.option('--notitle', is_flag=True,
+              help="Do not show title.")
 @click.option('-i', '--interval', default=100,
               help="Specify the animation interval.")
 @click.option('--save', is_flag=True,
@@ -121,6 +125,8 @@ def update(i, data, fig, kwargs):
               help="Turns on the pgkyl hashtag!")
 @click.option('--show/--no-show', default=True,
               help="Turn showing of the plot ON and OFF (default: ON).")
+@click.option('--saveframes', type=click.STRING,
+              help="Save individual frames as PNGS instead of an animation")
 @click.pass_context
 def animate(ctx, **kwargs):
     r"""Animate the actively loaded dataset and show resulting plots in a
@@ -174,17 +180,25 @@ def animate(ctx, **kwargs):
         #numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
         dataList = list(data.iterator(tag=tag))
         figs.append(plt.figure())
-        anims.append(FuncAnimation(figs[-1], update, len(dataList),
-                                   fargs=(dataList, figs[-1], kwargs),
-                                   interval=kwargs['interval'], blit=False))
+        if not kwargs['saveframes']:
+            anims.append(FuncAnimation(figs[-1], update, len(dataList),
+                                       fargs=(dataList, figs[-1], kwargs),
+                                       interval=kwargs['interval'], blit=False))
 
-        fName = 'anim_{:s}.mp4'.format(tag)
-        if kwargs['saveas']:
-            fName = str(kwargs['saveas'])
-        #end
-        if kwargs['save'] or kwargs['saveas']:
-            anims[-1].save(fName, writer='ffmpeg',
-                           fps=kwargs['fps'], dpi=kwargs['dpi'])
+            fName = 'anim_{:s}.mp4'.format(tag)
+            if kwargs['saveas']:
+                fName = str(kwargs['saveas'])
+            #end
+            if kwargs['save'] or kwargs['saveas']:
+                anims[-1].save(fName, writer='ffmpeg',
+                               fps=kwargs['fps'], dpi=kwargs['dpi'])
+            #end
+        else:
+            for i in range(len(dataList)):
+                update(i, dataList, figs[-1], kwargs)
+                plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i), dpi=kwargs['dpi'])
+            #end
+            kwargs['show'] = False #do not show in this case
         #end
     #end
     
