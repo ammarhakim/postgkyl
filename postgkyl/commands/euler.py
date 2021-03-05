@@ -24,7 +24,7 @@ def euler(ctx, **kwargs):
     
     v = kwargs['variable_name']
     for dat in data.iterator(kwargs['use']):
-        vlog(ctx, 'euler: Extracting {:s} from data set #{:d}'.format(v, s))
+        vlog(ctx, 'euler: Extracting {:s} from data set'.format(v))
         if v == "density":
             diag.getDensity(dat, overwrite=True)
         elif v == "xvel":
