@@ -234,10 +234,11 @@ class Data(object):
                 #end
                 with adios.file(gridNm) as gridFh:
                     gridVar = adios.var(gridFh, self._varName)
+                    offset, count = self._createOffsetCountBp(gridVar, axes, comp)
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose() 
                             for d in range(tmp.shape[-1])]
-                    self._grid.append(grid)
+                    self._grid = grid
                 #end
             elif self._gridType == "nonuniform":
                 raise TypeError("'nonuniform' is not presently supported")
