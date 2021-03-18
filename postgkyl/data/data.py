@@ -531,6 +531,10 @@ class Data(object):
         return self._grid
     #end
 
+    def getGridType(self):
+        return self._gridType
+    #end
+
     def getValues(self):
         return self._values
     #end
