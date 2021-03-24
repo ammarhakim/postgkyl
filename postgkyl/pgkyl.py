@@ -126,7 +126,7 @@ def cli(ctx, **kwargs):
             pass
         #end
         if kwargs['savechainas'] is not None:
-            ctx.obj['savechainPath'] = (home + '/.pgkyl/' + str(savechainas))
+            ctx.obj['savechainPath'] = (home + '/.pgkyl/' + str(kwargs['savechainas']))
         #end
         fh = open(ctx.obj['savechainPath'], 'w')  # The default chain name
         fh.close()
@@ -188,6 +188,7 @@ cli.add_command(cmd.write)
 #cli.add_command(cmd.temp.norm)
 
 if __name__ == '__main__':
-    cli()
+    ctx = []
+    cli(ctx)
 
 
