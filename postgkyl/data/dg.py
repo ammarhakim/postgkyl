@@ -226,15 +226,43 @@ def _decompose(n, dim, numInterp):
 #end
 
 
-def _makeMesh(nInterp, Xc, xlo=None, xup=None):
+def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
     nx = Xc.shape[0]-1 # expecting nodal mesh
-    if xlo is None or xup is None:
+    meshOut = np.zeros(nInterp*nx+1)
+    if gridType is None or gridType=="uniform":
+      if xlo is None or xup is None:
         xlo = Xc[0]
         xup = Xc[-1]
+      #end
+      meshOut = np.linspace(xlo, xup, nInterp*nx+1)
+    elif gridType=="mapped":
+      # subdivide every cell in Xc into nInterp cells. 
+      for i in range(nx):
+        dx = (Xc[i+1]-Xc[i])/nInterp
+        for j in range(nInterp):
+          meshOut[i*nInterp+j] = Xc[i]+j*dx
+      # add the last node.
+      dx = (Xc[-1]-Xc[-2])/nInterp
+      meshOut[nx*nInterp] = Xc[nx-1]+nInterp*dx
     #end
-    return np.linspace(xlo, xup, nInterp*nx+1)
+    return meshOut
 #end
 
+def _make1Dgrids(nInterp, Xc, numDims, gridType=None):
+  # build a list of 1D arrays, each containing the grid in that dimension.
+  gridOut = list() 
+  if gridType is None or gridType=="uniform":
+    gridOut = [_makeMesh(nInterp, Xc[d])
+               for d in range(numDims)]
+  elif gridType=="mapped":
+    # back out 1D arrays from Xc.
+    for d in range(numDims):
+      currSlices = [0]*numDims
+      currSlices[-1-d] = np.s_[:]
+      gridOut.append(_makeMesh(nInterp, Xc[d][tuple(currSlices)],gridType=gridType))
+    #end
+  #end
+  return gridOut
 
 def _interpOnMesh(cMat, qIn):
     numCells = np.array(qIn.shape)
@@ -282,6 +310,7 @@ class GInterp(object):
         self.numEqns = data.getNumComps()/numNodes
         self.numDims = data.getNumDims()
         self.Xc = data.getGrid()
+        self.gridType = data.getGridType()
     #end
 
     def _getRawNodal(self, component):
@@ -376,8 +405,7 @@ class GInterpNodal(GInterp):
                                    axis=-1)
             #end
         #end
-        grid = [_makeMesh(nInterp, self.Xc[d])
-                for d in range(self.numDims)]
+        grid = _make1Dgrids(nInterp, self.Xc, self.numDims)
         if overwrite:
             self.data.push(grid, values)
         else:
@@ -400,8 +428,7 @@ class GInterpNodal(GInterp):
                 values[:,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
-        grid = [_makeMesh(nInterp, self.Xc[d])
-                for d in range(self.numDims)]
+        grid = _make1Dgrids(nInterp, self.Xc, self.numDims)
         if overwrite:
             self.data.push(grid, values)
         else:
@@ -496,8 +523,8 @@ class GInterpModal(GInterp):
                                    axis=-1)
             #end
         #end
-        grid = [_makeMesh(nInterp, self.Xc[d])
-                for d in range(self.numDims)]
+        grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
+
         if overwrite:
             self.data.push(grid, values)
         else:
@@ -522,8 +549,7 @@ class GInterpModal(GInterp):
                 values[...,i] *= 2/(self.Xc[i][1]-self.Xc[i][0])
             #end
         #end
-        grid = [_makeMesh(nInterp, self.Xc[d])
-                for d in range(self.numDims)]
+        grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
         if overwrite:
             self.data.push(grid, values)
         else:

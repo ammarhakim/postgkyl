@@ -22,6 +22,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Transpose axes.")
 @click.option('-c', '--contour', is_flag=True,
               help="Make contour plot.")
+@click.option('--clevels', type=click.STRING,
+              help="Specify levels for contours: either integer or start:end:nlevels")
 @click.option('-q', '--quiver', is_flag=True,
               help="Make quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
