@@ -59,7 +59,7 @@ def plot(data, args=(),
          xlim=None, ylim=None,
          showgrid=True,
          hashtag=False, xkcd=False,
-         color=None, markersize=None,
+         color=None, markersize=None, linewidth=None,
          transpose=False,
          figsize=None,
          **kwargs):
@@ -284,13 +284,22 @@ def plot(data, args=(),
                         levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
                     else:
                         levels = int(clevels)
-                        
+                    #end
+                #end
                 
                 gridCC = _gridNodalToCellCentered(grid, cells)
+                cl = data.color
+                if color is not None:
+                    cl = color
+                    legend = False
+                #end
                 im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
-                                 values[..., comp].transpose(), levels,
-                                 *args)
-                cb = _colorbar(im, fig, cax, label=clabel)
+                                 values[..., comp].transpose(),
+                                 levels, *args,
+                                 colors=cl, linewidths=linewidth)
+                if color is None:
+                    cb = _colorbar(im, fig, cax, label=clabel)
+                #end
             elif quiver:  #-------------------------------------------
                 skip = int(np.max((len(grid[0]), len(grid[1])))//15)
                 skip2 = int(skip//2)
