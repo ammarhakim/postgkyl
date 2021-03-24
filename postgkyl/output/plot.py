@@ -47,8 +47,9 @@ def plot(data, args=(),
          numAxes=None, startAxes=0,
          nSubplotRow=None, nSubplotCol=None,
          scatter=False,
-         streamline=False, quiver=False, contour=False,
-         clevels=None,
+         streamline=False, sdensity=None, arrowstyle=None,
+         quiver=False,
+         contour=False, clevels=None,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
@@ -318,11 +319,18 @@ def plot(data, args=(),
                     cl = np.sqrt(values[..., 2*comp]**2 
                                  + values[..., 2*comp+1]**2).transpose()
                 #end
+                if sdensity is None:
+                    sdensity=1
+                #end
+                if arrowstyle is None:
+                    arrowstyle = 'simple'
+                #end
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,
                                     values[..., 2*comp].transpose(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
+                                    density=sdensity, arrowstyle=arrowstyle,
                                     color=cl, linewidth=linewidth)
                 if color is None:
                     _colorbar(im.lines, fig, cax, label=clabel)
