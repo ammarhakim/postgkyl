@@ -291,7 +291,6 @@ def plot(data, args=(),
                 cl = data.color
                 if color is not None:
                     cl = color
-                    legend = False
                 #end
                 im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
                                  values[..., comp].transpose(),
@@ -313,15 +312,21 @@ def plot(data, args=(),
                                        skip2::skip,
                                        2*comp+1].transpose())
             elif streamline:  #---------------------------------------
-                magnitude = np.sqrt(values[..., 2*comp]**2 
-                                    + values[..., 2*comp+1]**2)
+                if color is not None:
+                    cl = color
+                else: # magnitude
+                    cl = np.sqrt(values[..., 2*comp]**2 
+                                 + values[..., 2*comp+1]**2).transpose()
+                #end
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,
                                     values[..., 2*comp].transpose(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
-                                    color=magnitude.transpose())
-                _colorbar(im.lines, fig, cax, label=clabel)
+                                    color=cl)
+                if color is None:
+                    _colorbar(im.lines, fig, cax, label=clabel)
+                #end
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
                 im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
