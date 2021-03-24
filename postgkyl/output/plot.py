@@ -48,6 +48,7 @@ def plot(data, args=(),
          nSubplotRow=None, nSubplotCol=None,
          scatter=False,
          streamline=False, quiver=False, contour=False,
+         clevels=None,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
@@ -274,11 +275,20 @@ def plot(data, args=(),
                           color=cl, markersize=markersize)
             xmin = min(gridCC[0]*xscale)
             xmax = max(gridCC[0]*xscale)
-        elif numDims == 2: 
+        elif numDims == 2:            
             if contour:  #--------------------------------------------
+                levels = 10
+                if clevels:
+                    if ":" in clevels:
+                        s = clevels.split(":")
+                        levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
+                    else:
+                        levels = int(clevels)
+                        
+                
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
-                                 values[..., comp].transpose(),
+                                 values[..., comp].transpose(), levels,
                                  *args)
                 cb = _colorbar(im, fig, cax, label=clabel)
             elif quiver:  #-------------------------------------------
