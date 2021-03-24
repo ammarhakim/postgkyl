@@ -323,7 +323,7 @@ def plot(data, args=(),
                                     values[..., 2*comp].transpose(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
-                                    color=cl)
+                                    color=cl, linewidth=linewidth)
                 if color is None:
                     _colorbar(im.lines, fig, cax, label=clabel)
                 #end
