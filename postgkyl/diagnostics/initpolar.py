@@ -1,4 +1,9 @@
+#!/usr/bin/env python
+"""
+Postgkyl module for creating the bins for isotropic data
+"""
 import numpy as np
+from .. import diagnostics as diag
 
 def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
     #if 2D, nkz and kz = 0
@@ -9,7 +14,7 @@ def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
         polar_index = []
         akplim = []
     elif nkz == 0: 
-        nbin = np.zeros((1,nkpolar)) #Number of kx,ky in each polar bins
+        nbin = np.zeros(nkpolar) #Number of kx,ky in each polar bins
         polar_index = np.zeros((nkx, nky), dtype=int) #Polar index to simplify binning 
         if nkx == 1 & nky==1:
             dkp = 0
@@ -26,14 +31,14 @@ def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
         kp = np.sqrt(kxg**2 + kyg**2)
         pn  = np.where(kp >= akplim[nkpolar])
         polar_index[pn[0], pn[1]] = nkpolar-1  
-        nbin[0, nkpolar-1] = nbin[0, nkpolar-1] + len(pn[0])
+        nbin[nkpolar-1] = nbin[nkpolar-1] + len(pn[0])
         for ik in range(0, nkpolar):
             pn = np.where((kp < akplim[ik+1]) & (kp >= akplim[ik]))
             polar_index[pn[0], pn[1]] = ik
-            nbin[0, ik] = nbin[0, ik] + len(pn[0])
+            nbin[ik] = nbin[ik] + len(pn[0])
     else:
         #3D data
-        nbin = np.zeros((1,nkpolar))
+        nbin = np.zeros(nkpolar)
         polar_index = np.zeros((nkx, nky, nkz), dtype=int)
         if nkx == 1 & nky==1 & nkz==1:
             dkp = 0
@@ -52,12 +57,11 @@ def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
         kp = np.sqrt(kxg**2 + kyg**2 + kzg**2)
         pn = np.where(kp >= akplim[nkpolar])
         polar_index[pn[0], pn[1], pn[2]] = nkpolar-1
-        nbin[0, nkpolar-1] = nbin[0, nkpolar-1] + len(pn[0])
+        nbin[nkpolar-1] = nbin[nkpolar-1] + len(pn[0])
         for ik in range(0, nkpolar):
             pn = np.where((kp < akplim[ik+1]) & (kp >= akplim[ik]))
             polar_index[pn[0], pn[1], pn[2]] = ik
-            nbin[0, ik] = nbin[0, ik] + len(pn[0])
-        
-    
-    return akp, nbin, polar_index, akplim; 
+            nbin[ik] = nbin[ik] + len(pn[0])
+            
+    return akp, nbin, polar_index, akplim
 
