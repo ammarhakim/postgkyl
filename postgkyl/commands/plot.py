@@ -34,6 +34,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Make scatter plot.")
 @click.option('--markersize', type=click.FLOAT,
               help="Set marker size for scatter plots.")
+@click.option('--linewidth', type=click.FLOAT,
+              help="Set the linewidth.")
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option('-d', '--diverging', is_flag=True,
