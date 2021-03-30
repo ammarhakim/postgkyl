@@ -28,6 +28,10 @@ from postgkyl.commands.util import vlog, pushChain
               help="Make quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Make streamline plot.")
+@click.option('--sdensity', type=click.FLOAT,
+              help="Control density of the streamlines.")
+@click.option('--arrowstyle', type=click.STRING,
+              help="Set the style for streamline arrows.")
 @click.option('-g', '--group', type=click.Choice(['0', '1']),
               help="Switch to group mode.")
 @click.option('-s', '--scatter', is_flag=True,

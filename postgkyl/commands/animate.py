@@ -127,6 +127,8 @@ def update(i, data, fig, kwargs):
               help="Turn showing of the plot ON and OFF (default: ON).")
 @click.option('--saveframes', type=click.STRING,
               help="Save individual frames as PNGS instead of an animation")
+@click.option('--figsize',
+              help="Comma-separated values for x and y size.")
 @click.pass_context
 def animate(ctx, **kwargs):
     r"""Animate the actively loaded dataset and show resulting plots in a
@@ -176,10 +178,17 @@ def animate(ctx, **kwargs):
     anims = []
     figs = []
     kwargs['legend'] = False
+
+    figsize = None
+    if kwargs['figsize']:
+        figsize = (int(kwargs['figsize'].split(',')[0]),
+                   int(kwargs['figsize'].split(',')[1]))
+    #end
+    
     for tag in data.tagIterator(kwargs['use']):
         #numFiles = data.getNumDatasets(tag=tag, onlyActive=False)
         dataList = list(data.iterator(tag=tag))
-        figs.append(plt.figure())
+        figs.append(plt.figure(figsize=figsize))
         if not kwargs['saveframes']:
             anims.append(FuncAnimation(figs[-1], update, len(dataList),
                                        fargs=(dataList, figs[-1], kwargs),
