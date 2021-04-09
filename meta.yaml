@@ -30,6 +30,7 @@ requirements:
     - sympy
     - adiospy
     - bokeh
+    - msgpack-python
 
 test:
   imports:
