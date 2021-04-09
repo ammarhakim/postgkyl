@@ -157,8 +157,6 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
                 outMeta.pop(k)
             #end
         #end
-
-        print(outMeta)
         
         for i in range(numOut):
             gridStack[-numOut+i].append(outGrid[i])
