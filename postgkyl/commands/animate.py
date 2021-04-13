@@ -219,7 +219,7 @@ def animate(ctx, **kwargs):
                                fps=kwargs['fps'], dpi=kwargs['dpi'])
             #end
         else:
-            for i in range(np.nanmin((minSize, len(dataList)))):
+            for i in range(int(np.nanmin((minSize, len(dataList))))):
                 update(i, dataList, figs[-1], offsets, kwargs)
                 plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i), dpi=kwargs['dpi'])
             #end
