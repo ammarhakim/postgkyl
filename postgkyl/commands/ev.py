@@ -11,25 +11,25 @@ from postgkyl.commands.util import vlog, pushChain
 # load base commands
 from  postgkyl.commands import ev_cmd as cmdBase
 # load user commands
-if path.isfile(path.expanduser("~") + '/pgkyl_ev.py'):
-    sys.path.insert(0, path.expanduser("~"))
-    import pgkyl_ev as cmdUser
-    userCommands = True
-else:
-    userCommands = False
-#end
+#if path.isfile(path.expanduser("~") + '/pgkyl_ev.py'):
+#    sys.path.insert(0, path.expanduser("~"))
+#    import pgkyl_ev as cmdUser
+#    userCommands = True
+#else:
+#    userCommands = False
+##end
 
 helpStr = ""
 for s in cmdBase.cmds.keys():
     helpStr += " '{:s}',".format(s)
 #end
-if userCommands:
-    for s in cmdUser.cmds.keys():
-        helpStr += " '{:s}',".format(s)
-    #end
-#end
+#if userCommands:
+#    for s in cmdUser.cmds.keys():
+#        helpStr += " '{:s}',".format(s)
+#    #end
+##end
 
-def _data(ctx, gridStack, valueStack, metaStack, strIn, tags):
+def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
     if strIn[0] == 'f' or strIn.split('[')[0] in tags:
         splits = strIn.split('[')
         if splits[0] in tags:
@@ -56,20 +56,42 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags):
         gridStack.append([])
         valueStack.append([])
         metaStack.append([])
-        for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx, onlyActive=False):
-            if metaKey:
-                grid = None
-                if metaKey in dat.meta:
-                    values = np.array(dat.meta[metaKey])
-                else:
-                    ctx.fail(click.echo("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
+        if onlyActive:
+            cnt = 0
+            for dat in ctx.obj['data'].iterator(tag=tagNm, onlyActive=True):
+                if cnt == int(setIdx):
+                    if metaKey:
+                        grid = None
+                        if metaKey in dat.meta:
+                            values = np.array(dat.meta[metaKey])
+                        else:
+                            ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
+                        #end
+                    else:
+                        grid, values = pselect(dat, comp=compIdx)
+                    #end
+                    gridStack[-1].append(grid)
+                    valueStack[-1].append(values)
+                    metaStack[-1].append(dat.meta)
                 #end
-            else:
-                grid, values = pselect(dat, comp=compIdx)
+                cnt += 1
             #end
-            gridStack[-1].append(grid)
-            valueStack[-1].append(values)
-            metaStack[-1].append(dat.meta)
+        else:
+            for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx, onlyActive=False):
+                if metaKey:
+                    grid = None
+                    if metaKey in dat.meta:
+                        values = np.array(dat.meta[metaKey])
+                    else:
+                        ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
+                    #end
+                else:
+                    grid, values = pselect(dat, comp=compIdx)
+                #end
+                gridStack[-1].append(grid)
+                valueStack[-1].append(values)
+                metaStack[-1].append(dat.meta)
+            #end
         #end
         return True
     elif '(' in strIn or '[' in strIn:
@@ -95,11 +117,11 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags):
 #end
 
 def _command(ctx, gridStack, valueStack, metaStack, strIn):
-    if userCommands and strIn in cmdUser.cmds:
-        numIn = cmdUser.cmds[strIn]['numIn']
-        numOut = cmdUser.cmds[strIn]['numOut']
-        func = cmdUser.cmds[strIn]['func']
-    elif strIn in cmdBase.cmds:
+    #if userCommands and strIn in cmdUser.cmds:
+    #    numIn = cmdUser.cmds[strIn]['numIn']
+    #    numOut = cmdUser.cmds[strIn]['numOut']
+    #    func = cmdUser.cmds[strIn]['func']
+    if strIn in cmdBase.cmds:
         numIn = cmdBase.cmds[strIn]['numIn']
         numOut = cmdBase.cmds[strIn]['numOut']
         func = cmdBase.cmds[strIn]['func']
@@ -174,6 +196,9 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
 @click.option('--label', '-l',
               default='ev', show_default=True,
               help="Custom label for the result")
+@click.option('--global', '-g',
+              is_flag=True,
+              help="Ignore the active inactive datasets and use global indexing")
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
@@ -184,7 +209,12 @@ def ev(ctx, **kwargs):
     chainSplit = kwargs['chain'].split(' ')
     chainSplit = list(filter(None, chainSplit))
 
-    tags = list(data.tagIterator(onlyActive=False))
+    onlyActive = True
+    if kwargs['global']:
+        onlyActive = False
+    #end
+
+    tags = list(data.tagIterator(onlyActive=onlyActive))
     outTag = kwargs['tag']
     if outTag is None:
         if len(tags) == 1:
@@ -195,7 +225,7 @@ def ev(ctx, **kwargs):
     #end
             
     for s in chainSplit:
-        isData = _data(ctx, gridStack, valueStack, metaStack, s, tags)
+        isData = _data(ctx, gridStack, valueStack, metaStack, s, tags, onlyActive)
         if not isData:
             isCommand = _command(ctx, gridStack, valueStack, metaStack, s)
         #end
@@ -205,9 +235,9 @@ def ev(ctx, **kwargs):
     #end
 
     if len(valueStack) == 0:
-        ctx.fail(click.style("Evaluate stack is empty, there is nothing to return".format(s), fg='red'))
+        ctx.fail(click.style("Evaluate stack is empty, there is nothing to return", fg='red'))
     elif len(valueStack) > 1:
-        click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior".format(s), fg='yellow'))
+        click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior", fg='yellow'))
     #end
 
     data.deactivateAll()
