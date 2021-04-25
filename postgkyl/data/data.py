@@ -236,7 +236,7 @@ class Data(object):
                     gridVar = adios.var(gridFh, self._varName)
                     offset, count = self._createOffsetCountBp(gridVar, axes, comp)
                     tmp = gridVar.read(offset=offset, count=count)
-                    grid = [tmp[..., d].transpose() 
+                    grid = [tmp[..., d].transpose()
                             for d in range(tmp.shape[-1])]
                     self._grid = grid
                 #end
@@ -259,9 +259,9 @@ class Data(object):
                     lower = lower + offset[:numDims]*dz
                     cells = cells - offset[:numDims]
                 elif self._gridType == "mapped":
+                    idx = np.full(numDims, 0)
                     for d in range(numDims):
-                        idx = np.full(numDims, offset[d])
-                        lower[d] = self._grid[0][idx, d]
+                        lower[d] = self._grid[d][tuple(idx)]
                         cells[d] = cells[d] - offset[d]
                     #end
                 #end
@@ -271,9 +271,10 @@ class Data(object):
                     upper = lower + count[:numDims]*dz
                     cells = count[:numDims]
                 elif self._gridType == "mapped":
+                    idx = np.full(numDims, 0)
                     for d in range(numDims):
-                        idx = np.full(numDims, offset[d]+count[d])
-                        upper[d] = self._grid[0][idx ,d]
+                        idx[-d-1] = count[d]-1  #.Reverse indexing of idx because of transpose() in composing self._grid.
+                        upper[d] = self._grid[d][tuple(idx)]
                         cells[d] = count[d]
                     #end
                 #end
