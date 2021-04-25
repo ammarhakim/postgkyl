@@ -47,7 +47,9 @@ def plot(data, args=(),
          numAxes=None, startAxes=0,
          nSubplotRow=None, nSubplotCol=None,
          scatter=False,
-         streamline=False, quiver=False, contour=False,
+         streamline=False, sdensity=None, arrowstyle=None,
+         quiver=False,
+         contour=False, clevels=None,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0,
          style=None, legend=True, labelPrefix='',
@@ -58,7 +60,7 @@ def plot(data, args=(),
          xlim=None, ylim=None,
          showgrid=True,
          hashtag=False, xkcd=False,
-         color=None, markersize=None,
+         color=None, markersize=None, linewidth=None,
          transpose=False,
          figsize=None,
          **kwargs):
@@ -274,13 +276,30 @@ def plot(data, args=(),
                           color=cl, markersize=markersize)
             xmin = min(gridCC[0]*xscale)
             xmax = max(gridCC[0]*xscale)
-        elif numDims == 2: 
+        elif numDims == 2:            
             if contour:  #--------------------------------------------
+                levels = 10
+                if clevels:
+                    if ":" in clevels:
+                        s = clevels.split(":")
+                        levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
+                    else:
+                        levels = int(clevels)
+                    #end
+                #end
+                
                 gridCC = _gridNodalToCellCentered(grid, cells)
+                cl = data.color
+                if color is not None:
+                    cl = color
+                #end
                 im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
                                  values[..., comp].transpose(),
-                                 *args)
-                cb = _colorbar(im, fig, cax, label=clabel)
+                                 levels, *args,
+                                 colors=cl, linewidths=linewidth)
+                if color is None:
+                    cb = _colorbar(im, fig, cax, label=clabel)
+                #end
             elif quiver:  #-------------------------------------------
                 skip = int(np.max((len(grid[0]), len(grid[1])))//15)
                 skip2 = int(skip//2)
@@ -294,15 +313,28 @@ def plot(data, args=(),
                                        skip2::skip,
                                        2*comp+1].transpose())
             elif streamline:  #---------------------------------------
-                magnitude = np.sqrt(values[..., 2*comp]**2 
-                                    + values[..., 2*comp+1]**2)
+                if color is not None:
+                    cl = color
+                else: # magnitude
+                    cl = np.sqrt(values[..., 2*comp]**2 
+                                 + values[..., 2*comp+1]**2).transpose()
+                #end
+                if sdensity is None:
+                    sdensity=1
+                #end
+                if arrowstyle is None:
+                    arrowstyle = 'simple'
+                #end
                 gridCC = _gridNodalToCellCentered(grid, cells)
                 im = cax.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,
                                     values[..., 2*comp].transpose(),
                                     values[..., 2*comp+1].transpose(),
                                     *args,
-                                    color=magnitude.transpose())
-                _colorbar(im.lines, fig, cax, label=clabel)
+                                    density=sdensity, arrowstyle=arrowstyle,
+                                    color=cl, linewidth=linewidth)
+                if color is None:
+                    _colorbar(im.lines, fig, cax, label=clabel)
+                #end
             elif diverging:  #----------------------------------------
                 vmax = np.abs(values[..., comp]).max()
                 im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,

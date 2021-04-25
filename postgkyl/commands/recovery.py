@@ -40,23 +40,23 @@ def recovery(ctx, **kwargs):
 
     for dat in data.iterator(kwargs['use']):
         dg = GInterpModal(dat,
-                          kwatgs['polyorder'], basisType, 
+                          kwargs['polyorder'], basisType, 
                           kwargs['interp'], kwargs['periodic'])
         numNodes = dg.numNodes
-        numComps = int(ctx.obj['dataSets'][s].getNumComps() / numNodes)
+        numComps = int(dat.getNumComps() / numNodes)
 
-        vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
+        #vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
         #dg.recovery(tuple(range(numComps)), stack=True)
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
                        label=kwargs['label'],
                        compgrid=ctx.obj['compgrid'],
                        meta=dat.meta)
-            grid, values = dg.recovery(0, inputs['c1'])
+            grid, values = dg.recovery(0, kwargs['c1'])
             out.push(grid, values)
             data.add(out)
         else:
-            dg.recovery(0, inputs['c1'], overwrite=True)
+            dg.recovery(0, kwargs['c1'], overwrite=True)
         #end
     #end
     vlog(ctx, 'Finishing recovery')

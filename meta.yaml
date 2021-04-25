@@ -1,12 +1,12 @@
 package:
-  name: postgkyl-unstable
-  version: "1.6.0"
+  name: postgkyl
+  version: "1.6.5"
 
 source:
   path: ./
 
 build:
-  number: 20210203
+  number: 20210413
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
@@ -30,6 +30,7 @@ requirements:
     - sympy
     - adiospy
     - bokeh
+    - msgpack-python
 
 test:
   imports:

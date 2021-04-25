@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from distutils.core import setup
+from setuptools import setup
 
 try:
    import pypandoc
@@ -7,8 +7,8 @@ try:
 except (IOError, ImportError):
    long_description = ''
 
-setup(name='postgkyl-unstable',
-      version='1.6.0',
+setup(name='postgkyl',
+      version='1.6.5',
       description='Postrocessing utilities for Gkeyll simulation framework',
       long_description=long_description,
       url='https://github.com/ammarhakim/postgkyl',
