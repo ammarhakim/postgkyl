@@ -685,7 +685,7 @@ class Data(object):
             lo, up = self.getBounds()
             adios.define_attribute_byvalue(groupId, "lowerBounds", "", lo)
             adios.define_attribute_byvalue(groupId, "upperBounds", "", up)
-            if self.time is not None:
+            if hasattr(self, 'time') and self.time is not None:
                 adios.define_var(groupId, "time", "",
                                  adios.DATATYPE.double, "", "", "")
             #end
@@ -695,7 +695,7 @@ class Data(object):
 
             # Write the data and finalize
             fh = adios.open("CartField", outName, 'w')
-            if self.time is not None:
+            if hasattr(self, 'time') and self.time is not None:
                 adios.write(fh, "time", self.time)
             #end
             adios.write(fh, self._varName, self.getValues())
