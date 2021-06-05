@@ -104,6 +104,7 @@ def plot(data, args=(),
             if cells[d] <= 1:
                 idx.append(d)
             #end
+            grid[d] = grid[d].squeeze()
         #end
         if idx:
             for i in reversed(idx):

@@ -234,9 +234,10 @@ class Data(object):
                 #end
                 with adios.file(gridNm) as gridFh:
                     gridVar = adios.var(gridFh, self._varName)
-                    offset, count = self._createOffsetCountBp(gridVar, axes, comp)
+                    offset, count = self._createOffsetCountBp(gridVar, axes, None)
                     tmp = gridVar.read(offset=offset, count=count)
                     grid = [tmp[..., d].transpose()
+                            #for d in range(len(cells))]
                             for d in range(tmp.shape[-1])]
                     self._grid = grid
                 #end
@@ -261,6 +262,7 @@ class Data(object):
                 elif self._gridType == "mapped":
                     idx = np.full(numDims, 0)
                     for d in range(numDims):
+                        #print(idx)
                         lower[d] = self._grid[d][tuple(idx)]
                         cells[d] = cells[d] - offset[d]
                     #end
