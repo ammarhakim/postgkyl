@@ -5,7 +5,7 @@ Postgkyl module for rotating an array into the coordinate system perpendicular t
 import numpy as np
 from .. import diagnostics as diag
 
-def perprotate(data, rotator, rotateCoords='0:3', overwrite=False):
+def perprotate(data, rotator, rotateCoords='0:3', overwrite=False, stack=False):
     """Function to rotate input array into coordinate system perpendicular to rotator array
     For two arrays u and v, where v is the rotator, operation is u - (u dot v_hat) v_hat.
     Uses the diagnostic parrotate.py to compute (u dot v_hat) v_hat.
@@ -19,6 +19,10 @@ def perprotate(data, rotator, rotateCoords='0:3', overwrite=False):
     Notes:
     Assumes three component fields, and that the number of components is the last dimension.
     """
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
 

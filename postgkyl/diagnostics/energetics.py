@@ -5,7 +5,7 @@ Postgkyl module for separating different components of energy
 import numpy as np
 from .. import diagnostics as diag
 
-def energetics(dataElc, dataIon, dataField, overwrite=False):
+def energetics(dataElc, dataIon, dataField, overwrite=False, stack=False):
     """Function to separate components of the energy of each species and EM fields into
     constituent parts (species energy -> thermal + kinetic, field energy -> electric + magnetic)
 
@@ -17,6 +17,10 @@ def energetics(dataElc, dataIon, dataField, overwrite=False):
     Notes:
     Assumes two-species plasma
     """
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     # Grid is the same for each of the input objects 
     grid = dataField.getGrid()
     valuesField = dataField.getValues()

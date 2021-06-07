@@ -4,7 +4,7 @@ Postgkyl module for accumulating current
 """
 import numpy as np
 
-def accumulate_current(data, qbym=False, overwrite=False):
+def accumulate_current(data, qbym=False, overwrite=False, stack=False):
     """Function to compute current from an arbitrary number of input species
 
     Parameters:
@@ -14,6 +14,10 @@ def accumulate_current(data, qbym=False, overwrite=False):
             NOTE: Should be true for fluid data
 
     """
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values.shape)

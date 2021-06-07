@@ -4,7 +4,7 @@ Postgkyl module for computing relative change in a quantity
 """
 import numpy as np
 
-def rel_change(dataset0, dataset, comp=None, overwrite=False):
+def rel_change(dataset0, dataset, comp=None, overwrite=False, stack=False):
     """Function to compute the relative change in a dataset compared to another
     dataset, i.e. (dataset - dataset0)/dataset0
 
@@ -14,7 +14,11 @@ def rel_change(dataset0, dataset, comp=None, overwrite=False):
     component (i.e., for energetics, divide by the total energy, 
     not an individual component of the energy)
     """
-    # Grid is the same for each of the input objects 
+    # Grid is the same for each of the input objects
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = dataset.getGrid()
     values = dataset.getValues()
     values0 = dataset0.getValues()

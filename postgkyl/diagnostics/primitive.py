@@ -4,7 +4,11 @@ Postgkyl module for computing primitive variables from conservative variables
 """
 import numpy as np
 
-def getDensity(data, overwrite=False):
+def getDensity(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -19,7 +23,11 @@ def getDensity(data, overwrite=False):
     #end
 #end
 
-def getVx(data, overwrite=False):
+def getVx(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 1].shape)
@@ -34,7 +42,11 @@ def getVx(data, overwrite=False):
     #end
 #end
 
-def getVy(data, overwrite=False):
+def getVy(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 2].shape)
@@ -49,7 +61,11 @@ def getVy(data, overwrite=False):
     #end
 #end
 
-def getVz(data, overwrite=False):
+def getVz(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 3].shape)
@@ -64,7 +80,11 @@ def getVz(data, overwrite=False):
     #end
 #end
 
-def getVi(data, overwrite=False):
+def getVi(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 1:4].shape)
@@ -78,7 +98,11 @@ def getVi(data, overwrite=False):
     #end
 #end
 
-def getPxx(data, overwrite=False):
+def getPxx(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 4].shape)
@@ -95,7 +119,11 @@ def getPxx(data, overwrite=False):
     #end
 #end
 
-def getPxy(data, overwrite=False):
+def getPxy(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 5].shape)
@@ -114,7 +142,11 @@ def getPxy(data, overwrite=False):
     #end
 #end
 
-def getPxz(data, overwrite=False):
+def getPxz(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 6].shape)
@@ -133,7 +165,11 @@ def getPxz(data, overwrite=False):
     #end
 #end
 
-def getPyy(data, overwrite=False):
+def getPyy(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 7].shape)
@@ -151,7 +187,11 @@ def getPyy(data, overwrite=False):
     #end
 #end
 
-def getPyz(data, overwrite=False):
+def getPyz(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 8].shape)
@@ -170,7 +210,11 @@ def getPyz(data, overwrite=False):
     #end
 #end
 
-def getPzz(data, overwrite=False):
+def getPzz(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 9].shape)
@@ -188,7 +232,11 @@ def getPzz(data, overwrite=False):
     #end
 #end
 
-def getPij(data, overwrite=False):
+def getPij(data, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 4:10].shape)
@@ -214,7 +262,11 @@ def getPij(data, overwrite=False):
     #end
 #end
 
-def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False):
+def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -252,7 +304,11 @@ def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False):
     #end
 #end
 
-def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False):
+def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)
@@ -269,7 +325,11 @@ def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False):
     #end
 #end
 
-def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False):
+def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues()
     out = np.zeros(values[..., 0].shape)

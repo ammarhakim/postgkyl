@@ -379,7 +379,11 @@ class GInterpNodal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, overwrite=False):
+    def interpolate(self, comp=0, overwrite=False, stack=False):
+        if stack:
+            overwrite = stack
+            print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+        #end
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, False)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -413,7 +417,11 @@ class GInterpNodal(GInterp):
         #end
     #end
 
-    def differentiate(self, direction, comp=0, overwrite=False):
+    def differentiate(self, direction, comp=0, overwrite=False, stack=False):
+        if stack:
+            overwrite = stack
+            print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+        #end
         q = self._getRawNodal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, False)
@@ -497,7 +505,11 @@ class GInterpModal(GInterp):
         GInterp.__init__(self, data, numNodes)
     #end
 
-    def interpolate(self, comp=0, overwrite=False):
+    def interpolate(self, comp=0, overwrite=False, stack=False):
+        if stack:
+            overwrite = stack
+            print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+        #end
         cMat = _loadInterpMatrix(self.numDims, self.polyOrder,
                                  self.basisType, self.numInterp, self.read, True)
         nInterp = int(round(cMat.shape[0] ** (1.0/self.numDims)))
@@ -532,7 +544,11 @@ class GInterpModal(GInterp):
         #end
     #end
 
-    def differentiate(self, direction=None, comp=0, overwrite=False):
+    def differentiate(self, direction=None, comp=0, overwrite=False, stack=False):
+        if stack:
+            overwrite = stack
+            print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+        #end
         q = self._getRawModal(comp)
         cMat = _loadDerivativeMatrix(self.numDims, self.polyOrder,
                                      self.basisType, self.numInterp, self.read, True)
@@ -557,7 +573,11 @@ class GInterpModal(GInterp):
         #end
     #end
 
-    def recovery(self, comp=0, c1=False, overwrite=False):
+    def recovery(self, comp=0, c1=False, overwrite=False, stack=False):
+        if stack:
+            overwrite = stack
+            print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+        #end
         if isinstance(comp, int):
             q = self._getRawModal(comp)
         else:

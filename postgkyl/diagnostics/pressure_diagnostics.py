@@ -10,7 +10,11 @@ Diagnostics include:
 import numpy as np
 import postgkyl.diagnostics as diag
 
-def getPPar(dataSpecies, dataField, overwrite=False):
+def getPPar(dataSpecies, dataField, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
 
     Bx = dataField.getValues()[..., 3]
     By = dataField.getValues()[..., 4]
@@ -37,7 +41,11 @@ def getPPar(dataSpecies, dataField, overwrite=False):
     #end
 #end
 
-def getPPerp(dataSpecies, dataField, overwrite=False):
+def getPPerp(dataSpecies, dataField, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
 
     grid, PPar = getPPar(dataSpecies, dataField)
     
@@ -55,7 +63,11 @@ def getPPerp(dataSpecies, dataField, overwrite=False):
     #end
 #end
 
-def getAgyro(dataSpecies, dataField, measure="swisdak", overwrite=False):
+def getAgyro(dataSpecies, dataField, measure="swisdak", overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
 
     Bx = dataField.getValues()[..., 3]
     By = dataField.getValues()[..., 4]

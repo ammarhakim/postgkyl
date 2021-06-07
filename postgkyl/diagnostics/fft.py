@@ -2,7 +2,11 @@ import numpy as np
 from scipy import fftpack
 from .. import diagnostics as diag
 
-def fft(data, psd=False, iso=False, overwrite=False):
+def fft(data, psd=False, iso=False, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = data.getGrid()
     values = data.getValues() 
 

@@ -1,6 +1,10 @@
 import numpy as np
 
-def integrate(data, axis, overwrite=False):
+def integrate(data, axis, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     grid = list(data.getGrid())
     values = np.copy(data.getValues())
 

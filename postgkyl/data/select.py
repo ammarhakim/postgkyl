@@ -3,7 +3,7 @@ import numpy as np
 from postgkyl.utils import idxParser
 
 
-def select(data, comp=None, overwrite=False,
+def select(data, comp=None, overwrite=False, stack=False,
            z0=None, z1=None, z2=None,
            z3=None, z4=None, z5=None):
     """Selects parts of the GData.
@@ -17,6 +17,10 @@ def select(data, comp=None, overwrite=False,
         z0-5 (index, value, or slice (e.g. '1:5')
         comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
     """
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
     zs = (z0, z1, z2, z3, z4, z5)
     grid = data.getGrid()
     grid = list(grid)  # copy the grid
