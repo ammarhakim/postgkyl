@@ -1,10 +1,8 @@
 from glob import glob
 from os import path
-import adios
 import numpy as np
 import shutil
 import sys
-import tables
 
 from postgkyl.utils import idxParser
 
@@ -156,6 +154,7 @@ class Data(object):
         self.fileDir = path.dirname(path.realpath(self.fileName))
         extension = self.fileName.split('.')[-1]
         if extension == 'h5':
+            import tables
             fh = tables.open_file(self.fileName, 'r')
             if not '/StructGridField' in fh:
                 fh.close()
@@ -175,6 +174,7 @@ class Data(object):
             #end
             fh.close()
         elif extension == 'bp':
+            import adios
             fh = adios.file(self.fileName)
             if not self._varName in fh.vars:
                 # Not a Gkyl "frame" data; trying to load as a sequence
@@ -374,6 +374,7 @@ class Data(object):
         for fileName in files:
             extension = fileName.split('.')[-1]
             if extension == 'h5':
+                import tables
                 self.fileType = 'hdf5'
                 fh = tables.open_file(fileName, 'r')
                 if '/DataStruct/data' in fh and \
@@ -386,6 +387,7 @@ class Data(object):
                     continue
                 #end
             elif extension == 'bp':
+                import adios
                 self.fileType = 'adios'
                 fh =  adios.file(fileName)
                 timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
