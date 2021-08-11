@@ -36,7 +36,11 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
 
         if psd:
             freq[0] = freq[0][:N//2]
-            ftValues = np.abs(ftValues[:N//2, :])**2
+            if mag:
+                ftValues[...,0] = np.sum(np.abs(ftValues[:N//2, :])**2, axis=-1)
+            else:
+                ftValues = np.abs(ftValues[:N//2, :])**2
+            #end
         #end
 
         if overwrite:

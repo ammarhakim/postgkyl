@@ -39,6 +39,7 @@ from .energetics import energetics
 from .magsq import magsq
 from .parrotate import parrotate
 from .perprotate import perprotate
+from .pressurework import pressurework
 from .relchange import relchange
 from .velocity import velocity
 

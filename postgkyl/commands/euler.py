@@ -10,8 +10,8 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
-              type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel", "pressure", "ke", "mach"]))
+              type=click.Choice(["density", "xvel", "yvel", "zvel"
+                                 "vel", "pressure", "ke", "sound", "mach"]))
 @click.pass_context
 def euler(ctx, **kwargs):
     """Compute Euler (five-moment) primitive and some derived variables
@@ -39,6 +39,8 @@ def euler(ctx, **kwargs):
             diag.getP(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         elif v == "ke":
             diag.getKE(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
+        elif v == "sound":
+            diag.getSound(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         elif v == "mach":
             diag.getMach(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=True)
         #end

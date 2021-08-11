@@ -11,11 +11,7 @@ def getDensity(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-    out[..., 0] = values[..., 0]
-
+    out = values[..., 0, np.newaxis]
     if overwrite:
         data.push(grid, out)
     else:
@@ -30,11 +26,7 @@ def getVx(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 1].shape)
-    out = out[..., np.newaxis]
-
-    out[..., 0] =  values[..., 1] / values[..., 0]
-
+    out =  values[..., 1, np.newaxis] / values[..., 0, np.newaxis]
     if overwrite:
         data.push(grid, out)
     else:
@@ -49,11 +41,7 @@ def getVy(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 2].shape)
-    out = out[..., np.newaxis]
-
-    out[..., 0] = values[..., 2] / values[..., 0]
-
+    out =  values[..., 2, np.newaxis] / values[..., 0, np.newaxis]
     if overwrite:
         data.push(grid, out)
     else:
@@ -68,11 +56,7 @@ def getVz(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 3].shape)
-    out = out[..., np.newaxis]
-
-    out[..., 0] = values[..., 3] / values[..., 0]
-
+    out =  values[..., 3, np.newaxis] / values[..., 0, np.newaxis]
     if overwrite:
         data.push(grid, out)
     else:
@@ -87,10 +71,7 @@ def getVi(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 1:4].shape)
-
-    out[..., 0:3] = values[..., 1:4] / values[..., 0]
-
+    out = values[..., 1:4] / values[..., 0, np.newaxis]
     if overwrite:
         data.push(grid, out)
     else:
@@ -105,12 +86,10 @@ def getPxx(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 4].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vx = getVx(data)
-    out[..., 0] = values[..., 4] - rho*vx*vx
+    out = values[..., 4, np.newaxis] - rho*vx*vx
 
     if overwrite:
         data.push(grid, out)
@@ -126,14 +105,12 @@ def getPxy(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 5].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vx = getVx(data)
     grid, vy = getVy(data)
 
-    out[..., 0] = values[..., 5] - rho*vx*vy
+    out = values[..., 5, np.newaxis] - rho*vx*vy
 
     if overwrite:
         data.push(grid, out)
@@ -149,14 +126,12 @@ def getPxz(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 6].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vx = getVx(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 6] - rho*vx*vz
+    out = values[..., 6, np.newaxis] - rho*vx*vz
 
     if overwrite:
         data.push(grid, out)
@@ -172,13 +147,11 @@ def getPyy(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 7].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vy = getVy(data)
 
-    out[..., 0] = values[..., 7] - rho*vy*vy
+    out = values[..., 7, np.newaxis] - rho*vy*vy
 
     if overwrite:
         data.push(grid, out)
@@ -194,14 +167,12 @@ def getPyz(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 8].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vy = getVy(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 8] - rho*vy*vz
+    out = values[..., 8, np.newaxis] - rho*vy*vz
 
     if overwrite:
         data.push(grid, out)
@@ -217,13 +188,11 @@ def getPzz(data, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 9].shape)
-    out = out[..., np.newaxis]
 
     grid, rho = getDensity(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 9] - rho*vz*vz
+    out = values[..., 9, np.newaxis] - rho*vz*vz
 
     if overwrite:
         data.push(grid, out)
@@ -269,8 +238,6 @@ def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
 
     if numMom is None:
         if data.getNumComps() == 5:
@@ -288,13 +255,13 @@ def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False, stack=False):
         grid, rho = getDensity(data)
         grid, vx = getVx(data)  
         grid, vy = getVy(data)  
-        grid, vz = getVz(data)       
-        out[..., 0] = (gasGamma - 1)*(values[..., 4] - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2))
+        grid, vz = getVz(data)      
+        out = (gasGamma - 1)*(values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2))
     elif numMom == 10:
         grid, Pxx = getPxx(data)  
         grid, Pyy = getPyy(data)  
         grid, Pzz = getPzz(data) 
-        out[..., 0] = (Pxx[..., 0] + Pyy[..., 0] + Pzz[..., 0]) / 3.0
+        out = (Pxx + Pyy + Pzz) / 3.0
     #end
 
     if overwrite:
@@ -311,12 +278,35 @@ def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
     #end
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
 
     grid, pr = getP(data, gasGamma, numMom)
 
-    out[..., 0] = values[..., 4] - pr[..., 0]/(gasGamma-1)
+    out = values[..., 4, np.newaxis] - pr/(gasGamma-1)
+
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
+
+def getSound(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
+
+    grid = data.getGrid()
+    values = data.getValues()
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)  
+    grid, vy = getVy(data)  
+    grid, vz = getVz(data) 
+    grid, pr = getP(data, gasGamma, numMom)
+
+    # Sound speed cs = sqrt(gasGamma*pr/rho)
+    out = np.sqrt(gasGamma*pr/rho)
 
     if overwrite:
         data.push(grid, out)
@@ -330,20 +320,17 @@ def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
+
     grid = data.getGrid()
     values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
 
-
-    grid, rho = getDensity(data)
     grid, vx = getVx(data)  
     grid, vy = getVy(data)  
     grid, vz = getVz(data) 
-    grid, pr = getP(data, gasGamma, numMom)
+    grid, cs = getSound(data, gasGamma, numMom)
 
     # Sound speed cs = sqrt(gasGamma*pr/rho)
-    out[..., 0] = np.sqrt(vx[..., 0]**2+vy[..., 0]**2+vz[..., 0]**2)/np.sqrt(gasGamma*pr[..., 0]/rho[..., 0])
+    out = np.sqrt(vx**2+vy**2+vz**2)/cs
 
     if overwrite:
         data.push(grid, out)

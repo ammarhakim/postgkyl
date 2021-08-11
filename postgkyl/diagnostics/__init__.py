@@ -21,7 +21,17 @@ from .primitive import getPzz
 from .primitive import getPij
 from .primitive import getP
 from .primitive import getKE
+from .primitive import getSound
 from .primitive import getMach
+
+from .pressure_diagnostics import getDivP
+from .pressure_diagnostics import getGradU
+from .pressure_diagnostics import pDelU
+from .pressure_diagnostics import pressureWork
+from .pressure_diagnostics import pDelU
+from .pressure_diagnostics import getPPar
+from .pressure_diagnostics import getPPerp
+from .pressure_diagnostics import getAgyro
 
 from .accumulate_current import accumulate_current
 from .energetics import energetics
