@@ -1,12 +1,16 @@
 package:
   name: postgkyl
-  version: "1.6.5"
+  version: "1.6.6"
 
 source:
   path: ./
 
+channels:
+    - defaults
+    - gkyl
+
 build:
-  number: 20210605
+  number: 20210811
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
@@ -22,14 +26,14 @@ requirements:
 
   run:
     - python
-    - numpy >=1.13
+    - numpy>=1.16
     - scipy
-    - matplotlib >=3.1
+    - matplotlib>=3.1
     - pytables
     - click
     - sympy
-    - adiospy
     - bokeh
+    - adiospy
     - msgpack-python
 
 test:
