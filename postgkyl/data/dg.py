@@ -14,12 +14,12 @@ path = os.path.dirname(os.path.realpath(__file__))
 
 def _getNumNodes(dim, polyOrder, basisType):
     if basisType.lower() == 'serendipity':
-        numNodesSerendipity = np.array([[1, 2,   3,   4,   5],
-                                        [1, 4,   8,   12,  17],
-                                        [1, 8,   20,  32,  50],
-                                        [1, 16,  48,  80,  136],
-                                        [1, 32,  112, 192, 352],
-                                        [1, 64,  256, 448, 880]])
+        numNodesSerendipity = np.array([[1,  2,   3,   4,   5],
+                                        [1,  4,   8,  12,  17],
+                                        [1,  8,  20,  32,  50],
+                                        [1, 16,  48,  80, 136],
+                                        [1, 32, 112, 192, 352],
+                                        [1, 64, 256, 448, 880]])
         numNodes = numNodesSerendipity[dim-1, polyOrder]
     elif basisType.lower() == 'maximal-order':
         numNodesMaximal = np.array([[2,  3,  4,   5],
@@ -30,11 +30,11 @@ def _getNumNodes(dim, polyOrder, basisType):
                                     [7, 28, 84, 210])
         numNodes = numNodesMaximal[dim-1, polyOrder-1]
     elif basisType.lower() == 'tensor':
-        numNodesMaximal = np.array([[ 2,   3,    4,    5],
-                                    [ 4,   9,   16,   25],
-                                    [ 8,  27,   64,  125],
-                                    [16,  81,  256,  625],
-                                    [32, 343, 1024, 3125],
+        numNodesMaximal = np.array([[ 2,   3,    4,     5],
+                                    [ 4,   9,   16,    25],
+                                    [ 8,  27,   64,   125],
+                                    [16,  81,  256,   625],
+                                    [32, 343, 1024,  3125],
                                     [64, 729, 4096, 15625]])
         numNodes = numNodesMaximal[dim-1, polyOrder-1]
     else:
