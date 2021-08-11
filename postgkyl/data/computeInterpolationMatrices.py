@@ -14,7 +14,16 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
     if dim == 1:
         x = Symbol('x')
         if modal:
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.7071067811865468]])
+                interpMatrix = numpy.zeros((interpList.shape[0],
+                                            functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0,  functionVector.shape[0]):
+                        interpMatrix[i,j] = functionVector[j].subs(x, interpList[i])
+                    #end
+                #end
+            elif order == 1:
                 functionVector = Matrix([[0.7071067811865468],
                                          [1.224744871391589*x]])
                 interpMatrix = numpy.zeros((interpList.shape[0],
@@ -150,7 +159,14 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
                 raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
         elif modal and basisType == 'serendipity':
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.5]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, functionVector.shape[0]):
+                            interpMatrix[j+i*interpList.shape[0], k] = functionVector[k].subs(x, interpList[j]).subs(y, interpList[i])
+            elif order == 1:
                 functionVector =  Matrix([[0.5], [0.8660254037844385*x], [0.8660254037844385*y], [1.5*x*y]]) 
                 interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
                 for i in range(0, interpList.shape[0]):
@@ -276,7 +292,15 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
                 raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
         elif modal and basisType == 'serendipity':
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.3535533905932734]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, interpList.shape[0]):
+                            for l in range(0, functionVector.shape[0]):
+                                interpMatrix[k+j*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0], l] = functionVector[l].subs(x, interpList[k]).subs(y, interpList[j]).subs(z, interpList[i]) 
+            elif order == 1:
                 functionVector =  Matrix([[0.3535533905932734], [0.6123724356957931*x], [0.6123724356957931*y], [0.6123724356957931*z], [1.060660171779822*x*y], [1.060660171779822*x*z], [1.060660171779822*y*z], [1.837117307087383*x*y*z]]) 
                 interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
                 for i in range(0, interpList.shape[0]):
@@ -416,7 +440,17 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
             else:
                 raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
         elif modal and basisType == 'serendipity':
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.25]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, interpList.shape[0]):
+                            for l in range(0, interpList.shape[0]):
+                                for m in range(0, functionVector.shape[0]):
+                                    interpMatrix[l+k*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], m] = functionVector[m].subs(x, interpList[l]).subs(y, interpList[k]).subs(z, interpList[j]).subs(w, interpList[i]) 
+
+            elif order == 1:
                 functionVector =  Matrix([[0.25], [0.4330127018922192*x], [0.4330127018922192*y], [0.4330127018922192*z], [0.4330127018922192*w], [0.75*x*y], [0.75*x*z], [0.75*y*z], [0.75*x*w], [0.75*y*w], [0.75*z*w], [1.299038105676659*x*y*z], [1.299038105676659*x*y*w], [1.299038105676659*x*z*w], [1.299038105676659*y*z*w], [2.25*x*y*z*w]]) 
                 interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
                 for i in range(0, interpList.shape[0]):
@@ -559,7 +593,18 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
                 raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
         elif modal and basisType == 'serendipity':
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.1767766952966367]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, interpList.shape[0]):
+                            for l in range(0, interpList.shape[0]):
+                                for m in range(0, interpList.shape[0]):
+                                    for n in range(0, functionVector.shape[0]):
+                                        interpMatrix[m+l*interpList.shape[0]+k*interpList.shape[0]*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], n] = functionVector[n].subs(x, interpList[m]).subs(y, interpList[l]).subs(z, interpList[k]).subs(w, interpList[j]).subs(v, interpList[i])
+
+            elif order == 1:
                 functionVector =  Matrix([[0.1767766952966367], [0.3061862178478966*x], [0.3061862178478966*y], [0.3061862178478966*z], [0.3061862178478966*w], [0.3061862178478966*v], [0.5303300858899102*x*y], [0.5303300858899102*x*z], [0.5303300858899102*y*z], [0.5303300858899102*x*w], [0.5303300858899102*y*w], [0.5303300858899102*z*w], [0.5303300858899102*x*v], [0.5303300858899102*y*v], [0.5303300858899102*z*v], [0.5303300858899102*w*v], [0.9185586535436896*x*y*z], [0.9185586535436896*x*y*w], [0.9185586535436896*x*z*w], [0.9185586535436896*y*z*w], [0.9185586535436896*x*y*v], [0.9185586535436896*x*z*v], [0.9185586535436896*y*z*v], [0.9185586535436896*x*w*v], [0.9185586535436896*y*w*v], [0.9185586535436896*z*w*v], [1.590990257669732*x*y*z*w], [1.590990257669732*x*y*z*v], [1.590990257669732*x*y*w*v], [1.590990257669732*x*z*w*v], [1.590990257669732*y*z*w*v], [2.755675960631069*x*y*z*w*v]]) 
                 interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
                 for i in range(0, interpList.shape[0]):
@@ -630,7 +675,18 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True):
         v = Symbol('v')
         u = Symbol('u')
         if modal and basisType == 'serendipity':
-            if order == 1:
+            if order == 0:
+                functionVector = Matrix([[0.125]])
+                interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+                for i in range(0, interpList.shape[0]):
+                    for j in range(0, interpList.shape[0]):
+                        for k in range(0, interpList.shape[0]):
+                            for l in range(0, interpList.shape[0]):
+                                for m in range(0, interpList.shape[0]):
+                                    for n in range(0, interpList.shape[0]):
+                                        for o in range(0, functionVector.shape[0]):
+                                            interpMatrix[n+m*interpList.shape[0]+l*interpList.shape[0]*interpList.shape[0]+k*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], o] = functionVector[o].subs(x, interpList[n]).subs(y, interpList[m]).subs(z, interpList[l]).subs(w, interpList[k]).subs(v, interpList[j]).subs(u, interpList[i])
+            elif order == 1:
                 functionVector =  Matrix([[0.125], [0.2165063509461096*x], [0.2165063509461096*y], [0.2165063509461096*z], [0.2165063509461096*w], [0.2165063509461096*v], [0.2165063509461096*u], [0.375*x*y], [0.375*x*z], [0.375*y*z], [0.375*x*w], [0.375*y*w], [0.375*z*w], [0.375*x*v], [0.375*y*v], [0.375*z*v], [0.375*w*v], [0.375*x*u], [0.375*y*u], [0.375*z*u], [0.375*w*u], [0.375*v*u], [0.6495190528383289*x*y*z], [0.6495190528383289*x*y*w], [0.6495190528383289*x*z*w], [0.6495190528383289*y*z*w], [0.6495190528383289*x*y*v], [0.6495190528383289*x*z*v], [0.6495190528383289*y*z*v], [0.6495190528383289*x*w*v], [0.6495190528383289*y*w*v], [0.6495190528383289*z*w*v], [0.6495190528383289*x*y*u], [0.6495190528383289*x*z*u], [0.6495190528383289*y*z*u], [0.6495190528383289*x*w*u], [0.6495190528383289*y*w*u], [0.6495190528383289*z*w*u], [0.6495190528383289*x*v*u], [0.6495190528383289*y*v*u], [0.6495190528383289*z*v*u], [0.6495190528383289*w*v*u], [1.125*x*y*z*w], [1.125*x*y*z*v], [1.125*x*y*w*v], [1.125*x*z*w*v], [1.125*y*z*w*v], [1.125*x*y*z*u], [1.125*x*y*w*u], [1.125*x*z*w*u], [1.125*y*z*w*u], [1.125*x*y*v*u], [1.125*x*z*v*u], [1.125*y*z*v*u], [1.125*x*w*v*u], [1.125*y*w*v*u], [1.125*z*w*v*u], [1.948557158514986*x*y*z*w*v], [1.948557158514986*x*y*z*w*u], [1.948557158514986*x*y*z*v*u], [1.948557158514986*x*y*w*v*u], [1.948557158514986*x*z*w*v*u], [1.948557158514986*y*z*w*v*u], [3.375*x*y*z*w*v*u]])
                 interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
                 for i in range(0, interpList.shape[0]):
