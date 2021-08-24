@@ -24,6 +24,14 @@ def _pickCut(ctx, kwargs, zn):
     #end
 #end
 
+def _crush(s): # Temp function used as a sorting key
+    splitted = s.split('_')
+    tmp = splitted[-1].split('.')
+    splitted[-1] = int(tmp[0])
+    splitted.append(tmp[1])
+    return tuple(splitted)
+#end
+
 @click.command(hidden=True)
 @click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
 @click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
@@ -54,12 +62,6 @@ def load(ctx, **kwargs):
     if "*" in inDataString or "?" in inDataString or "!"  in inDataString:
         files = glob(str(inDataString))
         files = [f for f in files if f.find("restart") < 0]
-        def _crush(s): # Temp function used as a sorting key
-            splitted = s.split('_')
-            tmp = splitted[-1].split('.')
-            splitted[-1] = int(tmp[0])
-            splitted.append(tmp[1])
-            return tuple(splitted)
         try:
             files = sorted(files, key=_crush)
         except Exception:

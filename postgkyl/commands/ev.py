@@ -7,47 +7,28 @@ import sys
 from postgkyl.data import Data
 from postgkyl.data import select as pselect
 from postgkyl.commands.util import vlog, pushChain
-
-# load base commands
-from  postgkyl.commands import ev_cmd as cmdBase
-# load user commands
-#if path.isfile(path.expanduser("~") + '/pgkyl_ev.py'):
-#    sys.path.insert(0, path.expanduser("~"))
-#    import pgkyl_ev as cmdUser
-#    userCommands = True
-#else:
-#    userCommands = False
-##end
+from postgkyl.commands import ev_cmd as cmdBase
 
 helpStr = ""
 for s in cmdBase.cmds.keys():
     helpStr += " '{:s}',".format(s)
 #end
-#if userCommands:
-#    for s in cmdUser.cmds.keys():
-#        helpStr += " '{:s}',".format(s)
-#    #end
-##end
 
 def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
-    if strIn[0] == 'f' or strIn.split('[')[0] in tags:
-        splits = strIn.split('[')
-        if splits[0] in tags:
-            tagNm = splits[0]
-        elif strIn[0] == 'f' and len(tags) == 1:
-            tagNm = tags[0]
-        else:
-            ctx.fail(click.style("'f' cannot be used if there is more then one active tags ({:d} active); use tag names instead.".format(len(tags)), fg='red'))
+    strInSplit = strIn.split('[')
+    if strIn[0] == 'f' or strInSplit[0] in tags:
+        tagNm = None
+        if strInSplit[0] in tags:
+            tagNm = strInSplit[0]
         #end
         setIdx = None
-        if len(splits) >= 2:
-            setIdx = splits[1].split(']')[0]
+        if len(strInSplit) >= 2:
+            setIdx = strInSplit[1].split(']')[0]
         #end
         compIdx = None
-        if len(splits) == 3:
-            compIdx = splits[2].split(']')[0]
+        if len(strInSplit) == 3:
+            compIdx = strInSplit[2].split(']')[0]
         #end
-
         metaKey = None
         if len(strIn.split('.')) == 2:
             metaKey = strIn.split('.')[1]
@@ -56,71 +37,46 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
         gridStack.append([])
         valueStack.append([])
         metaStack.append([])
-        if onlyActive:
-            cnt = 0
-            for dat in ctx.obj['data'].iterator(tag=tagNm, onlyActive=True):
-                if cnt == int(setIdx):
-                    if metaKey:
-                        grid = None
-                        if metaKey in dat.meta:
-                            values = np.array(dat.meta[metaKey])
-                        else:
-                            ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
-                        #end
-                    else:
-                        grid, values = pselect(dat, comp=compIdx)
-                    #end
-                    gridStack[-1].append(grid)
-                    valueStack[-1].append(values)
-                    metaStack[-1].append(dat.meta)
-                #end
-                cnt += 1
-            #end
-        else:
-            for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx, onlyActive=False):
-                if metaKey:
-                    grid = None
-                    if metaKey in dat.meta:
-                        values = np.array(dat.meta[metaKey])
-                    else:
-                        ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
-                    #end
+ 
+        for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx, onlyActive=onlyActive):
+            if metaKey:
+                grid = None
+                if metaKey in dat.meta:
+                    values = np.array(dat.meta[metaKey])
                 else:
-                    grid, values = pselect(dat, comp=compIdx)
+                    ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
                 #end
-                gridStack[-1].append(grid)
-                valueStack[-1].append(values)
-                metaStack[-1].append(dat.meta)
+            else:
+                grid, values = pselect(dat, comp=compIdx)
             #end
+            gridStack[-1].append(grid)
+            valueStack[-1].append(values)
+            metaStack[-1].append(dat.meta)
         #end
-        return True
+        return True, (tagNm, setIdx)
     elif '(' in strIn or '[' in strIn:
         valueStack.append([eval(strIn)])
         gridStack.append([None])
         metaStack.append([{}])
-        return True
+        return True, ()
     elif ':' in strIn or ',' in strIn:
         valueStack.append([str(strIn)])
         gridStack.append([None])
         metaStack.append([{}])
-        return True
+        return True, ()
     else:
         try:
             valueStack.append([np.array(float(strIn))])
             gridStack.append([None])
             metaStack.append([{}])
-            return True
+            return True, ()
         except Exception:
-            return False
+            return False, ()
         #end
     #end
 #end
 
 def _command(ctx, gridStack, valueStack, metaStack, strIn):
-    #if userCommands and strIn in cmdUser.cmds:
-    #    numIn = cmdUser.cmds[strIn]['numIn']
-    #    numOut = cmdUser.cmds[strIn]['numOut']
-    #    func = cmdUser.cmds[strIn]['func']
     if strIn in cmdBase.cmds:
         numIn = cmdBase.cmds[strIn]['numIn']
         numOut = cmdBase.cmds[strIn]['numOut']
@@ -196,9 +152,9 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
 @click.option('--label', '-l',
               default='ev', show_default=True,
               help="Custom label for the result")
-@click.option('--global', '-g',
+@click.option('--all', '-a',
               is_flag=True,
-              help="Ignore the active inactive datasets and use global indexing")
+              help="Ignore the status of a dataset")
 @click.pass_context
 def ev(ctx, **kwargs):
     vlog(ctx, 'Starting evaluate')
@@ -210,7 +166,7 @@ def ev(ctx, **kwargs):
     chainSplit = list(filter(None, chainSplit))
 
     onlyActive = True
-    if kwargs['global']:
+    if kwargs['all']:
         onlyActive = False
     #end
 
@@ -223,9 +179,19 @@ def ev(ctx, **kwargs):
             outTag = 'ev'
         #end
     #end
-            
+    label = kwargs['label']
+    if label is None:
+        label = kwargs['chain']
+    #end
+
+    numDatasetsInChain = 0
+    outDataId = ()
     for s in chainSplit:
-        isData = _data(ctx, gridStack, valueStack, metaStack, s, tags, onlyActive)
+        isData, dataId = _data(ctx, gridStack, valueStack, metaStack, s, tags, onlyActive)
+        if isData and len(dataId) > 0:
+            numDatasetsInChain += 1
+            outDataId = dataId
+        #end
         if not isData:
             isCommand = _command(ctx, gridStack, valueStack, metaStack, s)
         #end
@@ -240,15 +206,22 @@ def ev(ctx, **kwargs):
         click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior", fg='yellow'))
     #end
 
-    data.deactivateAll()
-
-    for grid, values, meta in zip(gridStack[-1], valueStack[-1], metaStack[-1]):
-        out = Data(tag=outTag,
-                   compgrid=ctx.obj['compgrid'],
-                   label=kwargs['label'],
-                   meta=meta)
-        out.push(grid, values)
-        data.add(out)
+    if numDatasetsInChain == 1:
+        cnt = 0
+        for out in ctx.obj['data'].iterator(tag=outDataId[0], select=outDataId[1], onlyActive=onlyActive):
+            out.push(gridStack[-1][cnt], valueStack[-1][cnt])
+            cnt += 1
+        #end
+    else:
+        data.deactivateAll()
+        for grid, values, meta in zip(gridStack[-1], valueStack[-1], metaStack[-1]):
+            out = Data(tag=outTag,
+                       compgrid=ctx.obj['compgrid'],
+                       label=label,
+                       meta=meta)
+            out.push(grid, values)
+            data.add(out)
+        #end
     #end
 
     vlog(ctx, 'Finishing ev')
