@@ -461,6 +461,9 @@ class Data(object):
             return self._label
         #end
     #end
+    def getCustomLabel(self):
+        return self._customLabel
+    #end
 
     def activate(self):
         self._status = True

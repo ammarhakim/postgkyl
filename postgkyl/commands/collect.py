@@ -16,11 +16,11 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify an offset to create epoch data instead of time data")
 @click.option('-c', '--chunk', type=click.INT,
               help="Collect into chunks with specified length rather than into a single dataset")
-@click.option('--use', '-u',
+@click.option('--use', '-u', default=None,
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--tag', '-t', multiple=True,
+@click.option('--tag', '-t', default=None,
               help='Specify a \'tag\' for the result.')
-@click.option('--label', '-l', default='collect',
+@click.option('--label', '-l', default=None,
               help="Specify the custom label for the result.")
 @click.pass_context
 def collect(ctx, **kwargs):
@@ -34,21 +34,17 @@ def collect(ctx, **kwargs):
     pushChain(ctx, 'collect', **kwargs)
     data = ctx.obj['data']
 
-    tags = list(data.tagIterator())
-    outTag = kwargs['tag']
-    if outTag == ():
-        if len(tags) == 1:
-            outTag = tags[0]
-        else:
-            outTag = 'collect'
-        #end
+    if kwargs['tag']:
+        outTags = kwargs['tag'].split(',')
     #end
-    
+
+    tagCnt = 0
     for tag in data.tagIterator(kwargs['use']):
         time = [[]]
         values = [[]]
         grid = [[]]
         cnt = 0
+        label = None
         
         for i, dat in data.iterator(tag, enum=True):
             cnt += 1
@@ -76,9 +72,27 @@ def collect(ctx, **kwargs):
             if not grid[-1]:
                 grid[-1] = dat.getGrid().copy()
             #end
+            label = dat.getCustomLabel()
         #end
 
         data.deactivateAll(tag)
+
+        outTag = tag
+        if kwargs['tag']:
+            if len(outTags) > 1:
+                outTag = outTags[tagCnt]
+            else:
+                outTag = outTags[0]
+            #end
+        #end
+        tagCnt += 1
+
+        if label is None:
+            label = 'collect'
+        #end
+        if kwargs['label']:
+            label = kwargs['label']
+        #end
         
         for i in range(len(time)):
             time[i] = np.array(time[i])
@@ -98,14 +112,8 @@ def collect(ctx, **kwargs):
                 grid[i].insert(0, np.array(time[i]))
             #end
 
-            tempTag = outTag
-            if isinstance(outTag, tuple) and len(outTag) > 1:
-                tempTag = outTag[i]
-            elif isinstance(outTag, tuple):
-                tempTag = outTag[0]
-            #end
-            out = Data(tag=tempTag,
-                       label=kwargs['label'],
+            out = Data(tag=outTag,
+                       label=label,
                        compgrid=ctx.obj['compgrid'])
             out.push(grid[i], values[i])
             data.add(out)
