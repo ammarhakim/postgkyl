@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from glob import glob
 import os
 import time
@@ -94,7 +94,9 @@ class PgkylCommandGroup(click.Group):
 @click.option('--compgrid', is_flag=True,
               help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
-              help="Allows to specify the Adios variable name (default is 'CartGridField')")
+              help="Specify the Adios variable name (default is 'CartGridField')")
+@click.option('--c2p', 
+              help="Specify the file name containing c2p mapped coordinates")
 @click.pass_context
 def cli(ctx, **kwargs):
     """Postprocessing and plotting tool for Gkeyll 
@@ -148,6 +150,7 @@ def cli(ctx, **kwargs):
                              kwargs['z2'], kwargs['z3'],
                              kwargs['z4'], kwargs['z5'],
                              kwargs['component'])
+    ctx.obj['global_c2p'] = kwargs['c2p']
 #end
 
 # Hook the individual commands into pgkyl

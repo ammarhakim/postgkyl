@@ -27,61 +27,61 @@ from postgkyl.modalDG import interpolate as interpFn
               help="for testing purposes")
 @click.pass_context
 def interpolate(ctx, **kwargs):
-    vlog(ctx, 'Starting interpolate')
-    pushChain(ctx, 'interpolate', **kwargs)
-    data = ctx.obj['data']
+  vlog(ctx, 'Starting interpolate')
+  pushChain(ctx, 'interpolate', **kwargs)
+  data = ctx.obj['data']
 
-    basisType = None
-    isModal = None
-    if kwargs['basistype'] is not None:
-        if kwargs['basistype'] == 'ms':
-            basisType = 'serendipity'
-            isModal = True
-        elif kwargs['basistype'] == 'ns':
-            basisType = 'serendipity'
-            isModal = False
-        elif kwargs['basistype'] == 'mo':
-            basisType = 'maximal-order'
-            isModal = True
-        elif kwargs['basistype'] == 'mt':
-            basisType = 'tensor'
-            isModal = True
-        #end
+  basisType = None
+  isModal = None
+  if kwargs['basistype'] is not None:
+    if kwargs['basistype'] == 'ms':
+      basisType = 'serendipity'
+      isModal = True
+    elif kwargs['basistype'] == 'ns':
+      basisType = 'serendipity'
+      isModal = False
+    elif kwargs['basistype'] == 'mo':
+      basisType = 'maximal-order'
+      isModal = True
+    elif kwargs['basistype'] == 'mt':
+      basisType = 'tensor'
+      isModal = True
     #end
+  #end
     
-    for dat in data.iterator(kwargs['use']):
-        if kwargs['basistype'] is None and dat.meta['basisType'] is None:
-            ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
-        #end
-        
-        if isModal or dat.meta['isModal']:
-            dg = GInterpModal(dat,
-                              kwargs['polyorder'], kwargs['basistype'], 
-                              kwargs['interp'], kwargs['read'])
-        else:
-            dg = GInterpNodal(dat,
-                              kwargs['polyorder'], basisType,
-                              kwargs['interp'], kwargs['read'])
-        #end
-            
-        numNodes = dg.numNodes
-        numComps = int(dat.getNumComps() / numNodes)
-        
-        if not kwargs['new']:
-            if kwargs['tag']:
-                out = Data(tag=kwargs['tag'],
-                           label=kwargs['label'],
-                           compgrid=ctx.obj['compgrid'],
-                           meta=dat.meta)
-                grid, values = dg.interpolate(tuple(range(numComps)))
-                out.push(grid, values)
-                data.add(out)
-            else:
-                dg.interpolate(tuple(range(numComps)), overwrite=True)
-            #end
-        else:
-            interpFn(dat, kwargs['polyorder'])
-        #end
+  for dat in data.iterator(kwargs['use']):
+    if kwargs['basistype'] is None and dat.meta['basisType'] is None:
+      ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
     #end
-    vlog(ctx, 'Finishing interpolate')
+        
+    if isModal or dat.meta['isModal']:
+      dg = GInterpModal(dat,
+                        kwargs['polyorder'], kwargs['basistype'], 
+                        kwargs['interp'], kwargs['read'])
+    else:
+      dg = GInterpNodal(dat,
+                        kwargs['polyorder'], basisType,
+                        kwargs['interp'], kwargs['read'])
+    #end
+            
+    numNodes = dg.numNodes
+    numComps = int(dat.getNumComps() / numNodes)
+        
+    if not kwargs['new']:
+      if kwargs['tag']:
+        out = Data(tag=kwargs['tag'],
+                   label=kwargs['label'],
+                   compgrid=ctx.obj['compgrid'],
+                   meta=dat.meta)
+        grid, values = dg.interpolate(tuple(range(numComps)))
+        out.push(grid, values)
+        data.add(out)
+      else:
+        dg.interpolate(tuple(range(numComps)), overwrite=True)
+      #end
+    else:
+      interpFn(dat, kwargs['polyorder'])
+    #end
+  #end
+  vlog(ctx, 'Finishing interpolate')
 #end
