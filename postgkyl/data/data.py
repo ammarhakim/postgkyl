@@ -69,13 +69,16 @@ class Data(object):
                tag: str = 'default',
                label = None,
                meta = None,
-               mapc2p_name: str = None) -> None:
+               mapc2p_name: str = None,
+               fv: bool = False) -> None:
     self._tag = tag
     self._compGrid = compgrid # disregard the mapped grid
     self._grid = None
     self._gridType = 'uniform'
     self._gridFile = None
     self._values = None # (N+1)D narray of values
+    self._lower = None
+    self._upper = None
 
     self.meta = {}
     self.meta['time'] = None
@@ -90,12 +93,13 @@ class Data(object):
         self.meta[key] = meta[key]
       #end
     #end
-
+    
     self._label = ''
     self._customLabel = label
     self._varName = varName
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
+    self._fv = fv
     if file_name is not None:
       # Sequence load typically concatenates multiple files
       # When the sequence is in just a single file, _loadFrame will
@@ -347,6 +351,9 @@ class Data(object):
       raise NameError(
         'File extension \'{:s}\' is not supported'.format(extension))
     #end
+
+    self._upper = upper
+    self._lower = lower
     
     if self.mapc2p_name is not None:
       extension = self.mapc2p_name.split('.')[-1]
@@ -354,9 +361,15 @@ class Data(object):
       if extension == 'gkyl':
         num_dims, _, _, _, grid = self._load_gkyl(self.mapc2p_name)
         num_comps = grid.shape[-1]
-        num_coeff = num_comps/num_dims
+        num_coeff = int(num_comps/num_dims)
         self._grid = [grid[..., int(d*num_coeff):int((d+1)*num_coeff)]
                       for d in range(num_dims)]
+        if self._fv:
+          for d in range(num_dims):
+            self._grid[d] = self._grid[d][..., 0]/2**(num_dims/2)
+          #end
+        #end
+        print(self._grid[1])
       else:
         raise NameError(
           'File extension \'{:s}\' is not supported for mapc2p'.format(extension))
@@ -383,9 +396,9 @@ class Data(object):
 
     # Construct grids if not loaded already
     if self._grid is None:
-      self._grid = [np.linspace(lower[d],
-                                upper[d],
-                                cells[d]+1)
+      self._grid = [np.linspace(lower[d]+dz[d]/2,
+                                upper[d]-dz[d]/2,
+                                cells[d])
                     for d in range(num_dims)]
     #end
   #end
@@ -433,7 +446,9 @@ class Data(object):
                 newvals = np.expand_dims(newvals, axis=1)
               #end
               values = np.append(values, newvals,axis=0)
-              grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
+              grid = np.append(grid,
+                               adios.var(fh, timeMeshList[i]).read(),
+                               axis=0)
             #end
           #end
           fh.close()
@@ -551,12 +566,15 @@ class Data(object):
   #end
 
   def getBounds(self):
-    if self._grid is not None:
+    if self._lower is not None and self._upper is not None:
+      return self._lower, self._upper
+    elif self._grid is not None:
       num_dims = len(self._values.shape)-1
-      lo, up = np.zeros(num_dims), np.zeros(num_dims)
+      lo, up, dz = np.zeros(num_dims), np.zeros(num_dims), np.zeros(num_dims)
       for d in range(num_dims):
         lo[d] = self._grid[d].min()
         up[d] = self._grid[d].max()
+        dz[d] = (self._grid[d].max()-self._grid[d].min())/len(self._grid[d])
       #end
       return lo, up
     else:
@@ -576,17 +594,25 @@ class Data(object):
     return self._values
   #end
 
-  def setGrid(self, grid):
+  def setGrid(self, grid,
+              lower = None, upper = None):
     self._grid = grid
+    if lower is not None:
+      self._lower = lower
+    #end
+    if upper is not None:
+      self._upper = upper
+    #end
   #end
 
   def setValues(self, values):
     self._values = values
   #end                       
 
-  def push(self, grid, values):
-    self._values = values
-    self._grid = grid
+  def push(self, grid, values,
+           lower = None, upper = None):
+    self.setValues(values)
+    self.setGrid(grid, lower, upper)
     return self
   #end
 
@@ -624,36 +650,42 @@ class Data(object):
       output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
       output += '├─ Grid: ({:s})\n'.format(self._gridType)
       for d in range(num_dims-1):
-        output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, numCells[d])
-        output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[d],
-                                                      upper[d])
+        output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(
+          d, numCells[d])
+        output += 'Lower: {:e}; Upper: {:e}\n'.format(
+          lower[d], upper[d])
         #end
-      output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, numCells[num_dims-1])
-      output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[num_dims-1],
-                                                    upper[num_dims-1])
+      output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(
+        num_dims-1, numCells[num_dims-1])
+      output += 'Lower: {:e}; Upper: {:e}\n'.format(
+        lower[num_dims-1], upper[num_dims-1])
       maximum = np.nanmax(values)
       maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
       minimum = np.nanmin(values)
       minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-      output += '├─ Maximum: {:e} at {:s}'.format(maximum,
-                                                  str(maxIdx[:num_dims]))
+      output += '├─ Maximum: {:e} at {:s}'.format(
+        maximum, str(maxIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}\n'.format(maxIdx[-1])
       else:
         output += '\n'
       #end
-      output += '├─ Minimum: {:e} at {:s}'.format(minimum,
-                                                       str(minIdx[:num_dims]))
+      output += '├─ Minimum: {:e} at {:s}'.format(
+        minimum, str(minIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
-      if self.meta['polyOrder'] is not None and self.meta['basisType'] is not None:
+      if self.meta['polyOrder'] is not None \
+         and self.meta['basisType'] is not None:
         output += '\n├─ DG info:\n'
-        output += '│  ├─ Polynomial Order: {:d}\n'.format(self.meta['polyOrder'])
+        output += '│  ├─ Polynomial Order: {:d}\n'.format(
+          self.meta['polyOrder'])
         if self.meta['isModal']:
-          output += '│  └─ Basis Type: {:s} (modal)'.format(self.meta['basisType'])
+          output += '│  └─ Basis Type: {:s} (modal)'.format(
+            self.meta['basisType'])
         else:
-          output += '│  └─ Basis Type: {:s}'.format(self.meta['basisType'])
+          output += '│  └─ Basis Type: {:s}'.format(
+            self.meta['basisType'])
         #end
       #end
       if self.meta['changeset'] and self.meta['builddate']:

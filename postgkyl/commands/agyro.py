@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import GData
+from postgkyl.data import Data
 from postgkyl.commands.util import vlog, pushChain
 
 def getSwisdak(pij, B):
@@ -78,7 +78,7 @@ def agyro(ctx, **kwargs):
 
     tmp = tmp[..., np.newaxis]
 
-    ctx.obj['dataSets'].append(GData())
+    ctx.obj['dataSets'].append(Data())
     idx = len(ctx.obj['dataSets'])-1
     ctx.obj['dataSets'][idx].push(tmp, grid)
     ctx.obj['sets'] = [idx]

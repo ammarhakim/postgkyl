@@ -43,26 +43,29 @@ def _gridNodalToCellCentered(grid, cells):
 
 
 def plot(data, args=(),
-         figure=None, squeeze=False,
-         numAxes=None, startAxes=0,
-         nSubplotRow=None, nSubplotCol=None,
-         scatter=False,
-         streamline=False, sdensity=None, arrowstyle=None,
-         quiver=False,
-         contour=False, clevels=None,
-         diverging=False, group=None,
-         xscale=1.0, yscale=1.0,
+         figure=None, squeeze: bool = False,
+         numAxes: int = None, startAxes: int = 0,
+         nSubplotRow: int = None, nSubplotCol: int = None,
+         scatter: bool = False,
+         streamline: bool = False, sdensity=None, arrowstyle=None,
+         quiver: bool = False,
+         contour: bool = False, clevels=None,
+         diverging: bool = False, group=None,
+         xscale: float = 1.0, yscale: float = 1.0,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, clabel=None, title=None,
-         logx=False, logy=False, logz=False,
-         fixaspect=False,
+         logx: bool = False,
+         logy: bool = False,
+         logz: bool = False,
+         fixaspect: bool = False,
          vmin=None, vmax=None, edgecolors=None,
          xlim=None, ylim=None,
-         showgrid=True,
-         hashtag=False, xkcd=False,
+         showgrid: bool = True,
+         hashtag: bool = False, xkcd: bool = False,
          color=None, markersize=None, linewidth=None,
-         transpose=False,
+         transpose: bool = False,
          figsize=None,
+         shading: str = 'nearest',
          **kwargs):
   """Plots Gkeyll data
 
@@ -270,13 +273,12 @@ def plot(data, args=(),
       if color is not None:
         cl = color
       #end
-      gridCC = _gridNodalToCellCentered(grid, cells)
-      im = cax.plot(gridCC[0]*xscale,
+      im = cax.plot(grid[0]*xscale,
                     values[..., comp],
                     *args, label=label,
                     color=cl, markersize=markersize)
-      xmin = min(gridCC[0]*xscale)
-      xmax = max(gridCC[0]*xscale)
+      xmin = min(grid[0]*xscale)
+      xmax = max(grid[0]*xscale)
     elif numDims == 2:            
       if contour:  #--------------------------------------------
         levels = 10
@@ -289,12 +291,11 @@ def plot(data, args=(),
           #end
         #end
                 
-        gridCC = _gridNodalToCellCentered(grid, cells)
         cl = data.color
         if color is not None:
           cl = color
         #end
-        im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
+        im = cax.contour(grid[0]*xscale, grid[1]*yscale,
                          values[..., comp].transpose(),
                          levels, *args,
                          colors=cl, linewidths=linewidth)
@@ -304,9 +305,8 @@ def plot(data, args=(),
       elif quiver:  #-------------------------------------------
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
-        gridCC = _gridNodalToCellCentered(grid, cells)
-        im = cax.quiver(gridCC[0][skip2::skip]*xscale,
-                        gridCC[1][skip2::skip]*yscale,
+        im = cax.quiver(grid[0][skip2::skip]*xscale,
+                        grid[1][skip2::skip]*yscale,
                         values[skip2::skip,
                                skip2::skip,
                                2*comp].transpose(),
@@ -326,8 +326,7 @@ def plot(data, args=(),
         if arrowstyle is None:
           arrowstyle = 'simple'
         #end
-        gridCC = _gridNodalToCellCentered(grid, cells)
-        im = cax.streamplot(gridCC[0]*xscale, gridCC[1]*yscale,
+        im = cax.streamplot(grid[0]*xscale, grid[1]*yscale,
                             values[..., 2*comp].transpose(),
                             values[..., 2*comp+1].transpose(),
                             *args,
@@ -343,6 +342,7 @@ def plot(data, args=(),
                             vmax=vmax, vmin=-vmax,
                             cmap='RdBu_r',
                             edgecolors=edgecolors, linewidth=0.1,
+                            shading=shading,
                             *args)
         _colorbar(im, fig, cax, label=clabel)
       elif group is not None:  #--------------------------------
@@ -351,22 +351,29 @@ def plot(data, args=(),
         else:
           numLines = values.shape[0]
         #end
-        gridCC = _gridNodalToCellCentered(grid, cells)
         for l in range(numLines):
           idx = [slice(0, u) for u in values.shape]
           idx[-1] = comp
           color = cm.viridis(l / (numLines-1))
           if group == 0:
             idx[1] = l
-            im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
+            im = cax.plot(grid[0]*xscale, values[tuple(idx)],
                           *args, color=color)
-            mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[1][0]*yscale,vmax=gridCC[1][-1]*yscale,clip=False), cmap=cm.viridis)
+            mappable = cm.ScalarMappable(
+              norm=colors.Normalize(vmin=grid[1][0]*yscale,
+                                    vmax=grid[1][-1]*yscale,
+                                    clip=False),
+              cmap=cm.viridis)
             label = clabel or 'Z1' 
           else:
             idx[0] = l
-            im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
+            im = cax.plot(grid[1]*yscale, values[tuple(idx)],
                           *args, color=color)
-            mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[0][0]*xscale,vmax=gridCC[0][-1]*xscale,clip=False), cmap=cm.viridis)
+            mappable = cm.ScalarMappable(
+              norm=colors.Normalize(vmin=grid[0][0]*xscale,
+                                    vmax=grid[0][-1]*xscale,
+                                    clip=False),
+              cmap=cm.viridis)
             label = clabel or 'Z0'
           #end
         #end
@@ -398,16 +405,16 @@ def plot(data, args=(),
           norm = colors.LogNorm(vmin=vmin, vmax=vmax)
           im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
                               tmp.transpose(),
-                              norm=norm,# vmin=vmin, vmax=vmax,
+                              norm=norm,
                               edgecolors=edgecolors,
-                              linewidth=0.1,
+                              linewidth=0.1, shading=shading,
                               *args)
         elif transpose:
           im = cax.pcolormesh(grid[1]*xscale, grid[0]*yscale,
                               values[..., comp],
                               vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
-                              linewidth=0.1, #shading='gouraud',
+                              linewidth=0.1, shading=shading,
                               *args) 
         else:
           g0 = grid[0]*xscale
@@ -420,7 +427,7 @@ def plot(data, args=(),
                               values[..., comp].transpose(),
                               vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
-                              linewidth=0.1,
+                              linewidth=0.1, shading=shading,
                               *args)
         #end
         _colorbar(im, fig, cax, extend=extend, label=clabel)

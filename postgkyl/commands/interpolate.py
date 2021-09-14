@@ -74,7 +74,8 @@ def interpolate(ctx, **kwargs):
                    compgrid=ctx.obj['compgrid'],
                    meta=dat.meta)
         grid, values = dg.interpolate(tuple(range(numComps)))
-        out.push(grid, values)
+        lo, up = dat.getBounds()
+        out.push(grid, values, lo, up)
         data.add(out)
       else:
         dg.interpolate(tuple(range(numComps)), overwrite=True)

@@ -7,172 +7,179 @@ from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
 @click.option('--use', '-u', default=None,
-              help="Specify the tag to plot.")
+              help='Specify the tag to plot.')
 @click.option('--figure', '-f', default=None,
-              help="Specify figure (integer) to plot in.")
+              help='Specify figure (integer) to plot in.')
 @click.option('--squeeze', '-s', is_flag=True,
-              help="Squeeze the components into one panel.")
+              help='Squeeze the components into one panel.')
 @click.option('--subplots', '-b', is_flag=True,
-              help="Make subplots from multiple datasets.")
+              help='Make subplots from multiple datasets.')
 @click.option('--nsubplotrow', 'nSubplotRow', type=click.INT,
-              help="Manually set the number of rows for subplots.")
+              help='Manually set the number of rows for subplots.')
 @click.option('--nsubplotcol', 'nSubplotCol', type=click.INT,
-              help="Manually set the number of columns for subplots.")
+              help='Manually set the number of columns for subplots.')
 @click.option('--transpose', is_flag=True,
-              help="Transpose axes.")
+              help='Transpose axes.')
 @click.option('-c', '--contour', is_flag=True,
-              help="Make contour plot.")
+              help='Make contour plot.')
 @click.option('--clevels', type=click.STRING,
-              help="Specify levels for contours: either integer or start:end:nlevels")
+              help='Specify levels for contours: either integer or start:end:nlevels')
 @click.option('-q', '--quiver', is_flag=True,
-              help="Make quiver plot.")
+              help='Make quiver plot.')
 @click.option('-l', '--streamline', is_flag=True,
-              help="Make streamline plot.")
+              help='Make streamline plot.')
 @click.option('--sdensity', type=click.FLOAT,
-              help="Control density of the streamlines.")
+              help='Control density of the streamlines.')
 @click.option('--arrowstyle', type=click.STRING,
-              help="Set the style for streamline arrows.")
-@click.option('-g', '--group', type=click.Choice(['0', '1']),
-              help="Switch to group mode.")
+              help='Set the style for streamline arrows.')
+@click.option('--group', type=click.Choice(['0', '1']),
+              help='Switch to group mode.')
 @click.option('-s', '--scatter', is_flag=True,
-              help="Make scatter plot.")
+              help='Make scatter plot.')
 @click.option('--markersize', type=click.FLOAT,
-              help="Set marker size for scatter plots.")
+              help='Set marker size for scatter plots.')
 @click.option('--linewidth', type=click.FLOAT,
-              help="Set the linewidth.")
+              help='Set the linewidth.')
 @click.option('--style',
-              help="Specify Matplotlib style file (default: Postgkyl).")
+              help='Specify Matplotlib style file (default: Postgkyl).')
 @click.option('-d', '--diverging', is_flag=True,
-              help="Switch to diverging color map.")
+              help='Switch to diverging color map.')
 @click.option('--arg', type=click.STRING,
-              help="Additional plotting arguments, e.g., '*--'.")
+              help='Additional plotting arguments, e.g., \'*--\'.')
 @click.option('-a', '--fix-aspect', 'fixaspect', is_flag=True,
-              help="Enforce the same scaling on both axes.")
+              help='Enforce the same scaling on both axes.')
 @click.option('--logx', is_flag=True,
-              help="Set x-axis to log scale.")
+              help='Set x-axis to log scale.')
 @click.option('--logy', is_flag=True,
-              help="Set y-axis to log scale.")
+              help='Set y-axis to log scale.')
 @click.option('--logz', is_flag=True,
-              help="Set values of 2D plot to log scale.")
+              help='Set values of 2D plot to log scale.')
 @click.option('--xscale', default=1.0, type=click.FLOAT,
-              help="Value to scale the x-axis (default: 1.0).")
+              help='Value to scale the x-axis (default: 1.0).')
 @click.option('--yscale', default=1.0, type=click.FLOAT,
-              help="Value to scale the y-axis (default: 1.0).")
+              help='Value to scale the y-axis (default: 1.0).')
 @click.option('--vmax', default=None, type=click.FLOAT,
-              help="Set maximal value of data for plots.")
+              help='Set maximal value of data for plots.')
 @click.option('--vmin', default=None, type=click.FLOAT,
-              help="Set minimal value of data for plots.")
+              help='Set minimal value of data for plots.')
 @click.option('--xlim', default=None, type=click.STRING,
-              help="Set limits for the x-coordinate (lower,upper)")
+              help='Set limits for the x-coordinate (lower,upper)')
 @click.option('--ylim', default=None, type=click.STRING,
-              help="Set limits for the y-coordinate (lower,upper).")
+              help='Set limits for the y-coordinate (lower,upper).')
 @click.option('--legend/--no-legend', default=True,
-              help="Show legend.")
+              help='Show legend.')
 @click.option('--force-legend', 'forcelegend', is_flag=True,
-              help="Force legend even when plotting a single dataset.")
+              help='Force legend even when plotting a single dataset.')
 @click.option('--color', type=click.STRING,
-              help="Set color when available.")
+              help='Set color when available.')
 @click.option('-x', '--xlabel', type=click.STRING,
-              help="Specify a x-axis label.")
+              help='Specify a x-axis label.')
 @click.option('-y', '--ylabel', type=click.STRING,
-              help="Specify a y-axis label.")
+              help='Specify a y-axis label.')
 @click.option('--clabel', type=click.STRING,
-              help="Specify a label for colorbar.")
+              help='Specify a label for colorbar.')
 @click.option('--title', type=click.STRING,
-              help="Specify a title.")
+              help='Specify a title.')
 @click.option('--save', is_flag=True,
-              help="Save figure as PNG file.")
+              help='Save figure as PNG file.')
 @click.option('--saveas', type=click.STRING, default=None,
-              help="Name of figure file.")
+              help='Name of figure file.')
 @click.option('--dpi', type=click.INT, default=200,
-              help="DPI (resolution) for output.")
+              help='DPI (resolution) for output.')
 @click.option('-e', '--edgecolors', type=click.STRING,
-              help="Set color for cell edges to show grid outline (default: None)")
+              help='Set color for cell edges to show grid outline (default: None)')
 @click.option('--showgrid/--no-showgrid', default=True,
-              help="Show grid-lines (default: True)")
+              help='Show grid-lines (default: True)')
 @click.option('--xkcd', is_flag=True,
-              help="Turns on the xkcd style!")
+              help='Turns on the xkcd style!')
 @click.option('--hashtag', is_flag=True,
-              help="Turns on the pgkyl hashtag!")
+              help='Turns on the pgkyl hashtag!')
 @click.option('--show/--no-show', default=True,
-              help="Turn showing of the plot ON and OFF (default: ON).")
+              help='Turn showing of the plot ON and OFF (default: ON).')
 @click.option('--figsize',
-              help="Comma-separated values for x and y size.")
+              help='Comma-separated values for x and y size.')
+# @click.option('--shading', default='nearest',
+#               help='Specify shading for 2D plots; typically \'nearest\' (default) or \'gouraud\'.')
+@click.option('-g', '--gouraud', is_flag=True,
+              help='Turns on the Gouraud shading!')
 @click.pass_context
 def plot(ctx, **kwargs):
-    """Plot active datasets, optionally displaying the plot and/or saving
-    it to PNG files. Plot labels can use a sub-set of LaTeX math
-    commands placed between dollar ($) signs.
+  """Plot active datasets, optionally displaying the plot and/or saving
+  it to PNG files. Plot labels can use a sub-set of LaTeX math
+  commands placed between dollar ($) signs.
+  """
+  vlog(ctx, 'Starting plot')
+  pushChain(ctx, 'plot', **kwargs)
+  
+  if kwargs['group'] is not None:
+    kwargs['group'] = int(kwargs['group'])
+  #end
+    
+  if kwargs['scatter']:
+    kwargs['args'] = '.'
+  #end
 
-    """
-    vlog(ctx, 'Starting plot')
-    pushChain(ctx, 'plot', **kwargs)
-
-    if kwargs['group'] is not None:
-        kwargs['group'] = int(kwargs['group'])
-    #end
-
-    if kwargs['scatter']:
-        kwargs['args'] = '.'
-    #end
-
-    kwargs['numAxes'] = None
-    if kwargs['subplots']:
-        kwargs['numAxes'] = 0
-        kwargs['startAxes'] = 0
-        for dat in ctx.obj['data'].iterator(kwargs['use']):
-            kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
-        #end
-        if kwargs['figure'] is None:
-            kwargs['figure'] = 0
-        #end
-    #end
- 
-    fName = ""
+  if kwargs['gouraud']:
+    kwargs['shading'] = 'gouraud'
+  #end
+    
+  kwargs['numAxes'] = None
+  if kwargs['subplots']:
+    kwargs['numAxes'] = 0
+    kwargs['startAxes'] = 0
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-        if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
-            label = dat.getLabel()
-        else:
-            label = ''
-        #end
-        if kwargs['arg'] is not None:
-            gplot(dat, kwargs['arg'], labelPrefix=label, 
-                  **kwargs)
-        else:
-            gplot(dat, labelPrefix=label,
-                  **kwargs)
-        #end
-        if kwargs['subplots']:
-            kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
-        #end
-
-        if (kwargs['save'] or kwargs['saveas']):
-            if kwargs['saveas']:
-                fName = kwargs['saveas']
-            else:
-                if fName != "":
-                    fName = fName + "_"
-                    #end
-                if dat.fileName:
-                    fName = fName + dat.fileName.split('.')[0]
-                else:
-                    fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
-                #end
-            #end
-        #end
-        if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
-            fName = str(fName)
-            plt.savefig(fName, dpi=kwargs['dpi'])
-            fName = ""
-        #end
+      kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
     #end
-    if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-        fName = str(fName)
-        plt.savefig(fName, dpi=kwargs['dpi'])
+    if kwargs['figure'] is None:
+      kwargs['figure'] = 0
+    #end
+  #end
+ 
+  fName = ''
+  for dat in ctx.obj['data'].iterator(kwargs['use']):
+    if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
+      label = dat.getLabel()
+    else:
+      label = ''
+    #end
+    if kwargs['arg'] is not None:
+      gplot(dat, kwargs['arg'], labelPrefix=label, 
+            **kwargs)
+    else:
+      gplot(dat, labelPrefix=label,
+            **kwargs)
+    #end
+    if kwargs['subplots']:
+      kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
     #end
 
-    if kwargs['show']:
-        plt.show()
+    if (kwargs['save'] or kwargs['saveas']):
+      if kwargs['saveas']:
+        fName = kwargs['saveas']
+      else:
+        if fName != "":
+          fName = fName + "_"
+        #end
+        if dat.file_name:
+          fName = fName + dat.file_name.split('.')[0]
+        else:
+          fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
+        #end
+      #end
     #end
-    vlog(ctx, 'Finishing plot')
+    if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
+      fName = str(fName)
+      plt.savefig(fName, dpi=kwargs['dpi'])
+      fName = ""
+    #end
+  #end
+  if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
+    fName = str(fName)
+    plt.savefig(fName, dpi=kwargs['dpi'])
+  #end
+
+  if kwargs['show']:
+    plt.show()
+  #end
+  vlog(ctx, 'Finishing plot')
 #end
