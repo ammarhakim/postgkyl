@@ -34,26 +34,24 @@ def _crush(s): # Temp function used as a sorting key
 #end
 
 @click.command(hidden=True)
-@click.option('--z0', help='Partial file load: 0th coord (either int or slice)')
-@click.option('--z1', help='Partial file load: 1st coord (either int or slice)')
-@click.option('--z2', help='Partial file load: 2nd coord (either int or slice)')
-@click.option('--z3', help='Partial file load: 3rd coord (either int or slice)')
-@click.option('--z4', help='Partial file load: 4th coord (either int or slice)')
-@click.option('--z5', help='Partial file load: 5th coord (either int or slice)')
+@click.option('--z0', help="Partial file load: 0th coord (either int or slice)")
+@click.option('--z1', help="Partial file load: 1st coord (either int or slice)")
+@click.option('--z2', help="Partial file load: 2nd coord (either int or slice)")
+@click.option('--z3', help="Partial file load: 3rd coord (either int or slice)")
+@click.option('--z4', help="Partial file load: 4th coord (either int or slice)")
+@click.option('--z5', help="Partial file load: 5th coord (either int or slice)")
 @click.option('--component', '-c',
-              help='Partial file load: comps (either int or slice)')
-@click.option('--tag', '-t', default='default',
-              help='Specily tag for data (default: \'default\')')
+              help="Partial file load: comps (either int or slice)")
+@click.option('--tag', '-t', default="default",
+              help="Specily tag for data (default: \"default\")")
 @click.option('--compgrid', is_flag=True,
-              help='Disregard the mapped grid information')
+              help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
-              help='Allows to specify the Adios variable name (default is \'CartGridField\')')
+              help="Allows to specify the Adios variable name (default is 'CartGridField')")
 @click.option('--label', '-l',
-              help='Allows to specify the custom label')
-@click.option('--c2p', type=click.STRING, 
-              help='Specify the file name containing c2p mapped coordinates')
-@click.option('--fv', is_flag=True,
-              help='Specify that the \'c2p\' is for finite-volume data')
+              help="Allows to specify the custom label")
+@click.option('--c2p', 
+              help="Specify the file name containing c2p mapped coordinates")
 @click.pass_context
 def load(ctx, **kwargs):
   vlog(ctx, 'Starting load')
@@ -122,7 +120,7 @@ def load(ctx, **kwargs):
                       z3=z3, z4=z4, z5=z5,
                       comp=comp, varName=var,
                       label = kwargs['label'],
-                      mapc2p_name = mapc2p_name, fv = kwargs['fv']))
+                      mapc2p_name = mapc2p_name))
       except NameError:
         ctx.fail(click.style(
           'Failed to load the variable \'{:s}\' from \'{:s}\''.format(var, fn),
