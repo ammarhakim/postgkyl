@@ -36,7 +36,7 @@ def _get_basis_p(num_dim, num_comp):
   idx = np.argwhere(numNodesSerendipity[num_dim-1, :] == num_comp).squeeze()
   if idx:
     basis = 'serendipity'
-    poly_order = idx+1
+    poly_order = idx
   #end
   idx = np.argwhere(numNodesTensor[num_dim-1, :] == num_comp).squeeze()
   if idx:
@@ -65,12 +65,15 @@ def _getNumNodes(dim, polyOrder, basisType):
 #end
 
 
-def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal):
-  if interp is not None and read is None:
-    mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal)
+def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal, c2p=False):
+  if (interp is not None and read is None) or c2p:
+    if interp is None:
+      interp = polyOrder+1
+    #end
+    mat = createInterpMatrix(dim, polyOrder, basisType, interp, modal, c2p)
     return mat
   elif basisType=='tensor':
-    mat = createInterpMatrix(dim, polyOrder, 'tensor', polyOrder+1, True)
+    mat = createInterpMatrix(dim, polyOrder, 'tensor', polyOrder+1, True, c2p)
     return mat
   elif read is not None:
     fileNameGeneral = postgkylPath + '/interpMatrix.h5'
@@ -283,17 +286,22 @@ def _make1Dgrids(nInterp, Xc, numDims, gridType=None):
   return gridOut
 #end
 
-def _interpOnMesh(cMat, qIn):
+def _interpOnMesh(cMat, qIn, c2p=False):
+  shift = 0
+
   numCells = np.array(qIn.shape)
   # last entry is indexing nodes, get rid of it
   numCells = numCells[:-1]
   numDims = int(len(numCells))
   numInterp = int(round(cMat.shape[0] ** (1.0/numDims)))
   numNodes = cMat.shape[1]
-  qOut = np.zeros(numCells*numInterp, np.float)
+  if c2p:
+    qOut = np.zeros(numCells*(numInterp-1)+1, np.float)
+  else:
+    qOut = np.zeros(numCells*numInterp, np.float)
+  #end
   # move the node index from last to the first
   qIn = np.moveaxis(qIn, -1, 0)
-
   # Main loop
   for n in range(numInterp ** numDims):
     # https://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
@@ -301,10 +309,16 @@ def _interpOnMesh(cMat, qIn):
     # decompose n to i,j,k,... indices based on the number of dimensions
     startIdx = _decompose(n, numDims, numInterp)
     # define multi-D qOut slices
-    idxs = [slice(int(startIdx[i]), int(numCells[i]*numInterp), numInterp)
-            for i in range(numDims)]
+    if c2p:
+      idxs = [slice(int(startIdx[i]), int(numCells[i]*(numInterp-1)+startIdx[i]), numInterp-1)
+              for i in range(numDims)]
+    else:
+      idxs = [slice(int(startIdx[i]), int(numCells[i]*numInterp), numInterp)
+              for i in range(numDims)]
+    #end
     qOut[tuple(idxs)] = temp
   #end
+  #print(np.array(qOut).shape)
   return np.array(qOut)
 #end
 
@@ -563,11 +577,11 @@ class GInterpModal(GInterp):
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.numDims, num_comp)
       cMat = _loadInterpMatrix(self.numDims, poly_order,
-                               basis, self.numInterp, self.read, True)
+                               basis, self.numInterp, self.read, True, True)
       
       grid = []
       for d in range(self.numDims):
-        grid.append(_interpOnMesh(cMat, q[d]))
+        grid.append(_interpOnMesh(cMat, q[d], True))
       #end
     else:
       grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
