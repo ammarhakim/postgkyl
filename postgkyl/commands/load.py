@@ -51,16 +51,16 @@ def _crush(s): # Temp function used as a sorting key
               help='Allows to specify the Adios variable name (default is \'CartGridField\')')
 @click.option('--label', '-l',
               help='Allows to specify the custom label')
-@click.option('--c2p', 
+@click.option('--c2p', type=click.STRING,
               help='Specify the file name containing c2p mapped coordinates')
-@click.option('--fv', 
+@click.option('--fv', is_flag=True,
               help='Tag finite volume data when using c2p mapped coordinates')
 @click.pass_context
 def load(ctx, **kwargs):
   vlog(ctx, 'Starting load')
   pushChain(ctx, 'load', **kwargs)
   data = ctx.obj['data']
-  
+
   idx = ctx.obj['inDataStringsLoaded']
   inDataString = ctx.obj['inDataStrings'][idx]
 
