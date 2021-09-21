@@ -100,79 +100,78 @@ from postgkyl.commands.util import vlog, pushChain
               help="Comma-separated values for x and y size.")
 @click.pass_context
 def plot(ctx, **kwargs):
-    """Plot active datasets, optionally displaying the plot and/or saving
-    it to PNG files. Plot labels can use a sub-set of LaTeX math
-    commands placed between dollar ($) signs.
+  """Plot active datasets, optionally displaying the plot and/or saving
+  it to PNG files. Plot labels can use a sub-set of LaTeX math
+  commands placed between dollar ($) signs.
+  """
+  vlog(ctx, 'Starting plot')
+  pushChain(ctx, 'plot', **kwargs)
 
-    """
-    vlog(ctx, 'Starting plot')
-    pushChain(ctx, 'plot', **kwargs)
+  if kwargs['group'] is not None:
+    kwargs['group'] = int(kwargs['group'])
+  #end
 
-    if kwargs['group'] is not None:
-        kwargs['group'] = int(kwargs['group'])
-    #end
+  if kwargs['scatter']:
+    kwargs['args'] = '.'
+  #end
 
-    if kwargs['scatter']:
-        kwargs['args'] = '.'
-    #end
-
-    kwargs['numAxes'] = None
-    if kwargs['subplots']:
-        kwargs['numAxes'] = 0
-        kwargs['startAxes'] = 0
-        for dat in ctx.obj['data'].iterator(kwargs['use']):
-            kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
-        #end
-        if kwargs['figure'] is None:
-            kwargs['figure'] = 0
-        #end
-    #end
- 
-    fName = ""
+  kwargs['numAxes'] = None
+  if kwargs['subplots']:
+    kwargs['numAxes'] = 0
+    kwargs['startAxes'] = 0
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-        if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
-            label = dat.getLabel()
-        else:
-            label = ''
-        #end
-        if kwargs['arg'] is not None:
-            gplot(dat, kwargs['arg'], labelPrefix=label, 
-                  **kwargs)
-        else:
-            gplot(dat, labelPrefix=label,
-                  **kwargs)
-        #end
-        if kwargs['subplots']:
-            kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
-        #end
-
-        if (kwargs['save'] or kwargs['saveas']):
-            if kwargs['saveas']:
-                fName = kwargs['saveas']
-            else:
-                if fName != "":
-                    fName = fName + "_"
-                    #end
-                if dat.fileName:
-                    fName = fName + dat.fileName.split('.')[0]
-                else:
-                    fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
-                #end
-            #end
-        #end
-        if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
-            fName = str(fName)
-            plt.savefig(fName, dpi=kwargs['dpi'])
-            fName = ""
-        #end
+      kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
     #end
-    if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-        fName = str(fName)
-        plt.savefig(fName, dpi=kwargs['dpi'])
+    if kwargs['figure'] is None:
+      kwargs['figure'] = 0
+    #end
+  #end
+ 
+  fName = ''
+  for dat in ctx.obj['data'].iterator(kwargs['use']):
+    if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
+      label = dat.getLabel()
+    else:
+      label = ''
+    #end
+    if kwargs['arg'] is not None:
+      gplot(dat, kwargs['arg'], labelPrefix=label, 
+            **kwargs)
+    else:
+      gplot(dat, labelPrefix=label,
+            **kwargs)
+    #end
+    if kwargs['subplots']:
+      kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
     #end
 
-    if kwargs['show']:
-        plt.show()
+    if (kwargs['save'] or kwargs['saveas']):
+      if kwargs['saveas']:
+        fName = kwargs['saveas']
+      else:
+        if fName != "":
+          fName = fName + "_"
+        #end
+        if dat.fileName:
+          fName = fName + dat.fileName.split('.')[0]
+        else:
+          fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
+        #end
+      #end
     #end
-    vlog(ctx, 'Finishing plot')
+    if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
+      fName = str(fName)
+      plt.savefig(fName, dpi=kwargs['dpi'])
+      fName = ""
+    #end
+  #end
+  if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
+    fName = str(fName)
+    plt.savefig(fName, dpi=kwargs['dpi'])
+  #end
+
+  if kwargs['show']:
+    plt.show()
+  #end
+  vlog(ctx, 'Finishing plot')
 #end
