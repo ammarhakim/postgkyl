@@ -594,6 +594,29 @@ class GInterpModal(GInterp):
     #end
   #end
 
+  def interpolateGrid(self, overwrite=False):
+    if self.data._gridType == 'c2p':
+      q = self.data.getGrid()
+      num_comp = q[0].shape[-1]
+      basis, poly_order = _get_basis_p(self.numDims, num_comp)
+      cMat = _loadInterpMatrix(self.numDims, poly_order,
+                               basis, self.numInterp, self.read, True, True)
+      
+      grid = []
+      for d in range(self.numDims):
+        grid.append(_interpOnMesh(cMat, q[d], True))
+      #end
+    else:
+      grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
+    #end
+
+    if overwrite:
+      self.data.setGrid(grid)
+    else:
+      return grid
+    #end
+  #end
+
   def differentiate(self, direction=None, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack

@@ -127,7 +127,7 @@ def load(ctx, **kwargs):
         
         if kwargs['fv']:
           dg = GInterpModal(dat, 0, 'ms')
-          dg.interpolate(0, overwrite=True)
+          dg.interpolateGrid(overwrite=True)
         #end
         data.add(dat)
       except NameError:
