@@ -10,50 +10,20 @@ from postgkyl.utils import idxParser
 class Data(object):
   """Provides interface to Gkeyll output data.
 
-  Data serves as a baseline interface to Gkeyll data. It allows for
-  loading and saving and serves as an input for other Postgkyl
-  methods. Represents a dataset in the Postgkyl command line mode.
+  Data serves as a baseline interface to Gkeyll data. It is used for
+  loading Gkeyll data and serves is input to many Postgkyl
+  functions. Represents a dataset in the Postgkyl command line mode.
 
-  Init Args:
-    fileName (str): String with either full file name of or a
-      fragment (for history loading).  Currently supports only
-      'h5' and 'bp' files. Empty GData object is created when
-      not specified
-    stack (bool): Turn the internal stack on (True) and off
-      (False) (default: True)
-    comp (int or 'int:int'): Preselect a componend index (or a
-      slice) for the partial load of data
-    z0 (int or 'int:int'): Preselect an index (or a slice) for
-      the first coordinate for the partial load of data
-    z1 (int or 'int:int'): Preselect an index (or a slice) for
-      the second coordinate for the partial load of data
-    z2 (int or 'int:int'): Preselect an index (or a slice) for
-      the third coordinate for the partial load of data
-    z3 (int or 'int:int'): Preselect an index (or a slice) for
-      the fourth coordinate for the partial load of data
-    z4 (int or 'int:int'): Preselect an index (or a slice) for
-      the fifth coordinate for the partial load of data
-    z5 (int or 'int:int'): Preselect an index (or a slice) for
-      the sixth coordinate for the partial load of data
-    varName (str): allows to specify Adios variable; default is CartGridField
+  Attributes:
+    meta: A dictionary contaioning a physics information like charge
+      and/or representation information like polynomial order.
+    file_name: The name of the Gkeyll file used during initialization.
 
-    Raises:
-        NameError: when file name does not exist or is empty/corrupted.
-        TypeError: when partial load indices are no integers or 'int:int'
+  Examples:
+    import postgkyl
+    data = postgkyl.Data('file.bp', comp=1)
 
-    Notes:
-        - When fine name is incomplete or is not a Gkyl frame,
-          Postgkyl tries opening it as a history data before throwing
-          an exception
-        - Preselection coordinate indices for higher dimension than
-          included in the data are safelly disregarded (i.e., z2,
-          z3, z4, and z5 for 2D data).
-        - postgkyl.Data is a shortcut for postgkyl.data.Data
-
-    Examples:
-        import postgkyl
-        data = postgkyl.GData('file.bp', comp=1)
-    """
+  """
 
   def __init__(self,
                file_name: str = None,
@@ -64,14 +34,40 @@ class Data(object):
                z3: Union[int, str] = None,
                z4: Union[int, str] = None,
                z5: Union[int, str] = None,
-               compgrid: bool = False,
-               varName: str = 'CartGridField',
+               var_name: str = 'CartGridField',
                tag: str = 'default',
-               label = None,
-               meta = None,
+               label: str = None,
+               meta: dict = None,
+               comp_grid: bool = False,
                mapc2p_name: str = None) -> None:
+    """Initializes the Data class with a Gkeyll output file.
+
+    Args:
+      fileName: str
+        The name of Gkeyll output file. Currently supported are 'h5',
+        ADIOS1 'bp', and binary 'gkyl' files. Can be ommited for empty
+        class.
+      comp: int or 'int:int'
+        Load only the specified component index or a slice of
+        idices. Supported only for the ADIOS 'bp' files.
+      z0 - z5: int or 'int:int'
+        Load only the specified  index or a slice of
+        idices in a direction. Supported only for the ADIOS 'bp' files.
+      var_name: str
+        Specify custom ADIOS variable name (default is 'CartGridField').
+      tag: str
+        Specify dataset tag for use in the command line mode.
+      label: str
+        Specify dataset label for use in the command line mode.
+      meta: dict
+        Copy content of the specified meta dictionary.
+      comp_grid: bool
+        A flag to ignore grid mapping.
+      mapc2p_name: str
+        The name of the file containg the c2p mapping information.
+    """
     self._tag = tag
-    self._compGrid = compgrid # disregard the mapped grid
+    self._comp_grid = comp_grid # disregard the mapped grid
     self._grid = None
     self._gridType = 'uniform'
     self._gridFile = None
@@ -93,7 +89,7 @@ class Data(object):
 
     self._label = ''
     self._customLabel = label
-    self._varName = varName
+    self._var_name = var_name
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
     if file_name is not None:
@@ -189,8 +185,10 @@ class Data(object):
     upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
     offset += num_dims*doffset
 
-    # read array elemEz (the div by doffset is as elemSz includes sizeof(real_type) = doffset)
-    elemSzRaw = int(np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+    # read array elemEz (the div by doffset is as elemSz includes
+    # sizeof(real_type) = doffset)
+    elemSzRaw = int(
+      np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
     elemSz = elemSzRaw/doffset
     offset += 8
 
@@ -210,7 +208,7 @@ class Data(object):
 
   def _loadFrame(self, axes=(None, None, None, None, None, None),
                  comp=None):
-    self.fileDir = os.path.dirname(os.path.realpath(self.file_name))
+    self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
       import tables
@@ -235,7 +233,7 @@ class Data(object):
     elif extension == 'bp':
       import adios
       fh = adios.file(self.file_name)
-      if not self._varName in fh.vars:
+      if not self._var_name in fh.vars:
         # Not a Gkyl 'frame' data; trying to load as a sequence
         fh.close()
         self._loadSequence()  
@@ -279,7 +277,7 @@ class Data(object):
       #end
 
       # Check for mapped grid ...
-      if 'type' in fh.attrs.keys() and self._compGrid is False:
+      if 'type' in fh.attrs.keys() and self._comp_grid is False:
         self._gridType = adios.attr(fh, 'type').value.decode('UTF-8')
       #end
       # .. load nodal grid if provided ...
@@ -287,12 +285,12 @@ class Data(object):
         pass # nothing to do for uniform grids
       elif self._gridType == 'mapped':
         if 'grid' in fh.attrs.keys():
-          gridNm = self.fileDir + '/' +adios.attr(fh, 'grid').value.decode('UTF-8')
+          gridNm = self._file_dir + '/' +adios.attr(fh, 'grid').value.decode('UTF-8')
         else:
-          gridNm = self.fileDir + '/grid'  
+          gridNm = self._file_dir + '/grid'  
         #end
         with adios.file(gridNm) as gridFh:
-          gridVar = adios.var(gridFh, self._varName)
+          gridVar = adios.var(gridFh, self._var_name)
           offset, count = self._createOffsetCountBp(gridVar, axes, None)
           tmp = gridVar.read(offset=offset, count=count)
           grid = [tmp[..., d].transpose()
@@ -307,7 +305,7 @@ class Data(object):
       #end
 
       # Load data
-      var = adios.var(fh, self._varName)
+      var = adios.var(fh, self._var_name)
       offset, count = self._createOffsetCountBp(var, axes, comp)
       self._values = var.read(offset=offset, count=count)
 
@@ -371,7 +369,7 @@ class Data(object):
         if self._gridType == 'mapped':
           raise ValueError(
             'Data appears to include ghost cells which is not compatible with mapped grid.' \
-            'Use computational grid \'compgrid\' instead.')
+            'Use computational grid \'comp_grid\' instead.')
         #end
         ngl = int(np.floor((cells[d] - self._values.shape[d])*0.5))
         ngu = int(np.ceil((cells[d] - self._values.shape[d])*0.5))
@@ -593,11 +591,10 @@ class Data(object):
   #-----------------------------------------------------------------
   #-- Info ---------------------------------------------------------
   def info(self):
-    """Prints GData object information.
+    """Prints Data object information.
     
     Prints time (only when available), number of components, dimension
-    spans, extremes for a GData object. Only the top of the stack is
-    printed.
+    spans, extremes for a Data object.
         
     Args:
       none
@@ -676,7 +673,10 @@ class Data(object):
 
   #-----------------------------------------------------------------
   #-- Write --------------------------------------------------------
-  def write(self, bufferSize=1000, outName=None, mode='bp'):
+  def write(self,
+            bufferSize: int = 1000,
+            outName: str = None,
+            mode: str = 'bp'):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
     """
     # Create output file name
@@ -730,11 +730,11 @@ class Data(object):
         adios.write(fh, key, self.meta['time'])
       #end
             
-      adios.define_var(groupId, self._varName, '',
+      adios.define_var(groupId, self._var_name, '',
                        adios.DATATYPE.double,
                        sNumCells, sNumCells, sOffsets)
 
-      adios.write(fh, self._varName, self.getValues())
+      adios.write(fh, self._var_name, self.getValues())
       adios.close(fh)
       adios.finalize()
 

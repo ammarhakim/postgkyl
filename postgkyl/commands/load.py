@@ -118,10 +118,10 @@ def load(ctx, **kwargs):
     for fn in files:
       try:
         dat = Data(file_name=fn, tag=kwargs['tag'],
-                    compgrid=ctx.obj['compgrid'],
+                    comp_grid=ctx.obj['compgrid'],
                     z0=z0, z1=z1, z2=z2,
                     z3=z3, z4=z4, z5=z5,
-                    comp=comp, varName=var,
+                    comp=comp, var_name=var,
                     label = kwargs['label'],
                     mapc2p_name = mapc2p_name)
         

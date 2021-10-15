@@ -114,7 +114,7 @@ def collect(ctx, **kwargs):
 
             out = Data(tag=outTag,
                        label=label,
-                       compgrid=ctx.obj['compgrid'])
+                       comp_grid=ctx.obj['compgrid'])
             out.push(grid[i], values[i])
             data.add(out)
         #end
