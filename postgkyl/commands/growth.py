@@ -11,7 +11,7 @@ from postgkyl.diagnostics.growth import fitGrowth, exp2
 @click.command()
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('-g', '--guess', default=(1.0, 0.1),
+@click.option('-g', '--guess', 
               help='Specify initial guess')
 @click.option('-p', '--plot', is_flag=True,
               help='Plot the data and fit')
