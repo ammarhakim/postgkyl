@@ -216,7 +216,7 @@ def ev(ctx, **kwargs):
         data.deactivateAll()
         for grid, values, meta in zip(gridStack[-1], valueStack[-1], metaStack[-1]):
             out = Data(tag=outTag,
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        label=label,
                        meta=meta)
             out.push(grid, values)
