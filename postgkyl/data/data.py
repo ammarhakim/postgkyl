@@ -424,14 +424,19 @@ class Data(object):
               values = adios.var(fh, dataList[i]).read()
               grid = adios.var(fh, timeMeshList[i]).read()
             else:
-              newvals = adios.var(fh, dataList[i]).read()
+              newvals = np.asarray(adios.var(fh, dataList[i]).read())
+              newgrid = np.asarray(adios.var(fh, timeMeshList[i]).read())
+              # deal with weird behavior after restart where some data is a scalar
+              if len(newvals.shape) == 0:
+                  newvals = np.reshape(newvals, (1,1))
+                  newgrid = np.reshape(newgrid, (1,))
               # deal with weird behavior after restart where some data
               # doesn't have second dimension
               if len(newvals.shape) < 2:
                 newvals = np.expand_dims(newvals, axis=1)
               #end
               values = np.append(values, newvals,axis=0)
-              grid = np.append(grid, adios.var(fh, timeMeshList[i]).read(),axis=0)
+              grid = np.append(grid, newgrid,axis=0)
             #end
           #end
           fh.close()
