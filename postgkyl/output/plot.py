@@ -149,7 +149,7 @@ def plot(data, args=(),
   elif isinstance(figure, matplotlib.figure.Figure):
     fig = figure
   elif isinstance(figure, str) or isinstance(figure, unicode):
-    fig = plt.figure(int(figure))
+    fig = plt.figure(int(figure), figsize=figsize)
   else:
     raise TypeError('\'fig\' keyword needs to be one of ' \
                     'None (default), int, or MPL Figure')
