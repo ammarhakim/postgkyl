@@ -98,6 +98,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turn showing of the plot ON and OFF (default: ON).")
 @click.option('--figsize',
               help="Comma-separated values for x and y size.")
+@click.option('--jet', is_flag=True,
+              help="Turn colormap to jet for comparison with literature.")
 @click.pass_context
 def plot(ctx, **kwargs):
   """Plot active datasets, optionally displaying the plot and/or saving
@@ -113,6 +115,12 @@ def plot(ctx, **kwargs):
 
   if kwargs['scatter']:
     kwargs['args'] = '.'
+  #end
+
+  if kwargs['jet']:
+    click.echo(click.style(
+      'WARNING: The \'jet\' colormap has been selected. This colormap is not perceptually uniform and seemingly creates features which do not exist in the data!',
+      fg='yellow'))
   #end
 
   kwargs['numAxes'] = None

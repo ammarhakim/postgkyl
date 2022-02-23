@@ -1,4 +1,5 @@
 import click
+import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.figure
 import matplotlib.pyplot as plt
@@ -63,6 +64,7 @@ def plot(data, args=(),
          color=None, markersize=None, linewidth=None,
          transpose=False,
          figsize=None,
+         jet=False,
          **kwargs):
   """Plots Gkeyll data
 
@@ -80,6 +82,12 @@ def plot(data, args=(),
     plt.style.use(style)
   #end
 
+  # This should not be used on its own; however, it can be useful for
+  # comparing results with literature
+  if jet:
+    mpl.rcParams['image.cmap'] = 'jet'
+  #end
+  
   # The most important thing
   if xkcd:
     plt.xkcd()

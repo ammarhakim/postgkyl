@@ -684,6 +684,7 @@ class Data(object):
             mode: str = 'bp'):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
     """
+    import adios
     # Create output file name
     if outName is None:
       if self.file_name is not None:
