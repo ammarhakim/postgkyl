@@ -731,7 +731,6 @@ class Data(object):
       fh = adios.open('CartField', outName, 'w')
             
       if self.meta['time']:
-        print(key)
         adios.define_var(groupId, 'time', '',
                          adios.DATATYPE.double, '', '', '')
         adios.write(fh, 'time', self.meta['time'])
