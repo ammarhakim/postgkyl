@@ -116,7 +116,6 @@ class Data(object):
     count = np.array(bpVar.dims)
     offset = np.zeros(num_dims, np.int)
     cnt = 0
-
     for d, z in enumerate(zs):
       if d < num_dims-1 and z is not None:  # Last dim stores comp
         z = idxParser(z)
@@ -139,8 +138,8 @@ class Data(object):
         offset[-1] = comp
         count[-1] = 1
       elif isinstance(comp, slice):
-        offset[d] = comp.start
-        count[d] = comp.stop - comp.start
+        offset[-1] = comp.start
+        count[-1] = comp.stop - comp.start
       else:
         raise TypeError('\'comp\' is neither number or slice')
       #end
