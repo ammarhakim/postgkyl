@@ -368,13 +368,19 @@ def plot(data, args=(),
             idx[1] = l
             im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
                           *args, color=color)
-            mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[1][0]*yscale,vmax=gridCC[1][-1]*yscale,clip=False), cmap=cm.viridis)
+            mappable = cm.ScalarMappable(
+              norm=colors.Normalize(vmin=gridCC[1][0]*yscale,
+                                    vmax=gridCC[1][-1]*yscale,clip=False),
+              cmap=cm.viridis)
             label = clabel or 'Z1' 
           else:
             idx[0] = l
             im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
                           *args, color=color)
-            mappable = cm.ScalarMappable(norm=colors.Normalize(vmin=gridCC[0][0]*xscale,vmax=gridCC[0][-1]*xscale,clip=False), cmap=cm.viridis)
+            mappable = cm.ScalarMappable(
+              norm=colors.Normalize(vmin=gridCC[0][0]*xscale,
+                                    vmax=gridCC[0][-1]*xscale,clip=False),
+              cmap=cm.viridis)
             label = clabel or 'Z0'
           #end
         #end
@@ -389,8 +395,17 @@ def plot(data, args=(),
         elif vmin is not None:
           extend = 'min'
         #end
+
+        g0 = grid[0]*xscale
+        g1 = grid[1]*yscale
+        z = values[..., comp]
+        if len(g0.shape) > 1:
+          g0 = g0.transpose()
+          g1 = g1.transpose()
+        #end
+        
         if logz:
-          tmp = np.array(values[..., comp])
+          tmp = np.array(z)
           if vmin is not None or vmax is not None:
             for i in range(tmp.shape[0]):
               for j in range(tmp.shape[1]):
@@ -404,31 +419,41 @@ def plot(data, args=(),
             #end
           #end
           norm = colors.LogNorm(vmin=vmin, vmax=vmax)
-          im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
+          im = cax.pcolormesh(g0, g1, 
                               tmp.transpose(),
                               norm=norm,# vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
-                              linewidth=0.1,
+                              linewidth=0.1, shading='auto',
                               *args)
         elif transpose:
-          im = cax.pcolormesh(grid[1]*xscale, grid[0]*yscale,
-                              values[..., comp],
+          if len(g0.shape) == 1:
+            if bool(len(g0) == z.shape[1]) ^ bool(len(g1) == z.shape[0]):
+              if len(g0) > z.shape[1]:
+                g0 = 0.5*(g0[1:] + g0[:-1])
+              else:
+                g1 = 0.5*(g1[1:] + g1[:-1])
+            #end
+          #end 
+          im = cax.pcolormesh(g0, g1,
+                              z,
                               vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
-                              linewidth=0.1, #shading='gouraud',
+                              linewidth=0.1, shading='auto',
                               *args) 
         else:
-          g0 = grid[0]*xscale
-          g1 = grid[1]*yscale
-          if len(g0.shape) > 1:
-            g0 = g0.transpose()
-            g1 = g1.transpose()
-          #end
+          if len(g0.shape) == 1:
+            if bool(len(g0) == z.shape[0]) ^ bool(len(g1) == z.shape[1]):
+              if len(g0) > z.shape[0]:
+                g0 = 0.5*(g0[1:] + g0[:-1])
+              else:
+                g1 = 0.5*(g1[1:] + g1[:-1])
+            #end
+          #end 
           im = cax.pcolormesh(g0, g1,
-                              values[..., comp].transpose(),
+                              z.transpose(),
                               vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
-                              linewidth=0.1,
+                              linewidth=0.1, shading='auto',
                               *args)
         #end
         _colorbar(im, fig, cax, extend=extend, label=clabel)
