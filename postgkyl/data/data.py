@@ -154,19 +154,35 @@ class Data(object):
   #end
 
   def _load_gkyl(self, file_name) -> tuple:
-    dti8 = np.dtype('i8')
+    dti8 = np.dtype('i8')    
     dtf = np.dtype('f8')
     doffset = 8
-
     offset = 0
+    file_type = 0
 
+    magic = np.fromfile(file_name, dtype=np.dtype('b'), count=5)
+    if np.array_equal(magic, [103, 107, 121, 108,  48]):
+      offset += 5
+
+      version = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+      offset += 8
+
+      file_type = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+      offset += 8
+
+      meta_size = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+      offset += 8
+
+      # read meta
+      offset += meta_size
+    #end
+    
     # read real-type
-    realType = np.fromfile(file_name, dtype=dti8, count=1)[0]
+    realType = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
     if realType == 1:
       dtf = np.dtype('f4')
       doffset = 4
     #end
-
     offset += 8
             
     # read grid dimensions
@@ -196,7 +212,7 @@ class Data(object):
     offset += 8
 
     adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-    gshape = np.ones(num_dims+1, dtype=np.dtype('i8'))
+    gshape = np.ones(num_dims+1, dtype=dti8)
     for d in range(num_dims):
       gshape[d] = cells[d]
     #end
