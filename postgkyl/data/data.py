@@ -158,7 +158,8 @@ class Data(object):
     dtf = np.dtype('f8')
     doffset = 8
     offset = 0
-    file_type = 0
+    file_type = 1
+    version = 0
 
     magic = np.fromfile(file_name, dtype=np.dtype('b'), count=5)
     if np.array_equal(magic, [103, 107, 121, 108,  48]):
@@ -184,41 +185,62 @@ class Data(object):
       doffset = 4
     #end
     offset += 8
-            
-    # read grid dimensions
-    num_dims = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-    offset += 8
 
-    # read grid shape
-    cells = np.fromfile(file_name, dtype=dti8, count=num_dims, offset=offset)
-    offset += num_dims*8
+    if file_type == 1 or version == 0:
+      # read grid dimensions
+      num_dims = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+      offset += 8
 
-    # read lower/upper
-    lower = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-    offset += num_dims*doffset
+      # read grid shape
+      cells = np.fromfile(file_name, dtype=dti8, count=num_dims, offset=offset)
+      offset += num_dims*8
 
-    upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-    offset += num_dims*doffset
+      # read lower/upper
+      lower = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
+      offset += num_dims*doffset
+      
+      upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
+      offset += num_dims*doffset
 
-    # read array elemEz (the div by doffset is as elemSz includes
-    # sizeof(real_type) = doffset)
-    elemSzRaw = int(
-      np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-    elemSz = elemSzRaw/doffset
-    offset += 8
+      # read array elemEz (the div by doffset is as elemSz includes
+      # sizeof(real_type) = doffset)
+      elemSzRaw = int(
+        np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+      elemSz = elemSzRaw/doffset
+      offset += 8
 
-    # read array size
-    asize = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-    offset += 8
+      # read array size
+      asize = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+      offset += 8
 
-    adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-    gshape = np.ones(num_dims+1, dtype=dti8)
-    for d in range(num_dims):
-      gshape[d] = cells[d]
+      adata = np.fromfile(file_name, dtype=dtf, offset=offset)
+      gshape = np.ones(num_dims+1, dtype=dti8)
+      for d in range(num_dims):
+        gshape[d] = cells[d]
+      #end
+      numComp = int(elemSz)
+      gshape[-1] = numComp
+      return num_dims, cells, lower, upper, adata.reshape(gshape)
+    elif file_type == 2:
+      elemSzRaw = int(
+        np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+      numComp = int(elemSzRaw/doffset)
+      offset += 8
+
+      cells = int(np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+      offset += 8
+
+      time = np.fromfile(file_name, dtype=dtf, count=cells, offset=offset)
+      offset += 8*cells
+
+      adata = np.fromfile(file_name, dtype=dtf, offset=offset)
+      gshape = np.ones(2, dtype=dti8)
+      gshape[0] = cells
+      gshape[1] = numComp
+      return 1, np.array([cells]), np.array([time[0]]), np.array([time[-1]]), adata.reshape(gshape)
+    else:
+      raise TypeError('This g0 format is not presently supported')
     #end
-    numComp = elemSz
-    gshape[-1] = int(numComp)
-    return num_dims, cells, lower, upper, adata.reshape(gshape)
   #end
 
   def _loadFrame(self, axes=(None, None, None, None, None, None),
