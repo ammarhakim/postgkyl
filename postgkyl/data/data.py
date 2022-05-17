@@ -4,6 +4,7 @@ import numpy as np
 import shutil
 from typing import Union
 
+from postgkyl.data.load_gkyl import load_gkyl
 from postgkyl.utils import idxParser
 
 
@@ -153,95 +154,97 @@ class Data(object):
     #end
   #end
 
-  def _load_gkyl(self, file_name) -> tuple:
-    dti8 = np.dtype('i8')    
-    dtf = np.dtype('f8')
-    doffset = 8
-    offset = 0
-    file_type = 1
-    version = 0
+  # def _load_gkyl(self, file_name) -> tuple:
+  #   dti8 = np.dtype('i8')    
+  #   dtf = np.dtype('f8')
+  #   doffset = 8
+  #   offset = 0
+  #   file_type = 1
+  #   version = 0
 
-    magic = np.fromfile(file_name, dtype=np.dtype('b'), count=5)
-    if np.array_equal(magic, [103, 107, 121, 108,  48]):
-      offset += 5
+  #   magic = np.fromfile(file_name, dtype=np.dtype('b'), count=5)
+  #   if np.array_equal(magic, [103, 107, 121, 108,  48]):
+  #     offset += 5
 
-      version = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-      offset += 8
+  #     version = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #     offset += 8
 
-      file_type = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-      offset += 8
+  #     file_type = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #     offset += 8
 
-      meta_size = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-      offset += 8
+  #     meta_size = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #     offset += 8
 
-      # read meta
-      offset += meta_size
-    #end
+  #     # read meta
+  #     offset += meta_size
+  #   #end
     
-    # read real-type
-    realType = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-    if realType == 1:
-      dtf = np.dtype('f4')
-      doffset = 4
-    #end
-    offset += 8
+  #   # read real-type
+  #   realType = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #   if realType == 1:
+  #     dtf = np.dtype('f4')
+  #     doffset = 4
+  #   #end
+  #   offset += 8
 
-    if file_type == 1 or version == 0:
-      # read grid dimensions
-      num_dims = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-      offset += 8
+  #   if file_type == 1 or version == 0:
+  #     # read grid dimensions
+  #     num_dims = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #     offset += 8
 
-      # read grid shape
-      cells = np.fromfile(file_name, dtype=dti8, count=num_dims, offset=offset)
-      offset += num_dims*8
+  #     # read grid shape
+  #     cells = np.fromfile(file_name, dtype=dti8, count=num_dims, offset=offset)
+  #     offset += num_dims*8
 
-      # read lower/upper
-      lower = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-      offset += num_dims*doffset
+  #     # read lower/upper
+  #     lower = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
+  #     offset += num_dims*doffset
       
-      upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-      offset += num_dims*doffset
+  #     upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
+  #     offset += num_dims*doffset
 
-      # read array elemEz (the div by doffset is as elemSz includes
-      # sizeof(real_type) = doffset)
-      elemSzRaw = int(
-        np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-      elemSz = elemSzRaw/doffset
-      offset += 8
+  #     # read array elemEz (the div by doffset is as elemSz includes
+  #     # sizeof(real_type) = doffset)
+  #     elemSzRaw = int(
+  #       np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+  #     elemSz = elemSzRaw/doffset
+  #     offset += 8
 
-      # read array size
-      asize = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-      offset += 8
+  #     # read array size
+  #     asize = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
+  #     offset += 8
 
-      adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-      gshape = np.ones(num_dims+1, dtype=dti8)
-      for d in range(num_dims):
-        gshape[d] = cells[d]
-      #end
-      numComp = int(elemSz)
-      gshape[-1] = numComp
-      return num_dims, cells, lower, upper, adata.reshape(gshape)
-    elif file_type == 2:
-      elemSzRaw = int(
-        np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-      numComp = int(elemSzRaw/doffset)
-      offset += 8
+  #     adata = np.fromfile(file_name, dtype=dtf, offset=offset)
+  #     gshape = np.ones(num_dims+1, dtype=dti8)
+  #     for d in range(num_dims):
+  #       gshape[d] = cells[d]
+  #     #end
+  #     numComp = int(elemSz)
+  #     gshape[-1] = numComp
+  #     return num_dims, cells, lower, upper, adata.reshape(gshape)
+  #   elif file_type == 2:
+  #     elemSzRaw = int(
+  #       np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+  #     numComp = int(elemSzRaw/doffset)
+  #     offset += 8
 
-      cells = int(np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-      offset += 8
+  #     cells = int(np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
+  #     offset += 8
 
-      time = np.fromfile(file_name, dtype=dtf, count=cells, offset=offset)
-      offset += 8*cells
+  #     time = np.fromfile(file_name, dtype=dtf, count=cells, offset=offset)
+  #     offset += 8*cells
 
-      adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-      gshape = np.ones(2, dtype=dti8)
-      gshape[0] = cells
-      gshape[1] = numComp
-      return 1, np.array([cells]), np.array([time[0]]), np.array([time[-1]]), adata.reshape(gshape)
-    else:
-      raise TypeError('This g0 format is not presently supported')
-    #end
-  #end
+  #     adata = np.fromfile(file_name, dtype=dtf, offset=offset)
+  #     gshape = np.ones(2, dtype=dti8)
+  #     gshape[0] = cells
+  #     gshape[1] = numComp
+  #     print(cells)
+  #     print(len(adata))
+  #     return 1, np.array([cells]), np.array([time[0]]), np.array([time[-1]]), adata.reshape(gshape)
+  #   else:
+  #     raise TypeError('This g0 format is not presently supported')
+  #   #end
+  # #end
 
   def _loadFrame(self, axes=(None, None, None, None, None, None),
                  comp=None):
@@ -376,7 +379,7 @@ class Data(object):
       #end
       fh.close()
     elif extension == 'gkyl':
-      num_dims, cells, lower, upper, values = self._load_gkyl(self.file_name)
+      num_dims, cells, lower, upper, values = load_gkyl(self.file_name)
       self._values = values
     else:
       raise NameError(
@@ -387,7 +390,7 @@ class Data(object):
       extension = self.mapc2p_name.split('.')[-1]
       self._gridType = 'c2p'
       if extension == 'gkyl':
-        num_dims, _, _, _, grid = self._load_gkyl(self.mapc2p_name)
+        num_dims, _, _, _, grid = load_gkyl(self.mapc2p_name)
         num_comps = grid.shape[-1]
         num_coeff = num_comps/num_dims
         self._grid = [grid[..., int(d*num_coeff):int((d+1)*num_coeff)]

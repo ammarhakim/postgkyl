@@ -12,6 +12,8 @@ from .select import select
 
 from . import recovData
 
+from .load_gkyl import load_gkyl
+
 
 # legacy calls
 from .data import Data as GData
