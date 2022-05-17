@@ -32,13 +32,31 @@ def subtract(inGrid, inValues):
 
 def mult(inGrid, inValues):
   outGrid = _getGrid(inGrid[0], inGrid[1])
-  outValues = inValues[1] * inValues[0]
+  a, b = inValues[1], inValues[0]
+  if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
+    outValues = a*b
+  else:
+    # When multiplying phase-space and conf-space field, the
+    # dimensions do not match. NumPy can do a lot of things with
+    # broadcasting
+    # (https://numpy.org/doc/stable/user/basics.broadcasting.html) but
+    # it requires the trainling indices to match, which is opposite to
+    # what we have (the first indices are matching). Therefore, one can
+    # transpose, multiply, and transpose back; I think. -- Petr Cagas
+    outValues = (a.transpose()*b.transpose()).transpose()
+  #end
   return [outGrid], [outValues]
 #end
 
 def divide(inGrid, inValues):
   outGrid = _getGrid(inGrid[0], inGrid[1])
-  outValues = inValues[1] / inValues[0]
+  a, b = inValues[1], inValues[0]
+  if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
+    outValues = a/b
+  else:
+    # See the 'mult' comment above
+    outValues = (a.transpose()/b.transpose()).transpose()
+  #end
   return [outGrid], [outValues]
 #end
 
