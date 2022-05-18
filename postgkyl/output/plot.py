@@ -141,7 +141,7 @@ def plot(data, args=(),
   if xscale != 1.0:
     axLabel[0] = axLabel[0] + r' $\times$ {:.3e}'.format(xscale)
   #end
-  if numDims == 2 and yscale != 1.0:
+  if yscale != 1.0:
     axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
   #end
 
@@ -280,7 +280,7 @@ def plot(data, args=(),
       #end
       gridCC = _gridNodalToCellCentered(grid, cells)
       im = cax.plot(gridCC[0]*xscale,
-                    values[..., comp],
+                    values[..., comp]*yscale,
                     *args, label=label,
                     color=cl, markersize=markersize)
       xmin = min(gridCC[0]*xscale)
