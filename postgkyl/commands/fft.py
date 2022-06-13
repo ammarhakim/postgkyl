@@ -23,12 +23,12 @@ def fft(ctx, **kwargs):
     vlog(ctx, 'Starting FFT')
     pushChain(ctx, 'fft', **kwargs)
     data = ctx.obj['data']
-    
+
     for dat in data.iterator(kwargs['use']):
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
                        label=kwargs['label'],
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = diag.fft(dat, kwargs['psd'], kwargs['iso'])
             out.push(grid, values)

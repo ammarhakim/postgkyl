@@ -97,7 +97,7 @@ def val2coord(ctx, **kwargs):
 
             out = Data(tag=outTag,
                        label=kwargs['label'],
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push([x], y)
             out.color = 'C0'

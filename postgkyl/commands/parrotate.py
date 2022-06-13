@@ -36,7 +36,7 @@ def parrotate(ctx, **kwargs):
         # Create new GData structure with appropriate outtag and labels to store output.
         out = Data(tag=kwargs['tag'],
                    stack=ctx.obj['stack'],
-                   compgrid=ctx.obj['compgrid'],
+                   comp_grid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=a.meta)
         out.push(outrot, grid)

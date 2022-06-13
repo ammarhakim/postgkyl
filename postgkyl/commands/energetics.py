@@ -35,7 +35,7 @@ def energetics(ctx, **kwargs):
         grid = em.getGrid()
         outEnergetics = np.zeros(em.getValues()[...,0:7].shape)
         out = Data(tag=kwargs['tag'],
-                   compgrid=ctx.obj['compgrid'],
+                   comp_grid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=em.meta)
         grid, outEnergetics = diag.energetics(elc, ion, em)

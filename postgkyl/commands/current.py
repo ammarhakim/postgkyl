@@ -29,7 +29,7 @@ def current(ctx, **kwargs):
         grid, outcurrent = diag.accumulate_current(dat, kwargs['qbym'])
         dat.deactivate()
         out = Data(tag=kwargs['tag'],
-                   compgrid=ctx.obj['compgrid'],
+                   comp_grid=ctx.obj['compgrid'],
                    label=kwargs['label'],
                    meta=dat.meta)
         out.push(grid, outcurrent)

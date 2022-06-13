@@ -65,7 +65,7 @@ def differentiate(ctx, **kwargs):
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
                        label=kwargs['label'],
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = dg.differentiate(direction=kwargs['direction'])
             out.push(grid, values)

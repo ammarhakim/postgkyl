@@ -42,7 +42,7 @@ def select(ctx, **kwargs):
         if kwargs['tag']:
             out = Data(tag=kwargs['tag'],
                        label=kwargs['label'],
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        meta=dat.meta)
             grid, values = postgkyl.data.select(dat,
                                                 z0=kwargs['z0'],
