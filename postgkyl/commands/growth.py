@@ -11,8 +11,8 @@ from postgkyl.diagnostics.growth import fitGrowth, exp2
 @click.command()
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('-g', '--guess', 
-              help='Specify initial guess')
+@click.option('-g', '--guess',
+              help='Specify comma-separated initial guess')
 @click.option('-p', '--plot', is_flag=True,
               help='Plot the data and fit')
 @click.option('--minn', default=100, type=click.INT,
@@ -38,11 +38,15 @@ def growth(ctx, **kwargs):
         if numDims > 1:
             click.fail(click.style("'growth' is available only for 1D data (used on {:d}D data)".format(numDims), fg='red'))
         #end
-        
+        p0 = kwargs['guess']
+        if kwargs['guess']:
+          guess = kwargs['guess'].split(',')
+          p0 = (float(guess[0]), float(guess[1]))
+        #end
         bestParams, bestR2, bestN = fitGrowth(time[0], values[..., 0],
                                               minN=kwargs['minn'],
                                               maxN=kwargs['maxn'],
-                                              p0=kwargs['guess'])
+                                              p0=p0)
 
         if kwargs['plot'] is True:
             vlog(ctx, 'growth: Plotting data and fit')
