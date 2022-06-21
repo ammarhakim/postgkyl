@@ -395,9 +395,9 @@ def plot(data, args=(),
         elif vmin is not None:
           extend = 'min'
         #end
-
-        g0 = grid[0]*xscale
-        g1 = grid[1]*yscale
+        gridCC = _gridNodalToCellCentered(grid, cells)
+        g0 = gridCC[0]*xscale
+        g1 = gridCC[1]*yscale
         z = values[..., comp]
         if len(g0.shape) > 1:
           g0 = g0.transpose()
@@ -434,7 +434,7 @@ def plot(data, args=(),
                 g1 = 0.5*(g1[1:] + g1[:-1])
             #end
           #end 
-          im = cax.pcolormesh(g0, g1,
+          im = cax.pcolormesh(g1, g0,
                               z,
                               vmin=vmin, vmax=vmax,
                               edgecolors=edgecolors,
