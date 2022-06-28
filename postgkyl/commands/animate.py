@@ -202,8 +202,10 @@ def animate(ctx, **kwargs):
             figs.append(plt.figure(figsize=figsize))
         #end
         if not kwargs['saveframes']:
-            anims.append(FuncAnimation(figs[-1], update, int(np.nanmin((minSize, len(dataList)))),
-                                       fargs=(dataList, figs[-1], offsets, kwargs),
+            anims.append(FuncAnimation(figs[-1], update,
+                                       int(np.nanmin((minSize, len(dataList)))),
+                                       fargs=(dataList, figs[-1],
+                                              offsets, kwargs),
                                        interval=kwargs['interval'], blit=False))
 
             if tag is not None:
@@ -221,9 +223,10 @@ def animate(ctx, **kwargs):
         else:
             for i in range(int(np.nanmin((minSize, len(dataList))))):
                 update(i, dataList, figs[-1], offsets, kwargs)
-                plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i), dpi=kwargs['dpi'])
+                plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
+                            dpi=kwargs['dpi'])
             #end
-            kwargs['show'] = False #do not show in this case
+            kwargs['show'] = False # do not show in this case
         #end
     #end
     

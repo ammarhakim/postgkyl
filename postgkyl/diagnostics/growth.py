@@ -24,24 +24,24 @@ def exp2(x, a, b):
     """
     return a*np.exp(2*b*x)
 
-def fitGrowth(x, y, function=exp2, minN=100, maxN=None, p0=(1, 1)):
+def fitGrowth(x, y, function=exp2, minN=None, p0=(1, 1)):
     """Fit function to continuously increasing region of data
 
     Parameters:
     x -- independet variable
     y -- dependent variable
-    minN -- minimal number of fitted points (default: 100)
-    maxN -- maximal number of fitted points (default: full length)
+    minN -- minimal number of fitted points (default: 10%)
     function -- function to fit (default: exp2)
-    p0 -- initial guess (default: 1, 0.1)
+    p0 -- initial guess (default: 1, 1)
 
     Notes:
     The best is determined based on the coeficient of determination,
       R^2 https://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     bestR2 = 0
-    if maxN is None:
-        maxN = len(x)
+    if minN is None:
+      minN = int(len(x)/10)
+    maxN = len(x)
     bestParams = p0
 
     max_x = x[-1]
