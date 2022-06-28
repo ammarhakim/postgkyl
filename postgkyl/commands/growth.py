@@ -53,10 +53,12 @@ def growth(ctx, **kwargs):
             plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
                       + "/../output/postgkyl.mplstyle")
             fig, ax = plt.subplots()
-            ax.plot(time[0], values[..., 0], '.')
-            ax.set_autoscale_on(False)
-            ax.plot(time[0], exp2(time[0], *bestParams))
+            t = 0.5*(time[0][:-1] + time[0][1:])
+            ax.plot(t, np.log(values[..., 0]))
+            ax.plot(t, 2*t*bestParams[1] + np.log(bestParams[0]))
             ax.grid(True)
+            ax.set_xlim(t[0], t[-1])
+            #ax.set_autoscale_on(False)
             plt.show()
         #end
 
