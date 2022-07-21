@@ -251,6 +251,18 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3 for nodal Serendipity in 2D".format(order))
 
+    elif modal and basisType == 'gkhybrid':
+      if order == 1:
+        functionVector = Matrix([[0.5],[0.8660254037844386*x],[0.8660254037844386*y],[1.5*x*y],[1.677050983124842*(y**2-0.3333333333333333)],[2.904737509655563*(x*y**2-0.3333333333333333*x)]]) 
+        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+        for i in range(0, interpList.shape[0]):
+          for j in range(0, interpList.shape[0]):
+            for k in range(0, functionVector.shape[0]):
+              interpMatrix[j+i*interpList.shape[0], k] = functionVector[k].subs(x, interpList[j]).subs(y, interpList[i])
+
+      else:
+        raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
+                    
     else:
       raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))                 
   elif dim == 3:
@@ -374,6 +386,19 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <4".format(order))
       
+    elif modal and basisType == 'gkhybrid':
+      if order == 1:
+        functionVector = Matrix([[0.3535533905932737],[0.6123724356957944*x],[0.6123724356957944*y],[0.6123724356957944*z],[1.060660171779821*x*y],[1.060660171779821*x*z],[1.060660171779821*y*z],[1.837117307087383*x*y*z],[1.185854122563142*(y**2-0.3333333333333333)],[2.053959590644372*(x*y**2-0.3333333333333333*x)],[2.053959590644372*(y**2*z-0.3333333333333333*z)],[3.557562367689425*(x*y**2*z-0.3333333333333333*x*z)]]) 
+        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+        for i in range(0, interpList.shape[0]):
+          for j in range(0, interpList.shape[0]):
+            for k in range(0, interpList.shape[0]):
+              for l in range(0, functionVector.shape[0]):
+                interpMatrix[k+j*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0], l] = functionVector[l].subs(x, interpList[k]).subs(y, interpList[j]).subs(z, interpList[i]) 
+
+      else:
+        raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
+
     elif modal == False and basisType == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(x*y)/8.0 - y/8.0 - z/8.0 - x/8.0 + (x*z)/8.0 + (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [x/8.0 - y/8.0 - z/8.0 - (x*y)/8.0 - (x*z)/8.0 + (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [y/8.0 - x/8.0 - z/8.0 - (x*y)/8.0 + (x*z)/8.0 - (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [x/8.0 + y/8.0 - z/8.0 + (x*y)/8.0 - (x*z)/8.0 - (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [z/8.0 - y/8.0 - x/8.0 + (x*y)/8.0 - (x*z)/8.0 - (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [x/8.0 - y/8.0 + z/8.0 - (x*y)/8.0 + (x*z)/8.0 - (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [y/8.0 - x/8.0 + z/8.0 - (x*y)/8.0 - (x*z)/8.0 + (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [x/8.0 + y/8.0 + z/8.0 + (x*y)/8.0 + (x*z)/8.0 + (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0]]) 
@@ -518,6 +543,21 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
                   interpMatrix[l+k*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], m] = functionVector[m].subs(x, interpList[l]).subs(y, interpList[k]).subs(z, interpList[j]).subs(w, interpList[i]) 
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3".format(order))
+
+    elif modal and basisType == 'gkhybrid':
+      if order == 1:
+        functionVector = Matrix([[0.25],[0.4330127018922193*x],[0.4330127018922193*y],[0.4330127018922193*z],[0.4330127018922193*w],[0.75*x*y],[0.75*x*z],[0.75*y*z],[0.75*w*x],[0.75*w*y],[0.75*w*z],[1.299038105676658*x*y*z],[1.299038105676658*w*x*y],[1.299038105676658*w*x*z],[1.299038105676658*w*y*z],[2.25*w*x*y*z],[0.8385254915624212*(z**2-0.3333333333333333)],[1.452368754827781*(x*z**2-0.3333333333333333*x)],[1.452368754827781*(y*z**2-0.3333333333333333*y)],[1.452368754827781*(w*z**2-0.3333333333333333*w)],[2.515576474687264*(x*y*z**2-0.3333333333333333*x*y)],[2.515576474687264*(w*x*z**2-0.3333333333333333*w*x)],[2.515576474687264*(w*y*z**2-0.3333333333333333*w*y)],[4.357106264483344*(w*x*y*z**2-0.3333333333333333*w*x*y)]])
+        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+        for i in range(0, interpList.shape[0]):
+          for j in range(0, interpList.shape[0]):
+            for k in range(0, interpList.shape[0]):
+              for l in range(0, interpList.shape[0]):
+                for m in range(0, functionVector.shape[0]):
+                  interpMatrix[l+k*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], m] = functionVector[m].subs(x, interpList[l]).subs(y, interpList[k]).subs(z, interpList[j]).subs(w, interpList[i]) 
+
+      else:
+        raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
+
     elif modal == False and basisType == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(w*x)/16.0-x/16.0-y/16.0-z/16.0-w/16.0+(w*y)/16.0+(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0-y/16.0-z/16.0-(w*x)/16.0+(w*y)/16.0+(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [y/16.0-x/16.0-w/16.0-z/16.0+(w*x)/16.0-(w*y)/16.0+(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0+y/16.0-z/16.0-(w*x)/16.0-(w*y)/16.0+(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [z/16.0-x/16.0-y/16.0-w/16.0+(w*x)/16.0+(w*y)/16.0-(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0-y/16.0+z/16.0-(w*x)/16.0+(w*y)/16.0-(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [y/16.0-x/16.0-w/16.0+z/16.0+(w*x)/16.0-(w*y)/16.0-(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0+y/16.0+z/16.0-(w*x)/16.0-(w*y)/16.0-(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0-y/16.0-z/16.0-(w*x)/16.0-(w*y)/16.0-(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0-y/16.0-z/16.0+(w*x)/16.0-(w*y)/16.0-(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0+y/16.0-z/16.0-(w*x)/16.0+(w*y)/16.0-(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0+y/16.0-z/16.0+(w*x)/16.0+(w*y)/16.0-(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0-y/16.0+z/16.0-(w*x)/16.0-(w*y)/16.0+(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0-y/16.0+z/16.0+(w*x)/16.0-(w*y)/16.0+(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0+y/16.0+z/16.0-(w*x)/16.0+(w*y)/16.0+(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0+y/16.0+z/16.0+(w*x)/16.0+(w*y)/16.0+(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0]]) 
@@ -654,6 +694,21 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
                     interpMatrix[m+l*interpList.shape[0]+k*interpList.shape[0]*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], n] = functionVector[n].subs(x, interpList[m]).subs(y, interpList[l]).subs(z, interpList[k]).subs(w, interpList[j]).subs(v, interpList[i])  
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
+
+    elif modal and basisType == 'gkhybrid':
+      if order == 1:
+        functionVector = Matrix([[0.1767766952966368],[0.3061862178478971*x],[0.3061862178478971*y],[0.3061862178478971*z],[0.3061862178478971*w],[0.3061862178478971*v],[0.5303300858899105*x*y],[0.5303300858899105*x*z],[0.5303300858899105*y*z],[0.5303300858899105*w*x],[0.5303300858899105*w*y],[0.5303300858899105*w*z],[0.5303300858899105*v*x],[0.5303300858899105*v*y],[0.5303300858899105*v*z],[0.5303300858899105*v*w],[0.9185586535436913*x*y*z],[0.9185586535436913*w*x*y],[0.9185586535436913*w*x*z],[0.9185586535436913*w*y*z],[0.9185586535436913*v*x*y],[0.9185586535436913*v*x*z],[0.9185586535436913*v*y*z],[0.9185586535436913*v*w*x],[0.9185586535436913*v*w*y],[0.9185586535436913*v*w*z],[1.590990257669731*w*x*y*z],[1.590990257669731*v*x*y*z],[1.590990257669731*v*w*x*y],[1.590990257669731*v*w*x*z],[1.590990257669731*v*w*y*z],[2.755675960631073*v*w*x*y*z],[0.592927061281571*(w**2-0.3333333333333333)],[1.026979795322186*(w**2*x-0.3333333333333333*x)],[1.026979795322186*(w**2*y-0.3333333333333333*y)],[1.026979795322186*(w**2*z-0.3333333333333333*z)],[1.026979795322186*(v*w**2-0.3333333333333333*v)],[1.778781183844713*(w**2*x*y-0.3333333333333333*x*y)],[1.778781183844713*(w**2*x*z-0.3333333333333333*x*z)],[1.778781183844713*(w**2*y*z-0.3333333333333333*y*z)],[1.778781183844713*(v*w**2*x-0.3333333333333333*v*x)],[1.778781183844713*(v*w**2*y-0.3333333333333333*v*y)],[1.778781183844713*(v*w**2*z-0.3333333333333333*v*z)],[3.080939385966558*(w**2*x*y*z-0.3333333333333333*x*y*z)],[3.080939385966558*(v*w**2*x*y-0.3333333333333333*v*x*y)],[3.080939385966558*(v*w**2*x*z-0.3333333333333333*v*x*z)],[3.080939385966558*(v*w**2*y*z-0.3333333333333333*v*y*z)],[5.336343551534138*(v*w**2*x*y*z-0.3333333333333333*v*x*y*z)]])
+        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
+        for i in range(0, interpList.shape[0]):
+          for j in range(0, interpList.shape[0]):
+            for k in range(0, interpList.shape[0]):
+              for l in range(0, interpList.shape[0]):
+                for m in range(0, interpList.shape[0]):
+                  for n in range(0, functionVector.shape[0]):
+                    interpMatrix[m+l*interpList.shape[0]+k*interpList.shape[0]*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], n] = functionVector[n].subs(x, interpList[m]).subs(y, interpList[l]).subs(z, interpList[k]).subs(w, interpList[j]).subs(v, interpList[i])
+
+      else:
+        raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
     elif modal == False and basisType == 'serendipity':
       if order == 1:

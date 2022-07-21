@@ -30,6 +30,7 @@ numNodesTensor = np.array([[ 2,   3,    4,     5],
                            [16,  81,  256,   625],
                            [32, 343, 1024,  3125],
                            [64, 729, 4096, 15625]])
+numNodesGkHybrid = np.array([1, 6, 12, 24, 48])
 
 def _get_basis_p(num_dim, num_comp):
   basis, poly_order = None, None
@@ -53,12 +54,14 @@ def _getNumNodes(dim, polyOrder, basisType):
     numNodes = numNodesMaximal[dim-1, polyOrder-1]
   elif basisType.lower() == 'tensor':
     numNodes = numNodesTensor[dim-1, polyOrder-1]
+  elif basisType.lower() == 'gkhybrid':
+    numNodes = numNodesGkHybrid[dim-1]
   else:
     raise NameError(
       "GInterp: Basis '{:s}' is not supported!\n"
       "Supported basis are currently 'ns' (Nodal Serendipity),"
       " 'ms' (Modal Serendipity), 'mt' (Modal Tensor product),"
-      " and 'mo' (Modal maximal Order)".
+      " 'mo' (Modal maximal Order) and 'gkhybrid' (Modal GkHybrid)".
       format(basisType))
   #end
   return numNodes
