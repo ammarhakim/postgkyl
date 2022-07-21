@@ -20,6 +20,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
   interpListND = list()
   for d in range(dim):
     interp_true = interp
+    # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
     if ((dim==2 or dim==3) and d==1) or (dim==4 and d==2) or (dim==5 and d==3):
       interp_true = interp+1
 

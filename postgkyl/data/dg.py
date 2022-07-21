@@ -300,7 +300,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
   numDims = int(len(numCells))
   numInterp = np.array([nInterpIn]*numDims)
   if basisType == "gkhybrid":
-    # 1x1v, 1x2v, 2x2v, 3x2v cases
+    # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
     vpardir = 1 if (numDims==2 or numDims==3) else (2 if numDims==4  else (3 if numDims==5 else 99))
     numInterp[vpardir] = nInterpIn+1
   #end
@@ -597,7 +597,7 @@ class GInterpModal(GInterp):
       #end
     else:
       if self.basisType == "gkhybrid":
-        # 1x1v, 1x2v, 2x2v, 3x2v cases
+        # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
         vpardir = 1 if (self.numDims==2 or self.numDims==3) else (2 if self.numDims==4  else (3 if self.numDims==5 else 99))
         nInterp = [self.numInterp]*self.numDims
         nInterp[vpardir] = self.numInterp+1
