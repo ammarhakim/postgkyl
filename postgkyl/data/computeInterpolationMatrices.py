@@ -16,6 +16,24 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
     #end
   #end
 
+  # The following is for gkhybrid only.
+  interpListND = list()
+  for d in range(dim):
+    interp_true = interp
+    if ((dim==2 or dim==3) and d==1) or (dim==4 and d==2) or (dim==5 and d==3):
+      interp_true = interp+1
+
+    interpListND.append(numpy.zeros(interp_true))
+    for i in range(interp_true):
+      if c2p:
+        interpListND[d][i] = -1.0 + float(i)*2.0/(interp_true-1)
+      else:
+        interpListND[d][i] = -1.0*(interp_true-1)/interp_true + float(i)*2.0/interp_true
+      #end
+    #end
+  #end
+
+
   if dim == 1:
     x = Symbol('x')
     if modal:
@@ -254,11 +272,11 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
     elif modal and basisType == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.5],[0.8660254037844386*x],[0.8660254037844386*y],[1.5*x*y],[1.677050983124842*(y**2-0.3333333333333333)],[2.904737509655563*(x*y**2-0.3333333333333333*x)]]) 
-        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
-        for i in range(0, interpList.shape[0]):
-          for j in range(0, interpList.shape[0]):
+        interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0], functionVector.shape[0]))
+        for i in range(0, interpListND[0].shape[0]):
+          for j in range(0, interpListND[1].shape[0]):
             for k in range(0, functionVector.shape[0]):
-              interpMatrix[j+i*interpList.shape[0], k] = functionVector[k].subs(x, interpList[j]).subs(y, interpList[i])
+              interpMatrix[j+i*interpListND[1].shape[0], k] = functionVector[k].subs(x, interpListND[1][j]).subs(y, interpListND[0][i])
 
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
@@ -389,12 +407,12 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
     elif modal and basisType == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.3535533905932737],[0.6123724356957944*x],[0.6123724356957944*y],[0.6123724356957944*z],[1.060660171779821*x*y],[1.060660171779821*x*z],[1.060660171779821*y*z],[1.837117307087383*x*y*z],[1.185854122563142*(y**2-0.3333333333333333)],[2.053959590644372*(x*y**2-0.3333333333333333*x)],[2.053959590644372*(y**2*z-0.3333333333333333*z)],[3.557562367689425*(x*y**2*z-0.3333333333333333*x*z)]]) 
-        interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
-        for i in range(0, interpList.shape[0]):
-          for j in range(0, interpList.shape[0]):
-            for k in range(0, interpList.shape[0]):
+        interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0], functionVector.shape[0]))
+        for i in range(0, interpListND[0].shape[0]):
+          for j in range(0, interpListND[1].shape[0]):
+            for k in range(0, interpListND[2].shape[0]):
               for l in range(0, functionVector.shape[0]):
-                interpMatrix[k+j*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0], l] = functionVector[l].subs(x, interpList[k]).subs(y, interpList[j]).subs(z, interpList[i]) 
+                interpMatrix[k+j*interpListND[2].shape[0]+i*interpListND[1].shape[0]*interpListND[2].shape[0], l] = functionVector[l].subs(x, interpListND[0][k]).subs(y, interpListND[1][j]).subs(z, interpListND[2][i]) 
 
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
