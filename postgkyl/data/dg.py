@@ -285,12 +285,6 @@ def _make1Dgrids(nInterp, Xc, numDims, gridType=None):
   return gridOut
 #end
 
-def _decompose(n, dim, numInterp):
-  """Decompose n to the number decription with basis numInterp"""
-  arr = np.full(dim, n, dtype=np.int) / (numInterp**np.arange(dim))
-  return np.mod(arr, numInterp)
-#end
-
 def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
   shift = 0
 
@@ -316,7 +310,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
     # https://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
     temp = np.tensordot(cMat[n, :], qIn, axes=1)
     # decompose n to i,j,k,... indices based on the number of dimensions
-    startIdx = _decompose(n, numDims, numInterp)
+    startIdx = np.unravel_index(n, numInterp, order='F')
     # define multi-D qOut slices
     if c2p:
       idxs = [slice(int(startIdx[i]), int(numCells[i]*(numInterp[i]-1)+startIdx[i]), numInterp[i]-1)
