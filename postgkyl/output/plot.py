@@ -36,7 +36,8 @@ def _gridNodalToCellCentered(grid, cells):
         raise ValueError("Something is terribly wrong...")
       #end
     else:
-      pass
+      gridOut = grid
+      break
     #end
   #end
   return gridOut

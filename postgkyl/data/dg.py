@@ -292,7 +292,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
   # last entry is indexing nodes, get rid of it
   numCells = numCells[:-1]
   numDims = int(len(numCells))
-  numInterp = np.array([nInterpIn]*numDims)
+  numInterp = np.array([max(nInterpIn, 2)]*numDims)
   if basisType == "gkhybrid":
     # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
     vpardir = 1 if (numDims==2 or numDims==3) else (2 if numDims==4  else (3 if numDims==5 else 99))
