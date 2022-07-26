@@ -128,110 +128,110 @@ def update(i, data, fig, offsets, kwargs):
               help="Comma-separated values for x and y size.")
 @click.pass_context
 def animate(ctx, **kwargs):
-    r"""Animate the actively loaded dataset and show resulting plots in a
-    loop. Typically, the datasets are loaded using wildcard/regex
-    feature of the -f option to the main pgkyl executable. To save the
-    animation ffmpeg needs to be installed.
+  r"""Animate the actively loaded dataset and show resulting plots in a
+  loop. Typically, the datasets are loaded using wildcard/regex
+  feature of the -f option to the main pgkyl executable. To save the
+  animation ffmpeg needs to be installed.
 
-    """
-    vlog(ctx, 'Starting animate')
-    pushChain(ctx, 'animate', **kwargs)
-    data = ctx.obj['data']
-
-    if not kwargs['float']:
-        vmin = float('inf')
-        vmax = float('-inf')
-        for dat in ctx.obj['data'].iterator(kwargs['use']):
-            val = dat.getValues()
-            if kwargs['logz']:
-                val = np.log(val)
-            #end
-            if vmin > np.nanmin(val):
-                vmin = np.nanmin(val)
-            #end
-            if vmax < np.nanmax(val):
-                vmax = np.nanmax(val)
-            #end
-        #end
-        if kwargs['vmin'] is None:
-            kwargs['vmin'] = vmin
-            if kwargs['logz']:
-                kwargs['vmin'] = np.exp(vmin)
-            #end
-        #end
-        if kwargs['vmax'] is None:
-            kwargs['vmax'] = vmax
-            if kwargs['logz']:
-                kwargs['vmax'] = np.exp(vmax)
-            #end
-        #end
+  """
+  vlog(ctx, 'Starting animate')
+  pushChain(ctx, 'animate', **kwargs)
+  data = ctx.obj['data']
+  
+  if not kwargs['float'] and kwargs['ylim'] is None:
+    vmin = float('inf')
+    vmax = float('-inf')
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
+      val = dat.getValues()
+      if kwargs['logz']:
+        val = np.log(val)
+      #end
+      if vmin > np.nanmin(val):
+        vmin = np.nanmin(val)
+      #end
+      if vmax < np.nanmax(val):
+        vmax = np.nanmax(val)
+      #end
     #end
-
-    anims = []
-    figs = []
-    kwargs['legend'] = False
-
-    figsize = None
-    if kwargs['figsize']:
-        figsize = (int(kwargs['figsize'].split(',')[0]),
-                   int(kwargs['figsize'].split(',')[1]))
+    if kwargs['vmin'] is None:
+      kwargs['vmin'] = vmin
+      if kwargs['logz']:
+        kwargs['vmin'] = np.exp(vmin)
+      #end
     #end
-
-    offsets = [0]
-    tagIterator = list(data.tagIterator(kwargs['use']))
-    setFigure = False
-    minSize = np.NAN
-    if kwargs['figure']:
-        for tag in data.tagIterator(kwargs['use']):
-            numDatasets = int(data.getNumDatasets(tag=tag))
-            offsets.append(numDatasets)
-            minSize = int(np.nanmin((minSize, numDatasets)))
-        #end
-        offsets.pop()
-        tagIterator = list((kwargs['use'],))
-        kwargs['legend'] = True
-        setFigure = True
-        figNum = int(kwargs['figure'])
+    if kwargs['vmax'] is None:
+      kwargs['vmax'] = vmax
+      if kwargs['logz']:
+        kwargs['vmax'] = np.exp(vmax)
+      #end
     #end
+  #end
+
+  anims = []
+  figs = []
+  kwargs['legend'] = False
+
+  figsize = None
+  if kwargs['figsize']:
+    figsize = (int(kwargs['figsize'].split(',')[0]),
+               int(kwargs['figsize'].split(',')[1]))
+  #end
+
+  offsets = [0]
+  tagIterator = list(data.tagIterator(kwargs['use']))
+  setFigure = False
+  minSize = np.NAN
+  if kwargs['figure']:
+    for tag in data.tagIterator(kwargs['use']):
+      numDatasets = int(data.getNumDatasets(tag=tag))
+      offsets.append(numDatasets)
+      minSize = int(np.nanmin((minSize, numDatasets)))
+    #end
+    offsets.pop()
+    tagIterator = list((kwargs['use'],))
+    kwargs['legend'] = True
+    setFigure = True
+    figNum = int(kwargs['figure'])
+  #end
     
-    for tag in tagIterator:
-        dataList = list(data.iterator(tag=tag))
-        if setFigure:
-            figs.append(plt.figure(figNum, figsize=figsize))
-        else:
-            figs.append(plt.figure(figsize=figsize))
-        #end
-        if not kwargs['saveframes']:
-            anims.append(FuncAnimation(figs[-1], update,
-                                       int(np.nanmin((minSize, len(dataList)))),
-                                       fargs=(dataList, figs[-1],
-                                              offsets, kwargs),
-                                       interval=kwargs['interval'], blit=False))
+  for tag in tagIterator:
+    dataList = list(data.iterator(tag=tag))
+    if setFigure:
+      figs.append(plt.figure(figNum, figsize=figsize))
+    else:
+      figs.append(plt.figure(figsize=figsize))
+    #end
+    if not kwargs['saveframes']:
+      anims.append(FuncAnimation(figs[-1], update,
+                                 int(np.nanmin((minSize, len(dataList)))),
+                                 fargs=(dataList, figs[-1],
+                                        offsets, kwargs),
+                                 interval=kwargs['interval'], blit=False))
 
-            if tag is not None:
-                fName = 'anim_{:s}.mp4'.format(tag)
-            else:
-                fName = 'anim.mp4'
-            #end
-            if kwargs['saveas']:
-                fName = str(kwargs['saveas'])
-            #end
-            if kwargs['save'] or kwargs['saveas']:
-                anims[-1].save(fName, writer='ffmpeg',
-                               fps=kwargs['fps'], dpi=kwargs['dpi'])
-            #end
-        else:
-            for i in range(int(np.nanmin((minSize, len(dataList))))):
-                update(i, dataList, figs[-1], offsets, kwargs)
-                plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
-                            dpi=kwargs['dpi'])
-            #end
-            kwargs['show'] = False # do not show in this case
-        #end
+      if tag is not None:
+        fName = 'anim_{:s}.mp4'.format(tag)
+      else:
+        fName = 'anim.mp4'
+      #end
+      if kwargs['saveas']:
+        fName = str(kwargs['saveas'])
+      #end
+      if kwargs['save'] or kwargs['saveas']:
+        anims[-1].save(fName, writer='ffmpeg',
+                       fps=kwargs['fps'], dpi=kwargs['dpi'])
+      #end
+    else:
+      for i in range(int(np.nanmin((minSize, len(dataList))))):
+        update(i, dataList, figs[-1], offsets, kwargs)
+        plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
+                    dpi=kwargs['dpi'])
+      #end
+      kwargs['show'] = False # do not show in this case
     #end
+  #end
     
-    if kwargs['show']:
-        plt.show()
-    #end
-    vlog(ctx, 'Finishing animate')
+  if kwargs['show']:
+    plt.show()
+  #end
+  vlog(ctx, 'Finishing animate')
 #end
