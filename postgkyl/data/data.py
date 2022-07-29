@@ -154,98 +154,6 @@ class Data(object):
     #end
   #end
 
-  # def _load_gkyl(self, file_name) -> tuple:
-  #   dti8 = np.dtype('i8')    
-  #   dtf = np.dtype('f8')
-  #   doffset = 8
-  #   offset = 0
-  #   file_type = 1
-  #   version = 0
-
-  #   magic = np.fromfile(file_name, dtype=np.dtype('b'), count=5)
-  #   if np.array_equal(magic, [103, 107, 121, 108,  48]):
-  #     offset += 5
-
-  #     version = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #     offset += 8
-
-  #     file_type = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #     offset += 8
-
-  #     meta_size = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #     offset += 8
-
-  #     # read meta
-  #     offset += meta_size
-  #   #end
-    
-  #   # read real-type
-  #   realType = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #   if realType == 1:
-  #     dtf = np.dtype('f4')
-  #     doffset = 4
-  #   #end
-  #   offset += 8
-
-  #   if file_type == 1 or version == 0:
-  #     # read grid dimensions
-  #     num_dims = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #     offset += 8
-
-  #     # read grid shape
-  #     cells = np.fromfile(file_name, dtype=dti8, count=num_dims, offset=offset)
-  #     offset += num_dims*8
-
-  #     # read lower/upper
-  #     lower = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-  #     offset += num_dims*doffset
-      
-  #     upper = np.fromfile(file_name, dtype=dtf, count=num_dims, offset=offset)
-  #     offset += num_dims*doffset
-
-  #     # read array elemEz (the div by doffset is as elemSz includes
-  #     # sizeof(real_type) = doffset)
-  #     elemSzRaw = int(
-  #       np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-  #     elemSz = elemSzRaw/doffset
-  #     offset += 8
-
-  #     # read array size
-  #     asize = np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0]
-  #     offset += 8
-
-  #     adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-  #     gshape = np.ones(num_dims+1, dtype=dti8)
-  #     for d in range(num_dims):
-  #       gshape[d] = cells[d]
-  #     #end
-  #     numComp = int(elemSz)
-  #     gshape[-1] = numComp
-  #     return num_dims, cells, lower, upper, adata.reshape(gshape)
-  #   elif file_type == 2:
-  #     elemSzRaw = int(
-  #       np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-  #     numComp = int(elemSzRaw/doffset)
-  #     offset += 8
-
-  #     cells = int(np.fromfile(file_name, dtype=dti8, count=1, offset=offset)[0])
-  #     offset += 8
-
-  #     time = np.fromfile(file_name, dtype=dtf, count=cells, offset=offset)
-  #     offset += 8*cells
-
-  #     adata = np.fromfile(file_name, dtype=dtf, offset=offset)
-  #     gshape = np.ones(2, dtype=dti8)
-  #     gshape[0] = cells
-  #     gshape[1] = numComp
-  #     print(cells)
-  #     print(len(adata))
-  #     return 1, np.array([cells]), np.array([time[0]]), np.array([time[-1]]), adata.reshape(gshape)
-  #   else:
-  #     raise TypeError('This g0 format is not presently supported')
-  #   #end
-  # #end
-
   def _loadFrame(self, axes=(None, None, None, None, None, None),
                  comp=None):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
@@ -379,7 +287,15 @@ class Data(object):
       #end
       fh.close()
     elif extension == 'gkyl':
-      num_dims, cells, lower, upper, values = load_gkyl(self.file_name)
+      num_dims, cells, grid, values = load_gkyl(self.file_name)
+      if isinstance(grid, tuple):
+        lower = grid[0]
+        upper = grid[1]
+      else:
+        lower = np.array([grid[0]])
+        upper = np.array([grid[-1]])
+        self._grid = [grid]
+      #end
       self._values = values
     else:
       raise NameError(
@@ -435,7 +351,7 @@ class Data(object):
       raise NameError(
         'File(s) \'{:s}\' not found or empty.'.
         format(self.file_name))
-
+    
     cnt = 0  # Counter for the number of loaded files
     for file_name in files:
       extension = file_name.split('.')[-1]

@@ -109,7 +109,7 @@ def load_gkyl(file_name : str) -> tuple:
   if file_type == 1 or version == 0:
     offset, num_dims, cells, lower, upper, data = _load_t1_v1(
       file_name, offset, dti, dtf, doffset)
-    return num_dims, cells, lower, upper, data
+    return num_dims, cells, (lower, upper), data
   elif file_type == 2:
     cells = [0]
     time = np.array([])
@@ -133,7 +133,7 @@ def load_gkyl(file_name : str) -> tuple:
         raise TypeError('Inconsitent data in g0 dynVector file.')
       #end
     #end
-    return 1, cells, np.array([time[0]]), np.array([time[-1]]), data
+    return 1, cells, time, data
   else:
     raise TypeError('This g0 format is not presently supported')
   #end

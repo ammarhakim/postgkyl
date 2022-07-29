@@ -57,7 +57,7 @@ def plot(data, args=(),
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, clabel=None, title=None,
          logx=False, logy=False, logz=False,
-         fixaspect=False,
+         fixaspect=False, aspect=None,
          vmin=None, vmax=None, edgecolors=None,
          xlim=None, ylim=None,
          showgrid=True,
@@ -81,6 +81,10 @@ def plot(data, args=(),
                   "/postgkyl.mplstyle")
   else:
     plt.style.use(style)
+  #end
+
+  if aspect is None:
+    aspect = 1.0
   #end
 
   # This should not be used on its own; however, it can be useful for
@@ -511,7 +515,7 @@ def plot(data, args=(),
       #end
     elif numDims == 2:
       if fixaspect:
-        plt.setp(cax, aspect=1.0)
+        plt.setp(cax, aspect=aspect)
       #end
     #end
     if xlim is None:

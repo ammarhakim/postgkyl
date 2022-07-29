@@ -48,6 +48,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Additional plotting arguments, e.g., '*--'.")
 @click.option('-a', '--fix-aspect', 'fixaspect', is_flag=True,
               help="Enforce the same scaling on both axes.")
+@click.option('--aspect', default=None,
+              help="Specify the scaling ratio.")
 @click.option('--logx', is_flag=True,
               help="Set x-axis to log scale.")
 @click.option('--logy', is_flag=True,
@@ -123,6 +125,10 @@ def plot(ctx, **kwargs):
       fg='yellow'))
   #end
 
+  if kwargs['aspect']:
+    kwargs['fixaspect'] = True
+  #end
+  
   kwargs['numAxes'] = None
   if kwargs['subplots']:
     kwargs['numAxes'] = 0
