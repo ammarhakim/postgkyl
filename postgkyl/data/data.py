@@ -306,7 +306,7 @@ class Data(object):
       extension = self.mapc2p_name.split('.')[-1]
       self._gridType = 'c2p'
       if extension == 'gkyl':
-        num_dims, _, _, _, grid = load_gkyl(self.mapc2p_name)
+        num_dims, _, _, grid = load_gkyl(self.mapc2p_name)
         num_comps = grid.shape[-1]
         num_coeff = num_comps/num_dims
         self._grid = [grid[..., int(d*num_coeff):int((d+1)*num_coeff)]
