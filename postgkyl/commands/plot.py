@@ -60,6 +60,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
               help="Value to scale the y-axis (default: 1.0).")
+@click.option('--zscale', default=1.0, type=click.FLOAT,
+              help="Value to scale the z-axis (default: 1.0).")
 @click.option('--vmax', default=None, type=click.FLOAT,
               help="Set maximal value of data for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,
