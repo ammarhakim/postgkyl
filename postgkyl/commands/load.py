@@ -65,7 +65,7 @@ def load(ctx, **kwargs):
   inDataString = ctx.obj['inDataStrings'][idx]
 
   # Handling the wildcard characters
-  if '*' in inDataString or '?' in inDataString or '!'  in inDataString:
+  if '*' in inDataString or '?' in inDataString or '!' in inDataString:
     files = glob.glob(str(inDataString))
     files = [f for f in files if f.find('restart') < 0]
     try:
@@ -114,6 +114,10 @@ def load(ctx, **kwargs):
     mapc2p_name = None
   #end
 
+  if len(varNames) == 1:
+    varNames = varNames[0].split(',')
+  #end
+  
   for var in varNames:
     for fn in files:
       try:
