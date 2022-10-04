@@ -389,12 +389,12 @@ def plot(data, args=(),
             label = clabel or 'Z1' 
           else:
             idx[0] = l
-            im = cax.plot(gridCC[1]*yscale,
+            im = cax.plot(gridCC[1]*xscale,
                           values[tuple(idx)]*yscale,
                           *args, color=color)
             mappable = cm.ScalarMappable(
-              norm=colors.Normalize(vmin=gridCC[0][0]*xscale,
-                                    vmax=gridCC[0][-1]*xscale,
+              norm=colors.Normalize(vmin=gridCC[0][0]*yscale,
+                                    vmax=gridCC[0][-1]*yscale,
                                     clip=False),
               cmap=cm.inferno)
             label = clabel or 'Z0'
