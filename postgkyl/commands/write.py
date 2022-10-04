@@ -6,8 +6,8 @@ from postgkyl.commands.util import vlog, pushChain
 @click.command()
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('-f', '--filename', type=click.STRING,
-              help="Output file name(s)")
+@click.option('-f', '--filename', type=click.STRING, prompt=True,
+              help="Output file name")
 @click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy']),
               default='bp', 
               help="Output file mode. One of `bp` (ADIOS BP file; default), `txt` (ASCII text file), or `npy` (NumPy binary file)")
@@ -28,25 +28,29 @@ def write(ctx, **kwargs):
     data = ctx.obj['data']
     
     var_name = None
-    file_names = kwargs['filename'].split(',')
     append = False
     cleaning = True
+    fn = kwargs['filename']
+    mode = kwargs['mode']
+    if len(fn.split('.')) > 1:
+      mode = str(fn.split('.')[-1])
+      fn =  str(fn.split('.')[0])
+    #end
     
-    for i, dat in data.iterator(kwargs['use'],
+    num_files = data.getNumDatasets(tag=kwargs['use'])
+    for i, dat in data.iterator(tag=kwargs['use'],
                                 enum=True):
-      if i < len(file_names):
-        fn = file_names[i]
-      else:
-        fn = '{:s}{:d}.bp'.format(file_names[0].split('.')[0], i)
-      #end
-      
+      out_name = '{:s}.{:s}'.format(fn, mode)
       if kwargs['single']:
-        var_name = '{:s}{:d}'.format(dat.getTag(), i)
-        fn = file_names[0]
+        var_name = '{:s}_{:d}'.format(dat.getTag(), i)
         cleaning = False
+      else:
+        if num_files > 1:
+          out_name = '{:s}_{:d}.{:s}'.format(fn, i, mode)
+        #end
       #end
       
-      dat.write(out_name=fn,
+      dat.write(out_name=out_name,
                 mode=kwargs['mode'],
                 bufferSize=kwargs['buffersize'],
                 append=append,
@@ -65,8 +69,9 @@ def write(ctx, **kwargs):
       else:
         nm = fn
       #end
-      shutil.move(fn + '.dir/' + nm + '.0', fn)
-      shutil.rmtree(fn + '.dir')
+      shutil.move('{:s}.{:s}.dir/{:s}.{:s}.0'.format(fn, mode, fn, mode),
+                  '{:s}.{:s}'.format(fn, mode))
+      shutil.rmtree('{:s}.{:s}.dir'.format(fn, mode))
     #end
     vlog(ctx, 'Finishing write')
 #end
