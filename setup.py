@@ -7,8 +7,8 @@ try:
 except (IOError, ImportError):
    long_description = ''
 
-setup(name='postgkyl',
-      version='1.6.7',
+setup(name='postgkyl-experimental',
+      version='1.6.8',
       description='Postrocessing utilities for Gkeyll simulation framework',
       long_description=long_description,
       url='https://github.com/ammarhakim/postgkyl',
