@@ -740,6 +740,9 @@ class Data(object):
     elif mode == 'txt':
       numRows = int(numCells.prod())
       grid = self.getGrid()
+      for d in range(num_dims):
+        grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
+      #end
       values = self.getValues()
 
       basis = np.full(num_dims, 1.0)
@@ -756,10 +759,9 @@ class Data(object):
           idx = idx % basis[d]
         #end
         line = ''
-        for d in range(num_dims-1):
+        for d in range(num_dims):
           line += '{:.15e}, '.format(grid[d][idxs[d]])
         #end
-        line += '{:.15e}, '.format(grid[num_dims-1][idxs[num_dims-1]])
         for c in range(numComps-1):
           line += '{:.15e}, '.format(values[tuple(idxs)][c])
         #end

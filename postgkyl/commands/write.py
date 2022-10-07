@@ -51,7 +51,7 @@ def write(ctx, **kwargs):
       #end
       
       dat.write(out_name=out_name,
-                mode=kwargs['mode'],
+                mode=mode,
                 bufferSize=kwargs['buffersize'],
                 append=append,
                 var_name=var_name,
