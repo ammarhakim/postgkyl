@@ -9,7 +9,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('--use', '-u', default=None,
               help="Specify the tag to plot.")
 @click.option('--figure', '-f', default=None,
-              help="Specify figure (integer) to plot in.")
+              help="Specify figure to plot in; either number or 'dataset'.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
@@ -144,9 +144,18 @@ def plot(ctx, **kwargs):
       kwargs['figure'] = 0
     #end
   #end
+
+  dataset_fignum = False
+  if kwargs['figure'] == 'dataset' or kwargs['figure'] == 'set' or kwargs['figure'] == 's':
+    dataset_fignum = True
+  #end
  
   fName = ''
-  for dat in ctx.obj['data'].iterator(kwargs['use']):
+  for i, dat in ctx.obj['data'].iterator(kwargs['use'], enum=True):
+    if dataset_fignum:
+      kwargs['figure'] = int(i)
+    #end
+    
     if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
       label = dat.getLabel()
     else:
@@ -181,6 +190,12 @@ def plot(ctx, **kwargs):
       fName = str(fName)
       plt.savefig(fName, dpi=kwargs['dpi'])
       fName = ""
+    #end
+
+    if kwargs['saveframes']:
+      fName = '{:s}_{:d}.png'.format(kwargs['saveframes'], i)
+      plt.savefig(fName, dpi=kwargs['dpi'])
+      kwargs['show'] = False
     #end
   #end
   if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
