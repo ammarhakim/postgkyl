@@ -102,6 +102,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Turn showing of the plot ON and OFF (default: ON).")
 @click.option('--figsize',
               help="Comma-separated values for x and y size.")
+@click.option('--saveframes', type=click.STRING,
+              help="Save individual frames as PNGS instead of an opening them")
 @click.option('--jet', is_flag=True,
               help="Turn colormap to jet for comparison with literature.")
 @click.pass_context
