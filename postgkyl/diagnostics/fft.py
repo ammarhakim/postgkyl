@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import fftpack
+import scipy.fft
 from .. import diagnostics as diag
 
 def fft(data, psd=False, iso=False, overwrite=False, stack=False):
@@ -28,10 +28,10 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
     if numDims == 1:
         N = len(grid[0])
         dx = grid[0][1] - grid[0][0]
-        freq = [fftpack.fftfreq(N, dx)]
+        freq = [scipy.fft.fftfreq(N, dx)]
         ftValues = np.zeros(values.shape, 'complex')
         for comp in np.arange(numComps):
-            ftValues[..., comp] = fftpack.fft(values[..., comp])
+            ftValues[..., comp] = scipy.fft.fft(values[..., comp])
         #end
 
         if psd:
@@ -51,11 +51,11 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         for i in range(0, numDims):
             N[i] = len(grid[i])
             dx[i] = grid[i][1] - grid[i][0]
-            freq.append(fftpack.fftfreq(N[i], dx[i]))
+            freq.append(scipy.fft.fftfreq(N[i], dx[i]))
         #end
         ftValues = np.zeros(values.shape, 'complex')
         for comp in np.arange(numComps):
-            ftValues[..., comp] = fftpack.fftn(values[..., comp])
+            ftValues[..., comp] = scipy.fft.fftn(values[..., comp])
         #end
         if psd:
             for i in range(0, numDims):            

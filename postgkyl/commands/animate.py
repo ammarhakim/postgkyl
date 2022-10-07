@@ -50,16 +50,26 @@ def update(i, data, fig, offsets, kwargs):
               help="Transpose axes.")
 @click.option('-c', '--contour', is_flag=True,
               help="Make contour plot.")
+@click.option('--clevels', type=click.STRING,
+              help="Specify levels for contours: either integer or start:end:nlevels")
 @click.option('-q', '--quiver', is_flag=True,
               help="Make quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Make streamline plot.")
+@click.option('--sdensity', type=click.FLOAT,
+              help="Control density of the streamlines.")
+@click.option('--arrowstyle', type=click.STRING,
+              help="Set the style for streamline arrows.")
 @click.option('-g', '--group', type=click.Choice(['0', '1']),
               help="Switch to group mode.")
 @click.option('-s', '--scatter', is_flag=True,
               help="Make scatter plot.")
 @click.option('--markersize', type=click.FLOAT,
               help="Set marker size for scatter plots.")
+@click.option('--linewidth', type=click.FLOAT,
+              help="Set the linewidth.")
+@click.option('--color', type=click.STRING,
+              help="Set color when available.")
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option('-d', '--diverging', is_flag=True,
@@ -78,6 +88,8 @@ def update(i, data, fig, offsets, kwargs):
               help="Value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
               help="Value to scale the y-axis (default: 1.0).")
+@click.option('--zscale', default=1.0, type=click.FLOAT,
+              help="Value to scale the z-axis (default: 1.0).")
 @click.option('--vmax', default=None, type=click.FLOAT,
               help="Set maximal value of data for plots.")
 @click.option('--vmin', default=None, type=click.FLOAT,
@@ -142,7 +154,7 @@ def animate(ctx, **kwargs):
     vmin = float('inf')
     vmax = float('-inf')
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      val = dat.getValues()
+      val = dat.getValues()*kwargs['zscale']
       if kwargs['logz']:
         val = np.log(val)
       #end

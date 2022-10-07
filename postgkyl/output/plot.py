@@ -53,7 +53,7 @@ def plot(data, args=(),
          quiver=False,
          contour=False, clevels=None,
          diverging=False, group=None,
-         xscale=1.0, yscale=1.0,
+         xscale=1.0, yscale=1.0, zscale=1.0,
          style=None, legend=True, labelPrefix='',
          xlabel=None, ylabel=None, clabel=None, title=None,
          logx=False, logy=False, logz=False,
@@ -148,6 +148,13 @@ def plot(data, args=(),
   #end
   if yscale != 1.0:
     axLabel[1] = axLabel[1] + r' $\times$ {:.3e}'.format(yscale)
+  #end
+  if zscale != 1.0:
+    if clabel:
+      clabel = clabel + r' $\times$ {:.3e}'.format(zscale)
+    else:
+      clabel = r'$\times$ {:.3e}'.format(zscale)
+    #end
   #end
 
   # Prepare the figure
@@ -308,7 +315,7 @@ def plot(data, args=(),
           cl = color
         #end
         im = cax.contour(gridCC[0]*xscale, gridCC[1]*yscale,
-                         values[..., comp].transpose(),
+                         values[..., comp].transpose()*zscale,
                          levels, *args,
                          colors=cl, linewidths=linewidth)
         if color is None:
@@ -350,9 +357,9 @@ def plot(data, args=(),
           _colorbar(im.lines, fig, cax, label=clabel)
         #end
       elif diverging:  #----------------------------------------
-        vmax = np.abs(values[..., comp]).max()
+        vmax = np.abs(values[..., comp]*zscale).max()
         im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
-                            values[..., comp].transpose(),
+                            values[..., comp].transpose()*zscale,
                             vmax=vmax, vmin=-vmax,
                             cmap='RdBu_r',
                             edgecolors=edgecolors, linewidth=0.1,
@@ -368,24 +375,28 @@ def plot(data, args=(),
         for l in range(numLines):
           idx = [slice(0, u) for u in values.shape]
           idx[-1] = comp
-          color = cm.viridis(l / (numLines-1))
+          color = cm.inferno(l / (numLines-1))
           if group == 0:
             idx[1] = l
-            im = cax.plot(gridCC[0]*xscale, values[tuple(idx)],
+            im = cax.plot(gridCC[0]*xscale,
+                          values[tuple(idx)]*yscale,
                           *args, color=color)
             mappable = cm.ScalarMappable(
               norm=colors.Normalize(vmin=gridCC[1][0]*yscale,
-                                    vmax=gridCC[1][-1]*yscale,clip=False),
-              cmap=cm.viridis)
+                                    vmax=gridCC[1][-1]*yscale,
+                                    clip=False),
+              cmap=cm.inferno)
             label = clabel or 'Z1' 
           else:
             idx[0] = l
-            im = cax.plot(gridCC[1]*yscale, values[tuple(idx)],
+            im = cax.plot(gridCC[1]*xscale,
+                          values[tuple(idx)]*yscale,
                           *args, color=color)
             mappable = cm.ScalarMappable(
-              norm=colors.Normalize(vmin=gridCC[0][0]*xscale,
-                                    vmax=gridCC[0][-1]*xscale,clip=False),
-              cmap=cm.viridis)
+              norm=colors.Normalize(vmin=gridCC[0][0]*yscale,
+                                    vmax=gridCC[0][-1]*yscale,
+                                    clip=False),
+              cmap=cm.inferno)
             label = clabel or 'Z0'
           #end
         #end
@@ -403,7 +414,7 @@ def plot(data, args=(),
         gridCC = _gridNodalToCellCentered(grid, cells)
         g0 = gridCC[0]*xscale
         g1 = gridCC[1]*yscale
-        z = values[..., comp]
+        z = values[..., comp]*zscale
         if len(g0.shape) > 1:
           g0 = g0.transpose()
           g1 = g1.transpose()

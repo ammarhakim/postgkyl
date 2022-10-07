@@ -3,7 +3,6 @@ from .data_space import DataSpace
 from . import util
 from . import ev_cmd
 from .animate import animate
-from .blot import blot
 from .collect import collect
 from .differentiate import differentiate
 from .euler import euler

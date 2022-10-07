@@ -65,7 +65,7 @@ def load(ctx, **kwargs):
   inDataString = ctx.obj['inDataStrings'][idx]
 
   # Handling the wildcard characters
-  if '*' in inDataString or '?' in inDataString or '!'  in inDataString:
+  if '*' in inDataString or '?' in inDataString or '!' in inDataString:
     files = glob.glob(str(inDataString))
     files = [f for f in files if f.find('restart') < 0]
     try:
@@ -114,16 +114,20 @@ def load(ctx, **kwargs):
     mapc2p_name = None
   #end
 
+  if len(varNames) == 1:
+    varNames = varNames[0].split(',')
+  #end
+  
   for var in varNames:
     for fn in files:
       try:
         dat = Data(file_name=fn, tag=kwargs['tag'],
-                    comp_grid=ctx.obj['compgrid'],
-                    z0=z0, z1=z1, z2=z2,
-                    z3=z3, z4=z4, z5=z5,
-                    comp=comp, var_name=var,
-                    label = kwargs['label'],
-                    mapc2p_name = mapc2p_name)
+                   comp_grid=ctx.obj['compgrid'],
+                   z0=z0, z1=z1, z2=z2,
+                   z3=z3, z4=z4, z5=z5,
+                   comp=comp, var_name=var,
+                   label = kwargs['label'],
+                   mapc2p_name = mapc2p_name)
         
         if kwargs['fv']:
           dg = GInterpModal(dat, 0, 'ms')

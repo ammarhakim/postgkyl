@@ -11,36 +11,36 @@ from postgkyl.commands.util import vlog, pushChain
               help='All data sets.')
 @click.pass_context
 def info(ctx, **kwargs):
-    vlog(ctx, 'Starting info')
-    pushChain(ctx, 'info', **kwargs)
-    data = ctx.obj['data']
-    if kwargs['allsets']:
-        onlyActive = False
+  vlog(ctx, 'Starting info')
+  pushChain(ctx, 'info', **kwargs)
+  data = ctx.obj['data']
+  if kwargs['allsets']:
+    onlyActive = False
+  else:
+    onlyActive = True
+  #end
+
+  for i, dat in data.iterator(kwargs['use'],
+                              enum=True,
+                              onlyActive=onlyActive):
+    if dat.getStatus():
+      color = 'green'
+      bold = True
     else:
-        onlyActive = True
+      color = None
+      bold = False
     #end
-
-    for i, dat in data.iterator(kwargs['use'],
-                                enum=True,
-                                onlyActive=onlyActive):
-        if dat.getStatus():
-            color = 'green'
-            bold = True
-        else:
-            color = None
-            bold = False
-        #end
-        click.echo(
-          click.style('{:s}{:s}({:s}#{:d})'.format(dat.getLabel(),
-                                                   ' ' if dat.getLabel()
-                                                   else '', 
-                                                   dat.getTag(),
-                                                   i),
-                      fg=color, bold=bold))
-        if not kwargs['compact']:
-            click.echo(dat.info() + "\n")
-        #end
+    click.echo(
+      click.style('{:s}{:s}({:s}#{:d})'.format(dat.getLabel(),
+                                               ' ' if dat.getLabel()
+                                               else '', 
+                                               dat.getTag(),
+                                               i),
+                  fg=color, bold=bold))
+    if not kwargs['compact']:
+      click.echo(dat.info() + "\n")
     #end
+  #end
 
-    vlog(ctx, 'Finishing info')
+  vlog(ctx, 'Finishing info')
 #end
