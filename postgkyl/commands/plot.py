@@ -70,7 +70,7 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set limits for the x-coordinate (lower,upper)")
 @click.option('--ylim', default=None, type=click.STRING,
               help="Set limits for the y-coordinate (lower,upper).")
-@click.option('--globalrange', '-r' is_flag=True,
+@click.option('--globalrange', '-r', is_flag=True,
               help="Make uniform extends across datasets.")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
