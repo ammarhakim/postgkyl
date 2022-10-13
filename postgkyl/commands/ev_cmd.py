@@ -48,6 +48,12 @@ def mult(inGrid, inValues):
   return [outGrid], [outValues]
 #end
 
+def dot(inGrid, inValues):
+  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outValues = np.sum(inValues[1]*inValues[0], axis=-1)[..., np.newaxis]
+  return [outGrid], [outValues]
+#end
+
 def divide(inGrid, inValues):
   outGrid = _getGrid(inGrid[0], inGrid[1])
   a, b = inValues[1], inValues[0]
@@ -285,6 +291,7 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          '-' : { 'numIn' : 2, 'numOut' : 1, 'func' : subtract },
          '*' : { 'numIn' : 2, 'numOut' : 1, 'func' : mult },
          '/' : { 'numIn' : 2, 'numOut' : 1, 'func' : divide },
+         'dot' : { 'numIn' : 2, 'numOut' : 1, 'func' : dot },
          'sqrt' : { 'numIn' : 1, 'numOut' : 1, 'func' : sqrt },
          'sin' : { 'numIn' : 1, 'numOut' : 1, 'func' : psin },
          'cos' : { 'numIn' : 1, 'numOut' : 1, 'func' : pcos },

@@ -70,6 +70,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Set limits for the x-coordinate (lower,upper)")
 @click.option('--ylim', default=None, type=click.STRING,
               help="Set limits for the y-coordinate (lower,upper).")
+@click.option('--globalrange', '-r' is_flag=True,
+              help="Make uniform extends across datasets.")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
 @click.option('--force-legend', 'forcelegend', is_flag=True,
@@ -148,6 +150,35 @@ def plot(ctx, **kwargs):
   dataset_fignum = False
   if kwargs['figure'] == 'dataset' or kwargs['figure'] == 'set' or kwargs['figure'] == 's':
     dataset_fignum = True
+  #end
+
+  if kwargs['globalrange']:
+    vmin = float('inf')
+    vmax = float('-inf')
+    for dat in ctx.obj['data'].iterator(kwargs['use']):
+      val = dat.getValues()*kwargs['zscale']
+      if kwargs['logz']:
+        val = np.log(val)
+      #end
+      if vmin > np.nanmin(val):
+        vmin = np.nanmin(val)
+      #end
+      if vmax < np.nanmax(val):
+        vmax = np.nanmax(val)
+      #end
+    #end
+    if kwargs['vmin'] is None:
+      kwargs['vmin'] = vmin
+      if kwargs['logz']:
+        kwargs['vmin'] = np.exp(vmin)
+      #end
+    #end
+    if kwargs['vmax'] is None:
+      kwargs['vmax'] = vmax
+      if kwargs['logz']:
+        kwargs['vmax'] = np.exp(vmax)
+      #end
+    #end
   #end
  
   fName = ''
