@@ -109,24 +109,24 @@ def log10(inGrid, inValues):
 #end
 
 def minimum(inGrid, inValues):
-  outValues = np.atleast_1d(np.min(inValues[0]))
+  outValues = np.atleast_1d(np.nanmin(inValues[0]))
   return [[]], [outValues]
 #end
 
 def minimum2(inGrid, inValues):
   outGrid = _getGrid(inGrid[0], inGrid[1])
-  outValues = np.minimum(inValues[0], inValues[1])
+  outValues = np.fmin(inValues[0], inValues[1])
   return [outGrid], [outValues]
 #end
 
 def maximum(inGrid, inValues):
-  outValues = np.atleast_1d(np.max(inValues[0]))
+  outValues = np.atleast_1d(np.nanmax(inValues[0]))
   return [[]], [outValues] 
 #end
 
 def maximum2(inGrid, inValues):
   outGrid = _getGrid(inGrid[0], inGrid[1])
-  outValues = np.maximum(inValues[0], inValues[1])
+  outValues = np.fmax(inValues[0], inValues[1])
   return [outGrid], [outValues]
 #end
 
@@ -288,22 +288,36 @@ def curl(inGrid, inValues):
   numComps = inValues[0].shape[-1]
   
   outShape = list(inValues[0].shape)
-  if numDims == 2:
-    outShape[-1] = 1
-  #end
-  outValues = np.zeros(outShape)
-  if numDims == 2:
-    if numComps > 2:
-      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). Only the third component of curl will be calculated.".format(numComps, numDims), fg='yellow'))
-    elif numComps < 2:
-      raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
+
+  if numDims == 1:
+    if numComps != 3:
+      raise ValueError("ERROR in 'ev curl': Curl in 1D requires 3-component input and {:d}-component field was provided.".format(numComps))
     #end
     zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
+    outValues = np.zeros(outShape)
+    outValues[..., 1] = - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
+    outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0)
+  elif numDims == 2:
+    zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
     zc1 = 0.5*(inGrid[0][1][1:] + inGrid[0][1][:-1])
-    outValues[..., 0] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
-  else:
+    if numComps < 2:
+      raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated.".format(numComps, numDims))
+    elif numComps == 2:
+      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). Only the third component of curl will be calculated.".format(numComps, numDims), fg='yellow'))
+      outShape[-1] = 1
+      outValues = np.zeros(outShape)
+      outValues[..., 0] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
+    else:
+      if numComps > 3:
+        click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
+      #end
+      outValues = np.zeros(outShape)
+      outValues[..., 0] = np.gradient(inValues[0][..., 2], zc1, edge_order=2, axis=1)
+      outValues[..., 1] = - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
+      outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
+  else: # 3D
     if numComps > 3:
-      click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
+      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
     elif numComps < 3:
       raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
     #end
@@ -313,7 +327,7 @@ def curl(inGrid, inValues):
     outValues[..., 0] = np.gradient(inValues[0][..., 2], zc1, edge_order=2, axis=1) - np.gradient(inValues[0][..., 1], zc2, edge_order=2, axis=2)
     outValues[..., 1] = np.gradient(inValues[0][..., 0], zc2, edge_order=2, axis=2) - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
     outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
-    
+  #end
   return [outGrid], [outValues]
 #end
 
