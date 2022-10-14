@@ -109,21 +109,30 @@ def log10(inGrid, inValues):
 #end
 
 def minimum(inGrid, inValues):
-  outGrid = []
   outValues = np.atleast_1d(np.min(inValues[0]))
+  return [[]], [outValues]
+#end
+
+def minimum2(inGrid, inValues):
+  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outValues = np.minimum(inValues[0], inValues[1])
   return [outGrid], [outValues]
 #end
 
 def maximum(inGrid, inValues):
-  outGrid = []
   outValues = np.atleast_1d(np.max(inValues[0]))
-  return [outGrid], [outValues] 
+  return [[]], [outValues] 
+#end
+
+def maximum2(inGrid, inValues):
+  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outValues = np.maximum(inValues[0], inValues[1])
+  return [outGrid], [outValues]
 #end
 
 def mean(inGrid, inValues):
-  outGrid = []
   outValues = np.atleast_1d(np.mean(inValues[0]))
-  return [outGrid], [outValues]
+  return [[]], [outValues]
 #end
 
 def power(inGrid, inValues):
@@ -153,6 +162,24 @@ def length(inGrid, inValues):
   return [[]], [length]
 
 def grad(inGrid, inValues):
+  out_grid = inGrid[0]
+  nd = len(inValues[0].shape)-1
+  out_shape = list(inValues[0].shape)
+  nc = inValues[0].shape[-1]
+  out_shape[-1] = nc*nd
+  out_values = np.zeros(out_shape)
+  
+  for d in range(nd):
+    zc = 0.5*(inGrid[0][d][1:] + inGrid[0][d][:-1]) # get cell centered values
+    out_values[..., d*nc:(d+1)*nc] = np.gradient(inValues[0],
+                                                 zc,
+                                                 edge_order=2,
+                                                 axis=d)
+  #end
+  return [out_grid], [out_values]
+#end
+
+def grad2(inGrid, inValues):
   outGrid = inGrid[1]
   ax = inValues[0]
   if isinstance(ax, str) and ':' in ax:
@@ -174,7 +201,10 @@ def grad(inGrid, inValues):
   
   for cnt, d in enumerate(rng):
     zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
-    outValues[...,cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1], zc, edge_order=2, axis=d)
+    outValues[..., cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1],
+                                                                zc,
+                                                                edge_order=2,
+                                                                axis=d)
   #end
   return [outGrid], [outValues]
 #end
@@ -302,12 +332,15 @@ cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          'log10' : { 'numIn' : 1, 'numOut' : 1, 'func' : log10 },
          'max' : { 'numIn' : 1, 'numOut' : 1, 'func' : maximum },
          'min' : { 'numIn' : 1, 'numOut' : 1, 'func' : minimum },
+         'max2' : { 'numIn' : 2, 'numOut' : 1, 'func' : maximum2 },
+         'min2' : { 'numIn' : 2, 'numOut' : 1, 'func' : minimum2 },
          'mean' : { 'numIn' : 1, 'numOut' : 1, 'func' : mean },
          'len' : { 'numIn' : 2, 'numOut' : 1, 'func' : length },
          'pow' : { 'numIn' : 2, 'numOut' : 1, 'func' : power },
          'sq' : { 'numIn' : 1, 'numOut' : 1, 'func' : sq },
          'exp' : { 'numIn' : 1, 'numOut' : 1, 'func' : exp },
-         'grad' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad },
+         'grad' : { 'numIn' : 1, 'numOut' : 1, 'func' : grad },
+         'grad2' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad2 },
          'int' : { 'numIn' : 2, 'numOut' : 1, 'func' : integrate },
          'div' : { 'numIn' : 1, 'numOut' : 1, 'func' : divergence },
          'curl' : { 'numIn' : 1, 'numOut' : 1, 'func' : curl },
