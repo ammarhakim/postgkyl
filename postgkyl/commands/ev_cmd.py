@@ -270,7 +270,7 @@ def divergence(inGrid, inValues):
   numDims = len(inGrid[0])
   numComps = inValues[0].shape[-1]
   if numComps > numDims:
-    click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
+    click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
     #end
   outShape = list(inValues[0].shape)
   outShape[-1] = 1
@@ -309,6 +309,7 @@ def curl(inGrid, inValues):
       outValues[..., 0] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
     else:
       if numComps > 3:
+        print("here")
         click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
       #end
       outValues = np.zeros(outShape)
@@ -317,7 +318,7 @@ def curl(inGrid, inValues):
       outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
   else: # 3D
     if numComps > 3:
-      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
+      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
     elif numComps < 3:
       raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
     #end
