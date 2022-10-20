@@ -4,6 +4,7 @@ from . import util
 from . import ev_cmd
 from .animate import animate
 from .collect import collect
+from .copystyle import copystyle
 from .differentiate import differentiate
 from .euler import euler
 from .ev import ev
