@@ -155,6 +155,7 @@ def cli(ctx, **kwargs):
 cli.add_command(cmd.activate)
 cli.add_command(cmd.animate)
 cli.add_command(cmd.collect)
+cli.add_command(cmd.copystyle)
 cli.add_command(cmd.current)
 cli.add_command(cmd.deactivate)
 cli.add_command(cmd.differentiate)
