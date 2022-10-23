@@ -117,6 +117,8 @@ def plot(ctx, **kwargs):
   vlog(ctx, 'Starting plot')
   pushChain(ctx, 'plot', **kwargs)
 
+  kwargs['rcParams'] = ctx.obj['rcParams']
+
   if kwargs['group'] is not None:
     kwargs['group'] = int(kwargs['group'])
   #end

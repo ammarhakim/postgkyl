@@ -3,8 +3,9 @@ from glob import glob
 import os
 import time
 import sys
-from os import path
+import os.path
 
+from cycler import cycler
 import click
 import numpy as np
 
@@ -149,13 +150,28 @@ def cli(ctx, **kwargs):
                              kwargs['z4'], kwargs['z5'],
                              kwargs['component'])
     ctx.obj['global_c2p'] = kwargs['c2p']
+
+    ctx.obj['rcParams'] = {}
+    fn = '{:s}/output/postgkyl.mplstyle'.format(
+        os.path.dirname(os.path.realpath(__file__)))
+    stylef = open(fn, 'r')
+    for line in stylef.readlines():
+        key = line.split(':')[0]
+        key_len = int(len(key))
+        key = key.strip()
+        value = line[(key_len+1):].strip()
+        if value[:6] == 'cycler':
+            arg = eval(value[16:-1])
+            value = cycler(color=arg)
+        #end
+        ctx.obj['rcParams'][key] = value
+    #end
 #end
 
 # Hook the individual commands into pgkyl
 cli.add_command(cmd.activate)
 cli.add_command(cmd.animate)
 cli.add_command(cmd.collect)
-cli.add_command(cmd.copystyle)
 cli.add_command(cmd.current)
 cli.add_command(cmd.deactivate)
 cli.add_command(cmd.differentiate)
@@ -179,6 +195,7 @@ cli.add_command(cmd.recovery)
 cli.add_command(cmd.relchange)
 cli.add_command(cmd.runchain)
 cli.add_command(cmd.select)
+cli.add_command(cmd.style)
 cli.add_command(cmd.tenmoment)
 cli.add_command(cmd.trajectory)
 cli.add_command(cmd.val2coord)

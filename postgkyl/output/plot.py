@@ -54,7 +54,8 @@ def plot(data, args=(),
          contour=False, clevels=None,
          diverging=False, group=None,
          xscale=1.0, yscale=1.0, zscale=1.0,
-         style=None, legend=True, labelPrefix='',
+         style=None, rcParams=None,
+         legend=True, labelPrefix='',
          xlabel=None, ylabel=None, clabel=None, title=None,
          logx=False, logy=False, logz=False,
          fixaspect=False, aspect=None,
@@ -71,16 +72,20 @@ def plot(data, args=(),
 
   Unifies the plotting across a wide range of Gkyl applications. Can
   be used for both 1D an 2D data. Uses a proper colormap by default.
-
-  Args:
   """
 
-  # Load Postgkyl style
-  if style is None:
+  # Load styles; it default to Postgkyl style file file if no style is
+  # specified but in hte command line mode, uses the rcParams
+  # dictionary which is passed with contex
+  if style is None and rcParams is None:
     plt.style.use(os.path.dirname(os.path.realpath(__file__)) +
                   "/postgkyl.mplstyle")
-  else:
+  elif style:
     plt.style.use(style)
+  elif rcParams:
+    for key in rcParams:
+      mpl.rcParams[key] = rcParams[key]
+    #end
   #end
 
   if aspect is None:
