@@ -22,6 +22,8 @@ from .primitive import getPij
 from .primitive import getP
 from .primitive import getKE
 from .primitive import getMach
+from .primitive import getMhdP
+from .primitive import getMhdMagPressure
 
 from .accumulate_current import accumulate_current
 from .energetics import energetics

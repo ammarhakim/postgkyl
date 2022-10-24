@@ -351,3 +351,48 @@ def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
         return grid, out
     #end
 #end
+
+def getMhdP(data, gasGamma=5.0/3.0, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
+    grid = data.getGrid()
+    values = data.getValues()
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
+
+    grid, rho = getDensity(data)
+    grid, vx = getVx(data)  
+    grid, vy = getVy(data)  
+    grid, vz = getVz(data)
+    out[..., 0] = (gasGamma - 1)*(values[..., 4]
+                                  - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2)
+                                  - 0.5*(values[..., 5]**2 + values[..., 6]**2 + values[..., 7]**2)
+                                  )
+
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
+
+def getMhdMagPressure(data, gasGamma=5.0/3.0, overwrite=False, stack=False):
+    if stack:
+        overwrite = stack
+        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    #end
+    grid = data.getGrid()
+    values = data.getValues()
+    out = np.zeros(values[..., 0].shape)
+    out = out[..., np.newaxis]
+
+    out[..., 0] = 0.5*(values[..., 5]**2 + values[..., 6]**2 + values[..., 7]**2)
+
+    if overwrite:
+        data.push(grid, out)
+    else:
+        return grid, out
+    #end
+#end
