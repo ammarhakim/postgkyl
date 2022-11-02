@@ -36,8 +36,8 @@ def update(i, data, fig, offsets, kwargs):
 @click.command()
 @click.option('--use', '-u', default=None,
               help="Specify a tag to plot.")
-@click.option('--figure', '-f', default=None,
-              help="Specify figure (integer) to plot in.")
+@click.option('--grouptags', is_flag=True,
+              help="Group coresponding tagged frames.")
 @click.option('--squeeze', '-s', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
@@ -193,7 +193,8 @@ def animate(ctx, **kwargs):
   tagIterator = list(data.tagIterator(kwargs['use']))
   setFigure = False
   minSize = np.NAN
-  if kwargs['figure']:
+  
+  if kwargs['grouptags']:
     for tag in data.tagIterator(kwargs['use']):
       numDatasets = int(data.getNumDatasets(tag=tag))
       offsets.append(numDatasets)
@@ -203,11 +204,45 @@ def animate(ctx, **kwargs):
     tagIterator = list((kwargs['use'],))
     kwargs['legend'] = True
     setFigure = True
-    figNum = int(kwargs['figure'])
-  #end
+    figNum = int(0)
     
-  for tag in tagIterator:
-    dataList = list(data.iterator(tag=tag))
+    for tag in tagIterator:
+      dataList = list(data.iterator(tag=tag))
+      if setFigure:
+        figs.append(plt.figure(figNum, figsize=figsize))
+      else:
+        figs.append(plt.figure(figsize=figsize))
+      #end
+      if not kwargs['saveframes']:
+        anims.append(FuncAnimation(figs[-1], update,
+                                   int(np.nanmin((minSize, len(dataList)))),
+                                   fargs=(dataList, figs[-1],
+                                          offsets, kwargs),
+                                   interval=kwargs['interval'], blit=False))
+
+        if tag is not None:
+          fName = 'anim_{:s}.mp4'.format(tag)
+        else:
+          fName = 'anim.mp4'
+        #end
+        if kwargs['saveas']:
+          fName = str(kwargs['saveas'])
+        #end
+        if kwargs['save'] or kwargs['saveas']:
+          anims[-1].save(fName, writer='ffmpeg',
+                         fps=kwargs['fps'], dpi=kwargs['dpi'])
+        #end
+      else:
+        for i in range(int(np.nanmin((minSize, len(dataList))))):
+          update(i, dataList, figs[-1], offsets, kwargs)
+          plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
+                      dpi=kwargs['dpi'])
+        #end
+        kwargs['show'] = False # do not show in this case
+      #end
+    #end
+  else:
+    dataList = list(data.iterator(tag=kwargs['use']))
     if setFigure:
       figs.append(plt.figure(figNum, figsize=figsize))
     else:
@@ -219,12 +254,8 @@ def animate(ctx, **kwargs):
                                  fargs=(dataList, figs[-1],
                                         offsets, kwargs),
                                  interval=kwargs['interval'], blit=False))
-
-      if tag is not None:
-        fName = 'anim_{:s}.mp4'.format(tag)
-      else:
-        fName = 'anim.mp4'
-      #end
+      
+      fName = 'anim.mp4'
       if kwargs['saveas']:
         fName = str(kwargs['saveas'])
       #end

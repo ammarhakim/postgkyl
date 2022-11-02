@@ -23,7 +23,7 @@ def integrate(ctx, **kwargs):
             grid, values = diag.integrate(dat, kwargs['axis'])
             out = Data(tag=kwargs['tag'],
                        label=kwargs['label'],
-                       compgrid=ctx.obj['compgrid'],
+                       comp_grid=ctx.obj['compgrid'],
                        meta=dat.meta)
             out.push(grid, values)
             data.add(out)

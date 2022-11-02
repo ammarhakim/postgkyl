@@ -4,7 +4,6 @@ from . import util
 from . import ev_cmd
 from .animate import animate
 from .collect import collect
-from .copystyle import copystyle
 from .differentiate import differentiate
 from .euler import euler
 from .ev import ev
@@ -25,6 +24,7 @@ from .runchain import runchain
 from .select import select
 from .status import activate
 from .status import deactivate
+from .style import style
 from .tenmoment import tenmoment
 from .trajectory import trajectory
 from .val2coord import val2coord

@@ -1,5 +1,5 @@
 package:
-  name: postgkyl-experimental
+  name: postgkyl
   version: "1.6.8"
 
 source:
