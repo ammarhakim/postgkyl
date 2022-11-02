@@ -405,6 +405,8 @@ class GInterpNodal(GInterp):
     self.polyOrder = polyOrder
     if basisType == 'ns':
       self.basisType = 'serendipity'
+    elif basisType == 'gkhybrid':
+      self.basisType = 'gkhybrid'
     else:
       self.basisType = basisType
     #end

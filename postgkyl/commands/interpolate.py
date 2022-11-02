@@ -9,7 +9,7 @@ from postgkyl.modalDG import interpolate as interpFn
 
 @click.command(help='Interpolate DG data onto a uniform mesh.')
 @click.option('--basistype', '-b',
-              type=click.Choice(['ms', 'ns', 'mo', 'mt']),
+              type=click.Choice(['ms', 'ns', 'mo', 'mt', 'gkhyb']),
               help='Specify DG basis.')
 @click.option('--polyorder', '-p', type=click.INT,
               help='Specify polynomial order.')
@@ -45,6 +45,9 @@ def interpolate(ctx, **kwargs):
       isModal = True
     elif kwargs['basistype'] == 'mt':
       basisType = 'tensor'
+      isModal = True
+    elif kwargs['basistype'] == 'gkhyb':
+      basisType = 'gkhybrid'
       isModal = True
     #end
   #end
