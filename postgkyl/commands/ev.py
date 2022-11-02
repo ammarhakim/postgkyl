@@ -41,6 +41,7 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
  
     for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx,
                                         onlyActive=onlyActive):
+      tagNm = dat.getTag()
       if metaKey:
         grid = None
         if metaKey in dat.meta:
@@ -190,7 +191,7 @@ def ev(ctx, **kwargs):
   for s in chainSplit:
     isData, dataId = _data(ctx, gridStack, valueStack, metaStack, s, tags,
                            onlyActive)
-    if isData and len(dataId) > 0:
+    if isData and len(dataId) > 0 and dataId != outDataId:
       numDatasetsInChain += 1
       outDataId = dataId
     #end
@@ -207,7 +208,6 @@ def ev(ctx, **kwargs):
   elif len(valueStack) > 1:
     click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior", fg='yellow'))
   #end
-
   if numDatasetsInChain == 1 and kwargs['tag'] is None:
     cnt = 0
     tag = outDataId[0]
@@ -217,7 +217,7 @@ def ev(ctx, **kwargs):
       cnt += 1
     #end
   else:
-    tag = 'ev'
+    tag = outDataId[0]
     if kwargs['tag']:
       tag = kwargs['tag']
     else:

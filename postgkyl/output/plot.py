@@ -363,11 +363,15 @@ def plot(data, args=(),
         #end
       elif diverging:  #----------------------------------------
         vmax = np.abs(values[..., comp]*zscale).max()
-        im = cax.pcolormesh(grid[0]*xscale, grid[1]*yscale,
+        gridCC = _gridNodalToCellCentered(grid, cells)
+        g0 = gridCC[0]*xscale
+        g1 = gridCC[1]*yscale
+        im = cax.pcolormesh(g0, g1,
                             values[..., comp].transpose()*zscale,
                             vmax=vmax, vmin=-vmax,
                             cmap='RdBu_r',
                             edgecolors=edgecolors, linewidth=0.1,
+                            shading='auto',
                             *args)
         _colorbar(im, fig, cax, label=clabel)
       elif group is not None:  #--------------------------------
