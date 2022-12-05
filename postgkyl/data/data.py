@@ -605,7 +605,7 @@ class Data(object):
       if numComps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
-      if self.meta['polyOrder'] is not None and self.meta['basisType'] is not None:
+      if self.meta['polyOrder'] and self.meta['basisType']:
         output += '\n├─ DG info:\n'
         output += '│  ├─ Polynomial Order: {:d}\n'.format(self.meta['polyOrder'])
         if self.meta['isModal']:
@@ -618,6 +618,12 @@ class Data(object):
         output += '\n├─ Created with Gkeyll:\n'
         output += '│  ├─ Changeset: {:s}\n'.format(self.meta['changeset'])
         output += '│  └─ Build Date: {:s}'.format(self.meta['builddate'])
+      #end
+      for key in self.meta:
+        if key not in ['time', 'frame', 'changeset', 'builddate',
+                       'basisType', 'polyOrder', 'isModal']:
+          output += '\n├─ {:s}: {}'.format(key, self.meta[key])
+        #end
       #end
 
       #output += '\n- Contains attributes:\n  '
