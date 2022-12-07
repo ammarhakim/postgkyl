@@ -110,7 +110,7 @@ def getPxx(data, overwrite=False, stack=False):
 
     grid, rho = getDensity(data)
     grid, vx = getVx(data)
-    out[..., 0] = values[..., 4] - rho*vx*vx
+    out = values[..., 4, np.newaxis] - rho*vx*vx
 
     if overwrite:
         data.push(grid, out)
@@ -133,7 +133,7 @@ def getPxy(data, overwrite=False, stack=False):
     grid, vx = getVx(data)
     grid, vy = getVy(data)
 
-    out[..., 0] = values[..., 5] - rho*vx*vy
+    out = values[..., 5, np.newaxis] - rho*vx*vy
 
     if overwrite:
         data.push(grid, out)
@@ -156,7 +156,7 @@ def getPxz(data, overwrite=False, stack=False):
     grid, vx = getVx(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 6] - rho*vx*vz
+    out = values[..., 6, np.newaxis] - rho*vx*vz
 
     if overwrite:
         data.push(grid, out)
@@ -178,7 +178,7 @@ def getPyy(data, overwrite=False, stack=False):
     grid, rho = getDensity(data)
     grid, vy = getVy(data)
 
-    out[..., 0] = values[..., 7] - rho*vy*vy
+    out = values[..., 7, np.newaxis] - rho*vy*vy
 
     if overwrite:
         data.push(grid, out)
@@ -201,7 +201,7 @@ def getPyz(data, overwrite=False, stack=False):
     grid, vy = getVy(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 8] - rho*vy*vz
+    out = values[..., 8, np.newaxis] - rho*vy*vz
 
     if overwrite:
         data.push(grid, out)
@@ -223,7 +223,7 @@ def getPzz(data, overwrite=False, stack=False):
     grid, rho = getDensity(data)
     grid, vz = getVz(data)
 
-    out[..., 0] = values[..., 9] - rho*vz*vz
+    out = values[..., 9, np.newaxis] - rho*vz*vz
 
     if overwrite:
         data.push(grid, out)
