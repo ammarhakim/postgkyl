@@ -8,11 +8,14 @@ from postgkyl.commands.util import vlog, pushChain
 @click.command()
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
+@click.option('-m', '--mu0', help="Permeability of free space",
+              type=click.FLOAT, default=1.0)
 @click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel", "pressure", "magpressure"]))
+                                 "zvel", "vel", "Bx", "By", "Bz", "Bi", 
+                                 "magpressure", "pressure", "sound", "mach"]))
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -30,50 +33,45 @@ def mhd(ctx, **kwargs):
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
     vlog(ctx, 'mhd: Extracting {:s} from data set'.format(v))
+    overwrite = True
     if kwargs['tag']:
+      overwrite = False
       out = Data(tag=kwargs['tag'],
                 label=kwargs['label'],
                  comp_grid=ctx.obj['compgrid'],
                  meta=dat.meta)
-      if v == "density":
-        grid, values = diag.getDensity(dat)
-      elif v == "xvel":
-        grid, values = diag.getVx(dat)
-      elif v == "yvel":
-        grid, values = diag.getVy(dat)
-      elif v == "zvel":
-        grid, values = diag.getVz(dat)
-      elif v == "vel":
-        grid, values = diag.getVi(dat)
-      elif v == "pressure":
-        grid, values = diag.getMhdP(dat, gasGamma=kwargs['gas_gamma'])
-      elif v == "magpressure":
-        grid, values = diag.getMhdMagPressure(dat, gasGamma=kwargs['gas_gamma'])
-      else:
-        raise("NYI!")
-      #end
+    #end
+    if v == "density":
+      grid, values = diag.get_density(dat, overwrite=overwrite)
+    elif v == "xvel":
+      grid, values = diag.get_vx(dat, overwrite=overwrite)
+    elif v == "yvel":
+      grid, values = diag.get_vy(dat, overwrite=overwrite)
+    elif v == "zvel":
+      grid, values = diag.get_vz(dat, overwrite=overwrite)
+    elif v == "vel":
+      grid, values = diag.get_vi(dat, overwrite=overwrite)
+    elif v == "Bx":
+      grid, values = diag.get_mhd_Bx(dat, overwrite=overwrite)
+    elif v == "By":
+      grid, values = diag.get_mhd_By(dat, overwrite=overwrite)
+    elif v == "Bz":
+      grid, values = diag.get_mhd_Bz(dat, overwrite=overwrite)
+    elif v == "Bi":
+      grid, values = diag.get_mhd_Bi(dat, overwrite=overwrite)
+    elif v == "magpressure":
+      grid, values = diag.get_mhd_mag_p(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
+    elif v == "pressure":
+      grid, values = diag.get_mhd_p(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
+    elif v == "sound":
+      grid, values = diag.get_mhd_sound(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
+    elif v == "mach":
+      grid, values = diag.get_mhd_mach(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
+    #end
+    if kwargs['tag']:
       out.push(grid, values)
       data.add(out)
-    else:
-      if v == "density":
-        diag.getDensity(dat, overwrite=True)
-      elif v == "xvel":
-        diag.getVx(dat, overwrite=True)
-      elif v == "yvel":
-        diag.getVy(dat, overwrite=True)
-      elif v == "zvel":
-        diag.getVz(dat, overwrite=True)
-      elif v == "vel":
-        diag.getVi(dat, overwrite=True)
-      elif v == "pressure":
-        diag.getMhdP(dat, gasGamma=kwargs['gas_gamma'], overwrite=True)
-      elif v == "magpressure":
-        diag.getMhdMagPressure(dat, gasGamma=kwargs['gas_gamma'], overwrite=True)
-      else:
-        raise("NYI!")
-      #end
     #end
   #end
   vlog(ctx, 'Finishing mhd')
 #end
-    

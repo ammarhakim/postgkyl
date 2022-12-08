@@ -5,389 +5,494 @@ Postgkyl module for computing primitive variables from conservative variables
 import numpy as np
 
 def get_density(in_data=None,
-                in_grid=None, in_values=None, out_grid=None, out_values=None,
+                in_grid=None, in_values=None, 
                 overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
     in_values = in_data.getValues()
   #end
-  out_grid = np.copy(in_grid)
-  out_values = np.copy(in_values[..., 0, np.newaxis])
+  out_grid = in_grid
+  out_values = in_values[..., 0, np.newaxis]
   if overwrite:
     in_data.push(out_grid, out_values)
   #end
+  return out_grid, out_values
 #end
 
-def getVx(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 1].shape)
-    out = out[..., np.newaxis]
+def get_vx(in_data=None,
+           in_grid=None, in_values=None, 
+           overwrite=False):
 
-    out[..., 0] =  values[..., 1] / values[..., 0]
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  rhovx = in_values[..., 1, np.newaxis]
+  out_values = rhovx/rho
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getVy(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 2].shape)
-    out = out[..., np.newaxis]
+def get_vy(in_data=None,
+           in_grid=None, in_values=None, 
+           overwrite=False):
 
-    out[..., 0] = values[..., 2] / values[..., 0]
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  rhovy = in_values[..., 2, np.newaxis]
+  out_values = rhovy/rho
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getVz(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 3].shape)
-    out = out[..., np.newaxis]
+def get_vz(in_data=None,
+           in_grid=None, in_values=None, 
+           overwrite=False):
 
-    out[..., 0] = values[..., 3] / values[..., 0]
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  rhovz = in_values[..., 3, np.newaxis]
+  out_values = rhovz/rho
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getVi(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 1:4].shape)
+def get_vi(in_data=None,
+           in_grid=None, in_values=None, 
+           overwrite=False):
 
-    out[..., 0:3] = values[..., 1:4] / values[..., 0]
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  rhovi = in_values[..., 1:4, np.newaxis]
+  out_values = rhovi/rho
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPxx(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 4].shape)
-    out = out[..., np.newaxis]
+def get_pxx(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vx = getVx(data)
-    out = values[..., 4, np.newaxis] - rho*vx*vx
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
 
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 4, np.newaxis] - rho*vx*vx
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPxy(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 5].shape)
-    out = out[..., np.newaxis]
+def get_pxy(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vx = getVx(data)
-    grid, vy = getVy(data)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
 
-    out = values[..., 5, np.newaxis] - rho*vx*vy
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 5, np.newaxis] - rho*vx*vy
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPxz(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 6].shape)
-    out = out[..., np.newaxis]
+def get_pxz(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vx = getVx(data)
-    grid, vz = getVz(data)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
 
-    out = values[..., 6, np.newaxis] - rho*vx*vz
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 6, np.newaxis] - rho*vx*vz
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPyy(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 7].shape)
-    out = out[..., np.newaxis]
+def get_pyy(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vy = getVy(data)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
 
-    out = values[..., 7, np.newaxis] - rho*vy*vy
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 7, np.newaxis] - rho*vy*vy
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPyz(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 8].shape)
-    out = out[..., np.newaxis]
+def get_pyz(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vy = getVy(data)
-    grid, vz = getVz(data)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
 
-    out = values[..., 8, np.newaxis] - rho*vy*vz
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 8, np.newaxis] - rho*vy*vz
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPzz(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 9].shape)
-    out = out[..., np.newaxis]
+def get_pzz(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, rho = getDensity(data)
-    grid, vz = getVz(data)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
 
-    out = values[..., 9, np.newaxis] - rho*vz*vz
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  out_values = in_values[..., 9, np.newaxis] - rho*vz*vz
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getPij(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 4:10].shape)
+def get_pij(in_data=None,
+            in_grid=None, in_values=None, 
+            overwrite=False):
 
-    grid, Pxx = getPxx(data)
-    grid, Pxy = getPxy(data)
-    grid, Pxz = getPxz(data)
-    grid, Pyy = getPyy(data)
-    grid, Pyz = getPyz(data)
-    grid, Pzz = getPzz(data)
-                        
-    out[..., 0] = np.squeeze(Pxx)
-    out[..., 1] = np.squeeze(Pxy)
-    out[..., 2] = np.squeeze(Pxz)
-    out[..., 3] = np.squeeze(Pyy)
-    out[..., 4] = np.squeeze(Pyz)
-    out[..., 5] = np.squeeze(Pzz)
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_values = np.zeros(in_values[..., 4:10].shape)
+  
+  out_grid, pxx = get_pxx(in_data, in_grid, in_values)
+  out_grid, pxy = get_pxy(in_data, in_grid, in_values)
+  out_grid, pxz = get_pxz(in_data, in_grid, in_values)
+  out_grid, pyy = get_pyy(in_data, in_grid, in_values)
+  out_grid, pyz = get_pyz(in_data, in_grid, in_values)
+  out_grid, pzz = get_pzz(in_data, in_grid, in_values)
+                    
+  out_values[..., 0] = np.squeeze(pxx)
+  out_values[..., 1] = np.squeeze(pxy)
+  out_values[..., 2] = np.squeeze(pxz)
+  out_values[..., 3] = np.squeeze(pyy)
+  out_values[..., 4] = np.squeeze(pyz)
+  out_values[..., 5] = np.squeeze(pzz)  
 
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getP(data, gasGamma=5.0/3.0, numMom=None, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-    if numMom is None:
-        if data.getNumComps() == 5:
-            numMom = 5
-        elif data.getNumComps() == 10:
-            numMom = 10
-        else:
-            raise ValueError("Number of components appears to be {:d};"
-                             "it needs to be specified using 'numMom' "
-                             "(5 or 10)".format(data.getNumComps()))
-        #end
-    #end
-
-    if numMom == 5:
-        grid, rho = getDensity(data)
-        grid, vx = getVx(data)  
-        grid, vy = getVy(data)  
-        grid, vz = getVz(data)       
-        out[..., 0] = (gasGamma - 1)*(values[..., 4] - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2))
-    elif numMom == 10:
-        grid, Pxx = getPxx(data)  
-        grid, Pyy = getPyy(data)  
-        grid, Pzz = getPzz(data) 
-        out[..., 0] = (Pxx[..., 0] + Pyy[..., 0] + Pzz[..., 0]) / 3.0
-    #end
-
-    if overwrite:
-        data.push(grid, out)
+def get_p(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, numMom=None, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  if numMom is None:
+    if in_data.getNumComps() == 5:
+      numMom = 5
+    elif in_data.getNumComps() == 10:
+      numMom = 10
     else:
-        return grid, out
+      raise ValueError("Number of components appears to be {:d};"
+                       "it needs to be specified using 'numMom' "
+                       "(5 or 10)".format(in_data.getNumComps()))
     #end
+  #end
+
+  if numMom == 5:
+    out_grid, rho = get_density(in_data, in_grid, in_values)
+    out_grid, vx = get_vx(in_data, in_grid, in_values)
+    out_grid, vy = get_vy(in_data, in_grid, in_values)
+    out_grid, vz = get_vz(in_data, in_grid, in_values)
+     
+    out_values = (gasGamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2))
+  elif numMom == 10:
+    out_grid, pxx = get_pxx(in_data, in_grid, in_values)
+    out_grid, pyy = get_pyy(in_data, in_grid, in_values)
+    out_grid, pzz = get_pzz(in_data, in_grid, in_values)
+
+    out_values = (pxx + pyy + pzz) / 3.0
+  #end
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getKE(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-    grid, pr = getP(data, gasGamma, numMom)
-
-    out[..., 0] = values[..., 4] - pr[..., 0]/(gasGamma-1)
-
-    if overwrite:
-        data.push(grid, out)
+def get_ke(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, numMom=None, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  if numMom is None:
+    if in_data.getNumComps() == 5:
+      numMom = 5
+    elif in_data.getNumComps() == 10:
+      numMom = 10
     else:
-        return grid, out
+      raise ValueError("Number of components appears to be {:d};"
+                       "it needs to be specified using 'numMom' "
+                       "(5 or 10)".format(in_data.getNumComps()))
     #end
+  #end
+
+  if numMom == 5:
+    out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
+
+    out_values = in_values[..., 4, np.newaxis] - pr/(gasGamma - 1)
+  elif numMom == 10:
+    out_grid, rho = get_density(in_data, in_grid, in_values)
+    out_grid, vx = get_vx(in_data, in_grid, in_values)
+    out_grid, vy = get_vy(in_data, in_grid, in_values)
+    out_grid, vz = get_vz(in_data, in_grid, in_values)
+
+    out_values = 0.5*rho*(vx**2 + vy**2 + vz**2)
+  #end
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end  
+
+def get_sound(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, numMom=None, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
+
+  out_values = np.sqrt(gasGamma*pr/rho)
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end 
+
+def get_mach(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, numMom=None, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
+  out_grid, cs = get_sound(in_data, in_grid, in_values, gasGamma, numMom)
+
+  out_values = np.sqrt(vx**2+vy**2+vz**2)/cs
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getMach(data, gasGamma=5.0/3, numMom=None, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-
-    grid, rho = getDensity(data)
-    grid, vx = getVx(data)  
-    grid, vy = getVy(data)  
-    grid, vz = getVz(data) 
-    grid, pr = getP(data, gasGamma, numMom)
-
-    # Sound speed cs = sqrt(gasGamma*pr/rho)
-    out[..., 0] = np.sqrt(vx[..., 0]**2+vy[..., 0]**2+vz[..., 0]**2)/np.sqrt(gasGamma*pr[..., 0]/rho[..., 0])
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+def get_mhd_Bx(in_data=None,
+               in_grid=None, in_values=None, 
+               overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid = in_grid
+  out_values = in_values[..., 5, np.newaxis]
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getMhdP(data, gasGamma=5.0/3.0, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-    grid, rho = getDensity(data)
-    grid, vx = getVx(data)  
-    grid, vy = getVy(data)  
-    grid, vz = getVz(data)
-    out[..., 0] = (gasGamma - 1)*(values[..., 4]
-                                  - 0.5*rho[..., 0]*(vx[..., 0]**2 + vy[..., 0]**2 + vz[..., 0]**2)
-                                  - 0.5*(values[..., 5]**2 + values[..., 6]**2 + values[..., 7]**2)
-                                  )
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+def get_mhd_By(in_data=None,
+               in_grid=None, in_values=None, 
+               overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid = in_grid
+  out_values = in_values[..., 6, np.newaxis]
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
 
-def getMhdMagPressure(data, gasGamma=5.0/3.0, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
+def get_mhd_Bz(in_data=None,
+               in_grid=None, in_values=None, 
+               overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid = in_grid
+  out_values = in_values[..., 7, np.newaxis]
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end
 
-    out[..., 0] = 0.5*(values[..., 5]**2 + values[..., 6]**2 + values[..., 7]**2)
+def get_mhd_Bi(in_data=None,
+           in_grid=None, in_values=None, 
+           overwrite=False):
 
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid = in_grid
+  out_values = in_values[..., 5:8, np.newaxis]
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end
+
+def get_mhd_mag_p(in_data=None,
+          in_grid=None, in_values=None, 
+          mu0=1.0, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, Bx = get_mhd_Bx(in_data, in_grid, in_values)
+  out_grid, By = get_mhd_By(in_data, in_grid, in_values)
+  out_grid, Bz = get_mhd_Bz(in_data, in_grid, in_values)
+
+  out_values = 0.5*(Bx**2 + By**2 + Bz**2)/mu0
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end  
+
+def get_mhd_p(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, mu0=1.0, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
+  out_grid, mag_p = get_mhd_mag_p(in_data, in_grid, in_values, mu0)
+
+  out_values = (gasGamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2) - mag_p)
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end   
+
+def get_mhd_sound(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, mu0=1.0, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, pr = get_mhd_p(in_data, in_grid, in_values, gasGamma, mu0)
+
+  out_values = np.sqrt(gasGamma*pr/rho)
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end  
+
+def get_mhd_mach(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, mu0=1.0, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, vx = get_vx(in_data, in_grid, in_values)
+  out_grid, vy = get_vy(in_data, in_grid, in_values)
+  out_grid, vz = get_vz(in_data, in_grid, in_values)
+  out_grid, cs = get_mhd_sound(in_data, in_grid, in_values, gasGamma, mu0)
+
+  out_values = np.sqrt(vx**2+vy**2+vz**2)/cs
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
 #end
