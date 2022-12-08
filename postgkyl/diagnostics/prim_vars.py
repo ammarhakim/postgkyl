@@ -308,6 +308,26 @@ def get_ke(in_data=None,
   return out_grid, out_values
 #end  
 
+def get_temp(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, numMom=None, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
+
+  out_values = pr/rho
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end 
+
 def get_sound(in_data=None,
           in_grid=None, in_values=None, 
           gasGamma=5.0/3.0, numMom=None, 
@@ -454,6 +474,26 @@ def get_mhd_p(in_data=None,
   #end
   return out_grid, out_values
 #end   
+
+def get_mhd_temp(in_data=None,
+          in_grid=None, in_values=None, 
+          gasGamma=5.0/3.0, mu0=1.0, 
+          overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+
+  out_grid, rho = get_density(in_data, in_grid, in_values)
+  out_grid, pr = get_mhd_p(in_data, in_grid, in_values, gasGamma, mu0)
+
+  out_values = pr/rho
+
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
+  return out_grid, out_values
+#end 
 
 def get_mhd_sound(in_data=None,
           in_grid=None, in_values=None, 

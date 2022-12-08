@@ -15,7 +15,7 @@ from postgkyl.commands.util import vlog, pushChain
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "Bx", "By", "Bz", "Bi", 
-                                 "magpressure", "pressure", "sound", "mach"]))
+                                 "magpressure", "pressure", "temp", "sound", "mach"]))
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -63,6 +63,8 @@ def mhd(ctx, **kwargs):
       grid, values = diag.get_mhd_mag_p(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
     elif v == "pressure":
       grid, values = diag.get_mhd_p(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
+    elif v == "temp":
+      grid, values = diag.get_mhd_temp(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
     elif v == "sound":
       grid, values = diag.get_mhd_sound(dat, gasGamma=kwargs['gas_gamma'], mu0=kwargs['mu0'], overwrite=overwrite)
     elif v == "mach":

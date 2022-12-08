@@ -12,7 +12,7 @@ from postgkyl.commands.util import vlog, pushChain
               type=click.Choice(["density", "xvel", "yvel",
                                  "zvel", "vel", "pressureTensor",
                                  "pxx", "pxy", "pxz", "pyy", "pyz", "pzz",
-                                 "pressure", "ke", "sound", "mach"]))
+                                 "pressure", "temp", "ke", "sound", "mach"]))
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -65,6 +65,8 @@ def tenmoment(ctx, **kwargs):
       grid, values = diag.get_p(dat, numMom=10, overwrite=overwrite)
     elif v == "ke":
       grid, values = diag.get_ke(dat, numMom=10, overwrite=overwrite)
+    elif v == "temp":
+      grid, values = diag.get_temp(dat, numMom=10, overwrite=overwrite)
     elif v == "sound":
       grid, values = diag.get_sound(dat, numMom=10, overwrite=overwrite)
     elif v == "mach":

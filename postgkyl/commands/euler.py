@@ -12,7 +12,7 @@ from postgkyl.commands.util import vlog, pushChain
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel", "pressure", "ke", "sound", "mach"]))
+                                 "zvel", "vel", "pressure", "ke", "temp", "sound", "mach"]))
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -51,6 +51,8 @@ def euler(ctx, **kwargs):
       grid, values = diag.get_p(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=overwrite)
     elif v == "ke":
       grid, values = diag.get_ke(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=overwrite)
+    elif v == "temp":
+      grid, values = diag.get_temp(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=overwrite)
     elif v == "sound":
       grid, values = diag.get_sound(dat, gasGamma=kwargs['gas_gamma'], numMom=5, overwrite=overwrite)
     elif v == "mach":
