@@ -8,7 +8,7 @@ from postgkyl.data.load_gkyl import load_gkyl
 from postgkyl.utils import idxParser
 
 
-class Data(object):
+class GData(object):
   """Provides interface to Gkeyll output data.
 
   Data serves as a baseline interface to Gkeyll data. It is used for
@@ -112,14 +112,14 @@ class Data(object):
 
   #-----------------------------------------------------------------
   #-- File Loading -------------------------------------------------
-  def _createOffsetCountBp(self, bpVar, zs, comp):
+  def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
     num_dims = len(bpVar.dims)
     count = np.array(bpVar.dims)
     offset = np.zeros(num_dims, np.int)
     cnt = 0
     for d, z in enumerate(zs):
       if d < num_dims-1 and z is not None:  # Last dim stores comp
-        z = idxParser(z)
+        z = idxParser(z, grid[d])
         if isinstance(z, int):
           offset[d] = z
           count[d] = 1
@@ -159,25 +159,16 @@ class Data(object):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
-      import tables
-      fh = tables.open_file(self.file_name, 'r')
-      if not '/StructGridField' in fh:
-        fh.close()
+      status, param = load_h5(self.file_name, self.meta)
+      if status:
+        lower = params[0]
+        upper = params[1]
+        cells = params[2]
+        self._values = params[3]
+      else:
         self._loadSequence()
         return
       #end
-            
-      # Get the atributes
-      lower = fh.root.StructGrid._v_attrs.vsLowerBounds
-      upper = fh.root.StructGrid._v_attrs.vsUpperBounds
-      cells = fh.root.StructGrid._v_attrs.vsNumCells
-      # Load data ...
-      self._values = fh.root.StructGridField.read()
-      # ... and the time-stamp
-      if '/timeData' in fh:
-        self.meta['time'] = fh.root.timeData._v_attrs.vsTime
-      #end
-      fh.close()
     elif extension == 'bp':
       import adios
       fh = adios.file(self.file_name)
@@ -253,12 +244,16 @@ class Data(object):
       #end
 
       # Load data
+      num_dims = len(cells)
       var = adios.var(fh, self._var_name)
-      offset, count = self._createOffsetCountBp(var, axes, comp)
+      grid = [np.linspace(lower[d],
+                          upper[d],
+                          cells[d]+1)
+              for d in range(num_dims)]
+      offset, count = self._createOffsetCountBp(var, axes, comp, grid)
       self._values = var.read(offset=offset, count=count, nsteps=1)
 
       # Adjust boundaries for 'offset' and 'count'
-      num_dims = len(cells)
       dz = (upper - lower) / cells
       if offset:
         if self._gridType == 'uniform':

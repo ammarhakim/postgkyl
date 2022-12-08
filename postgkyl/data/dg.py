@@ -4,7 +4,7 @@ from glob import glob
 import tables
 import numpy as np
 
-from postgkyl.data.data import Data
+from postgkyl.data import GData
 from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 

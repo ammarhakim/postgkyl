@@ -23,7 +23,7 @@ def _findCellIndex(array, value):
   return int(idx)
 #end
 
-def _stringToIndex(value, array=None, nodal=True):
+def _stringToIndex(value, array=None, nodal=False):
   if isinstance(value, str):
     if value.isdigit():
       return int(value)
@@ -39,7 +39,7 @@ def _stringToIndex(value, array=None, nodal=True):
   #end
 #end
 
-def idxParser(value, array=None, nodal=True):
+def idxParser(value, array=None, nodal=False):
   idx = None
   if isinstance(value, int):
     idx = value
