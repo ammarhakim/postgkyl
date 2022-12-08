@@ -21,6 +21,7 @@ from .prim_vars import get_pzz
 from .prim_vars import get_pij
 from .prim_vars import get_p
 from .prim_vars import get_ke
+from .prim_vars import get_temp
 from .prim_vars import get_sound
 from .prim_vars import get_mach
 from .prim_vars import get_mhd_Bx
@@ -29,6 +30,7 @@ from .prim_vars import get_mhd_Bz
 from .prim_vars import get_mhd_Bi
 from .prim_vars import get_mhd_mag_p
 from .prim_vars import get_mhd_p
+from .prim_vars import get_mhd_temp
 from .prim_vars import get_mhd_sound
 from .prim_vars import get_mhd_mach
 
