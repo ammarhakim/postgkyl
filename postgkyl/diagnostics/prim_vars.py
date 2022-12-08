@@ -4,23 +4,18 @@ Postgkyl module for computing primitive variables from conservative variables
 """
 import numpy as np
 
-def getDensity(data, overwrite=False, stack=False):
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-    #end
-    grid = data.getGrid()
-    values = data.getValues()
-    out = np.zeros(values[..., 0].shape)
-    out = out[..., np.newaxis]
-
-    out[..., 0] = values[..., 0]
-
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+def get_density(in_data=None,
+                in_grid=None, in_values=None, out_grid=None, out_values=None,
+                overwrite=False):
+  if in_data:
+    in_grid = in_data.getGrid()
+    in_values = in_data.getValues()
+  #end
+  out_grid = np.copy(in_grid)
+  out_values = np.copy(in_values[..., 0, np.newaxis])
+  if overwrite:
+    in_data.push(out_grid, out_values)
+  #end
 #end
 
 def getVx(data, overwrite=False, stack=False):
