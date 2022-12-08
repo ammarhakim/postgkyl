@@ -4,7 +4,7 @@ Postgkyl module for computing the magnitude squared of an array
 """
 import numpy as np
 
-def magsq(data, coords='0:3', overwrite=False, stack=False):
+def mag_sq(in_data=None, in_grid=None, in_values=None, coords='0:3', overwrite=False):
     """Function to compute the magnitude squared of an array
 
     Parameters:
@@ -17,21 +17,20 @@ def magsq(data, coords='0:3', overwrite=False, stack=False):
     Assumes that the number of components is the last dimension.
 
     """
-    if stack:
-        overwrite = stack
-        print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
+    if in_data:
+        in_grid = in_data.getGrid()
+        in_values = in_data.getValues()
     #end
-    grid = data.getGrid()
     # Because coords is an input string, need to split and parse it to get the right coordinates
     s = coords.split(':')
-    values = data.getValues()[...,slice(int(s[0]), int(s[1]))]
+    values = in_values[...,slice(int(s[0]), int(s[1]))]
     # Output is a scalar, so dimensionality should not include number of components.
     out = np.zeros(values[...,0].shape)
     out = np.sum(values*values, axis=-1)
     out = out[..., np.newaxis]
     if overwrite:
-        data.push(grid, out)
+        in_data.push(in_grid, out)
     else:
-        return grid, out
+        return in_grid, out
     #end
 #end

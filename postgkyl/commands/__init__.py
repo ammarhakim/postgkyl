@@ -32,6 +32,7 @@ from .write import write
 
 from . import temp
 from .agyro import agyro
+from .agyro import gkyl_10m_agyro
 
 from .bparrotate import bparrotate
 from .bperprotate import bperprotate

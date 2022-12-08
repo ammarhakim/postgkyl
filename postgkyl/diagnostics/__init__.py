@@ -32,9 +32,16 @@ from .prim_vars import get_mhd_p
 from .prim_vars import get_mhd_sound
 from .prim_vars import get_mhd_mach
 
+from .pressure_diagnostics import get_p_par
+from .pressure_diagnostics import get_gkyl_10m_p_par
+from .pressure_diagnostics import get_p_perp
+from .pressure_diagnostics import get_gkyl_10m_p_perp
+from .pressure_diagnostics import get_agyro
+from .pressure_diagnostics import get_gkyl_10m_agyro
+
 from .accumulate_current import accumulate_current
 from .energetics import energetics
-from .magsq import magsq
+from .magsq import mag_sq
 from .parrotate import parrotate
 from .perprotate import perprotate
 from .rel_change import rel_change

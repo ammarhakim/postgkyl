@@ -1,6 +1,7 @@
 import click
 import numpy as np
 
+from postgkyl.data import Data
 import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
 
