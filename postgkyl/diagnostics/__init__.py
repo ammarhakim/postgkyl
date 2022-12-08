@@ -6,7 +6,19 @@ from .fft import fft
 #from .fieldParticleCorrelation import Ce
 # import growth functions
 from .growth import fitGrowth
-# import primitiva variable functions
+
+# import parameter computation functions
+from .params import get_magB
+from .params import get_vt
+from .params import get_vA
+from .params import get_omegaC
+from .params import get_omegaP
+from .params import get_d
+from .params import get_lambdaD
+from .params import get_rho
+from .params import get_beta
+
+# import primitive variable functions
 from .prim_vars import get_density
 from .prim_vars import get_vx
 from .prim_vars import get_vy
