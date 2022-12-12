@@ -8,7 +8,7 @@ from postgkyl.diagnostics import get_agyro, get_gkyl_10m_agyro
 
 @click.command()
 @click.option('--measure', '-m', default='frobenius', show_default=True,
-              type=click.Choice(['swidak', 'frobenius']),
+              type=click.Choice(['swisdak', 'frobenius']),
               help='Specify how to calculate agyrotropy.')
 @click.option('--pressure', '-p',
               default='pressure', show_default=True,
@@ -64,7 +64,7 @@ def agyro(ctx, **kwargs):
 @click.option('--label', '-l',
               help='Custom label for the result')
 @click.pass_context
-def gkyl_10m_agyro(ctx, **kwargs):
+def mom_agyro(ctx, **kwargs):
   """Compute a measure of agyrotropy. Default measure is taken from
   Swisdak 2015. Optionally computes agyrotropy as Frobenius norm of
   agyrotropic pressure tensor.
