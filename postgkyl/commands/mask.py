@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import Data
+from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command(help='Mask data with specified Gkeyll mask file.')
@@ -20,7 +20,7 @@ def mask(ctx, **kwargs):
     data = ctx.obj('data')
     
     if kwargs['filename']:
-        maskFld = Data(kwargs['filename']).getValues()
+        maskFld = GData(kwargs['filename']).getValues()
     #end
 
     for dat in data.interator(kwargs['use']):

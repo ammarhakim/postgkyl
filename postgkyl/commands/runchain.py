@@ -5,19 +5,20 @@ import click
               help="Specify file with stored chain (default 'pgkylchain.dat')")
 @click.pass_context
 def runchain(ctx, filename):
-    if filename is None:
-        fn = ctx.obj['savechainPath']
-    else:
-        home = os.path.expanduser('~')
-        fn = home + '/.pgkyl/' + filename
+  if filename is None:
+    fn = ctx.obj['savechainPath']
+  else:
+    home = os.path.expanduser('~')
+    fn = home + '/.pgkyl/' + filename
+  #end
+  if os.path.isfile(fn):
+    fh = open(fn, 'r')
+    for line in fh.readlines():
+      eval('ctx.invoke(cmd.{:s})'.format(line))
     #end
-    if os.path.isfile(fn):
-        fh = open(fn, 'r')
-        for line in fh.readlines():
-            eval('ctx.invoke(cmd.{:s})'.format(line))
-        fh.close()
-    else:
-        raise NameError("File with stored chain ({:s}) does not exist".
-                        format(filename))
-    #end
+    fh.close()
+  else:
+    raise NameError("File with stored chain ({:s}) does not exist".
+                    format(filename))
+  #end
 #end

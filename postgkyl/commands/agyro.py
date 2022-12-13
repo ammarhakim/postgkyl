@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import Data
+from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.diagnostics import get_agyro, get_gkyl_10m_agyro
 
@@ -39,10 +39,10 @@ def agyro(ctx, **kwargs):
   for pressure, bfield in zip(data.iterator(kwargs['pressure']),
                               data.iterator(kwargs['bfield'])):
     grid, agyro = get_agyro(p_data=pressure, b_data=bfield, measure=kwargs['measure'])
-    out = Data(tag=tag,
-               label=kwargs['label'],
-               comp_grid=ctx.obj['compgrid'],
-               meta=pressure.meta)
+    out = GData(tag=tag,
+                label=kwargs['label'],
+                comp_grid=ctx.obj['compgrid'],
+                meta=pressure.meta)
     out.push(grid, agyro)
     data.add(out)
   #end

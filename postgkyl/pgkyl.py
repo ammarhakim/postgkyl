@@ -11,7 +11,6 @@ import numpy as np
 
 from postgkyl.commands import DataSpace
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
 import postgkyl.commands as cmd
 
 # Version print helper

@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 import postgkyl.diagnostics as diag
-from postgkyl.data import Data
+from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
@@ -36,10 +36,10 @@ def mhd(ctx, **kwargs):
     overwrite = True
     if kwargs['tag']:
       overwrite = False
-      out = Data(tag=kwargs['tag'],
-                label=kwargs['label'],
-                 comp_grid=ctx.obj['compgrid'],
-                 meta=dat.meta)
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
     #end
     if v == "density":
       grid, values = diag.get_density(dat, overwrite=overwrite)

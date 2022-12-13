@@ -3,6 +3,7 @@
 Postgkyl module for computing primitive variables from conservative variables
 """
 import numpy as np
+from postgkyl.utils import input_parser
 
 def get_density(in_data=None,
                 in_grid=None, in_values=None, 
@@ -22,7 +23,6 @@ def get_density(in_data=None,
 def get_vx(in_data=None,
            in_grid=None, in_values=None, 
            overwrite=False):
-
   if in_data:
     in_grid = in_data.getGrid()
     in_values = in_data.getValues()
@@ -39,7 +39,6 @@ def get_vx(in_data=None,
 def get_vy(in_data=None,
            in_grid=None, in_values=None, 
            overwrite=False):
-
   if in_data:
     in_grid = in_data.getGrid()
     in_values = in_data.getValues()
@@ -56,7 +55,6 @@ def get_vy(in_data=None,
 def get_vz(in_data=None,
            in_grid=None, in_values=None, 
            overwrite=False):
-
   if in_data:
     in_grid = in_data.getGrid()
     in_values = in_data.getValues()

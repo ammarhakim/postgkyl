@@ -2,7 +2,7 @@ import click
 
 import postgkyl.diagnostics as diag
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 
 @click.command()
 @click.option('-p', '--psd', is_flag=True,
@@ -26,10 +26,10 @@ def fft(ctx, **kwargs):
 
     for dat in data.iterator(kwargs['use']):
         if kwargs['tag']:
-            out = Data(tag=kwargs['tag'],
-                       label=kwargs['label'],
-                       comp_grid=ctx.obj['compgrid'],
-                       meta=dat.meta)
+            out = GData(tag=kwargs['tag'],
+                        label=kwargs['label'],
+                        comp_grid=ctx.obj['compgrid'],
+                        meta=dat.meta)
             grid, values = diag.fft(dat, kwargs['psd'], kwargs['iso'])
             out.push(grid, values)
             data.add(out)
