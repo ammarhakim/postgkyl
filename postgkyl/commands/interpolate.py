@@ -3,9 +3,7 @@ import numpy as np
 
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
-
-from postgkyl.modalDG import interpolate as interpFn
+from postgkyl.data import GData
 
 @click.command(help='Interpolate DG data onto a uniform mesh.')
 @click.option('--basistype', '-b',
@@ -23,8 +21,6 @@ from postgkyl.modalDG import interpolate as interpFn
               help="Custom label for the result")
 @click.option('--read', '-r', type=click.BOOL,
               help='Read from general interpolation file.')
-@click.option('-n', '--new', is_flag=True,
-              help="for testing purposes")
 @click.pass_context
 def interpolate(ctx, **kwargs):
   vlog(ctx, 'Starting interpolate')
@@ -70,20 +66,16 @@ def interpolate(ctx, **kwargs):
     numNodes = dg.numNodes
     numComps = int(dat.getNumComps() / numNodes)
         
-    if not kwargs['new']:
-      if kwargs['tag']:
-        out = Data(tag=kwargs['tag'],
-                   label=kwargs['label'],
-                   comp_grid=ctx.obj['compgrid'],
-                   meta=dat.meta)
-        grid, values = dg.interpolate(tuple(range(numComps)))
-        out.push(grid, values)
-        data.add(out)
-      else:
-        dg.interpolate(tuple(range(numComps)), overwrite=True)
-      #end
+    if kwargs['tag']:
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
+      grid, values = dg.interpolate(tuple(range(numComps)))
+      out.push(grid, values)
+      data.add(out)
     else:
-      interpFn(dat, kwargs['polyorder'])
+      dg.interpolate(tuple(range(numComps)), overwrite=True)
     #end
   #end
   vlog(ctx, 'Finishing interpolate')

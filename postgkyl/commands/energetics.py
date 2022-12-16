@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command(help='Decomposes the components of the energy \
@@ -34,10 +34,10 @@ def energetics(ctx, **kwargs):
                             data.iterator(kwargs['field'])):
         grid = em.getGrid()
         outEnergetics = np.zeros(em.getValues()[...,0:7].shape)
-        out = Data(tag=kwargs['tag'],
-                   comp_grid=ctx.obj['compgrid'],
-                   label=kwargs['label'],
-                   meta=em.meta)
+        out = GData(tag=kwargs['tag'],
+                    comp_grid=ctx.obj['compgrid'],
+                    label=kwargs['label'],
+                    meta=em.meta)
         grid, outEnergetics = diag.energetics(elc, ion, em)
         out.push(grid, outEnergetics)
         data.add(out)

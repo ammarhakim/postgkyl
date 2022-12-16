@@ -1,7 +1,7 @@
 import click
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command(help='Magnitude squared of an input array |A|^2 = sum_i A_i^2')
@@ -21,10 +21,10 @@ def magsq(ctx, **kwargs):
     
     for dat in data.iterator(kwargs['use']):
         if kwargs['tag']:
-            out = Data(tag=kwargs['tag'],
-                       label=kwargs['label'],
-                       comp_grid=ctx.obj['compgrid'],
-                       meta=dat.meta)
+            out = GData(tag=kwargs['tag'],
+                        label=kwargs['label'],
+                        comp_grid=ctx.obj['compgrid'],
+                        meta=dat.meta)
             grid, values = diag.magsq(dat)
             out.push(grid, values)
             data.add(out)

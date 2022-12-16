@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command(help='Computes the relative change between two datasets')
@@ -23,25 +23,25 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def relchange(ctx, **kwargs):
-    vlog(ctx, 'Starting relative change')
-    pushChain(ctx, 'relchange', **kwargs)
+  vlog(ctx, 'Starting relative change')
+  pushChain(ctx, 'relchange', **kwargs)
     
-    data = ctx.obj['data'] # shortcut
-    for tag in data.tagIterator(kwargs['use']):
-        reference = data.getDataset(tag, kwargs['index'])
-        for dat in data.iterator(tag):
-            if kwargs['tag']:
-                out = Data(tag=kwargs['tag'],
-                           compgrid=ctx.obj['compgrid'],
-                           meta=dat.meta)
-                grid, values = diag.rel_change(reference, dat, kwargs['comp'])
-                dat.deactivate()
-                out.push(grid, values)
-                data.add(out)
-            else:
-                diag.rel_change(reference, dat, kwargs['comp'], overwrite=True)
-            #end
-        #end
+  data = ctx.obj['data'] # shortcut
+  for tag in data.tagIterator(kwargs['use']):
+    reference = data.getDataset(tag, kwargs['index'])
+    for dat in data.iterator(tag):
+      if kwargs['tag']:
+        out = GData(tag=kwargs['tag'],
+                    compgrid=ctx.obj['compgrid'],
+                    meta=dat.meta)
+        grid, values = diag.rel_change(reference, dat, kwargs['comp'])
+        dat.deactivate()
+        out.push(grid, values)
+        data.add(out)
+      else:
+        diag.rel_change(reference, dat, kwargs['comp'], overwrite=True)
+      #end
     #end
-    vlog(ctx, 'Finishing relative change')
+  #end
+  vlog(ctx, 'Finishing relative change')
 #end

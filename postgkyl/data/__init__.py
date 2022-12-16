@@ -1,5 +1,5 @@
 # import data handler
-from .data import Data 
+from .gdata import GData 
 # import interpolators
 #from .dg import GInterpZeroOrder
 from .dg import GInterpNodal
@@ -13,7 +13,4 @@ from .select import select
 from . import recovData
 
 from .load_gkyl import load_gkyl
-
-
-# legacy calls
-from .data import Data as GData
+from .load_h5 import load_h5

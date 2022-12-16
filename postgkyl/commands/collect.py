@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.data import Data
+from postgkyl.data import GData
 from postgkyl.commands.util import vlog, pushChain
 
 @click.command()
@@ -112,9 +112,9 @@ def collect(ctx, **kwargs):
                 grid[i].insert(0, np.array(time[i]))
             #end
 
-            out = Data(tag=outTag,
-                       label=label,
-                       comp_grid=ctx.obj['compgrid'])
+            out = GData(tag=outTag,
+                        label=label,
+                        comp_grid=ctx.obj['compgrid'])
             out.push(grid[i], values[i])
             data.add(out)
         #end

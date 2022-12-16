@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.data import GInterpModal
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 
 @click.command(help='Interpolate DG data on a uniform mesh')
 @click.option('--use', '-u',
@@ -48,10 +48,10 @@ def recovery(ctx, **kwargs):
         #vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
         #dg.recovery(tuple(range(numComps)), stack=True)
         if kwargs['tag']:
-            out = Data(tag=kwargs['tag'],
-                       label=kwargs['label'],
-                       comp_grid=ctx.obj['compgrid'],
-                       meta=dat.meta)
+            out = GData(tag=kwargs['tag'],
+                        label=kwargs['label'],
+                        comp_grid=ctx.obj['compgrid'],
+                        meta=dat.meta)
             grid, values = dg.recovery(0, kwargs['c1'])
             out.push(grid, values)
             data.add(out)

@@ -1,7 +1,7 @@
 import click
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command()
@@ -35,10 +35,10 @@ def bparrotate(ctx, **kwargs):
         # Magnetic field is components 3, 4, & 5 in field array
         grid, outrot = diag.parrotate(a, rot, '3:6')
         # Create new GData structure with appropriate outtag and labels to store output.
-        out = Data(tag=kwargs['tag'],
-                   comp_grid=ctx.obj['compgrid'],
-                   label=kwargs['label'],
-                   meta=a.meta)
+        out = GData(tag=kwargs['tag'],
+                    comp_grid=ctx.obj['compgrid'],
+                    label=kwargs['label'],
+                    meta=a.meta)
         out.push(grid, outrot)
         data.add(out)
     #end

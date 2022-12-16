@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.diagnostics.growth import fitGrowth, exp2
-from postgkyl.data import Data
+from postgkyl.data import GData
 
 #---------------------------------------------------------------------
 #-- Growth -----------------------------------------------------------
@@ -108,10 +108,10 @@ def growth(ctx, **kwargs):
     #end
     
     if kwargs['tag']:
-      out = Data(tag=kwargs['tag'],
-                 label=kwargs['label'],
-                 comp_grid=ctx.obj['compgrid'],
-                 meta=dat.meta)
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
       out.push([ks], growth_rates[..., np.newaxis])
       data.add(out)
     #end

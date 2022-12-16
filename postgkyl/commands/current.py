@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command(help='Accumulate current, sum over species of charge multiplied by flow')
@@ -28,10 +28,10 @@ def current(ctx, **kwargs):
         outcurrent = np.zeros(dat.getValues().shape)
         grid, outcurrent = diag.accumulate_current(dat, kwargs['qbym'])
         dat.deactivate()
-        out = Data(tag=kwargs['tag'],
-                   comp_grid=ctx.obj['compgrid'],
-                   label=kwargs['label'],
-                   meta=dat.meta)
+        out = GData(tag=kwargs['tag'],
+                    comp_grid=ctx.obj['compgrid'],
+                    label=kwargs['label'],
+                    meta=dat.meta)
         out.push(grid, outcurrent)
         data.add(out)
     #end

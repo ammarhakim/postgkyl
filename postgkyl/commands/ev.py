@@ -4,7 +4,7 @@ import importlib
 from os import path
 import sys
 
-from postgkyl.data import Data
+from postgkyl.data import GData
 from postgkyl.data import select as pselect
 from postgkyl.commands.util import vlog, pushChain
 from postgkyl.commands import ev_cmd as cmdBase
@@ -224,10 +224,10 @@ def ev(ctx, **kwargs):
       data.deactivateAll()
     #end
     for grid, values, meta in zip(gridStack[-1], valueStack[-1], metaStack[-1]):
-      out = Data(tag=tag,
-                 comp_grid=ctx.obj['compgrid'],
-                 label=label,
-                 meta=meta)
+      out = GData(tag=tag,
+                  comp_grid=ctx.obj['compgrid'],
+                  label=label,
+                  meta=meta)
       out.push(grid, values)
       data.add(out)
     #end

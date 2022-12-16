@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 
 @click.command(help='Interpolate a derivative of DG data on a uniform mesh')
 @click.option('--basistype', '-b',
@@ -63,10 +63,10 @@ def differentiate(ctx, **kwargs):
         #end
         
         if kwargs['tag']:
-            out = Data(tag=kwargs['tag'],
-                       label=kwargs['label'],
-                       comp_grid=ctx.obj['compgrid'],
-                       meta=dat.meta)
+            out = GData(tag=kwargs['tag'],
+                        label=kwargs['label'],
+                        comp_grid=ctx.obj['compgrid'],
+                        meta=dat.meta)
             grid, values = dg.differentiate(direction=kwargs['direction'])
             out.push(grid, values)
             data.add(out)

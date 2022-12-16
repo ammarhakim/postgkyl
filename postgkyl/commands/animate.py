@@ -5,7 +5,6 @@ import numpy as np
 import click
 
 import postgkyl.output.plot as gplot
-from postgkyl.data import Data
 import postgkyl.data.select as select
 from postgkyl.commands.util import vlog, pushChain
 

@@ -36,14 +36,9 @@ from . import utils
 from . import modalDG
 
 # import selected classes to the root
-from .data.data import Data
+from .data.gdata import GData
 from .data.dg import GInterpNodal
 from .data.dg import GInterpModal
 
 # link the command line executable to the system
 from . import pgkyl
-
-
-
-# legacy call
-from .data.data import Data as GData

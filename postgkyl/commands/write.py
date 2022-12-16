@@ -17,61 +17,61 @@ from postgkyl.commands.util import vlog, pushChain
               help='Set the buffer size for ADIOS write (default: 1000 MB)')
 @click.pass_context
 def write(ctx, **kwargs):
-    """Write active dataset to a file. The output file format can be set 
-    with ``--mode``, and is ADIOS BP by default. If data is
-    saved as BP file it can be later loaded back into pgkyl to further
-    manipulate or plot it.
+  """Write active dataset to a file. The output file format can be set 
+  with ``--mode``, and is ADIOS BP by default. If data is
+  saved as BP file it can be later loaded back into pgkyl to further
+  manipulate or plot it.
 
-    """
-    vlog(ctx, 'Starting write')
-    pushChain(ctx, 'write', **kwargs)
-    data = ctx.obj['data']
+  """
+  vlog(ctx, 'Starting write')
+  pushChain(ctx, 'write', **kwargs)
+  data = ctx.obj['data']
     
-    var_name = None
-    append = False
-    cleaning = True
-    fn = kwargs['filename']
-    mode = kwargs['mode']
-    if len(fn.split('.')) > 1:
-      mode = str(fn.split('.')[-1])
-      fn =  str(fn.split('.')[0])
-    #end
+  var_name = None
+  append = False
+  cleaning = True
+  fn = kwargs['filename']
+  mode = kwargs['mode']
+  if len(fn.split('.')) > 1:
+    mode = str(fn.split('.')[-1])
+    fn =  str(fn.split('.')[0])
+  #end
     
-    num_files = data.getNumDatasets(tag=kwargs['use'])
-    for i, dat in data.iterator(tag=kwargs['use'],
-                                enum=True):
-      out_name = '{:s}.{:s}'.format(fn, mode)
-      if kwargs['single']:
-        var_name = '{:s}_{:d}'.format(dat.getTag(), i)
-        cleaning = False
-      else:
-        if num_files > 1:
-          out_name = '{:s}_{:d}.{:s}'.format(fn, i, mode)
-        #end
+  num_files = data.getNumDatasets(tag=kwargs['use'])
+  for i, dat in data.iterator(tag=kwargs['use'],
+                              enum=True):
+    out_name = '{:s}.{:s}'.format(fn, mode)
+    if kwargs['single']:
+      var_name = '{:s}_{:d}'.format(dat.getTag(), i)
+      cleaning = False
+    else:
+      if num_files > 1:
+        out_name = '{:s}_{:d}.{:s}'.format(fn, i, mode)
       #end
+    #end
       
-      dat.write(out_name=out_name,
-                mode=mode,
-                bufferSize=kwargs['buffersize'],
-                append=append,
-                var_name=var_name,
-                cleaning=cleaning)
+    dat.write(out_name=out_name,
+              mode=mode,
+              bufferSize=kwargs['buffersize'],
+              append=append,
+              var_name=var_name,
+              cleaning=cleaning)
 
-      if kwargs['single']:
-        append = True
-      #end
+    if kwargs['single']:
+      append = True
     #end
+  #end
 
-    # Cleaning
-    if not cleaning:
-      if len(fn.split('/')) > 1:
-        nm = fn.split('/')[-1]
-      else:
-        nm = fn
-      #end
-      shutil.move('{:s}.{:s}.dir/{:s}.{:s}.0'.format(fn, mode, fn, mode),
-                  '{:s}.{:s}'.format(fn, mode))
-      shutil.rmtree('{:s}.{:s}.dir'.format(fn, mode))
+  # Cleaning
+  if not cleaning:
+    if len(fn.split('/')) > 1:
+      nm = fn.split('/')[-1]
+    else:
+      nm = fn
     #end
-    vlog(ctx, 'Finishing write')
+    shutil.move('{:s}.{:s}.dir/{:s}.{:s}.0'.format(fn, mode, fn, mode),
+                '{:s}.{:s}'.format(fn, mode))
+    shutil.rmtree('{:s}.{:s}.dir'.format(fn, mode))
+  #end
+  vlog(ctx, 'Finishing write')
 #end

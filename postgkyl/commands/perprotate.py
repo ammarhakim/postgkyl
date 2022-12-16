@@ -1,7 +1,7 @@
 import click
 
 from postgkyl.commands.util import vlog, pushChain
-from postgkyl.data import Data
+from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
 @click.command()
@@ -31,10 +31,10 @@ def perprotate(ctx, **kwargs):
                       data.iterator(kwargs['rotator'])):
         grid, outrot = diag.perprotate(a, rot)
         # Create new GData structure with appropriate outtag and labels to store output.
-        out = Data(tag=kwargs['tag'],
-                   compgrid=ctx.obj['compgrid'],
-                   label=kwargs['label'],
-                   meta=a.meta)
+        out = GData(tag=kwargs['tag'],
+                    compgrid=ctx.obj['compgrid'],
+                    label=kwargs['label'],
+                    meta=a.meta)
         out.push(outrot, grid)
         data.add(out)
     #end
