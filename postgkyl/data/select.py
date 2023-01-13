@@ -3,7 +3,7 @@ import numpy as np
 from postgkyl.utils import idxParser
 
 
-def select(data, comp=None, overwrite=False, stack=False,
+def select(data, comp=None, overwrite=False,
            z0=None, z1=None, z2=None,
            z3=None, z4=None, z5=None):
   """Selects parts of the GData.
@@ -17,64 +17,61 @@ def select(data, comp=None, overwrite=False, stack=False,
     z0-5 (index, value, or slice (e.g. '1:5')
     comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
   """
-  if stack:
-    overwrite = stack
-    print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
-  #end
   zs = (z0, z1, z2, z3, z4, z5)
   grid = data.getGrid()
   grid = list(grid)  # copy the grid
   values = data.getValues()
-  numDims = data.getNumDims()
-  idxValues = [slice(0, values.shape[d]) for d in range(numDims+1)]
+  num_dims = data.getNumDims()
+  values_idx = [slice(0, values.shape[d]) for d in range(num_dims+1)]
+  uniform_grid = (len(grid[0].shape) == 1)
+  if not uniform_grid:
+    grid_idx = [slice(0, grid[d].shape[d]) for d in range(num_dims)]
+  #end
     
   # Loop for coordinates
   for d, z in enumerate(zs):
-    if d < numDims and z is not None:
-      if values.shape[d] == len(grid[d]):
-        nodal = True
-      else:
-        nodal = False
+    if d < num_dims and z is not None:
+      if uniform_grid:
+        len_grid = grid[d].shape[0]
+      else: 
+        len_grid = grid[d].shape[d]
       #end
+      nodal = (values.shape[d] == len_grid)
       idx = idxParser(z, grid[d], nodal)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
         vIdx = slice(idx, idx+1)
-        if nodal:
-          gIdx = slice(idx, idx+2)
-          # grid[d] = grid[d][slice(idx, idx+2)]
-        else:
-          gIdx = vIdx
-        #end
+        gIdx = slice(idx, idx+2) if nodal else slice(idx, idx+1)
       elif isinstance(idx, slice):
         vIdx = idx
-        if nodal:
-          gIdx = slice(idx.start, idx.stop+1)
-        else:
-          gIdx = vIdx
-        #end
+        gIdx = slice(idx.start, idx.stop+1) if nodal else idx
       else:
         raise TypeError("The coordinate select can be only single index (int) or a slice")
       #end
-      grid[d] = grid[d][gIdx]
-      idxValues[d] = vIdx
+      if uniform_grid:
+        grid[d] = grid[d][gIdx]
+      else:
+        grid_idx[d] = gIdx
+      #end
+      values_idx[d] = vIdx
     #end
   #end
 
   # Select components
   if comp is not None:
-    idxValues[-1] = idxParser(comp)
+    values_idx[-1] = idxParser(comp)
   #end
-  valuesOut = values[tuple(idxValues)]
+  valuesOut = values[tuple(values_idx)]
+  if not uniform_grid:
+    for d in range(num_dims):
+      grid[d] = grid[d][tuple(grid_idx)]
+    #end
+  #end
 
   # Adding a dummy dimension indicies
-  # for d, coord in enumerate(coords):
-  #     if d < numDims and coord is not None and len(grid[d]) == 1:
-  #         valuesOut = np.expand_dims(valuesOut, d)
-  # # adding a dummy component index
-  if numDims == len(valuesOut.shape):
+  if num_dims == len(valuesOut.shape):
     valuesOut = valuesOut[..., np.newaxis]
   #end
 
