@@ -67,6 +67,7 @@ def plot(data, args=(),
          transpose=False,
          figsize=None,
          jet=False,
+         cmap=None,
          **kwargs):
   """Plots Gkeyll data
 
@@ -90,6 +91,10 @@ def plot(data, args=(),
 
   if aspect is None:
     aspect = 1.0
+  #end
+
+  if cmap is not None:
+    mpl.rcParams['image.cmap'] = cmap
   #end
 
   # This should not be used on its own; however, it can be useful for

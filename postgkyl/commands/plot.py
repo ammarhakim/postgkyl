@@ -108,6 +108,8 @@ from postgkyl.commands.util import vlog, pushChain
               help="Save individual frames as PNGS instead of an opening them")
 @click.option('--jet', is_flag=True,
               help="Turn colormap to jet for comparison with literature.")
+@click.option('--cmap', type=click.STRING, default=None,
+              help="Override default colormap with a valid matplotlib cmap.")
 @click.pass_context
 def plot(ctx, **kwargs):
   """Plot active datasets, optionally displaying the plot and/or saving
