@@ -5,12 +5,11 @@ import time
 import sys
 import os.path
 
-from cycler import cycler
 import click
 import numpy as np
 
 from postgkyl.commands import DataSpace
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import load_style, verb_print
 import postgkyl.commands as cmd
 
 # Version print helper
@@ -72,10 +71,6 @@ class PgkylCommandGroup(click.Group):
 # The command line mode entry command
 @click.command(cls=PgkylCommandGroup, chain=True,
                context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('--savechain', '-s', is_flag=True,
-              help="Save command chain for quick repetition.")
-@click.option('--savechainas', 
-              help="Save command chain for quick repetition with specified name for multiple options")
 @click.option('--verbose', '-v', is_flag=True,
               help="Turn on verbosity.")
 @click.option('--version', is_flag=True, callback=_printVersion,
@@ -95,6 +90,8 @@ class PgkylCommandGroup(click.Group):
               help="Specify the Adios variable name (default is 'CartGridField')")
 @click.option('--c2p', 
               help="Specify the file name containing c2p mapped coordinates")
+@click.option('--style',
+              help="Sets Maplotlib rcParams style file.")
 @click.pass_context
 def cli(ctx, **kwargs):
   """Postprocessing and plotting tool for Gkeyll 
@@ -108,30 +105,11 @@ def cli(ctx, **kwargs):
   if kwargs['verbose']:
     ctx.obj['verbose'] = True
     # Monty Python references should be a part of any Python code
-    vlog(ctx, 'This is Postgkyl running in verbose mode!')
-    vlog(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
-    vlog(ctx, 'And now for something completelly different...')
+    verb_log(ctx, 'This is Postgkyl running in verbose mode!')
+    verb_log(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
+    verb_log(ctx, 'And now for something completelly different...')
   else:
     ctx.obj['verbose'] = False
-  #end
-    
-  home = os.path.expanduser('~')
-  ctx.obj['savechainPath'] = (home + '/.pgkyl/pgkylchain')
-  if kwargs['savechain'] or kwargs['savechainas'] is not None:
-    ctx.obj['savechain'] = True
-    try:
-      os.makedirs(home + "/.pgkyl")
-    except FileExistsError:
-      # directory already exists
-      pass
-    #end
-    if kwargs['savechainas'] is not None:
-      ctx.obj['savechainPath'] = (home + '/.pgkyl/' + str(kwargs['savechainas']))
-    #end
-    fh = open(ctx.obj['savechainPath'], 'w')  # The default chain name
-    fh.close()
-  else:
-    ctx.obj['savechain'] = False
   #end
 
   ctx.obj['inDataStrings'] = []
@@ -151,20 +129,8 @@ def cli(ctx, **kwargs):
   ctx.obj['global_c2p'] = kwargs['c2p']
 
   ctx.obj['rcParams'] = {}
-  fn = '{:s}/output/postgkyl.mplstyle'.format(
-    os.path.dirname(os.path.realpath(__file__)))
-  stylef = open(fn, 'r')
-  for line in stylef.readlines():
-    key = line.split(':')[0]
-    key_len = int(len(key))
-    key = key.strip()
-    value = line[(key_len+1):].strip()
-    if value[:6] == 'cycler':
-      arg = eval(value[16:-1])
-      value = cycler(color=arg)
-    #end
-    ctx.obj['rcParams'][key] = value
-  #end
+  fn = kwargs['style'] if kwargs['style'] else '{:s}/output/postgkyl.mplstyle'.format(os.path.dirname(os.path.realpath(__file__)))
+  load_style(ctx, fn)
 #end
 
 # Hook the individual commands into pgkyl
@@ -191,11 +157,9 @@ cli.add_command(cmd.load)
 cli.add_command(cmd.magsq)
 cli.add_command(cmd.mask)
 cli.add_command(cmd.plot)
-#cli.add_command(cmd.pop)
 cli.add_command(cmd.pr)
 cli.add_command(cmd.recovery)
 cli.add_command(cmd.relchange)
-cli.add_command(cmd.runchain)
 cli.add_command(cmd.select)
 cli.add_command(cmd.style)
 cli.add_command(cmd.tenmoment)
@@ -203,9 +167,6 @@ cli.add_command(cmd.trajectory)
 cli.add_command(cmd.val2coord)
 cli.add_command(cmd.velocity)
 cli.add_command(cmd.write)
-
-#cli.add_command(cmd.agyro)
-#cli.add_command(cmd.temp.norm)
 
 if __name__ == '__main__':
   ctx = []

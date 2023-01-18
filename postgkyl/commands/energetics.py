@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -24,28 +24,26 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def energetics(ctx, **kwargs):
-    vlog(ctx, 'Starting energetics decomposition')
-    pushChain(ctx, 'energetics', **kwargs)
+  verb_print(ctx, 'Starting energetics decomposition')
+  data = ctx.obj['data'] # shortcut
     
-    data = ctx.obj['data'] # shortcut
-    
-    for elc, ion, em in zip(data.iterator(kwargs['elc']),
-                            data.iterator(kwargs['ion']),
-                            data.iterator(kwargs['field'])):
-        grid = em.getGrid()
-        outEnergetics = np.zeros(em.getValues()[...,0:7].shape)
-        out = GData(tag=kwargs['tag'],
-                    comp_grid=ctx.obj['compgrid'],
-                    label=kwargs['label'],
-                    meta=em.meta)
-        grid, outEnergetics = diag.energetics(elc, ion, em)
-        out.push(grid, outEnergetics)
-        data.add(out)
-    #end
+  for elc, ion, em in zip(data.iterator(kwargs['elc']),
+                          data.iterator(kwargs['ion']),
+                          data.iterator(kwargs['field'])):
+    grid = em.getGrid()
+    outEnergetics = np.zeros(em.getValues()[...,0:7].shape)
+    out = GData(tag=kwargs['tag'],
+                comp_grid=ctx.obj['compgrid'],
+                label=kwargs['label'],
+                meta=em.meta)
+    grid, outEnergetics = diag.energetics(elc, ion, em)
+    out.push(grid, outEnergetics)
+    data.add(out)
+  #end
 
-    data.deactivateAll(tag=kwargs['elc'])
-    data.deactivateAll(tag=kwargs['ion'])
-    data.deactivateAll(tag=kwargs['field'])
+  data.deactivateAll(tag=kwargs['elc'])
+  data.deactivateAll(tag=kwargs['ion'])
+  data.deactivateAll(tag=kwargs['field'])
 
-    vlog(ctx, 'Finishing energetics decomposition')
+  verb_print(ctx, 'Finishing energetics decomposition')
 #end

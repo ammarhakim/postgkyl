@@ -6,30 +6,30 @@ import click
 
 import postgkyl.output.plot as gplot
 import postgkyl.data.select as select
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 def update(i, data, fig, offsets, kwargs):
-    fig.clear()
-    kwargs['figure'] = fig
+  fig.clear()
+  kwargs['figure'] = fig
 
-    for n in offsets:
-        dat = data[i+n]
-        kwargs['title'] = ''
-        if not kwargs['notitle']:
-            if dat.meta['frame'] is not None:
-                kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
-            #end
-            if dat.meta['time'] is not None:
-                kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
-            #end
-        #end
-        if kwargs['arg'] is not None:
-            im = gplot(dat, kwargs['arg'], **kwargs)
-        else:
-            im = gplot(dat, **kwargs)
-        #end
+  for n in offsets:
+    dat = data[i+n]
+    kwargs['title'] = ''
+    if not kwargs['notitle']:
+      if dat.meta['frame'] is not None:
+        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
+      #end
+      if dat.meta['time'] is not None:
+        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
+      #end
     #end
-    return(im)
+    if kwargs['arg'] is not None:
+      im = gplot(dat, kwargs['arg'], **kwargs)
+    else:
+      im = gplot(dat, **kwargs)
+    #end
+  #end
+  return(im)
 #end
 
 @click.command()
@@ -145,8 +145,7 @@ def animate(ctx, **kwargs):
   animation ffmpeg needs to be installed.
 
   """
-  vlog(ctx, 'Starting animate')
-  pushChain(ctx, 'animate', **kwargs)
+  verb_print(ctx, 'Starting animate')
   data = ctx.obj['data']
   
   if not kwargs['float'] and kwargs['ylim'] is None:
@@ -275,5 +274,5 @@ def animate(ctx, **kwargs):
   if kwargs['show']:
     plt.show()
   #end
-  vlog(ctx, 'Finishing animate')
+  verb_print(ctx, 'Finishing animate')
 #end

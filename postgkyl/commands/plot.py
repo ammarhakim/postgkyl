@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import click
 
 import postgkyl.output.plot as gplot
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--use', '-u', default=None,
@@ -116,8 +116,7 @@ def plot(ctx, **kwargs):
   it to PNG files. Plot labels can use a sub-set of LaTeX math
   commands placed between dollar ($) signs.
   """
-  vlog(ctx, 'Starting plot')
-  pushChain(ctx, 'plot', **kwargs)
+  verb_print(ctx, 'Starting plot')
 
   kwargs['rcParams'] = ctx.obj['rcParams']
 
@@ -241,5 +240,5 @@ def plot(ctx, **kwargs):
   if kwargs['show']:
     plt.show()
   #end
-  vlog(ctx, 'Finishing plot')
+  verb_print(ctx, 'Finishing plot')
 #end

@@ -3,7 +3,7 @@ import click
 import numpy as np
 import matplotlib.pyplot as plt
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.diagnostics.growth import fitGrowth, exp2
 from postgkyl.data import GData
 
@@ -32,8 +32,7 @@ def growth(ctx, **kwargs):
   data, typically an integrated quantity like electric or magnetic
   field energy.
   """
-  vlog(ctx, 'Starting growth')
-  pushChain( ctx, 'growth', **kwargs) 
+  verb_print(ctx, 'Starting growth')
   data = ctx.obj['data']
     
   for dat in data.iterator(kwargs['use']):
@@ -87,7 +86,7 @@ def growth(ctx, **kwargs):
       #end
 
       if kwargs['instantaneous']:
-        vlog(ctx, 'growth: Plotting instantaneous growth rate')
+        verb_print(ctx, 'growth: Plotting instantaneous growth rate')
         gammas = []
         for i in range(1,len(time[0])-1):
           gamma = (values[i+1,0] - values[i-1,0])/(2*values[i,0]*(time[0][i+1] - time[0][i-1]))
@@ -116,5 +115,5 @@ def growth(ctx, **kwargs):
       data.add(out)
     #end
   #end
-  vlog(ctx, 'Finishing growth')
+  verb_print(ctx, 'Finishing growth')
 #end

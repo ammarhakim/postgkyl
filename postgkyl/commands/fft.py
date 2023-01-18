@@ -1,7 +1,7 @@
 import click
 
 import postgkyl.diagnostics as diag
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
 @click.command()
@@ -17,26 +17,25 @@ from postgkyl.data import GData
               help="Custom label for the result")
 @click.pass_context
 def fft(ctx, **kwargs):
-    """Calculate the Fourier Transform or the power-spectral density of
-    input data. Only works on 1D data at present.
-    """
-    vlog(ctx, 'Starting FFT')
-    pushChain(ctx, 'fft', **kwargs)
-    data = ctx.obj['data']
+  """Calculate the Fourier Transform or the power-spectral density of
+  input data. Only works on 1D data at present.
+  """
+  verb_print(ctx, 'Starting FFT')
+  data = ctx.obj['data']
 
-    for dat in data.iterator(kwargs['use']):
-        if kwargs['tag']:
-            out = GData(tag=kwargs['tag'],
-                        label=kwargs['label'],
-                        comp_grid=ctx.obj['compgrid'],
-                        meta=dat.meta)
-            grid, values = diag.fft(dat, kwargs['psd'], kwargs['iso'])
-            out.push(grid, values)
-            data.add(out)
-        else:
-            diag.fft(dat, kwargs['psd'], kwargs['iso'], overwrite=True)
-        #end
+  for dat in data.iterator(kwargs['use']):
+    if kwargs['tag']:
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
+      grid, values = diag.fft(dat, kwargs['psd'], kwargs['iso'])
+      out.push(grid, values)
+      data.add(out)
+    else:
+      diag.fft(dat, kwargs['psd'], kwargs['iso'], overwrite=True)
     #end
+  #end
         
-    vlog(ctx, 'Finishing FFT')
+  verb_print(ctx, 'Finishing FFT')
 #end

@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -19,28 +19,27 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def perprotate(ctx, **kwargs):
-    """Rotate an array perpendicular to the unit vectors of a second array.
-    For two arrays u and v, where v is the rotator, operation is u - (u dot v_hat) v_hat.
-    """
-    vlog(ctx, 'Starting rotation perpendicular to rotator array')
-    pushChain(ctx, 'rotarraypar', **kwargs)
+  """Rotate an array perpendicular to the unit vectors of a second array.
+  For two arrays u and v, where v is the rotator, operation is u - (u dot v_hat) v_hat.
+  """
+  verb_print(ctx, 'Starting rotation perpendicular to rotator array')
     
-    data = ctx.obj['data'] # shortcut
+  data = ctx.obj['data'] # shortcut
     
-    for a, rot in zip(data.iterator(kwargs['array']),
-                      data.iterator(kwargs['rotator'])):
-        grid, outrot = diag.perprotate(a, rot)
-        # Create new GData structure with appropriate outtag and labels to store output.
-        out = GData(tag=kwargs['tag'],
-                    compgrid=ctx.obj['compgrid'],
-                    label=kwargs['label'],
-                    meta=a.meta)
-        out.push(outrot, grid)
-        data.add(out)
-    #end
+  for a, rot in zip(data.iterator(kwargs['array']),
+                    data.iterator(kwargs['rotator'])):
+    grid, outrot = diag.perprotate(a, rot)
+    # Create new GData structure with appropriate outtag and labels to store output.
+    out = GData(tag=kwargs['tag'],
+                compgrid=ctx.obj['compgrid'],
+                label=kwargs['label'],
+                meta=a.meta)
+    out.push(outrot, grid)
+    data.add(out)
+  #end
 
-    data.deactivateAll(tag=kwargs['array'])
-    data.deactivateAll(tag=kwargs['rotator'])
-
-    vlog(ctx, 'Finishing rotation perpendicular to rotator array')
+  data.deactivateAll(tag=kwargs['array'])
+  data.deactivateAll(tag=kwargs['rotator'])
+  
+  verb_print(ctx, 'Finishing rotation perpendicular to rotator array')
 #end

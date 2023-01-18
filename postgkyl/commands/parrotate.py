@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -19,32 +19,31 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def parrotate(ctx, **kwargs):
-    """Rotate an array parallel to the unit vectors of a second array.
-    For two arrays u and v, where v is the rotator, operation is (u dot v_hat) v_hat.
-    Note that for a three-component field, the output is a new vector
-    whose components are (u_{v_x}, u_{v_y}, u_{v_z}), i.e.,
-    the x, y, and z components of the vector u parallel to v. 
-    """
-    vlog(ctx, 'Starting rotation parallel to rotator array')
-    pushChain(ctx, 'rotarraypar', **kwargs)
+  """Rotate an array parallel to the unit vectors of a second array.
+  For two arrays u and v, where v is the rotator, operation is (u dot v_hat) v_hat.
+  Note that for a three-component field, the output is a new vector
+  whose components are (u_{v_x}, u_{v_y}, u_{v_z}), i.e.,
+  the x, y, and z components of the vector u parallel to v. 
+  """
+  verb_print(ctx, 'Starting rotation parallel to rotator array')
     
-    data = ctx.obj['data'] # shortcut
+  data = ctx.obj['data'] # shortcut
     
-    for a, rot in zip(data.iterator(kwargs['array']),
-                      data.iterator(kwargs['rotator'])):
-        grid, outrot = diag.parrotate(a, rot)
-        # Create new GData structure with appropriate outtag and labels to store output.
-        out = GData(tag=kwargs['tag'],
-                    stack=ctx.obj['stack'],
-                    comp_grid=ctx.obj['compgrid'],
-                    label=kwargs['label'],
-                    meta=a.meta)
-        out.push(outrot, grid)
-        data.add(out)
-    #end
+  for a, rot in zip(data.iterator(kwargs['array']),
+                    data.iterator(kwargs['rotator'])):
+    grid, outrot = diag.parrotate(a, rot)
+    # Create new GData structure with appropriate outtag and labels to store output.
+    out = GData(tag=kwargs['tag'],
+                stack=ctx.obj['stack'],
+                comp_grid=ctx.obj['compgrid'],
+                label=kwargs['label'],
+                meta=a.meta)
+    out.push(outrot, grid)
+    data.add(out)
+  #end
 
-    data.deactivateAll(tag=kwargs['array'])
-    data.deactivateAll(tag=kwargs['rotator'])
+  data.deactivateAll(tag=kwargs['array'])
+  data.deactivateAll(tag=kwargs['rotator'])
 
-    vlog(ctx, 'Finishing rotation parallel to rotator array')
+  verb_print(ctx, 'Finishing rotation parallel to rotator array')
 #end

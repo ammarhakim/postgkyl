@@ -1,10 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.commands.util import vlog, pushChain
-
-#---------------------------------------------------------------------
-#-- Main functions ---------------------------------------------------
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--tag', '-t', type=click.STRING,
@@ -29,8 +26,7 @@ def activate(ctx, **kwargs):
   'info' command (especially with the '-ac' flags) can be helpful
   when activating/deactivating multiple datasets.
   """
-  vlog(ctx, 'Starting activate')
-  pushChain(ctx, 'activate', **kwargs)
+  verb_print(ctx, 'Starting activate')
   data = ctx.obj['data']
 
   if not kwargs['focused']:
@@ -43,7 +39,7 @@ def activate(ctx, **kwargs):
     dat.activate()
   #end
 
-  vlog(ctx, 'Finishing activate')
+  verb_print(ctx, 'Finishing activate')
 #end
 
 @click.command()
@@ -69,8 +65,7 @@ def deactivate(ctx, **kwargs):
   'info' command (especially with the '-ac' flags) can be helpful
   when activating/deactivating multiple datasets.
   """
-  vlog(ctx, 'Starting deactivate')
-  pushChain(ctx, 'deactivate', **kwargs)
+  verb_print(ctx, 'Starting deactivate')
   data = ctx.obj['data']
 
   if kwargs['focused']:
@@ -83,5 +78,5 @@ def deactivate(ctx, **kwargs):
     dat.deactivate()
   #end
 
-  vlog(ctx, 'Finishing deactivate')
+  verb_print(ctx, 'Finishing deactivate')
 #end

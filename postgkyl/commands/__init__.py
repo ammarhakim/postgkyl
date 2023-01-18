@@ -2,9 +2,16 @@ from .data_space import DataSpace
 
 from . import util
 from . import ev_cmd
+
+from .agyro import agyro
+from .agyro import mom_agyro
 from .animate import animate
+from .bparrotate import bparrotate
+from .bperprotate import bperprotate
 from .collect import collect
+from .current import current
 from .differentiate import differentiate
+from .energetics import energetics
 from .euler import euler
 from .ev import ev
 from .extractinput import extractinput
@@ -15,12 +22,15 @@ from .integrate import integrate
 from .interpolate import interpolate
 from .listoutputs import listoutputs
 from .load import load
+from .magsq import magsq
 from .mask import mask
 from .mhd import mhd
+from .parrotate import parrotate
+from .perprotate import perprotate
 from .plot import plot
 from .pr import pr
 from .recovery import recovery
-from .runchain import runchain
+from .relchange import relchange
 from .select import select
 from .status import activate
 from .status import deactivate
@@ -28,21 +38,11 @@ from .style import style
 from .tenmoment import tenmoment
 from .trajectory import trajectory
 from .val2coord import val2coord
+from .velocity import velocity
 from .write import write
 
 from . import temp
-from .agyro import agyro
-from .agyro import mom_agyro
 
-from .bparrotate import bparrotate
-from .bperprotate import bperprotate
-from .current import current
-from .energetics import energetics
-from .magsq import magsq
-from .parrotate import parrotate
-from .perprotate import perprotate
-from .relchange import relchange
-from .velocity import velocity
 
-#from postgkyl.commands import cglpressure
+
 

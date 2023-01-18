@@ -2,17 +2,18 @@ import click
 import shutil
 import os.path
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import load_style, verb_print
 
 @click.command(help='Probe and control the plotting style.')
 @click.option('--print', '-p', is_flag=True,
               help="Prints the current rcParams.")
 @click.option('--set', '-s', multiple=True,
               help="Sets rcParam(s).")
+@click.option('--file', '-f',
+              help="Sets Maplotlib rcParams style file.")
 @click.pass_context
 def style(ctx, **kwargs):
-  vlog(ctx, 'Starting style')
-  pushChain(ctx, 'style', **kwargs)
+  verb_print(ctx, 'Starting \'style\' command')
 
   if kwargs['print']:
     for key in ctx.obj['rcParams']:
@@ -27,5 +28,9 @@ def style(ctx, **kwargs):
     ctx.obj['rcParams'][key] = value
   #end
   
-  vlog(ctx, 'Finishing style')
+  if  kwargs['file']:
+    load_style(ctx, kwargs['file'])
+  #end
+
+  verb_print(ctx, 'Finishing \'style\' command')
 #end

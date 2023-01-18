@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
 @click.command()
@@ -18,8 +18,7 @@ from postgkyl.data import GData
               help="Custom label for the result")
 @click.pass_context
 def velocity(ctx, **kwargs):
-  vlog(ctx, 'Starting velocity')
-  pushChain(ctx, 'velocity', **kwargs)
+  verb_print(ctx, 'Starting velocity')
     
   data = ctx.obj['data'] # shortcut
     
@@ -40,5 +39,5 @@ def velocity(ctx, **kwargs):
   data.deactivateAll(tag=kwargs['density'])
   data.deactivateAll(tag=kwargs['momentum'])
 
-  vlog(ctx, 'Finishing velocity')
+  verb_print(ctx, 'Finishing velocity')
 #end

@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
-from postgkyl.commands.output import vlog, pushChain
+from postgkyl.commands.output import verb_print
 
 def getParPerp(pij, B):
     tmp = np.copy(pij[..., 0:2])
@@ -65,8 +65,7 @@ def cglpressure(ctx, **inputs):
     tensor.
 
     """
-    vlog(ctx, 'Starting CGL pressure')
-    pushChain(ctx, 'cglpressure.cglpressure', **inputs)
+    verb_print(ctx, 'Starting CGL pressure')
 
     coords, pij = peakStack(ctx, ctx.obj['sets'][0])
     coords, B = peakStack(ctx, ctx.obj['sets'][1])
@@ -83,6 +82,6 @@ def cglpressure(ctx, **inputs):
     pushStack(ctx, idx, coords, tmp, 'CGL')
     ctx.obj['sets'] = [idx]
 
-    vlog(ctx, 'Finishing CGL pressure')
+    verb_print(ctx, 'Finishing CGL pressure')
 
     
