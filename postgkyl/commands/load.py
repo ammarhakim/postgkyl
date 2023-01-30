@@ -2,7 +2,7 @@ import click
 import glob
 import numpy as np
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 from postgkyl.data import GInterpModal
 
@@ -57,8 +57,7 @@ def _crush(s): # Temp function used as a sorting key
               help='Tag finite volume data when using c2p mapped coordinates')
 @click.pass_context
 def load(ctx, **kwargs):
-  vlog(ctx, 'Starting load')
-  pushChain(ctx, 'load', **kwargs)
+  verb_print(ctx, 'Starting load')
   data = ctx.obj['data']
 
   idx = ctx.obj['inDataStringsLoaded']
@@ -145,5 +144,5 @@ def load(ctx, **kwargs):
   data.setUniqueLabels()
 
   ctx.obj['inDataStringsLoaded'] += 1
-  vlog(ctx, 'Finishing load')
+  verb_print(ctx, 'Finishing load')
 #end

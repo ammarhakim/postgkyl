@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -23,8 +23,7 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def relchange(ctx, **kwargs):
-  vlog(ctx, 'Starting relative change')
-  pushChain(ctx, 'relchange', **kwargs)
+  verb_print(ctx, 'Starting relative change')
     
   data = ctx.obj['data'] # shortcut
   for tag in data.tagIterator(kwargs['use']):
@@ -43,5 +42,5 @@ def relchange(ctx, **kwargs):
       #end
     #end
   #end
-  vlog(ctx, 'Finishing relative change')
+  verb_print(ctx, 'Finishing relative change')
 #end

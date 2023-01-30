@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GInterpModal
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
 @click.command(help='Interpolate DG data on a uniform mesh')
@@ -25,39 +25,39 @@ from postgkyl.data import GData
               help='Enforce continuous first derivatives')
 @click.pass_context
 def recovery(ctx, **kwargs):
-    vlog(ctx, 'Starting recovery')
-    pushChain(ctx, 'recovery', **kwargs)
-    data = ctx.obj['data']
+  verb_print(ctx, 'Starting recovery')
+  data = ctx.obj['data']
 
-    if kwargs['basistype'] is not None:
-        if kwargs['basistype'] == 'ms' or kwargs['basistype'] == 'ns':
-            basisType = 'serendipity'
-        elif kwargs['basistype'] == 'mo':
-            basisType = 'maximal-order'
+  if kwargs['basistype'] is not None:
+    if kwargs['basistype'] == 'ms' or kwargs['basistype'] == 'ns':
+      basisType = 'serendipity'
+    elif kwargs['basistype'] == 'mo':
+      basisType = 'maximal-order'
+    #end
+  else:
+    basisType = None
+  #end
+
+  for dat in data.iterator(kwargs['use']):
+    dg = GInterpModal(dat,
+                      kwargs['polyorder'], basisType, 
+                      kwargs['interp'], kwargs['periodic'])
+    numNodes = dg.numNodes
+    numComps = int(dat.getNumComps() / numNodes)
+
+    #verb_print(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
+    #dg.recovery(tuple(range(numComps)), stack=True)
+    if kwargs['tag']:
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
+      grid, values = dg.recovery(0, kwargs['c1'])
+      out.push(grid, values)
+      data.add(out)
     else:
-        basisType = None
+      dg.recovery(0, kwargs['c1'], overwrite=True)
     #end
-
-    for dat in data.iterator(kwargs['use']):
-        dg = GInterpModal(dat,
-                          kwargs['polyorder'], basisType, 
-                          kwargs['interp'], kwargs['periodic'])
-        numNodes = dg.numNodes
-        numComps = int(dat.getNumComps() / numNodes)
-
-        #vlog(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
-        #dg.recovery(tuple(range(numComps)), stack=True)
-        if kwargs['tag']:
-            out = GData(tag=kwargs['tag'],
-                        label=kwargs['label'],
-                        comp_grid=ctx.obj['compgrid'],
-                        meta=dat.meta)
-            grid, values = dg.recovery(0, kwargs['c1'])
-            out.push(grid, values)
-            data.add(out)
-        else:
-            dg.recovery(0, kwargs['c1'], overwrite=True)
-        #end
-    #end
-    vlog(ctx, 'Finishing recovery')
+  #end
+  verb_print(ctx, 'Finishing recovery')
 #end

@@ -3,7 +3,7 @@ import numpy as np
 
 import postgkyl.diagnostics as diag
 from postgkyl.data import GData
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--use', '-u',
@@ -22,13 +22,12 @@ def euler(ctx, **kwargs):
   """Compute Euler (five-moment) primitive and some derived variables
     from fluid conserved variables.
   """
-  vlog(ctx, 'Starting euler')
-  pushChain(ctx, 'euler', **kwargs)
+  verb_print(ctx, 'Starting euler')
   data = ctx.obj['data']
   
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
-    vlog(ctx, 'euler: Extracting {:s} from data set'.format(v))
+    verb_print(ctx, 'euler: Extracting {:s} from data set'.format(v))
     overwrite = True
     if kwargs['tag']:
       overwrite = False
@@ -63,6 +62,6 @@ def euler(ctx, **kwargs):
       data.add(out)
     #end
   #end
-  vlog(ctx, 'Finishing euler')
+  verb_print(ctx, 'Finishing euler')
 #end
     

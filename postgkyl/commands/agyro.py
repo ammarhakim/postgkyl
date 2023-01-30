@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.diagnostics import get_agyro, get_gkyl_10m_agyro
 
 
@@ -26,8 +26,7 @@ def agyro(ctx, **kwargs):
   Swisdak 2015. Optionally computes agyrotropy as Frobenius norm of
   agyrotropic pressure tensor.
   """
-  vlog(ctx, 'Starting agyro')
-  pushChain(ctx, 'agyro', **kwargs)
+  verb_print(ctx, 'Starting agyro')
 
   data = ctx.obj['data'] # shortcut
 
@@ -47,7 +46,7 @@ def agyro(ctx, **kwargs):
     data.add(out)
   #end
   
-  vlog(ctx, 'Finishing agyro')
+  verb_print(ctx, 'Finishing agyro')
 #end
 
     
@@ -69,8 +68,7 @@ def mom_agyro(ctx, **kwargs):
   Swisdak 2015. Optionally computes agyrotropy as Frobenius norm of
   agyrotropic pressure tensor.
   """
-  vlog(ctx, 'Starting agyro')
-  pushChain(ctx, 'agyro', **kwargs)
+  verb_print(ctx, 'Starting agyro')
 
   data = ctx.obj['data'] # shortcut
 
@@ -90,5 +88,5 @@ def mom_agyro(ctx, **kwargs):
     data.add(out)
   #end
   
-  vlog(ctx, 'Finishing agyro')
+  verb_print(ctx, 'Finishing agyro')
 #end

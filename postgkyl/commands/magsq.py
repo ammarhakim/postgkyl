@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -13,25 +13,24 @@ import postgkyl.diagnostics as diag
               help="Custom label for the result")
 @click.pass_context
 def magsq(ctx, **kwargs):
-    """Calculate the magnitude squared of an input array
-    """
-    vlog(ctx, 'Starting magnitude squared computation')
-    pushChain(ctx, 'magsq', **kwargs)
-    data = ctx.obj['data']
+  """Calculate the magnitude squared of an input array
+  """
+  verb_print(ctx, 'Starting magnitude squared computation')
+  data = ctx.obj['data']
     
-    for dat in data.iterator(kwargs['use']):
-        if kwargs['tag']:
-            out = GData(tag=kwargs['tag'],
-                        label=kwargs['label'],
-                        comp_grid=ctx.obj['compgrid'],
-                        meta=dat.meta)
-            grid, values = diag.magsq(dat)
-            out.push(grid, values)
-            data.add(out)
-        else:
-            diag.magsq(dat, overwrite=True)
-        #end
+  for dat in data.iterator(kwargs['use']):
+    if kwargs['tag']:
+      out = GData(tag=kwargs['tag'],
+                  label=kwargs['label'],
+                  comp_grid=ctx.obj['compgrid'],
+                  meta=dat.meta)
+      grid, values = diag.magsq(dat)
+      out.push(grid, values)
+      data.add(out)
+    else:
+      diag.magsq(dat, overwrite=True)
     #end
+  #end
         
-    vlog(ctx, 'Finishing magnitude squared computation')
+  verb_print(ctx, 'Finishing magnitude squared computation')
 #end

@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
 
@@ -23,8 +23,7 @@ def bperprotate(ctx, **kwargs):
   For two arrays u and b, where b is the unit vector in the direction of the magnetic field, 
   the operation is u - (u dot b_hat) b_hat.
   """
-  vlog(ctx, 'Starting rotation perpendicular to magnetic field')
-  pushChain(ctx, 'arrayBpar', **kwargs)
+  verb_print(ctx, 'Starting rotation perpendicular to magnetic field')
     
   data = ctx.obj['data'] # shortcut
   
@@ -44,5 +43,5 @@ def bperprotate(ctx, **kwargs):
   data.deactivateAll(tag=kwargs['array'])
   data.deactivateAll(tag=kwargs['field'])
 
-  vlog(ctx, 'Finishing rotation perpendicular to magnetic field')
+  verb_print(ctx, 'Finishing rotation perpendicular to magnetic field')
 #end

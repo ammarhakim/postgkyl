@@ -6,7 +6,7 @@ import sys
 
 from postgkyl.data import GData
 from postgkyl.data import select as pselect
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.commands import ev_cmd as cmdBase
 
 helpStr = ""
@@ -159,8 +159,7 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
               help="Ignore the status of a dataset")
 @click.pass_context
 def ev(ctx, **kwargs):
-  vlog(ctx, 'Starting evaluate')
-  pushChain(ctx, 'ev', **kwargs)
+  verb_print(ctx, 'Starting evaluate')
   data = ctx.obj['data']
     
   gridStack, valueStack, metaStack = [], [], []
@@ -233,5 +232,5 @@ def ev(ctx, **kwargs):
     #end
   #end
 
-  vlog(ctx, 'Finishing ev')
+  verb_print(ctx, 'Finishing ev')
 #end

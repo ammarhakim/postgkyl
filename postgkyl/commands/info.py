@@ -1,6 +1,6 @@
 import click
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command(help='Print info of active datasets.')
 @click.option('-u', '--use',
@@ -11,8 +11,7 @@ from postgkyl.commands.util import vlog, pushChain
               help='All data sets.')
 @click.pass_context
 def info(ctx, **kwargs):
-  vlog(ctx, 'Starting info')
-  pushChain(ctx, 'info', **kwargs)
+  verb_print(ctx, 'Starting info')
   data = ctx.obj['data']
   if kwargs['allsets']:
     onlyActive = False
@@ -42,5 +41,5 @@ def info(ctx, **kwargs):
     #end
   #end
 
-  vlog(ctx, 'Finishing info')
+  verb_print(ctx, 'Finishing info')
 #end

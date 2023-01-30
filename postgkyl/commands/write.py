@@ -1,7 +1,7 @@
 import click
 import shutil
 
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--use', '-u',
@@ -23,8 +23,7 @@ def write(ctx, **kwargs):
   manipulate or plot it.
 
   """
-  vlog(ctx, 'Starting write')
-  pushChain(ctx, 'write', **kwargs)
+  verb_print(ctx, 'Starting write')
   data = ctx.obj['data']
     
   var_name = None
@@ -73,5 +72,5 @@ def write(ctx, **kwargs):
                 '{:s}.{:s}'.format(fn, mode))
     shutil.rmtree('{:s}.{:s}.dir'.format(fn, mode))
   #end
-  vlog(ctx, 'Finishing write')
+  verb_print(ctx, 'Finishing write')
 #end

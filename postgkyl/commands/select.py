@@ -3,7 +3,7 @@ import numpy as np
 
 import postgkyl.data.select
 from postgkyl.data import GData
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--z0',  default=None,
@@ -34,8 +34,7 @@ def select(ctx, **kwargs):
   be specified using python slice notation (start:end:stride).
 
   """
-  vlog(ctx, 'Starting select')
-  pushChain(ctx, 'select', **kwargs)
+  verb_print(ctx, 'Starting select')
   data = ctx.obj['data']
   
   for dat in data.iterator(kwargs['use']):
@@ -62,5 +61,5 @@ def select(ctx, **kwargs):
                            comp=kwargs['comp'])
     #end
   #end
-  vlog(ctx, 'Finishing select')
+  verb_print(ctx, 'Finishing select')
 #end

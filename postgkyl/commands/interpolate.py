@@ -2,12 +2,12 @@ import click
 import numpy as np
 
 from postgkyl.data import GInterpModal, GInterpNodal
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
 @click.command(help='Interpolate DG data onto a uniform mesh.')
 @click.option('--basistype', '-b',
-              type=click.Choice(['ms', 'ns', 'mo', 'mt', 'gkhyb']),
+              type=click.Choice(['ms', 'ns', 'mo', 'mt', 'gkhyb', 'pkpmhyb']),
               help='Specify DG basis.')
 @click.option('--polyorder', '-p', type=click.INT,
               help='Specify polynomial order.')
@@ -23,8 +23,7 @@ from postgkyl.data import GData
               help='Read from general interpolation file.')
 @click.pass_context
 def interpolate(ctx, **kwargs):
-  vlog(ctx, 'Starting interpolate')
-  pushChain(ctx, 'interpolate', **kwargs)
+  verb_print(ctx, 'Starting interpolate')
   data = ctx.obj['data']
 
   basisType = None
@@ -44,6 +43,9 @@ def interpolate(ctx, **kwargs):
       isModal = True
     elif kwargs['basistype'] == 'gkhyb':
       basisType = 'gkhybrid'
+      isModal = True
+    elif kwargs['basistype'] == 'pkpmhyb':
+      basisType = 'pkpmhybrid'
       isModal = True
     #end
   #end
@@ -78,5 +80,5 @@ def interpolate(ctx, **kwargs):
       dg.interpolate(tuple(range(numComps)), overwrite=True)
     #end
   #end
-  vlog(ctx, 'Finishing interpolate')
+  verb_print(ctx, 'Finishing interpolate')
 #end

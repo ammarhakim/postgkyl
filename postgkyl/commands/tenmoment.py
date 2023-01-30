@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.data import GData
 import postgkyl.diagnostics as diag
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command()
 @click.option('--use', '-u',
@@ -22,13 +22,12 @@ def tenmoment(ctx, **kwargs):
   """Extract ten-moment primitive variables from ten-moment conserved
   variables.
   """
-  vlog(ctx, 'Starting tenmoment')
-  pushChain(ctx, 'tenmoment', **kwargs)
+  verb_print(ctx, 'Starting tenmoment')
   data = ctx.obj['data']
   
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
-    vlog(ctx, 'tenmoment: Extracting {:s} from data set'.format(v))
+    verb_print(ctx, 'tenmoment: Extracting {:s} from data set'.format(v))
     overwrite = True
     if kwargs['tag']:
       overwrite = False
@@ -77,5 +76,5 @@ def tenmoment(ctx, **kwargs):
       data.add(out)
     #end
   #end
-  vlog(ctx, 'Finishing tenmoment')
+  verb_print(ctx, 'Finishing tenmoment')
 #end

@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 @click.command(help='Mask data with specified Gkeyll mask file.')
 @click.option('--use', '-u',
@@ -15,31 +15,30 @@ from postgkyl.commands.util import vlog, pushChain
               help="Specify the upper theshold to be masked out.")
 @click.pass_context
 def mask(ctx, **kwargs):
-    vlog(ctx, 'Starting mask')
-    pushChain(ctx, 'mask', **kwargs)
-    data = ctx.obj('data')
+  verb_print(ctx, 'Starting mask')
+  data = ctx.obj('data')
     
+  if kwargs['filename']:
+    maskFld = GData(kwargs['filename']).getValues()
+  #end
+
+  for dat in data.interator(kwargs['use']):
+    values = dat.getValues()
+
     if kwargs['filename']:
-        maskFld = GData(kwargs['filename']).getValues()
+      maskFldRep = np.repeat(maskFld, dat.getNumComps(), axis=-1)
+      data.push(np.ma.masked_where(maskFldRep < 0.0, values))
+    elif kwargs['lower'] is not None and kwargs['upper'] is not None:
+      dat.push(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']), grid)
+    elif kwargs['lower'] is not None:
+      dat.push(np.ma.masked_less(values, kwargs['lower']))
+    elif kwargs['upper'] is not None:
+      dat.push(np.ma.masked_greater(values, kwargs['upper']))
+    else:
+      data.push(values, grid)
+      click.echo(click.style("WARNING in 'mask': No masking information specified.", fg='yellow'))
     #end
-
-    for dat in data.interator(kwargs['use']):
-        values = dat.getValues()
-
-        if kwargs['filename']:
-            maskFldRep = np.repeat(maskFld, dat.getNumComps(), axis=-1)
-            data.push(np.ma.masked_where(maskFldRep < 0.0, values))
-        elif kwargs['lower'] is not None and kwargs['upper'] is not None:
-            dat.push(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']), grid)
-        elif kwargs['lower'] is not None:
-            dat.push(np.ma.masked_less(values, kwargs['lower']))
-        elif kwargs['upper'] is not None:
-            dat.push(np.ma.masked_greater(values, kwargs['upper']))
-        else:
-            data.push(values, grid)
-            click.echo(click.style("WARNING in 'mask': No masking information specified.", fg='yellow'))
-        #end
-    #end
+  #end
         
-    vlog(ctx, 'Finishing mask')
+  verb_print(ctx, 'Finishing mask')
 #end

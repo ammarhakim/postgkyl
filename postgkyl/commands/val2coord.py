@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 def _getRange(strIn, length):
   if len(strIn.split(',')) > 1:
@@ -58,8 +58,7 @@ def val2coord(ctx, **kwargs):
   as many datasets are then created.
 
   """
-  vlog(ctx, 'Starting val2coord')
-  pushChain(ctx, 'val2coord', **kwargs)
+  verb_print(ctx, 'Starting val2coord')
   data = ctx.obj['data']
 
   activeSets = []
@@ -105,5 +104,5 @@ def val2coord(ctx, **kwargs):
     #end
     dat.deactivate()
   #end
-  vlog(ctx, 'Finishing val2coord')
+  verb_print(ctx, 'Finishing val2coord')
 #end

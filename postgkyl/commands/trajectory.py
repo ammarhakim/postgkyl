@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation
 import click
 
 import postgkyl.output.plot as gplot
-from postgkyl.commands.util import vlog, pushChain
+from postgkyl.commands.util import verb_print
 
 def update(i, ax, ctx, leap, vel,
            xmin, xmax, ymin, ymax, zmin, zmax,
@@ -143,8 +143,7 @@ def update(i, ax, ctx, leap, vel,
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def trajectory(ctx, **kwargs):
-    vlog(ctx, 'Starting trajectory')
-    pushChain(ctx, 'trajectory', **kwargs)
+    verb_print(ctx, 'Starting trajectory')
     data = ctx.obj['data']
     
     tags = list(data.tagIterator(kwargs['use']))
@@ -192,5 +191,5 @@ def trajectory(ctx, **kwargs):
     if kwargs['show']:
         plt.show()
     #end
-    vlog(ctx, 'Finishing trajectory')
+    verb_print(ctx, 'Finishing trajectory')
 #end
