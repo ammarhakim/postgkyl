@@ -31,6 +31,7 @@ numNodesTensor = np.array([[ 2,   3,    4,     5],
                            [32, 343, 1024,  3125],
                            [64, 729, 4096, 15625]])
 numNodesGkHybrid = np.array([1, 6, 12, 24, 48])
+numNodesPkpmHybrid = np.array([1, 6, 12, 24, 48])
 
 def _get_basis_p(num_dim, num_comp):
   basis, poly_order = None, None
@@ -56,12 +57,15 @@ def _getNumNodes(dim, polyOrder, basisType):
     numNodes = numNodesTensor[dim-1, polyOrder-1]
   elif basisType.lower() == 'gkhybrid':
     numNodes = numNodesGkHybrid[dim-1]
+  elif basisType.lower() == 'pkpmhybrid':
+    numNodes = numNodesPkpmHybrid[dim-1]
   else:
     raise NameError(
       "GInterp: Basis '{:s}' is not supported!\n"
       "Supported basis are currently 'ns' (Nodal Serendipity),"
       " 'ms' (Modal Serendipity), 'mt' (Modal Tensor product),"
-      " 'mo' (Modal maximal Order) and 'gkhybrid' (Modal GkHybrid)".
+      " 'mo' (Modal maximal Order), 'gkhybrid' (Modal GkHybrid),"
+      " and 'pkpmhybrid' (Modal PKPM hybrid)".
       format(basisType))
   #end
   return numNodes
@@ -80,6 +84,9 @@ def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal, c2p=False)
     return mat
   elif basisType=='gkhybrid':
     mat = createInterpMatrix(dim, polyOrder, 'gkhybrid', polyOrder+1, True, c2p)
+    return mat
+  elif basisType=='pkpmhybrid':
+    mat = createInterpMatrix(dim, polyOrder, 'pkpmhybrid', polyOrder+1, True, c2p)
     return mat
   elif read is not None:
     fileNameGeneral = postgkylPath + '/interpMatrix.h5'
@@ -298,6 +305,9 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
     vpardir = 1 if (numDims==2 or numDims==3) else (2 if numDims==4  else (3 if numDims==5 else 99))
     numInterp[vpardir] = nInterpIn+1
   #end
+  if basisType == "pkpmhybrid":
+    numInterp[-1] = nInterpIn+1
+  #end
   if c2p:
     qOut = np.zeros(numCells*(numInterp-1)+1, np.float)
   else:
@@ -403,13 +413,11 @@ class GInterpNodal(GInterp):
                numInterp=None, read=None):
     self.numDims = data.getNumDims()
     self.polyOrder = polyOrder
+    self.basisType = basisType
     if basisType == 'ns':
       self.basisType = 'serendipity'
-    elif basisType == 'gkhybrid':
-      self.basisType = 'gkhybrid'
-    else:
-      self.basisType = basisType
     #end
+
     self.numInterp = numInterp
     self.read = read
     numNodes = _getNumNodes(self.numDims, self.polyOrder, self.basisType)
@@ -532,6 +540,8 @@ class GInterpModal(GInterp):
         self.basisType = 'tensor'
       elif basisType == 'gkhyb':
         self.basisType = 'gkhybrid'
+      elif basisType == 'pkpmhyb':
+        self.basisType = 'pkpmhybrid'
       #end
     elif data.meta['basisType'] is not None:
       self.basisType = data.meta['basisType']
@@ -597,6 +607,9 @@ class GInterpModal(GInterp):
         vpardir = 1 if (self.numDims==2 or self.numDims==3) else (2 if self.numDims==4  else (3 if self.numDims==5 else 99))
         nInterp = [self.numInterp]*self.numDims
         nInterp[vpardir] = self.numInterp+1
+      elif self.basisType == 'pkpmhybrid':
+        nInterp = [self.numInterp]*self.numDims
+        nInterp[-1] = self.numInterp+1
       else:
         nInterp = [int(round(cMat.shape[0] ** (1.0/self.numDims)))]*self.numDims
       grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
