@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+import numpy as np
 import click
 
 import postgkyl.output.plot as gplot
@@ -14,9 +14,9 @@ from postgkyl.commands.util import verb_print
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
               help="Make subplots from multiple datasets.")
-@click.option('--nsubplotrow', 'nSubplotRow', type=click.INT,
+@click.option('--nsubplotrow', 'num_subplot_row', type=click.INT,
               help="Manually set the number of rows for subplots.")
-@click.option('--nsubplotcol', 'nSubplotCol', type=click.INT,
+@click.option('--nsubplotcol', 'num_subplot_col', type=click.INT,
               help="Manually set the number of columns for subplots.")
 @click.option('--transpose', is_flag=True,
               help="Transpose axes.")
@@ -32,8 +32,8 @@ from postgkyl.commands.util import verb_print
               help="Control density of the streamlines.")
 @click.option('--arrowstyle', type=click.STRING,
               help="Set the style for streamline arrows.")
-@click.option('-g', '--group', type=click.Choice(['0', '1']),
-              help="Switch to group mode.")
+@click.option('--lineouts', type=click.Choice(['0', '1']),
+              help="Switch to lineouts mode.")
 @click.option('-s', '--scatter', is_flag=True,
               help="Make scatter plot.")
 @click.option('--markersize', type=click.FLOAT,
@@ -44,7 +44,7 @@ from postgkyl.commands.util import verb_print
               help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option('-d', '--diverging', is_flag=True,
               help="Switch to diverging color map.")
-@click.option('--arg', type=click.STRING,
+@click.option('--arg', type=click.STRING, default='',
               help="Additional plotting arguments, e.g., '*--'.")
 @click.option('-a', '--fix-aspect', 'fixaspect', is_flag=True,
               help="Enforce the same scaling on both axes.")
@@ -62,14 +62,24 @@ from postgkyl.commands.util import verb_print
               help="Value to scale the y-axis (default: 1.0).")
 @click.option('--zscale', default=1.0, type=click.FLOAT,
               help="Value to scale the z-axis (default: 1.0).")
-@click.option('--vmax', default=None, type=click.FLOAT,
-              help="Set maximal value of data for plots.")
-@click.option('--vmin', default=None, type=click.FLOAT,
-              help="Set minimal value of data for plots.")
+@click.option('--xmax', default=None, type=click.FLOAT,
+              help="Set maximal x-value.")
+@click.option('--xmin', default=None, type=click.FLOAT,
+              help="Set minimal x-values.")
+@click.option('--ymax', default=None, type=click.FLOAT,
+              help="Set maximal y-value.")
+@click.option('--ymin', default=None, type=click.FLOAT,
+              help="Set minimal y-values.")
+@click.option('--zmax', default=None, type=click.FLOAT,
+              help="Set maximal z-value.")
+@click.option('--zmin', default=None, type=click.FLOAT,
+              help="Set minimal z-values.")
 @click.option('--xlim', default=None, type=click.STRING,
               help="Set limits for the x-coordinate (lower,upper)")
 @click.option('--ylim', default=None, type=click.STRING,
               help="Set limits for the y-coordinate (lower,upper).")
+@click.option('--zlim', default=None, type=click.STRING,
+              help="Set limits for the z-coordinate (lower,upper).")
 @click.option('--globalrange', '-r', is_flag=True,
               help="Make uniform extends across datasets.")
 @click.option('--legend/--no-legend', default=True,
@@ -120,10 +130,6 @@ def plot(ctx, **kwargs):
 
   kwargs['rcParams'] = ctx.obj['rcParams']
 
-  if kwargs['group'] is not None:
-    kwargs['group'] = int(kwargs['group'])
-  #end
-
   if kwargs['scatter']:
     kwargs['args'] = '.'
   #end
@@ -137,17 +143,34 @@ def plot(ctx, **kwargs):
   if kwargs['aspect']:
     kwargs['fixaspect'] = True
   #end
-  
-  kwargs['numAxes'] = None
+
+  if kwargs['lineouts']:
+    kwargs['lineouts'] = int(kwargs['lineouts'])
+  #end
+
+  kwargs['num_axes'] = None
   if kwargs['subplots']:
-    kwargs['numAxes'] = 0
-    kwargs['startAxes'] = 0
+    kwargs['num_axes'] = 0
+    kwargs['start_axes'] = 0
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      kwargs['numAxes'] = kwargs['numAxes'] + dat.getNumComps()
+      kwargs['num_axes'] = kwargs['num_axes'] + dat.getNumComps()
     #end
     if kwargs['figure'] is None:
       kwargs['figure'] = 0
     #end
+  #end
+
+  if kwargs['xlim']:
+    kwargs['xmin'] = float(kwargs['xlim'].split(',')[0])
+    kwargs['xmax'] = float(kwargs['xlim'].split(',')[1])
+  #end
+  if kwargs['ylim']:
+    kwargs['ymin'] = float(kwargs['ylim'].split(',')[0])
+    kwargs['ymax'] = float(kwargs['ylim'].split(',')[1])
+  #end
+  if kwargs['zlim']:
+    kwargs['zmin'] = float(kwargs['zlim'].split(',')[0])
+    kwargs['zmax'] = float(kwargs['zlim'].split(',')[1])
   #end
 
   dataset_fignum = False
@@ -159,10 +182,7 @@ def plot(ctx, **kwargs):
     vmin = float('inf')
     vmax = float('-inf')
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      val = dat.getValues()*kwargs['zscale']
-      if kwargs['logz']:
-        val = np.log(val)
-      #end
+      val = dat.getValues() * kwargs['zscale']
       if vmin > np.nanmin(val):
         vmin = np.nanmin(val)
       #end
@@ -170,71 +190,68 @@ def plot(ctx, **kwargs):
         vmax = np.nanmax(val)
       #end
     #end
+
     if kwargs['vmin'] is None:
       kwargs['vmin'] = vmin
-      if kwargs['logz']:
-        kwargs['vmin'] = np.exp(vmin)
-      #end
     #end
     if kwargs['vmax'] is None:
       kwargs['vmax'] = vmax
-      if kwargs['logz']:
-        kwargs['vmax'] = np.exp(vmax)
-      #end
     #end
   #end
- 
-  fName = ''
+
+  file_name = ''
+
+  # ------------------------------------------------------------------
+  # Loop over all the datasets
   for i, dat in ctx.obj['data'].iterator(kwargs['use'], enum=True):
     if dataset_fignum:
       kwargs['figure'] = int(i)
     #end
-    
     if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
       label = dat.getLabel()
     else:
       label = ''
     #end
-    if kwargs['arg'] is not None:
-      gplot(dat, kwargs['arg'], labelPrefix=label, 
-            **kwargs)
-    else:
-      gplot(dat, labelPrefix=label,
-            **kwargs)
-    #end
+
+
+    # Plot -----------------------------------------------------------
+    gplot(dat, kwargs['arg'], label_prefix=label, **kwargs)
+    # ----------------------------------------------------------------
+
+
     if kwargs['subplots']:
-      kwargs['startAxes'] = kwargs['startAxes'] + dat.getNumComps()
+      kwargs['start_axes'] = kwargs['start_axes'] + dat.getNumComps()
     #end
 
     if (kwargs['save'] or kwargs['saveas']):
       if kwargs['saveas']:
-        fName = kwargs['saveas']
+        file_name = kwargs['saveas']
       else:
-        if fName != "":
-          fName = fName + "_"
+        if file_name != "":
+          file_name = file_name + "_"
         #end
         if dat.file_name:
-          fName = fName + dat.file_name.split('.')[0]
+          file_name = file_name + dat.file_name.split('.')[0]
         else:
-          fName = fName + 'ev_'+ctx.obj['labels'][s].replace(' ', '_')
+          file_name = file_name + 'ev_'+ctx.obj['labels'][i].replace(' ', '_')
         #end
       #end
     #end
     if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is None:
-      fName = str(fName)
-      plt.savefig(fName, dpi=kwargs['dpi'])
-      fName = ""
+      file_name = str(file_name)
+      plt.savefig(file_name, dpi=kwargs['dpi'])
+      file_name = ""
     #end
 
     if kwargs['saveframes']:
-      fName = '{:s}_{:d}.png'.format(kwargs['saveframes'], i)
-      plt.savefig(fName, dpi=kwargs['dpi'])
+      file_name = '{:s}_{:d}.png'.format(kwargs['saveframes'], i)
+      plt.savefig(file_name, dpi=kwargs['dpi'])
       kwargs['show'] = False
     #end
   #end
   if (kwargs['save'] or kwargs['saveas']) and kwargs['figure'] is not None:
-    fName = str(fName)
-    plt.savefig(fName, dpi=kwargs['dpi'])
+    file_name = str(file_name)
+    plt.savefig(file_name, dpi=kwargs['dpi'])
   #end
 
   if kwargs['show']:
