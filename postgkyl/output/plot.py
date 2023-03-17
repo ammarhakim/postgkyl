@@ -435,7 +435,7 @@ def plot(data, args=(),
         cax.legend(loc=0)
       else:
         cax.text(0.03, 0.96, label,
-                 bbox={'facecolor':'w', 'edgecolor':'w', 'alpha':'0.8',
+                 bbox={'facecolor':'w', 'edgecolor':'w', 'alpha':0.8,
                        'boxstyle':'round'},
                  verticalalignment='top',
                  horizontalalignment='left',
@@ -444,7 +444,7 @@ def plot(data, args=(),
     #end
     if hashtag:
       cax.text(0.97, 0.03, '#pgkyl',
-               bbox={'facecolor':'w', 'edgecolor':'w', 'alpha':'0.8',
+               bbox={'facecolor':'w', 'edgecolor':'w', 'alpha':0.8,
                      'boxstyle':'round'},
                verticalalignment='bottom',
                horizontalalignment='right',
