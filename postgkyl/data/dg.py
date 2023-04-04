@@ -309,9 +309,9 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
     numInterp[-1] = nInterpIn+1
   #end
   if c2p:
-    qOut = np.zeros(numCells*(numInterp-1)+1, np.float)
+    qOut = np.zeros(numCells*(numInterp-1)+1, np.float64)
   else:
-    qOut = np.zeros(numCells*numInterp, np.float)
+    qOut = np.zeros(numCells*numInterp, np.float64)
   #end
   # move the node index from last to the first
   qIn = np.moveaxis(qIn, -1, 0)
@@ -363,7 +363,7 @@ class GInterp(object):
     numEqns = self.numEqns
     shp = [q.shape[i] for i in range(self.numDims)]
     shp.append(self.numNodes)
-    rawData = np.zeros(shp, np.float)
+    rawData = np.zeros(shp, np.float64)
     for n in range(self.numNodes):
       rawData[..., n] = q[..., int(component+n*numEqns)]
     #end
@@ -375,7 +375,7 @@ class GInterp(object):
     numEqns = self.numEqns
     shp = [q.shape[i] for i in range(self.numDims)]
     shp.append(self.numNodes)
-    rawData = np.zeros(shp, np.float)
+    rawData = np.zeros(shp, np.float64)
     lo = int(component*self.numNodes)
     up = int(lo+self.numNodes)
     rawData = q[..., lo:up]
