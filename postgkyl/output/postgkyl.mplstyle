@@ -3,6 +3,7 @@ lines.linewidth : 2
 font.size : 12
 axes.labelsize : large
 axes.titlesize : 14
+axes.xmargin : 0
 image.interpolation : none
 image.cmap : inferno
 image.origin : lower
