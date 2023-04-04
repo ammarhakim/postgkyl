@@ -115,7 +115,7 @@ class GData(object):
   def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
     num_dims = len(bpVar.dims)
     count = np.array(bpVar.dims)
-    offset = np.zeros(num_dims, np.int)
+    offset = np.zeros(num_dims, np.int32)
     cnt = 0
     for d, z in enumerate(zs):
       if d < num_dims-1 and z is not None:  # Last dim stores comp
@@ -754,7 +754,7 @@ class GData(object):
       fh = open(out_name, 'w')
       for i in range(numRows):
         idx = i
-        idxs = np.zeros(num_dims, np.int)
+        idxs = np.zeros(num_dims, np.int32)
         for d in range(num_dims):
           idxs[d] = int(idx // basis[d])
           idx = idx % basis[d]
