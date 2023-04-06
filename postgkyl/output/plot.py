@@ -8,6 +8,10 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
+# this is needed for Python 3.0 compatibility
+import sys
+if sys.version_info[0] >= 3:
+    unicode = str
 
 # Helper functions
 def _colorbar(obj, fig, cax, label="", extend=None):
