@@ -460,7 +460,8 @@ def plot(data, args=(),
     if logy:
       cax.set_yscale('log')
     #end
-    #plt.autoscale(enable=True, axis='x', tight=True)
+    plt.autoscale(enable=True, axis='x', tight=True)
+    plt.autoscale(enable=True, axis='y')
     cax.set_xlim(xmin, xmax)
     cax.set_ylim(ymin, ymax)
 
