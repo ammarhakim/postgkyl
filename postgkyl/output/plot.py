@@ -462,8 +462,10 @@ def plot(data, args=(),
     #end
     plt.autoscale(enable=True, axis='x', tight=True)
     plt.autoscale(enable=True, axis='y')
-    cax.set_xlim(xmin, xmax)
-    cax.set_ylim(ymin, ymax)
+    if xmin is not None or xmax is not None:
+      cax.set_xlim(xmin, xmax)
+    if ymin is not None or ymax is not None:
+      cax.set_ylim(ymin, ymax)
 
     if num_dims == 2:
       if fixaspect:

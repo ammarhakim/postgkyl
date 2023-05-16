@@ -1,6 +1,6 @@
 package:
   name: postgkyl
-  version: "1.6.8"
+  version: "1.6.9"
 
 source:
   path: ./
@@ -11,7 +11,7 @@ channels:
     - conda-forge
 
 build:
-  number: 20221205
+  number: 20230413
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
