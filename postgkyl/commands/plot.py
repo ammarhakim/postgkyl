@@ -191,11 +191,11 @@ def plot(ctx, **kwargs):
       #end
     #end
 
-    if kwargs['vmin'] is None:
-      kwargs['vmin'] = vmin
+    if kwargs['zmin'] is None:
+      kwargs['zmin'] = vmin
     #end
-    if kwargs['vmax'] is None:
-      kwargs['vmax'] = vmax
+    if kwargs['zmax'] is None:
+      kwargs['zmax'] = vmax
     #end
   #end
 
