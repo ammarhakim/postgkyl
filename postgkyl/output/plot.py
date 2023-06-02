@@ -54,7 +54,7 @@ def plot(data, args=(),
          num_subplot_row=None, num_subplot_col=None,
          streamline=False, sdensity=1, arrowstyle='simple',
          quiver=False,
-         contour=False, clevels=None,
+         contour=False, clevels=None, cnlevels=None, cont_label=False,
          diverging=False,
          lineouts=None, group=None,
          xmin=None, xmax=None, xscale=1.0,
@@ -305,12 +305,14 @@ def plot(data, args=(),
 
       if contour:  #--------------------------------------------------
         levels = 10
-        if clevels:
+        if cnlevels:
+          levels = int(cnlevels)-1
+        elif clevels:
           if ":" in clevels:
             s = clevels.split(":")
             levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
           else:
-            levels = int(clevels)
+            levels = np.array(clevels.split(','))
           #end
         #end
         cc_grid = _get_cell_centered_grid(grid, cells)
@@ -318,7 +320,10 @@ def plot(data, args=(),
         z = values[..., comp].transpose() * zscale
         im = cax.contour(x, y, z,
                          levels, *args,
-                         colors=cl, linewidths=linewidth)
+                         colors=color, linewidths=linewidth)
+        if cont_label:
+          cax.clabel(im, inline=1)
+        #end
 
 
       elif quiver:  #-------------------------------------------------
