@@ -5,7 +5,7 @@ import postgkyl
 import numpy as np
 import math
 
-def calc_ke_dke(root_file_name, initFrame, finalFrame, dim, Vol):
+def calc_ke_dke(root_file_name, initFrame, finalFrame, dim, Vol, initTime, finalTime):
     #function to calculate all the total kinetic energy and the rate of dissipation of KE 
     #root_file_name is the name of the file before the numbers start
     #initFrame is the first frame and finalFrame is the final frame
@@ -42,9 +42,9 @@ def calc_ke_dke(root_file_name, initFrame, finalFrame, dim, Vol):
             py = data[:,:,:,2]
             pz = data[:,:,:,3]
         
-        u = px/(rho*V0)
-        v = py/(rho*V0)
-        w = pz/(rho*V0)
+        u = px/rho
+        v = py/rho
+        w = pz/rho
         
         e = rho*(u**2 + v**2 + w**2)
         ke[0,r] = np.sum(e, axis=(0,1,2))*dx*dy*dz*Vol

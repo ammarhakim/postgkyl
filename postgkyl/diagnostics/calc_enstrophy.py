@@ -35,9 +35,9 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
         py = data[:,:,:,2]
         pz = data[:,:,:,3]
         #calculate ux, uy, uz
-        u = px/(rho*V0)
-        v = py/(rho*V0)
-        w = pz/(rho*V0)
+        u = px/rho
+        v = py/rho
+        w = pz/rho
         #calculate the gradient
         u_gradient = (np.gradient(u, dx, dy, dz, edge_order=2))
         v_gradient = (np.gradient(v, dx, dy, dz, edge_order=2))
