@@ -80,7 +80,7 @@ def mom_agyro(ctx, **kwargs):
   for species, field in zip(data.iterator(kwargs['species']),
                             data.iterator(kwargs['field'])):
     grid, agyro = get_gkyl_10m_agyro(species_data=species, field_data=field, measure=kwargs['measure'])
-    out = Data(tag=tag,
+    out = GData(tag=tag,
                label=kwargs['label'],
                comp_grid=ctx.obj['compgrid'],
                meta=species.meta)

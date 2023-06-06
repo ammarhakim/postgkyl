@@ -105,9 +105,9 @@ def cli(ctx, **kwargs):
   if kwargs['verbose']:
     ctx.obj['verbose'] = True
     # Monty Python references should be a part of any Python code
-    verb_log(ctx, 'This is Postgkyl running in verbose mode!')
-    verb_log(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
-    verb_log(ctx, 'And now for something completelly different...')
+    verb_print(ctx, 'This is Postgkyl running in verbose mode!')
+    verb_print(ctx, 'Spam! Spam! Spam! Spam! Lovely Spam! Lovely Spam!')
+    verb_print(ctx, 'And now for something completelly different...')
   else:
     ctx.obj['verbose'] = False
   #end

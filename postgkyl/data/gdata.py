@@ -5,6 +5,7 @@ import shutil
 from typing import Union
 
 from postgkyl.data.load_gkyl import load_gkyl
+from postgkyl.data.load_h5 import load_h5
 from postgkyl.utils import idxParser
 
 
@@ -159,7 +160,7 @@ class GData(object):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
-      status, param = load_h5(self.file_name, self.meta)
+      status, params = load_h5(self.file_name, self.meta)
       if status:
         lower = params[0]
         upper = params[1]
@@ -459,6 +460,7 @@ class GData(object):
   #end
 
   def getInputFile(self):
+    import adios
     fh = adios.file(self.file_name)
     inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
     fh.close()

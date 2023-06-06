@@ -27,15 +27,15 @@ def mask(ctx, **kwargs):
 
     if kwargs['filename']:
       maskFldRep = np.repeat(maskFld, dat.getNumComps(), axis=-1)
-      data.push(np.ma.masked_where(maskFldRep < 0.0, values))
+      data.setValues(np.ma.masked_where(maskFldRep < 0.0, values))
     elif kwargs['lower'] is not None and kwargs['upper'] is not None:
-      dat.push(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']), grid)
+      dat.setValues(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']))
     elif kwargs['lower'] is not None:
-      dat.push(np.ma.masked_less(values, kwargs['lower']))
+      dat.setValues(np.ma.masked_less(values, kwargs['lower']))
     elif kwargs['upper'] is not None:
-      dat.push(np.ma.masked_greater(values, kwargs['upper']))
+      dat.setValues(np.ma.masked_greater(values, kwargs['upper']))
     else:
-      data.push(values, grid)
+      data.setValues(values)
       click.echo(click.style("WARNING in 'mask': No masking information specified.", fg='yellow'))
     #end
   #end

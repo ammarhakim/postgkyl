@@ -46,7 +46,7 @@ def calcPressureParPer(Pij, B):
     Ppp = np.copy(Pij[..., 0:2])
     Ppp[..., 0] = bx*bx*Pxx + by*by*Pyy + bz*bz*Pzz \
                   + 2.0*(bx*by*Pxy + bx*bz*Pxz + by*bz*Pyz) # parallel
-    Ppp[..., 1] = (Pxx + Pyy + Pzz - Ppar) / 2.0 # perpendicular
+    Ppp[..., 1] = (Pxx + Pyy + Pzz - Ppp[..., 0]) / 2.0 # perpendicular
     return Ppp
 
 def calcAgyrotropy(Pij, B,

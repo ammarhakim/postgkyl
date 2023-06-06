@@ -75,10 +75,10 @@ def growth(ctx, **kwargs):
                                             p0=p0)
 
       if kwargs['dataset']:
-        out = Data(tag='growth',
-                   label='Fit',
-                   comp_grid=ctx.obj['compgrid'],
-                   meta=dat.meta)
+        out = GData(tag='growth',
+                    label='Fit',
+                    comp_grid=ctx.obj['compgrid'],
+                    meta=dat.meta)
         t = 0.5*(time[0][:-1] + time[0][1:])
         out_val = exp2(t, *bestParams)
         out.push([time[0]], out_val[..., np.newaxis])

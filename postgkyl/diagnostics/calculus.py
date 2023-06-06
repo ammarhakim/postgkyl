@@ -22,7 +22,7 @@ def integrate(data, axis, overwrite=False, stack=False):
                 bounds = axis.split(':')
                 #axis = np.zeros(bounds[1]-bounds[0], np.int)
                 #axis += int(bounds[0])
-                axis = tuple(range(bouns[0], bounds[1]))
+                axis = tuple(range(bounds[0], bounds[1]))
             else:
                 axis = tuple([int(axis)])
             #end

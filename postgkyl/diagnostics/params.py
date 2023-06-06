@@ -142,7 +142,7 @@ def get_d(species_data=None, species_grid=None, species_values=None,
     _mu = mu0
   #end
 
-  light_speed = 1.0/sqrt(_eps*_mu)
+  light_speed = 1.0/np.sqrt(_eps*_mu)
   out_values = light_speed/omegaP
 
   return out_grid, out_values
@@ -159,7 +159,7 @@ def get_lambdaD(species_data=None, species_grid=None, species_values=None,
                         field_data, field_grid, field_values, gasGamma, numMom, mass, mu0, sqrt2)
 
   if (sqrt2):
-    out_values = (vt/omegaP)/sqrt(2.0)
+    out_values = (vt/omegaP)/np.sqrt(2.0)
   else:
     out_values = (vt/omegaP)
 
@@ -179,7 +179,7 @@ def get_rho(species_data=None, species_grid=None, species_values=None,
   if (sqrt2):
     out_values = (vt/omegaC)
   else:
-    out_values = (vt/omegaP)*sqrt(2.0)
+    out_values = (vt/omegaC)*np.sqrt(2.0)
 
   return out_grid, out_values
 #end

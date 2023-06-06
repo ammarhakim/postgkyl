@@ -1,0 +1,12 @@
+name: pgkyl
+dependencies:
+  - python=3.8
+  - numpy=1.21.*
+  - matplotlib
+  - click
+  - conda-forge::adios=1.13.1
+  - conda-forge::adios-python=1.13.1=py38h522c649_1006
+  - pytables
+  - scipy
+  - sympy
+  - msgpack-python
