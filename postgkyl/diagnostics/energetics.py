@@ -44,9 +44,5 @@ def energetics(dataElc, dataIon, dataField, overwrite=False, stack=False):
     out[..., 4] = np.squeeze(esq/2.0)
     out[..., 5] = np.squeeze(bsq/2.0)
     out[..., 6] = np.squeeze(pre+kee+pri+kei+esq/2.0+bsq/2.0)
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+    return grid, out
 #end

@@ -50,9 +50,6 @@ def idxParser(value, array=None, nodal=False):
       idx = _findNearestIndex(array, value)
     #end
   else:
-    if sys.version_info[0] < 3 and isinstance(value, unicode):
-      value = str(value)
-    #end
     if isinstance(value, str):
       if len(value.split(',')) > 1:
         idxs = value.split(',')

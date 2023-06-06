@@ -28,9 +28,5 @@ def rel_change(dataset0, dataset, comp=None, overwrite=False, stack=False):
             out[..., i] = (values[..., i] - values0[..., i])/values0[..., int(comp)]
         else:
             out[..., i] = (values[..., i] - values0[..., i])/values0[..., i]
-    if overwrite:
-        data.push(grid, out)
-    else:
-        return grid, out
-    #end
+    return grid, out
 #end

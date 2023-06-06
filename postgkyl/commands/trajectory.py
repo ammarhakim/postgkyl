@@ -12,68 +12,68 @@ from postgkyl.commands.util import verb_print
 def update(i, ax, ctx, leap, vel,
            xmin, xmax, ymin, ymax, zmin, zmax,
            tag):
-    colors = ['C0', 'C1', 'C2', 'C3', 'C4',
-              'C5', 'C6', 'C7', 'C8', 'C9']
+  colors = ['C0', 'C1', 'C2', 'C3', 'C4',
+            'C5', 'C6', 'C7', 'C8', 'C9']
 
-    s = -1
-    plt.cla()
-    #for s, dat in ctx.obj['data'].iterator(tag, emum=True):
-    for dat in ctx.obj['data'].iterator(tag):
-        s = s+1
-        time = dat.getGrid()[0]
-        coords = dat.getValues()
-        tIdx = int(i*leap)
+  s = -1
+  plt.cla()
+  #for s, dat in ctx.obj['data'].iterator(tag, emum=True):
+  for dat in ctx.obj['data'].iterator(tag):
+    s = s+1
+    time = dat.getGrid()[0]
+    coords = dat.getValues()
+    tIdx = int(i*leap)
 
-        if xmin is not None:
-            x = np.where(coords[:, 0]>xmin, coords[:, 0], np.nan)
-        else:
-            x = coords[:,0]
-        #end
-        if xmax is not None:
-            x = np.where(x<xmax, x, np.nan)
-        #end
-        if ymin is not None:
-            y = np.where(coords[:, 1]>ymin, coords[:, 1], np.nan)
-        else:
-            y = coords[:,1]
-        #end
-        if ymax is not None:
-            y = np.where(y<ymax, y, np.nan)
-        #end
-        if zmin is not None:
-            z = np.where(coords[:, 2]>zmin, coords[:, 2], np.nan)
-        else:
-            z = coords[:,2]
-        #end
-        if zmax is not None:
-            z = np.where(z<zmax, z, np.nan)
-        #end
-        
-        ax.plot(x, y, z, color=colors[s%10])
-        ax.scatter(x[tIdx], y[tIdx], z[tIdx],
-                   color=colors[s%10])
-        if vel and dat.getNumComps() == 6:          
-            if tIdx+leap >= len(grid) :
-                dt = time[-1] - time[tIdx]
-            else:
-                dt = time[int(tIdx+leap)] - time[tIdx]
-            #end
-            dx = coords[i, 3]*dt
-            dy = coords[i, 4]*dt
-            dz = coords[i, 5]*dt
-            ax.plot([x[tIdx], x[tIdx]+dx], 
-                    [y[tIdx], y[tIdx]+dy],
-                    [z[tIdx], z[tIdx]+dz],
-                    color=colors[s%10])
-        #end
+    if xmin is not None:
+      x = np.where(coords[:, 0]>xmin, coords[:, 0], np.nan)
+    else:
+      x = coords[:,0]
     #end
-    plt.title('T: {:.4e}'.format(time[tIdx]))
-    ax.set_xlabel('$z_0$')
-    ax.set_ylabel('$z_1$')
-    ax.set_zlabel('$z_2$')
-    ax.set_xlim3d(xmin, xmax)
-    ax.set_ylim3d(ymin, ymax)
-    ax.set_zlim3d(zmin, zmax)
+    if xmax is not None:
+      x = np.where(x<xmax, x, np.nan)
+    #end
+    if ymin is not None:
+      y = np.where(coords[:, 1]>ymin, coords[:, 1], np.nan)
+    else:
+      y = coords[:,1]
+    #end
+    if ymax is not None:
+      y = np.where(y<ymax, y, np.nan)
+    #end
+    if zmin is not None:
+      z = np.where(coords[:, 2]>zmin, coords[:, 2], np.nan)
+    else:
+      z = coords[:,2]
+    #end
+    if zmax is not None:
+      z = np.where(z<zmax, z, np.nan)
+    #end
+        
+    ax.plot(x, y, z, color=colors[s%10])
+    ax.scatter(x[tIdx], y[tIdx], z[tIdx],
+               color=colors[s%10])
+    if vel and dat.getNumComps() == 6:          
+      if tIdx+leap >= len(time) :
+        dt = time[-1] - time[tIdx]
+      else:
+        dt = time[int(tIdx+leap)] - time[tIdx]
+      #end
+      dx = coords[i, 3]*dt
+      dy = coords[i, 4]*dt
+      dz = coords[i, 5]*dt
+      ax.plot([x[tIdx], x[tIdx]+dx], 
+              [y[tIdx], y[tIdx]+dy],
+              [z[tIdx], z[tIdx]+dz],
+              color=colors[s%10])
+    #end
+  #end
+  plt.title('T: {:.4e}'.format(time[tIdx]))
+  ax.set_xlabel('$z_0$')
+  ax.set_ylabel('$z_1$')
+  ax.set_zlabel('$z_2$')
+  ax.set_xlim3d(xmin, xmax)
+  ax.set_ylim3d(ymin, ymax)
+  ax.set_zlim3d(zmin, zmax)
 #end
 
 @click.command(help='Animate a particle trajectory')
@@ -143,53 +143,54 @@ def update(i, ax, ctx, leap, vel,
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.pass_context
 def trajectory(ctx, **kwargs):
-    verb_print(ctx, 'Starting trajectory')
-    data = ctx.obj['data']
+  verb_print(ctx, 'Starting trajectory')
+  data = ctx.obj['data']
     
-    tags = list(data.tagIterator(kwargs['use']))
-    if len(tags) > 1:
-        ctx.fail(click.echo("'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)), fg='red'))
-    else:
-        tag = tags[0]
-    #end
+  tags = list(data.tagIterator(kwargs['use']))
+  if len(tags) > 1:
+    ctx.fail(click.echo("'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)), fg='red'))
+  else:
+    tag = tags[0]
+  #end
     
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    kwargs['figure'] = fig
-    kwargs['legend'] = False
+  fig = plt.figure()
+  ax = Axes3D(fig)
+  kwargs['figure'] = fig
+  kwargs['legend'] = False
 
-    dat = ctx.obj['data'].getDataset(tag, 0)
-    numPos = dat.getNumCells()[0]
+  dat = ctx.obj['data'].getDataset(tag, 0)
+  numPos = dat.getNumCells()[0]
 
-    jump = 1
-    if kwargs['numframes'] is not None:
-        jump = int(math.floor(numPos/kwargs['numframes']))
-        numPos = int(kwargs['numframes'])
-    #end
+  jump = 1
+  if kwargs['numframes'] is not None:
+    jump = int(math.floor(numPos/kwargs['numframes']))
+    numPos = int(kwargs['numframes'])
+  #end
    
-    anim = FuncAnimation(fig, update, numPos,
-                         fargs=(ax, ctx, jump, kwargs['velocity'],
-                                kwargs['xmin'], kwargs['xmax'],
-                                kwargs['ymin'], kwargs['ymax'],
-                                kwargs['zmin'], kwargs['zmax'],
-                                tag),
-                         interval=kwargs['interval'])
+  anim = FuncAnimation(fig, update, numPos,
+                       fargs=(ax, ctx, jump, kwargs['velocity'],
+                              kwargs['xmin'], kwargs['xmax'],
+                              kwargs['ymin'], kwargs['ymax'],
+                              kwargs['zmin'], kwargs['zmax'],
+                              tag),
+                       interval=kwargs['interval'])
 
-    ax.view_init(elev=kwargs['elevation'], azim=kwargs['azimuth'])
+  ax.view_init(elev=kwargs['elevation'], azim=kwargs['azimuth'])
 
-    if kwargs['fixaspect']:
-        plt.setp(ax, aspect=1.0)
+  if kwargs['fixaspect']:
+    plt.setp(ax, aspect=1.0)
+  #end
 
-    fName = 'anim.mp4'
-    if kwargs['saveas']:
-        fName = str(kwargs['saveas'])
-    #end
-    if kwargs['save'] or kwargs['saveas']:
-        anim.save(fName, writer='ffmpeg')
-    #end
+  fName = 'anim.mp4'
+  if kwargs['saveas']:
+    fName = str(kwargs['saveas'])
+  #end
+  if kwargs['save'] or kwargs['saveas']:
+    anim.save(fName, writer='ffmpeg')
+  #end
     
-    if kwargs['show']:
-        plt.show()
-    #end
-    verb_print(ctx, 'Finishing trajectory')
+  if kwargs['show']:
+    plt.show()
+  #end
+  verb_print(ctx, 'Finishing trajectory')
 #end

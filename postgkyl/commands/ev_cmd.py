@@ -226,7 +226,7 @@ def integrate(inGrid, inValues, avg=False):
       axis = tuple([int(a) for a in axes])
     elif len(axis.split(':')) == 2:
       bounds = axis.split(':')
-      axis = tuple(range(bouns[0], bounds[1]))
+      axis = tuple(range(bounds[0], bounds[1]))
     elif axis == 'all':
       numDims = len(grid)
       axis = tuple(range(numDims))

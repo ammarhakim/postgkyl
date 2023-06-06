@@ -22,8 +22,8 @@ def accumulate_current(data, qbym=False, overwrite=False, stack=False):
     values = data.getValues()
     out = np.zeros(values.shape)
     factor = 0.0
-    if (qbym and dat.mass is not None and dat.charge is not None):
-        factor = dat.charge/dat.mass
+    if (qbym and data.mass is not None and data.charge is not None):
+        factor = data.charge/data.mass
     #elif (dat.charge is not None): 
     #    factor = dat.charge
     else:
