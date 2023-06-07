@@ -1,6 +1,6 @@
 name: Test Postgkyl
 
-on: [push]
+on: push
 
 jobs:
   build-linux:

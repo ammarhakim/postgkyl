@@ -6,9 +6,7 @@ source:
   path: ./
 
 channels:
-    - defaults
-    - gkyl
-    - conda-forge
+  - gkyl
 
 build:
   number: 20230413
@@ -27,12 +25,14 @@ requirements:
 
   run:
     - python
-    - numpy>=1.16
+    - numpy=1.21.*
     - scipy
-    - matplotlib>=3.1
+    - matplotlib
     - pytables
     - click
     - sympy
+    - conda-forge::adios=1.13.1
+    - conda-forge::adios-python=1.13.1=py38h522c649_1006
     - adios
     - adios-python
     - msgpack-python
