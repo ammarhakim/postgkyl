@@ -1,6 +1,9 @@
 name: Create and publish conda builds
 
-on: push
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build-linux:
