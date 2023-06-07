@@ -1,11 +1,11 @@
 name: Create and publish conda builds
 
-on: workflow_dispatch
+#on: workflow_dispatch
 
-#on:
-#  push:
-#    branches:
-#      - master
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build-linux:
@@ -29,6 +29,31 @@ jobs:
       run: |
         anaconda login --username gkyl --password ${{ secrets.CONDA_PASSWORD }}
         conda config --set anaconda_upload yes
-    - name: Build
+    - name: Build 3.8
+      run: |    
+        conda build . --channel conda-forge
+
+  build-osx:
+    runs-on: osx-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.8'
+    - name: Add conda to system path
       run: |
-        conda build .
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda install anaconda-client conda-build
+    - name: Login to Anaconda cloud
+      run: |
+        anaconda login --username gkyl --password ${{ secrets.CONDA_PASSWORD }}
+        conda config --set anaconda_upload yes
+    - name: Build 3.8
+      run: |    
+        conda build . --channel conda-forge
