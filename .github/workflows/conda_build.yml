@@ -1,9 +1,11 @@
 name: Create and publish conda builds
 
-on:
-  push:
-    branches:
-      - master
+on: workflow_dispatch
+
+#on:
+#  push:
+#    branches:
+#      - master
 
 jobs:
   build-linux:
