@@ -31,7 +31,7 @@ jobs:
         conda config --set anaconda_upload yes
     - name: Build 3.8
       run: |    
-        conda build . --channel conda-forge
+        conda build . --python=3.8 --channel conda-forge
 
   build-osx:
     runs-on: osx-latest
@@ -56,4 +56,4 @@ jobs:
         conda config --set anaconda_upload yes
     - name: Build 3.8
       run: |    
-        conda build . --channel conda-forge
+        conda build . --python=3.8  --channel conda-forge
