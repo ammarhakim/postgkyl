@@ -1,6 +1,6 @@
 package:
   name: postgkyl
-  version: "1.6.9"
+  version: 1.6.9
 
 source:
   path: ./
@@ -9,7 +9,7 @@ channels:
   - gkyl
 
 build:
-  number: 20230413
+  number: {{ CUSTOM_BUILD_NUMBER }}
   always_include_files:
     - postgkyl/data/xformMatricesModalMaximal.h5
     - postgkyl/data/xformMatricesModalSerendipity.h5
