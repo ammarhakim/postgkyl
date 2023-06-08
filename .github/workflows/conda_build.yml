@@ -1,17 +1,10 @@
 name: Create and publish conda builds
 
-#on: workflow_dispatch
-
-on:
-  push:
-    branches:
-      - master
+on: workflow_dispatch
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
 
     steps:
     - uses: actions/checkout@v3
@@ -30,7 +23,8 @@ jobs:
         anaconda login --username gkyl --password ${{ secrets.CONDA_PASSWORD }}
         conda config --set anaconda_upload yes
     - name: Build 3.8
-      run: |    
+      run: |
+        export CUSTOM_BUILD_NUMBER=$(date +'%Y%m%d')
         conda build . --python=3.8 --channel conda-forge
 
   build-osx:
@@ -55,5 +49,6 @@ jobs:
         anaconda login --username gkyl --password ${{ secrets.CONDA_PASSWORD }}
         conda config --set anaconda_upload yes
     - name: Build 3.8
-      run: |    
+      run: |
+        export CUSTOM_BUILD_NUMBER=$(date +'%Y%m%d')
         conda build . --python=3.8  --channel conda-forge

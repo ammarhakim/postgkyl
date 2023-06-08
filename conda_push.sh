@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Modify the build number to the day of the last change
-./setbuildnumber.py
-
+export CUSTOM_BUILD_NUMBER=$(date +'%Y%m%d')
 conda config --set anaconda_upload yes
 
 # Linux builds
