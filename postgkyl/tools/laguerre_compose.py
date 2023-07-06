@@ -33,20 +33,11 @@ def laguerre_compose(in_f : Union[GData, tuple],
 
   F1 = F0 - (G.transpose()/T_m).transpose()
 
-  s = vperp_3D.shape
-  f = np.zeros(s)
+  F0, F1 = F0[..., np.newaxis], F1[..., np.newaxis]
+  T_m = T_m[..., np.newaxis, np.newaxis]
 
-  for i in range(s[0]):
-    for j in range(s[1]):
-      for k in range(s[2]):
-        f[i,j,k] += F0[i,j] / (2*np.pi*T_m[i]) \
-          * np.exp(-vperp_3D[i, j, k]**2/2/T_m[i])
-        f[i,j,k] += F1[i,j] / (2*np.pi*T_m[j]) \
-          * np.exp(-vperp_3D[i, j, k]**2/2/T_m[i]) \
-            * (1 - vperp_3D[i, j, k]**2/2/T_m[i])
-      #end
-    #end
-  #end
+  f =  ( F0 + F1 * (1 - vperp_3D**2/2/T_m) ) \
+    / (2*np.pi*T_m) * np.exp(-vperp_3D**2/2/T_m)
 
   f = f[..., np.newaxis]
   if (out_f):
