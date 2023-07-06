@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -20,13 +20,13 @@ import postgkyl.diagnostics as diag
 @click.pass_context
 def bperprotate(ctx, **kwargs):
   """Rotate an array perpendicular to the unit vectors of the magnetic field.
-  For two arrays u and b, where b is the unit vector in the direction of the magnetic field, 
+  For two arrays u and b, where b is the unit vector in the direction of the magnetic field,
   the operation is u - (u dot b_hat) b_hat.
   """
   verb_print(ctx, 'Starting rotation perpendicular to magnetic field')
-    
+
   data = ctx.obj['data'] # shortcut
-  
+
   for a, rot in zip(data.iterator(kwargs['array']),
                     data.iterator(kwargs['field'])):
     # Magnetic field is components 3, 4, & 5 in field array

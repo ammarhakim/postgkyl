@@ -1,1 +1,1 @@
-from .idxParser import idxParser
+from .idx_parser import idxParser

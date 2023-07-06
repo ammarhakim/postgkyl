@@ -3,11 +3,11 @@
 Postgkyl module for binning isotropic data
 """
 import numpy as np
-from .. import diagnostics as diag
+from .. import tools as diag
 
 def polar_isotropic(nkpolar, nkx, nky, nkz, polar_index, nbin, fft_matrix, kx, ky, kz):
     #if 2D, then nkz = kz = 0
-    
+
     fft_isok = np.zeros(nkpolar)
     if nkz == 0:
         for i in range(0, nkx):

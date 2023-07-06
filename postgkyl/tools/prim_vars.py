@@ -3,11 +3,9 @@
 Postgkyl module for computing primitive variables from conservative variables
 """
 import numpy as np
-from postgkyl.utils import input_parser
+from postgkyl.tools import input_parser
 
-def get_density(in_data=None,
-                in_grid=None, in_values=None, 
-                overwrite=False):
+def get_density(in_data, overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
     in_values = in_data.getValues()
@@ -21,7 +19,7 @@ def get_density(in_data=None,
 #end
 
 def get_vx(in_data=None,
-           in_grid=None, in_values=None, 
+           in_grid=None, in_values=None,
            overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -37,7 +35,7 @@ def get_vx(in_data=None,
 #end
 
 def get_vy(in_data=None,
-           in_grid=None, in_values=None, 
+           in_grid=None, in_values=None,
            overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -53,7 +51,7 @@ def get_vy(in_data=None,
 #end
 
 def get_vz(in_data=None,
-           in_grid=None, in_values=None, 
+           in_grid=None, in_values=None,
            overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -69,7 +67,7 @@ def get_vz(in_data=None,
 #end
 
 def get_vi(in_data=None,
-           in_grid=None, in_values=None, 
+           in_grid=None, in_values=None,
            overwrite=False):
 
   if in_data:
@@ -86,7 +84,7 @@ def get_vi(in_data=None,
 #end
 
 def get_pxx(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -104,7 +102,7 @@ def get_pxx(in_data=None,
 #end
 
 def get_pxy(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -123,7 +121,7 @@ def get_pxy(in_data=None,
 #end
 
 def get_pxz(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -142,7 +140,7 @@ def get_pxz(in_data=None,
 #end
 
 def get_pyy(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -160,7 +158,7 @@ def get_pyy(in_data=None,
 #end
 
 def get_pyz(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -179,7 +177,7 @@ def get_pyz(in_data=None,
 #end
 
 def get_pzz(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -197,7 +195,7 @@ def get_pzz(in_data=None,
 #end
 
 def get_pij(in_data=None,
-            in_grid=None, in_values=None, 
+            in_grid=None, in_values=None,
             overwrite=False):
 
   if in_data:
@@ -205,20 +203,20 @@ def get_pij(in_data=None,
     in_values = in_data.getValues()
   #end
   out_values = np.zeros(in_values[..., 4:10].shape)
-  
+
   out_grid, pxx = get_pxx(in_data, in_grid, in_values)
   out_grid, pxy = get_pxy(in_data, in_grid, in_values)
   out_grid, pxz = get_pxz(in_data, in_grid, in_values)
   out_grid, pyy = get_pyy(in_data, in_grid, in_values)
   out_grid, pyz = get_pyz(in_data, in_grid, in_values)
   out_grid, pzz = get_pzz(in_data, in_grid, in_values)
-                    
+
   out_values[..., 0] = np.squeeze(pxx)
   out_values[..., 1] = np.squeeze(pxy)
   out_values[..., 2] = np.squeeze(pxz)
   out_values[..., 3] = np.squeeze(pyy)
   out_values[..., 4] = np.squeeze(pyz)
-  out_values[..., 5] = np.squeeze(pzz)  
+  out_values[..., 5] = np.squeeze(pzz)
 
   if overwrite:
     in_data.push(out_grid, out_values)
@@ -227,8 +225,8 @@ def get_pij(in_data=None,
 #end
 
 def get_p(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, numMom=None, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, numMom=None,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -251,7 +249,7 @@ def get_p(in_data=None,
     out_grid, vx = get_vx(in_data, in_grid, in_values)
     out_grid, vy = get_vy(in_data, in_grid, in_values)
     out_grid, vz = get_vz(in_data, in_grid, in_values)
-     
+
     out_values = (gasGamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2))
   elif numMom == 10:
     out_grid, pxx = get_pxx(in_data, in_grid, in_values)
@@ -268,8 +266,8 @@ def get_p(in_data=None,
 #end
 
 def get_ke(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, numMom=None, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, numMom=None,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -304,11 +302,11 @@ def get_ke(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end  
+#end
 
 def get_temp(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, numMom=None, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, numMom=None,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -324,11 +322,11 @@ def get_temp(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end 
+#end
 
 def get_sound(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, numMom=None, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, numMom=None,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -344,11 +342,11 @@ def get_sound(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end 
+#end
 
 def get_mach(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, numMom=None, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, numMom=None,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -369,7 +367,7 @@ def get_mach(in_data=None,
 #end
 
 def get_mhd_Bx(in_data=None,
-               in_grid=None, in_values=None, 
+               in_grid=None, in_values=None,
                overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -384,7 +382,7 @@ def get_mhd_Bx(in_data=None,
 #end
 
 def get_mhd_By(in_data=None,
-               in_grid=None, in_values=None, 
+               in_grid=None, in_values=None,
                overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -399,7 +397,7 @@ def get_mhd_By(in_data=None,
 #end
 
 def get_mhd_Bz(in_data=None,
-               in_grid=None, in_values=None, 
+               in_grid=None, in_values=None,
                overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -414,7 +412,7 @@ def get_mhd_Bz(in_data=None,
 #end
 
 def get_mhd_Bi(in_data=None,
-           in_grid=None, in_values=None, 
+           in_grid=None, in_values=None,
            overwrite=False):
 
   if in_data:
@@ -430,8 +428,8 @@ def get_mhd_Bi(in_data=None,
 #end
 
 def get_mhd_mag_p(in_data=None,
-          in_grid=None, in_values=None, 
-          mu0=1.0, 
+          in_grid=None, in_values=None,
+          mu0=1.0,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -448,11 +446,11 @@ def get_mhd_mag_p(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end  
+#end
 
 def get_mhd_p(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, mu0=1.0, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, mu0=1.0,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -471,11 +469,11 @@ def get_mhd_p(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end   
+#end
 
 def get_mhd_temp(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, mu0=1.0, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, mu0=1.0,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -491,11 +489,11 @@ def get_mhd_temp(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end 
+#end
 
 def get_mhd_sound(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, mu0=1.0, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, mu0=1.0,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()
@@ -511,11 +509,11 @@ def get_mhd_sound(in_data=None,
     in_data.push(out_grid, out_values)
   #end
   return out_grid, out_values
-#end  
+#end
 
 def get_mhd_mach(in_data=None,
-          in_grid=None, in_values=None, 
-          gasGamma=5.0/3.0, mu0=1.0, 
+          in_grid=None, in_values=None,
+          gasGamma=5.0/3.0, mu0=1.0,
           overwrite=False):
   if in_data:
     in_grid = in_data.getGrid()

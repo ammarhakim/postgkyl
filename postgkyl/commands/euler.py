@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 from postgkyl.data import GData
 from postgkyl.commands.util import verb_print
 
@@ -24,7 +24,7 @@ def euler(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting euler')
   data = ctx.obj['data']
-  
+
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
     verb_print(ctx, 'euler: Extracting {:s} from data set'.format(v))
@@ -64,4 +64,4 @@ def euler(ctx, **kwargs):
   #end
   verb_print(ctx, 'Finishing euler')
 #end
-    
+

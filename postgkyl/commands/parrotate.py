@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -23,12 +23,12 @@ def parrotate(ctx, **kwargs):
   For two arrays u and v, where v is the rotator, operation is (u dot v_hat) v_hat.
   Note that for a three-component field, the output is a new vector
   whose components are (u_{v_x}, u_{v_y}, u_{v_z}), i.e.,
-  the x, y, and z components of the vector u parallel to v. 
+  the x, y, and z components of the vector u parallel to v.
   """
   verb_print(ctx, 'Starting rotation parallel to rotator array')
-    
+
   data = ctx.obj['data'] # shortcut
-    
+
   for a, rot in zip(data.iterator(kwargs['array']),
                     data.iterator(kwargs['rotator'])):
     grid, outrot = diag.parrotate(a, rot)

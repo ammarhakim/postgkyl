@@ -1,6 +1,6 @@
 import click
 
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
@@ -16,7 +16,7 @@ from postgkyl.data import GData
 def integrate(ctx, **kwargs):
   verb_print(ctx, 'Starting integrate')
   data = ctx.obj['data']
-    
+
   for dat in data.iterator(kwargs['use']):
     if kwargs['tag']:
       grid, values = diag.integrate(dat, kwargs['axis'])
@@ -30,6 +30,6 @@ def integrate(ctx, **kwargs):
       diag.integrate(dat, kwargs['axis'], overwrite=True)
     #end
   #end
-        
+
   verb_print(ctx, 'Finishing integrate')
 #end

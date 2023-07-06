@@ -3,19 +3,19 @@
 Postgkyl module for creating the bins for isotropic data
 """
 import numpy as np
-from .. import diagnostics as diag
+from .. import tools as diag
 
 def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
     #if 2D, nkz and kz = 0
-    
-    if nkpolar == 0: 
-        akp = [] 
+
+    if nkpolar == 0:
+        akp = []
         nbin = 0
         polar_index = []
         akplim = []
-    elif nkz == 0: 
+    elif nkz == 0:
         nbin = np.zeros(nkpolar) #Number of kx,ky in each polar bins
-        polar_index = np.zeros((nkx, nky), dtype=int) #Polar index to simplify binning 
+        polar_index = np.zeros((nkx, nky), dtype=int) #Polar index to simplify binning
         if nkx == 1 & nky==1:
             dkp = 0
         elif nkx == 1:
@@ -30,7 +30,7 @@ def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
         [kxg, kyg] = np.meshgrid(ky,kx) #Deal with meshgrid weirdness (so do not have to transpose)
         kp = np.sqrt(kxg**2 + kyg**2)
         pn  = np.where(kp >= akplim[nkpolar])
-        polar_index[pn[0], pn[1]] = nkpolar-1  
+        polar_index[pn[0], pn[1]] = nkpolar-1
         nbin[nkpolar-1] = nbin[nkpolar-1] + len(pn[0])
         for ik in range(0, nkpolar):
             pn = np.where((kp < akplim[ik+1]) & (kp >= akplim[ik]))
@@ -62,6 +62,6 @@ def initpolar(nkx, nky, nkz, kx, ky, kz, nkpolar):
             pn = np.where((kp < akplim[ik+1]) & (kp >= akplim[ik]))
             polar_index[pn[0], pn[1], pn[2]] = ik
             nbin[ik] = nbin[ik] + len(pn[0])
-            
+
     return akp, nbin, polar_index, akplim
 

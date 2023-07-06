@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -28,9 +28,9 @@ def bparrotate(ctx, **kwargs):
   to the magnetic field.
   """
   verb_print(ctx, 'Starting rotation parallel to magnetic field')
-    
+
   data = ctx.obj['data'] # shortcut
-    
+
   for a, rot in zip(data.iterator(kwargs['array']),
                     data.iterator(kwargs['field'])):
     # Magnetic field is components 3, 4, & 5 in field array

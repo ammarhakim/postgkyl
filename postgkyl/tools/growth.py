@@ -3,14 +3,12 @@
 Postgkyl module for computing growth rates
 """
 import numpy as np
-import math
-import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import sys
 
 # --------------------------------------------------------------------
 # Growth rate fitting stuff ------------------------------------------
-def exp2(x, a, b):
+def exp2(x : float, a : float, b : float) -> float:
     """Define custom exponential a*exp(2b*x)
 
     Parameters:
@@ -38,7 +36,7 @@ def fitGrowth(x, y, function=exp2, minN=None, p0=(1, 1)):
     The best is determined based on the coeficient of determination,
       R^2 https://en.wikipedia.org/wiki/Coefficient_of_determination
     """
-    bestR2 = 0
+    bestR2 : float = 0
     if minN is None:
       minN = int(len(x)/10)
     maxN = len(x)

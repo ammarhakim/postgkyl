@@ -4,7 +4,7 @@ Postgkyl module for computing constants and parameters
 """
 
 import numpy as np
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 def get_magB(species_data=None, species_grid=None, species_values=None,
              field_data=None, field_grid=None, field_values=None):
@@ -22,7 +22,7 @@ def get_magB(species_data=None, species_grid=None, species_values=None,
 
 def get_vt(species_data=None, species_grid=None, species_values=None,
            field_data=None, field_grid=None, field_values=None,
-           gasGamma=5.0/3.0, numMom=None, 
+           gasGamma=5.0/3.0, numMom=None,
            mass=1.0, mu0=1.0, sqrt2=True, mhd=False):
   if species_data:
     species_grid = species_data.getGrid()
@@ -39,7 +39,7 @@ def get_vt(species_data=None, species_grid=None, species_values=None,
   else:
     _m = mass
   #end
-  
+
   if (sqrt2):
     out_values = np.sqrt(2.0*temp/_m)
   else:
@@ -53,7 +53,7 @@ def get_vA(species_data=None, species_grid=None, species_values=None,
            field_data=None, field_grid=None, field_values=None,
            mass=1.0, mu0=1.0):
 
-  out_grid, magB = get_magB(species_data, species_grid, species_values, 
+  out_grid, magB = get_magB(species_data, species_grid, species_values,
                             field_data, field_grid, field_values)
 
   # Fluid data already has mass factor in density
@@ -73,7 +73,7 @@ def get_vA(species_data=None, species_grid=None, species_values=None,
 def get_omegaC(species_data=None, species_grid=None, species_values=None,
                field_data=None, field_grid=None, field_values=None,
                mass=1.0, charge=1.0):
-  out_grid, magB = get_magB(species_data, species_grid, species_values, 
+  out_grid, magB = get_magB(species_data, species_grid, species_values,
                             field_data, field_grid, field_values)
 
   if (species_data.mass):
@@ -81,7 +81,7 @@ def get_omegaC(species_data=None, species_grid=None, species_values=None,
   else:
     _m = mass
   #end
-  
+
   if (species_data.charge):
     _q = species_data.charge
   else:
@@ -104,7 +104,7 @@ def get_omegaP(species_data=None, species_grid=None, species_values=None,
   else:
     _m = mass
   #end
-  
+
   if (species_data.charge):
     _q = species_data.charge
   else:
@@ -127,7 +127,7 @@ def get_d(species_data=None, species_grid=None, species_values=None,
           field_data=None, field_grid=None, field_values=None,
           mass=1.0, charge=1.0, epsilon0=1.0, mu0=1.0):
 
-  out_grid, omegaP = get_omegaP(species_data, species_grid, species_values, 
+  out_grid, omegaP = get_omegaP(species_data, species_grid, species_values,
                                 field_data, field_grid, field_values, mass, charge, epsilon0)
 
   if(field_data.epsilon0):
@@ -150,12 +150,12 @@ def get_d(species_data=None, species_grid=None, species_values=None,
 
 def get_lambdaD(species_data=None, species_grid=None, species_values=None,
                 field_data=None, field_grid=None, field_values=None,
-                gasGamma=5.0/3.0, numMom=None, 
+                gasGamma=5.0/3.0, numMom=None,
                 mass=1.0, charge=1.0, epsilon0=1.0, mu0=1.0, sqrt2=True):
 
-  out_grid, omegaP = get_omegaP(species_data, species_grid, species_values, 
+  out_grid, omegaP = get_omegaP(species_data, species_grid, species_values,
                                 field_data, field_grid, field_values, mass, charge, epsilon0)
-  out_grid, vt = get_vt(species_data, species_grid, species_values, 
+  out_grid, vt = get_vt(species_data, species_grid, species_values,
                         field_data, field_grid, field_values, gasGamma, numMom, mass, mu0, sqrt2)
 
   if (sqrt2):
@@ -168,12 +168,12 @@ def get_lambdaD(species_data=None, species_grid=None, species_values=None,
 
 def get_rho(species_data=None, species_grid=None, species_values=None,
             field_data=None, field_grid=None, field_values=None,
-            gasGamma=5.0/3.0, numMom=None, 
+            gasGamma=5.0/3.0, numMom=None,
             mass=1.0, charge=1.0, epsilon0=1.0, mu0=1.0, sqrt2=True):
 
-  out_grid, omegaC = get_omegaC(species_data, species_grid, species_values, 
+  out_grid, omegaC = get_omegaC(species_data, species_grid, species_values,
                                 field_data, field_grid, field_values, mass, charge)
-  out_grid, vt = get_vt(species_data, species_grid, species_values, 
+  out_grid, vt = get_vt(species_data, species_grid, species_values,
                         field_data, field_grid, field_values, gasGamma, numMom, mass, mu0, sqrt2)
 
   if (sqrt2):
@@ -186,12 +186,12 @@ def get_rho(species_data=None, species_grid=None, species_values=None,
 
 def get_beta(species_data=None, species_grid=None, species_values=None,
              field_data=None, field_grid=None, field_values=None,
-             gasGamma=5.0/3.0, numMom=None, 
+             gasGamma=5.0/3.0, numMom=None,
              mass=1.0, charge=1.0, epsilon0=1.0, mu0=1.0, sqrt2=True):
 
-  out_grid, vA = get_vA(species_data, species_grid, species_values, 
+  out_grid, vA = get_vA(species_data, species_grid, species_values,
                         field_data, field_grid, field_values, mass, mu0)
-  out_grid, vt = get_vt(species_data, species_grid, species_values, 
+  out_grid, vt = get_vt(species_data, species_grid, species_values,
                         field_data, field_grid, field_values, gasGamma, numMom, mass, mu0, sqrt2)
 
   if (sqrt2):
