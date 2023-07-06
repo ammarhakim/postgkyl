@@ -1,7 +1,7 @@
 from postgkyl.data import GData
 from typing import Union
 
-def input_parser(in_data: Union[GData, tuple]) -> tuple:
+def _input_parser(in_data: Union[GData, tuple]) -> tuple:
   if type(in_data) == GData:
     return in_data.getGrid(), in_data.getValues()
   elif type(in_data) == tuple:

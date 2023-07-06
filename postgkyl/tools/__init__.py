@@ -75,7 +75,7 @@ from .filters import fftData
 from .filters import fftFiltering
 from .filters import butterFiltering
 
-from .input_parser import input_parser
+from .input_parser import _input_parser
 
 from .laguerre_compose import laguerre_compose
 from .transform_frame import transform_frame

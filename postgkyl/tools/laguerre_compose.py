@@ -3,7 +3,7 @@ from typing import Union
 
 # ---- Postgkyl imports ------------------------------------------------
 from postgkyl.data import GData
-from postgkyl.tools import input_parser
+from postgkyl.tools import _input_parser
 # ----------------------------------------------------------------------
 
 def laguerre_compose(in_f : Union[GData, tuple],
@@ -12,8 +12,8 @@ def laguerre_compose(in_f : Union[GData, tuple],
   """
   Compose PKPM expansion coefficients into a single f
   """
-  in_f_grid, in_f_values = input_parser(in_f)
-  _, in_mom_values = input_parser(in_mom)
+  in_f_grid, in_f_values = _input_parser(in_f)
+  _, in_mom_values = _input_parser(in_mom)
 
   x, vpar = in_f_grid[0], in_f_grid[1]
   vperp = np.copy(vpar)

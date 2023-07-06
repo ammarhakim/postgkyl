@@ -3,7 +3,7 @@ from typing import Union
 
 # ---- Postgkyl imports ------------------------------------------------
 from postgkyl.data import GData
-from postgkyl.tools import input_parser
+from postgkyl.tools import _input_parser
 # ----------------------------------------------------------------------
 
 def transform_frame(in_f : Union[GData, tuple],
@@ -13,8 +13,8 @@ def transform_frame(in_f : Union[GData, tuple],
   """
   Shift distribution function to a different frame of reference
   """
-  in_f_grid, in_f_values = input_parser(in_f)
-  _, u = input_parser(in_u)
+  in_f_grid, in_f_values = _input_parser(in_f)
+  _, u = _input_parser(in_u)
   v_dim = len(in_f_grid) - c_dim
   out_grid = np.meshgrid(*in_f_grid, indexing='ij')
 
