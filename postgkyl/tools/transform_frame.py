@@ -14,32 +14,54 @@ def transform_frame(in_f : Union[GData, tuple],
   Shift distribution function to a different frame of reference
   """
   in_f_grid, in_f_values = input_parser(in_f)
-  _, in_u_values = input_parser(in_u)
+  _, u = input_parser(in_u)
   v_dim = len(in_f_grid) - c_dim
   out_grid = np.meshgrid(*in_f_grid, indexing='ij')
 
   if c_dim == 1:
-    print(in_f_grid[0].shape[0])
-    for i in range(in_f_grid[0].shape[0]-1):
-      for v_idx in range(v_dim):
-        out_grid[c_dim+v_idx][i, ...] += in_u_values[i, v_idx]
+    for v_idx in range(v_dim):
+      nx = in_f_grid[0].shape[0]
+
+      ext_u = np.zeros(nx)
+      ext_u[:-1] += u[..., v_idx]
+      ext_u[1:] += u[..., v_idx]
+      ext_u[1:-1] = ext_u[1:-1] / 2
+
+      for i in range(nx):
+        out_grid[c_dim+v_idx][i, ...] += ext_u[i]
       #end
     #end
   elif c_dim == 2:
-    for i in range(in_f_grid[0].shape[0]):
-      for j in range(in_f_grid[0].shape[1]):
-        for v_idx in range(v_dim):
-          out_grid[c_dim+v_idx][i, j, ...] += in_u_values[i, j, v_idx]
+    for v_idx in range(v_dim):
+      nx = in_f_grid[0].shape[0]
+      ny = in_f_grid[0].shape[1]
+
+      ext_u = np.zeros((nx, ny))
+      ext_u[:-1, :-1] += u[..., v_idx]
+      ext_u[1:, 1:] += u[..., v_idx]
+      ext_u[1:-1, 1:-1] = ext_u[1:-1, 1:-1] / 2
+
+      for i in range(nx):
+        for j in range(ny):
+          out_grid[c_dim+v_idx][i, j, ...] += ext_u[i, j]
         #end
       #end
     #end
   else:
-    for i in range(in_f_grid[0].shape[0]):
-      for j in range(in_f_grid[0].shape[1]):
-        for k in range(in_f_grid[0].shape[2]):
-          for v_idx in range(v_dim):
-            out_grid[c_dim+v_idx][i, j, k, ...] += \
-              in_u_values[i, j, k, v_idx]
+    for v_idx in range(v_dim):
+      nx = in_f_grid[0].shape[0]
+      ny = in_f_grid[0].shape[1]
+      nz = in_f_grid[0].shape[2]
+
+      ext_u = np.zeros((nx, ny, nz))
+      ext_u[:-1, :-1, :-1] += u[..., v_idx]
+      ext_u[1:, 1:, 1:] += u[..., v_idx]
+      ext_u[1:-1, 1:-1, 1:-1] = ext_u[1:-1, 1:-1, 1:-1] / 2
+
+      for i in range(nx):
+        for j in range(ny):
+          for k in range(nz):
+            out_grid[c_dim+v_idx][i, j, k, ...] += ext_u[i, j, k]
           #end
         #end
       #end
