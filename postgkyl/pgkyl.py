@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from glob import glob
 import os
 import time
@@ -168,9 +169,9 @@ cli.add_command(cmd.val2coord)
 cli.add_command(cmd.velocity)
 cli.add_command(cmd.write)
 cli.add_command(cmd.transformframe)
+cli.add_command(cmd.gkylpkpm)
 
 if __name__ == '__main__':
   ctx = []
   cli(ctx)
-
-
+#end
