@@ -3,7 +3,7 @@
 Postgkyl module for separating different components of energy
 """
 import numpy as np
-from .. import diagnostics as diag
+from .. import tools as diag
 
 def energetics(dataElc, dataIon, dataField, overwrite=False, stack=False):
     """Function to separate components of the energy of each species and EM fields into
@@ -21,7 +21,7 @@ def energetics(dataElc, dataIon, dataField, overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    # Grid is the same for each of the input objects 
+    # Grid is the same for each of the input objects
     grid = dataField.getGrid()
     valuesField = dataField.getValues()
     # Output array is a seven component field

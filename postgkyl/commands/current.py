@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command(help='Accumulate current, sum over species of charge multiplied by flow')
 @click.option('--qbym', '-q',

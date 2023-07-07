@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.data import GData
 from postgkyl.commands.util import verb_print
-from postgkyl.diagnostics import get_agyro, get_gkyl_10m_agyro
+from postgkyl.tools import get_agyro, get_gkyl_10m_agyro
 
 
 @click.command()
@@ -34,7 +34,7 @@ def agyro(ctx, **kwargs):
   if kwargs['tag']:
     tag = kwargs['tag']
   #end
-  
+
   for pressure, bfield in zip(data.iterator(kwargs['pressure']),
                               data.iterator(kwargs['bfield'])):
     grid, agyro = get_agyro(p_data=pressure, b_data=bfield, measure=kwargs['measure'])
@@ -45,11 +45,11 @@ def agyro(ctx, **kwargs):
     out.push(grid, agyro)
     data.add(out)
   #end
-  
+
   verb_print(ctx, 'Finishing agyro')
 #end
 
-    
+
 @click.command()
 @click.option('--measure', '-m', default='frobenius', show_default=True,
               type=click.Choice(['swidak', 'frobenius']),
@@ -76,7 +76,7 @@ def mom_agyro(ctx, **kwargs):
   if kwargs['tag']:
     tag = kwargs['tag']
   #end
-  
+
   for species, field in zip(data.iterator(kwargs['species']),
                             data.iterator(kwargs['field'])):
     grid, agyro = get_gkyl_10m_agyro(species_data=species, field_data=field, measure=kwargs['measure'])
@@ -87,6 +87,6 @@ def mom_agyro(ctx, **kwargs):
     out.push(grid, agyro)
     data.add(out)
   #end
-  
+
   verb_print(ctx, 'Finishing agyro')
 #end

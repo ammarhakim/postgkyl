@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from glob import glob
 import os
 import time
@@ -6,7 +7,6 @@ import sys
 import os.path
 
 import click
-import numpy as np
 
 from postgkyl.commands import DataSpace
 from postgkyl.commands.util import load_style, verb_print
@@ -16,7 +16,7 @@ import postgkyl.commands as cmd
 def _printVersion(ctx, param, value):
   if not value or ctx.resilient_parsing:
     return
-  #end        
+  #end
   fls = glob(os.path.dirname(os.path.realpath(__file__)) + "/*/*.py")
   latest = 0.0
   for f in fls:
@@ -30,7 +30,7 @@ def _printVersion(ctx, param, value):
   #end
   click.echo('Postgkyl 1.6.9 {:s} ({:s})'.format(date, sys.platform))
   click.echo('Python version: {:s}'.format(sys.version))
-  click.echo('Copyright 2016-2022 Gkeyll Team')
+  click.echo('Copyright 2016-2023 Gkeyll Team')
   click.echo('Postgkyl can be used freely for research at universities,')
   click.echo('national laboratories, and other non-profit institutions.')
   click.echo('There is NO warranty.\n')
@@ -42,29 +42,29 @@ def _printVersion(ctx, param, value):
 #   a) use shortened versions of command names
 #   b) use a file name as a command
 class PgkylCommandGroup(click.Group):
-  def get_command(self, ctx, cmdName):
-    # cmdName is a full name of a pgkyl command
-    rv = click.Group.get_command(self, ctx, cmdName)
+  def get_command(self, ctx, cmd_name):
+    # cmd_name is a full name of a pgkyl command
+    rv = click.Group.get_command(self, ctx, cmd_name)
     if rv is not None:
       return rv
     #end
 
-    # cmdName is an abreviation of a pgkyl command
+    # cmd_name is an abreviation of a pgkyl command
     matches = [x for x in self.list_commands(ctx)
-               if x.startswith(cmdName)]
+               if x.startswith(cmd_name)]
     if matches and len(matches) == 1:
       return click.Group.get_command(self, ctx, matches[0])
     elif matches:
-      ctx.fail("Too many matches for '{:s}': {:s}".format(cmdName, ', '.join(sorted(matches))))
+      ctx.fail("Too many matches for '{:s}': {:s}".format(cmd_name, ', '.join(sorted(matches))))
     #end
 
-    # cmdName is a data set
-    if glob(cmdName):
-      ctx.obj['inDataStrings'].append(cmdName)
+    # cmd_name is a data set
+    if glob(cmd_name):
+      ctx.obj['inDataStrings'].append(cmd_name)
       return click.Group.get_command(self, ctx, 'load')
     #end
-        
-    ctx.fail("'{:s}' does not match either command name nor a data file".format(cmdName))
+
+    ctx.fail("'{:s}' does not match either command name nor a data file".format(cmd_name))
   #end
 #end
 
@@ -88,13 +88,13 @@ class PgkylCommandGroup(click.Group):
               help="Disregard the mapped grid information")
 @click.option('--varname', '-d', multiple=True,
               help="Specify the Adios variable name (default is 'CartGridField')")
-@click.option('--c2p', 
+@click.option('--c2p',
               help="Specify the file name containing c2p mapped coordinates")
 @click.option('--style',
               help="Sets Maplotlib rcParams style file.")
 @click.pass_context
 def cli(ctx, **kwargs):
-  """Postprocessing and plotting tool for Gkeyll 
+  """Postprocessing and plotting tool for Gkeyll
   data. Datasets can be loaded, processed and plotted using a
   command chaining mechanism. For full documentation see the Gkeyll
   documentation webpages. Help for individual commands can be
@@ -114,14 +114,14 @@ def cli(ctx, **kwargs):
 
   ctx.obj['inDataStrings'] = []
   ctx.obj['inDataStringsLoaded'] = 0
-    
+
   ctx.obj['data'] = DataSpace()
 
   ctx.obj['fig'] = ''
   ctx.obj['ax'] = ''
 
   ctx.obj['compgrid'] = kwargs['compgrid']
-  ctx.obj['globalVarNames'] = kwargs['varname']    
+  ctx.obj['globalVarNames'] = kwargs['varname']
   ctx.obj['globalCuts'] = (kwargs['z0'], kwargs['z1'],
                            kwargs['z2'], kwargs['z3'],
                            kwargs['z4'], kwargs['z5'],
@@ -152,6 +152,7 @@ cli.add_command(cmd.growth)
 cli.add_command(cmd.info)
 cli.add_command(cmd.integrate)
 cli.add_command(cmd.interpolate)
+cli.add_command(cmd.laguerrecompose)
 cli.add_command(cmd.listoutputs)
 cli.add_command(cmd.load)
 cli.add_command(cmd.magsq)
@@ -167,9 +168,10 @@ cli.add_command(cmd.trajectory)
 cli.add_command(cmd.val2coord)
 cli.add_command(cmd.velocity)
 cli.add_command(cmd.write)
+cli.add_command(cmd.transformframe)
+cli.add_command(cmd.gkylpkpm)
 
 if __name__ == '__main__':
   ctx = []
   cli(ctx)
-
-
+#end

@@ -24,7 +24,7 @@ def accumulate_current(data, qbym=False, overwrite=False, stack=False):
     factor = 0.0
     if (qbym and data.mass is not None and data.charge is not None):
         factor = data.charge/data.mass
-    #elif (dat.charge is not None): 
+    #elif (dat.charge is not None):
     #    factor = dat.charge
     else:
         factor = -1.0

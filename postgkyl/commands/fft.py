@@ -1,6 +1,6 @@
 import click
 
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
@@ -36,6 +36,6 @@ def fft(ctx, **kwargs):
       diag.fft(dat, kwargs['psd'], kwargs['iso'], overwrite=True)
     #end
   #end
-        
+
   verb_print(ctx, 'Finishing FFT')
 #end

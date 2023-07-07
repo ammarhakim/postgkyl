@@ -105,7 +105,7 @@ class GData(object):
         self._loadSequence()
       #end
     #end
-    
+
     self.color = None
 
     self._status = True
@@ -176,7 +176,7 @@ class GData(object):
       if not self._var_name in fh.vars:
         # Not a Gkyl 'frame' data; trying to load as a sequence
         fh.close()
-        self._loadSequence()  
+        self._loadSequence()
         return
       #end
       # Get the atributes
@@ -227,7 +227,7 @@ class GData(object):
         if 'grid' in fh.attrs.keys():
           gridNm = self._file_dir + '/' +adios.attr(fh, 'grid').value.decode('UTF-8')
         else:
-          gridNm = self._file_dir + '/grid'  
+          gridNm = self._file_dir + '/grid'
         #end
         with adios.file(gridNm) as gridFh:
           gridVar = adios.var(gridFh, self._var_name)
@@ -297,7 +297,7 @@ class GData(object):
       raise NameError(
         'File extension \'{:s}\' is not supported'.format(extension))
     #end
-    
+
     if self.mapc2p_name is not None:
       extension = self.mapc2p_name.split('.')[-1]
       self._gridType = 'c2p'
@@ -347,7 +347,7 @@ class GData(object):
       raise NameError(
         'File(s) \'{:s}\' not found or empty.'.
         format(self.file_name))
-    
+
     cnt = 0  # Counter for the number of loaded files
     for file_name in files:
       extension = file_name.split('.')[-1]
@@ -398,8 +398,8 @@ class GData(object):
         #end
       else:
         continue
-      #end                    
-    
+      #end
+
       if cnt > 0:
         self._grid = np.append(self._grid, grid, axis=0)
         self._values = np.append(self._values, values, axis=0)
@@ -429,10 +429,15 @@ class GData(object):
   #end
 
 
-  #-----------------------------------------------------------------
-  #-- Stuff Control ------------------------------------------------
+  #---------------------------------------------------------------------
+  #---- Stuff Control --------------------------------------------------
   def getTag(self):
     return self._tag
+  #end
+  def setTag(self, tag=None):
+    if tag:
+      self._tag = tag
+    #end
   #end
 
   def setLabel(self, label):
@@ -467,7 +472,7 @@ class GData(object):
     return inputFile
   #end
 
-    
+
   def getNumCells(self):
     if self._values is not None:
       num_dims = len(self._values.shape)-1
@@ -538,7 +543,7 @@ class GData(object):
 
   def setValues(self, values):
     self._values = values
-  #end                       
+  #end
 
   def push(self, grid, values):
     self._values = values
@@ -550,13 +555,13 @@ class GData(object):
   #-- Info ---------------------------------------------------------
   def info(self):
     """Prints Data object information.
-    
+
     Prints time (only when available), number of components, dimension
     spans, extremes for a Data object.
-        
+
     Args:
       none
-        
+
     Returns:
       output (str): A list of strings with the informations
         """
@@ -627,7 +632,7 @@ class GData(object):
       #for k in self.attrsList:
       #    output += '{:s} '.format(k)
       #end
-            
+
       return output
     else:
       return 'No data'
@@ -667,7 +672,7 @@ class GData(object):
     num_dims = self.getNumDims()
     numComps = self.getNumComps()
     numCells = self.getNumCells()
-    
+
     if mode == 'bp':
       # Create string number of cells and offsets
       sNumCells = ''
@@ -688,14 +693,14 @@ class GData(object):
         adios.set_max_buffer_size(bufferSize)
         groupId = adios.declare_group('CartField', '')
         adios.select_method(groupId, 'POSIX1', '', '')
- 
-        # Define variables and attributes       
+
+        # Define variables and attributes
         adios.define_attribute_byvalue(groupId, 'numCells', '', numCells)
         lo, up = self.getBounds()
         adios.define_attribute_byvalue(groupId, 'lowerBounds', '', lo)
         adios.define_attribute_byvalue(groupId, 'upperBounds', '', up)
         fh = adios.open('CartField', out_name, 'w')
-        
+
         if self.meta['time']:
           adios.define_var(groupId, 'time', '',
                            adios.DATATYPE.double, '', '', '')
@@ -706,7 +711,7 @@ class GData(object):
                          adios.DATATYPE.double,
                          sNumCells, sNumCells, sOffsets)
         adios.write(fh, var_name, self.getValues())
-        
+
         adios.close(fh)
         adios.finalize()
       else:

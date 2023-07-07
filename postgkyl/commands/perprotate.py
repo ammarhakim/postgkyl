@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command()
 @click.option('--array', '-a',
@@ -23,9 +23,9 @@ def perprotate(ctx, **kwargs):
   For two arrays u and v, where v is the rotator, operation is u - (u dot v_hat) v_hat.
   """
   verb_print(ctx, 'Starting rotation perpendicular to rotator array')
-    
+
   data = ctx.obj['data'] # shortcut
-    
+
   for a, rot in zip(data.iterator(kwargs['array']),
                     data.iterator(kwargs['rotator'])):
     grid, outrot = diag.perprotate(a, rot)
@@ -40,6 +40,6 @@ def perprotate(ctx, **kwargs):
 
   data.deactivateAll(tag=kwargs['array'])
   data.deactivateAll(tag=kwargs['rotator'])
-  
+
   verb_print(ctx, 'Finishing rotation perpendicular to rotator array')
 #end

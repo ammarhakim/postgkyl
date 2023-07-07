@@ -20,6 +20,7 @@ from .growth import growth
 from .info import info
 from .integrate import integrate
 from .interpolate import interpolate
+from .laguerre_compose import laguerrecompose
 from .listoutputs import listoutputs
 from .load import load
 from .magsq import magsq
@@ -40,6 +41,8 @@ from .trajectory import trajectory
 from .val2coord import val2coord
 from .velocity import velocity
 from .write import write
+from .transform_frame import transformframe
+from .gkyl_pkpm import gkylpkpm
 
 from . import temp
 

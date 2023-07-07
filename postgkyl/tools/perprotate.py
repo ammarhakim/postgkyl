@@ -3,7 +3,7 @@
 Postgkyl module for rotating an array into the coordinate system perpendicular to another array
 """
 import numpy as np
-from .. import diagnostics as diag
+from .. import tools as diag
 
 def perprotate(data, rotator, rotateCoords='0:3', overwrite=False, stack=False):
     """Function to rotate input array into coordinate system perpendicular to rotator array
@@ -13,7 +13,7 @@ def perprotate(data, rotator, rotateCoords='0:3', overwrite=False, stack=False):
     Parameters:
     data -- input GData object being rotated
     rotator -- GData object used for the rotation
-    rotateCoords -- optional input to specify a different set of coordinates in the rotator array used 
+    rotateCoords -- optional input to specify a different set of coordinates in the rotator array used
     for the rotation (e.g., if rotating to the local magnetic field of a finite volume simulation, rotateCoords='3:6')
 
     Notes:

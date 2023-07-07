@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command(help='Computes the relative change between two datasets')
 @click.option('--use', '-u',
@@ -24,7 +24,7 @@ import postgkyl.diagnostics as diag
 @click.pass_context
 def relchange(ctx, **kwargs):
   verb_print(ctx, 'Starting relative change')
-    
+
   data = ctx.obj['data'] # shortcut
   for tag in data.tagIterator(kwargs['use']):
     reference = data.getDataset(tag, kwargs['index'])

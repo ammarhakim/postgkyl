@@ -1,7 +1,7 @@
 import click
 import numpy as np
 
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 from postgkyl.data import GData
 from postgkyl.commands.util import verb_print
 
@@ -14,7 +14,7 @@ from postgkyl.commands.util import verb_print
               type=click.FLOAT, default=5.0/3.0)
 @click.option('-v', '--variable_name', help="Variable to extract", prompt=True,
               type=click.Choice(["density", "xvel", "yvel",
-                                 "zvel", "vel", "Bx", "By", "Bz", "Bi", 
+                                 "zvel", "vel", "Bx", "By", "Bz", "Bi",
                                  "magpressure", "pressure", "temp", "sound", "mach"]))
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
@@ -28,7 +28,7 @@ def mhd(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting mhd')
   data = ctx.obj['data']
-  
+
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
     verb_print(ctx, 'mhd: Extracting {:s} from data set'.format(v))

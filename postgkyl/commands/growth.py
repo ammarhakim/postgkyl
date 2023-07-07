@@ -4,11 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from postgkyl.commands.util import verb_print
-from postgkyl.diagnostics.growth import fitGrowth, exp2
+from postgkyl.tools.growth import fitGrowth, exp2
 from postgkyl.data import GData
 
 #---------------------------------------------------------------------
-#-- Growth -----------------------------------------------------------
+#---- Growth ---------------------------------------------------------
 @click.command()
 @click.option('--use', '-u',
               help='Specify a \'tag\' to apply to (default all tags).')
@@ -34,7 +34,7 @@ def growth(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting growth')
   data = ctx.obj['data']
-    
+
   for dat in data.iterator(kwargs['use']):
     time = dat.getGrid()
     values = dat.getValues()
@@ -69,7 +69,7 @@ def growth(ctx, **kwargs):
       elif kwargs['dir'] == 1:
         y = values[idx, :, 0].squeeze()
       #end
-      
+
       bestParams, bestR2, bestN = fitGrowth(x, y,
                                             minN=kwargs['minn'],
                                             p0=p0)
@@ -91,7 +91,7 @@ def growth(ctx, **kwargs):
         for i in range(1,len(time[0])-1):
           gamma = (values[i+1,0] - values[i-1,0])/(2*values[i,0]*(time[0][i+1] - time[0][i-1]))
           gammas.append(gamma)
-            
+
           plt.style.use(os.path.dirname(os.path.realpath(__file__)) \
                         + "/../output/postgkyl.mplstyle")
           fig, ax = plt.subplots()
@@ -105,7 +105,7 @@ def growth(ctx, **kwargs):
       growth_rates[idx] = bestParams[1]
       ks[idx] = idx
     #end
-    
+
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],

@@ -2,7 +2,7 @@ import click
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command(help='Magnitude squared of an input array |A|^2 = sum_i A_i^2')
 @click.option('--use', '-u', default=None,
@@ -17,7 +17,7 @@ def magsq(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting magnitude squared computation')
   data = ctx.obj['data']
-    
+
   for dat in data.iterator(kwargs['use']):
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
@@ -31,6 +31,6 @@ def magsq(ctx, **kwargs):
       diag.magsq(dat, overwrite=True)
     #end
   #end
-        
+
   verb_print(ctx, 'Finishing magnitude squared computation')
 #end

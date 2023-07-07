@@ -6,7 +6,7 @@ manipulate the data in many wonderful ways, and then save or plot the
 results. Postgkyl can be run in two modes: command line mode and
 Python package mode.  See the `documentation`_ for more details.
 
-License: 
+License:
     We follow a open-source but closed development model. Release
     zip-balls will be provided, but access to the source-code
     repository is restricted to those who need to modify the code. In
@@ -29,7 +29,6 @@ __version__ = '1.0'
 
 # import submodules
 from . import data
-from . import diagnostics
 from . import tools
 from . import output
 from . import utils

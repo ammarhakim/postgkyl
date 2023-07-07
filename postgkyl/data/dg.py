@@ -124,22 +124,22 @@ def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal, c2p=False)
   #       return mat.transpose()
   #     #end
   #   #end
-                
+
   #   fhGeneral = tables.open_file(postgkylPath+'/interpMatrix.h5',
-  #                                mode = 'r')        
+  #                                mode = 'r')
   #   mat = fhGeneral.root.interpolation_matrix[:]
   #   fhGeneral.close()
-        
+
   #   # Check if matrix loaded from interpMatrix.h5 has correct first
   #   # dimension (i.e. has correct number of nodes)
-        
+
   #   numNodes = _getNumNodes(dim, polyOrder, basisType)
   #   if mat.shape[1] != numNodes:
   #     print("WARNING: Matrix read from interpMatrix.h5"
   #           " does not have the right dimensions for specified "
   #           "dim = {:d}, basis = {:d}, and polyOrder = {:d}\n".
   #           format(dim, basisType, polyOrder))
-      
+
   #     if interp is not None:
   #       print("interp = {}, calling createInterpMatrix "
   #             "for dim = {:d}, basis = {:d}, and polyOrder = {:d}\n".
@@ -182,7 +182,7 @@ def _loadInterpMatrix(dim, polyOrder, basisType, interp, read, modal, c2p=False)
       fileName = path + '/xformMatricesNodalSerendipity.h5'
     elif modal and basisType.lower() == 'serendipity':
       fileName = path + '/xformMatricesModalSerendipity.h5'
-      
+
     elif modal and basisType.lower() == 'maximal-order':
       fileName = path + '/xformMatricesModalMaximal.h5'
     else:
@@ -220,7 +220,7 @@ def _loadDerivativeMatrix(dim, polyOrder, basisType, interp, read, modal=True):
   #     #end
   #   #end
   #   fhGeneral = tables.open_file(postgkylPath+'/derivativeMatrix.h5',
-  #                                mode = 'r')        
+  #                                mode = 'r')
   #   mat = fhGeneral.root.derivative_matrix[:]
   #   fhGeneral.close()
 
@@ -230,7 +230,7 @@ def _loadDerivativeMatrix(dim, polyOrder, basisType, interp, read, modal=True):
   #   numNodes = _getNumNodes(dim, polyOrder, basisType)
   #   if mat.shape[1] != numNodes:
   #     print('WARNING: Matrix read from derivativeMatrix.h5 does not have the right dimensions for specified dim = {}, basis = {}, and polyOrder = {}\n'.format(dim, basisType, polyOrder))
-            
+
   #     if interp is not None:
   #       print('interp = {}, calling createDerivativeMatrix for dim = {}, basis = {}, and polyOrder = {}\n'.format(interp, dim, basis, polyOrder))
   #       mat = createDerivativeMatrix(dim, polyOrder, basisType,
@@ -261,7 +261,7 @@ def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
     #end
     meshOut = np.linspace(xlo, xup, nInterp*nx+1)
   elif gridType=="mapped":
-    # subdivide every cell in Xc into nInterp cells. 
+    # subdivide every cell in Xc into nInterp cells.
     for i in range(nx):
       dx = (Xc[i+1]-Xc[i])/nInterp
       for j in range(nInterp):
@@ -277,7 +277,7 @@ def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
 
 def _make1Dgrids(nInterp, Xc, numDims, gridType=None):
   # build a list of 1D arrays, each containing the grid in that dimension.
-  gridOut = list() 
+  gridOut = list()
   if gridType is None or gridType=="uniform":
     gridOut = [_makeMesh(nInterp[d], Xc[d])
                for d in range(numDims)]
@@ -382,7 +382,7 @@ class GInterp(object):
     return rawData
   #end
 #end
-        
+
 class GInterpNodal(GInterp):
   """Postgkyl class for nodal DG data manipulation.
 
@@ -548,6 +548,14 @@ class GInterpModal(GInterp):
     else:
       raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
     #end
+
+    # PKPM hybrid base expects 2+ dimensions with the last one being
+    # the parallel velocity. This allows to specify 'pkpmhyb' basis
+    # and work with 1x1v and 1x data simulataneously.
+    if self.numDims == 1 and self.basisType == 'pkpmhybrid':
+      self.basisType = 'serendipity'
+    #end
+
     self.periodic = periodic
     if numInterp is not None and self.polyOrder > 1:
       self.numInterp = numInterp
@@ -596,7 +604,7 @@ class GInterpModal(GInterp):
       basis, poly_order = _get_basis_p(self.numDims, num_comp)
       cMat = _loadInterpMatrix(self.numDims, poly_order,
                                basis, self.numInterp, self.read, True, True)
-      
+
       grid = []
       for d in range(self.numDims):
         grid.append(_interpOnMesh(cMat, q[d], self.numInterp, self.basisType, True))
@@ -629,7 +637,7 @@ class GInterpModal(GInterp):
       basis, poly_order = _get_basis_p(self.numDims, num_comp)
       cMat = _loadInterpMatrix(self.numDims, poly_order,
                                basis, self.numInterp, self.read, True, True)
-      
+
       grid = []
       for d in range(self.numDims):
         grid.append(_interpOnMesh(cMat, q[d], self.numInterp, self.basisType, True))

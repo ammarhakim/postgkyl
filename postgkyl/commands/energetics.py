@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 
 @click.command(help='Decomposes the components of the energy \
     (kinetic, thermal, electromagnetic) for a two-species (electron, ion) plasma')
@@ -26,7 +26,7 @@ import postgkyl.diagnostics as diag
 def energetics(ctx, **kwargs):
   verb_print(ctx, 'Starting energetics decomposition')
   data = ctx.obj['data'] # shortcut
-    
+
   for elc, ion, em in zip(data.iterator(kwargs['elc']),
                           data.iterator(kwargs['ion']),
                           data.iterator(kwargs['field'])):

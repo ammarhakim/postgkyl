@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.fft
-from .. import diagnostics as diag
+from .. import tools as diag
 
 def fft(data, psd=False, iso=False, overwrite=False, stack=False):
     if stack:
@@ -8,7 +8,7 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
     grid = data.getGrid()
-    values = data.getValues() 
+    values = data.getValues()
 
     # Remove dummy dimensions
     numDims = len(grid)
@@ -20,7 +20,7 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
     #end
     if idx:
         grid = np.delete(grid, idx)
-        values = np.squeeze(values, tuple(idx)) 
+        values = np.squeeze(values, tuple(idx))
         numDims = len(grid)
     #end
 
@@ -58,7 +58,7 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
             ftValues[..., comp] = scipy.fft.fftn(values[..., comp])
         #end
         if psd:
-            for i in range(0, numDims):            
+            for i in range(0, numDims):
                 freq[i] = freq[i][:N[i]//2]
             if numDims == 2:
                 ftValues = np.abs(ftValues[:N[0]//2, :N[1]//2, :])**2
@@ -87,7 +87,7 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
                     data.push([akp], fft_iso)
                 else:
                     return [akp], fft_iso
-                #end        
+                #end
             #end
         #end
 
@@ -98,4 +98,4 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         #end
     #end
 #end
-        
+

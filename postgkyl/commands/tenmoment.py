@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-import postgkyl.diagnostics as diag
+import postgkyl.tools as diag
 from postgkyl.commands.util import verb_print
 
 @click.command()
@@ -24,7 +24,7 @@ def tenmoment(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting tenmoment')
   data = ctx.obj['data']
-  
+
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
     verb_print(ctx, 'tenmoment: Extracting {:s} from data set'.format(v))
