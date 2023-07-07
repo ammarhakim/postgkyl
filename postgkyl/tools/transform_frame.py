@@ -10,14 +10,29 @@ def transform_frame(in_f : Union[GData, tuple],
                     in_u : Union[GData, tuple],
                     c_dim : int,
                     out_f : GData = None) -> tuple:
-  """
-  Shift distribution function to a different frame of reference
+  """Shift a distribution function to a different frame of reference.
+
+  Shifsts the frame of reference for specified distribution function
+  with a supplied bulk velocity (a direction of magnetic field will be
+  added in future update).
+
+  Args:
+    in_f: Particle distribution function to be shifted.
+    in_u: PBulk velocity.
+    c_dim: Number of the configuration space dimensions.
+    out_f: (Optional) GData to store output.
+
+  Returns:
+    A tuple of grid (which is itself a tuple of nupy arrays for each
+    dimension) and a numpy array with values.
   """
   in_f_grid, in_f_values = _input_parser(in_f)
   _, u = _input_parser(in_u)
   v_dim = len(in_f_grid) - c_dim
   out_grid = np.meshgrid(*in_f_grid, indexing='ij')
 
+  # There might be a better way to do this but hopefully such hardcoding
+  # is ok in this instance -- PC
   if c_dim == 1:
     for v_idx in range(v_dim):
       nx = in_f_grid[0].shape[0]
