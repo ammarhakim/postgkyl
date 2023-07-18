@@ -6,8 +6,8 @@ from typing import Union
 
 from postgkyl.data.load_gkyl import load_gkyl
 from postgkyl.data.load_h5 import load_h5
+from postgkyl.data.load_flash import load_flash
 from postgkyl.utils import idxParser
-
 
 class GData(object):
   """Provides interface to Gkeyll output data.
@@ -41,7 +41,8 @@ class GData(object):
                label: str = None,
                meta: dict = None,
                comp_grid: bool = False,
-               mapc2p_name: str = None) -> None:
+               mapc2p_name: str = None,
+               source : str = None) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -100,7 +101,8 @@ class GData(object):
       # fail and _loadSequence is called instead
       if os.path.isfile(self.file_name):
         zs = (z0, z1, z2, z3, z4, z5)
-        self._loadFrame(zs, comp)
+        self._loadFrame(axes = zs, comp = comp,
+                        source = source)
       else:
         self._loadSequence()
       #end
@@ -109,6 +111,7 @@ class GData(object):
     self.color = None
 
     self._status = True
+    self._source = source
   #end
 
   #-----------------------------------------------------------------
@@ -155,8 +158,10 @@ class GData(object):
     #end
   #end
 
-  def _loadFrame(self, axes=(None, None, None, None, None, None),
-                 comp=None):
+  def _loadFrame(self,
+                 axes : tuple = (None, None, None, None, None, None),
+                 comp : int = None,
+                 source : str = None):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
@@ -293,9 +298,17 @@ class GData(object):
         self._grid = [grid]
       #end
       self._values = values
+    elif source == 'flash':
+      num_dims, cells, extends, values = load_flash(self.file_name,
+                                                    self._var_name)
+      lower = extends[0]
+      upper = extends[1]
+      #end
+      self._values = values[..., np.newaxis]
     else:
       raise NameError(
         'File extension \'{:s}\' is not supported'.format(extension))
+      #end
     #end
 
     if self.mapc2p_name is not None:
