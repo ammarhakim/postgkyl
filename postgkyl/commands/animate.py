@@ -83,6 +83,12 @@ def update(i, data, fig, offsets, kwargs):
               help="Set y-axis to log scale.")
 @click.option('--logz', is_flag=True,
               help="Set values of 2D plot to log scale.")
+@click.option('--xshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the x-axis (default: 0.0).")
+@click.option('--yshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the y-axis (default: 0.0).")
+@click.option('--zshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the z-axis (default: 0.0).")
 @click.option('--xscale', default=1.0, type=click.FLOAT,
               help="Value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
@@ -147,7 +153,7 @@ def animate(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting animate')
   data = ctx.obj['data']
-  
+
   if not kwargs['float'] and kwargs['ylim'] is None:
     vmin = float('inf')
     vmax = float('-inf')
@@ -191,7 +197,7 @@ def animate(ctx, **kwargs):
   tagIterator = list(data.tagIterator(kwargs['use']))
   setFigure = False
   minSize = np.NAN
-  
+
   if kwargs['grouptags']:
     for tag in data.tagIterator(kwargs['use']):
       numDatasets = int(data.getNumDatasets(tag=tag))
@@ -203,7 +209,7 @@ def animate(ctx, **kwargs):
     kwargs['legend'] = True
     setFigure = True
     figNum = int(0)
-    
+
     for tag in tagIterator:
       dataList = list(data.iterator(tag=tag))
       if setFigure:
@@ -252,7 +258,7 @@ def animate(ctx, **kwargs):
                                  fargs=(dataList, figs[-1],
                                         offsets, kwargs),
                                  interval=kwargs['interval'], blit=False))
-      
+
       fName = 'anim.mp4'
       if kwargs['saveas']:
         fName = str(kwargs['saveas'])
@@ -270,7 +276,7 @@ def animate(ctx, **kwargs):
       kwargs['show'] = False # do not show in this case
     #end
   #end
-    
+
   if kwargs['show']:
     plt.show()
   #end

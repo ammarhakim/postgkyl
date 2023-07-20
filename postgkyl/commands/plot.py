@@ -61,6 +61,12 @@ from postgkyl.commands.util import verb_print
               help="Set y-axis to log scale.")
 @click.option('--logz', is_flag=True,
               help="Set values of 2D plot to log scale.")
+@click.option('--xshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the x-axis (default: 0.0).")
+@click.option('--yshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the y-axis (default: 0.0).")
+@click.option('--zshift', default=0.0, type=click.FLOAT,
+              help="Value to shift the z-axis (default: 0.0).")
 @click.option('--xscale', default=1.0, type=click.FLOAT,
               help="Value to scale the x-axis (default: 1.0).")
 @click.option('--yscale', default=1.0, type=click.FLOAT,
@@ -206,7 +212,7 @@ def plot(ctx, **kwargs):
 
   file_name = ''
 
-  # ------------------------------------------------------------------
+  # --------------------------------------------------------------------
   # Loop over all the datasets
   for i, dat in ctx.obj['data'].iterator(kwargs['use'], enum=True):
     if dataset_fignum:
@@ -219,9 +225,9 @@ def plot(ctx, **kwargs):
     #end
 
 
-    # Plot -----------------------------------------------------------
+    # Plot -------------------------------------------------------------
     gplot(dat, kwargs['arg'], label_prefix=label, **kwargs)
-    # ----------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
     if kwargs['subplots']:

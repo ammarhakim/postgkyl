@@ -18,7 +18,7 @@ def transform_frame(in_f : Union[GData, tuple],
 
   Args:
     in_f: Particle distribution function to be shifted.
-    in_u: PBulk velocity.
+    in_u: Bulk velocity.
     c_dim: Number of the configuration space dimensions.
     out_f: (Optional) GData to store output.
 

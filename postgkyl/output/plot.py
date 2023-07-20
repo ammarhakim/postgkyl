@@ -17,10 +17,10 @@ if sys.version_info[0] >= 3:
 def _colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
-  if extend:
-    return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
+  #if extend:
+  return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
   #end
-  return fig.colorbar(obj, cax=cax2, label=label or "")
+  #return fig.colorbar(obj, cax=cax2, label=label or "")
 #end
 
 def _get_cell_centered_grid(grid, cells):
@@ -57,9 +57,9 @@ def plot(data, args=(),
          contour=False, clevels=None, cnlevels=None, cont_label=False,
          diverging=False,
          lineouts=None, group=None,
-         xmin=None, xmax=None, xscale=1.0,
-         ymin=None, ymax=None, yscale=1.0,
-         zmin=None, zmax=None, zscale=1.0,
+         xmin=None, xmax=None, xscale=1.0, xshift=0.0,
+         ymin=None, ymax=None, yscale=1.0, yshift=0.0,
+         zmin=None, zmax=None, zscale=1.0, zshift=0.0,
          style=None, rcParams=None,
          legend=True, label_prefix='', colorbar=True,
          xlabel=None, ylabel=None, clabel=None, title=None,
@@ -84,8 +84,7 @@ def plot(data, args=(),
     print("plot.py Deprecation warning: the 'group' parameter is being renamed to 'lineouts', which is hopefully more explanatory.")
   #end
 
-  #-----------------------------------------------------------------
-  #-- Set style and process inputs ---------------------------------
+  #---- Set style and process inputs -----------------------------------
   # Default to Postgkyl style file file if no style is specified
   # Use the rcParams dictionary which is passed with click contex
   if bool(style):
@@ -131,9 +130,7 @@ def plot(data, args=(),
     mpl.rcParams['lines.linewidth'] = linewidth
   #end
 
-  #-----------------------------------------------------------------
-  #-- Data Loading -------------------------------------------------
-  #-----------------------------------------------------------------
+  #---- Data Loading ---------------------------------------------------
   num_dims = data.getNumDims(squeeze=True)
   if num_dims > 2:
     raise Exception('Only 1D and 2D plots are currently supported')
@@ -179,14 +176,22 @@ def plot(data, args=(),
   # Create axis labels
   if xlabel is None:
     xlabel = axes_labels[0] if lineouts != 1 else axes_labels[1]
-    if xscale != 1.0:
-      xlabel = xlabel + r' $\times$ {:.3e}'.format(xscale)
+    if xshift != 0.0 and xscale != 1.0:
+      xlabel = r'({:s} + {:.2e}) $\times$ {:.2e}'.format(xlabel, xshift, xscale)
+    elif xshift != 0.0:
+      xlabel = r'{:s} + {:.2e}'.format(xlabel, xshift)
+    elif xscale != 1.0:
+      xlabel = r'{:s} $\times$ {:.2e}'.format(xlabel, xscale)
     #end
   #end
   if ylabel is None and num_dims == 2 and lineouts is None:
     ylabel = axes_labels[1]
-    if yscale != 1.0:
-      ylabel = ylabel + r' $\times$ {:.3e}'.format(yscale)
+    if yshift != 0.0 and yscale != 1.0:
+      ylabel = r'({:s} + {:.2e}) $\times$ {:.2e}'.format(ylabel, yshift, yscale)
+    elif xshift != 0.0:
+      ylabel = r'{:s} + {:.2e}'.format(ylabel, yshift)
+    elif xscale != 1.0:
+      ylabel = r'{:s} $\times$ {:.2e}'.format(ylabel, yscale)
     #end
   #end
   if zscale != 1.0:
@@ -198,10 +203,7 @@ def plot(data, args=(),
   #end
 
 
-
-  #-----------------------------------------------------------------
-  #-- Prepare Figure and Axes --------------------------------------
-  #-----------------------------------------------------------------
+  #---- Prepare Figure and Axes ----------------------------------------
   if bool(figsize):
     figsize = (int(figsize.split(',')[0]),
                int(figsize.split(',')[1]))
@@ -285,17 +287,15 @@ def plot(data, args=(),
     #end
   #end
 
-  #-------------------------------------------------------------------
-  #-- Main Plotting Loop ---------------------------------------------
-  #-------------------------------------------------------------------
+  #---- Main Plotting Loop ---------------------------------------------
   for comp in idx_comps:
     cax = ax[0] if squeeze else ax[comp+start_axes]
     label = ('{:s}_c{:d}'.format(label_prefix, comp)).strip('_') if len(idx_comps) > 1 else label_prefix
 
     if num_dims == 1:
       cc_grid = _get_cell_centered_grid(grid, cells)
-      x = cc_grid[0] * xscale
-      y = values[..., comp] * yscale
+      x = (cc_grid[0] + xshift) * xscale
+      y = (values[..., comp] + yshift) * yscale
       im = cax.plot(x, y,
                     *args, color=color, label=label, markersize=markersize)
 
@@ -303,7 +303,7 @@ def plot(data, args=(),
     elif num_dims == 2:
       extend = None
 
-      if contour:  #--------------------------------------------------
+      if contour:  #----------------------------------------------------
         levels = 10
         if cnlevels:
           levels = int(cnlevels)-1
@@ -316,8 +316,9 @@ def plot(data, args=(),
           #end
         #end
         cc_grid = _get_cell_centered_grid(grid, cells)
-        x, y = cc_grid[0] * xscale, cc_grid[1] * yscale
-        z = values[..., comp].transpose() * zscale
+        x = (cc_grid[0] + xshift) * xscale
+        y = (cc_grid[1] + yshift) * yscale
+        z = (values[..., comp].transpose() + zshift) * zscale
         im = cax.contour(x, y, z,
                          levels, *args,
                          colors=color, linewidths=linewidth)
@@ -326,43 +327,49 @@ def plot(data, args=(),
         #end
 
 
-      elif quiver:  #-------------------------------------------------
+      elif quiver:  #---------------------------------------------------
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
         cc_grid = _get_cell_centered_grid(grid, cells)
-        x, y = cc_grid[0][skip2::skip]*xscale, cc_grid[1][skip2::skip]*yscale
-        z1 = values[skip2::skip, skip2::skip, 2*comp].transpose()
-        z2 = values[skip2::skip, skip2::skip, 2*comp+1].transpose()
+        x = (cc_grid[0][skip2::skip] + xshift) * xscale
+        y = (cc_grid[1][skip2::skip] + yshift) * yscale
+        z1 = (values[skip2::skip, skip2::skip, 2*comp].transpose()
+              + zshift) * zscale
+        z2 = (values[skip2::skip, skip2::skip, 2*comp+1].transpose()
+              + zshift) * zscale
         im = cax.quiver(x, y, z1, z2)
 
 
-      elif streamline:  #---------------------------------------------
+      elif streamline:  #-----------------------------------------------
         if not bool(color):
           # magnitude
           cl = np.sqrt(values[..., 2*comp]**2
                        + values[..., 2*comp+1]**2).transpose()
         #end
         cc_grid = _get_cell_centered_grid(grid, cells)
-        x, y = cc_grid[0] * xscale, cc_grid[1] * yscale
-        z1 = values[..., 2*comp].transpose()
-        z2 = values[..., 2*comp+1].transpose()
+        x = (cc_grid[0] + xshift) * xscale
+        y = (cc_grid[1] + yshift) * yscale
+        z1 = (values[..., 2*comp].transpose() + zshift) * zscale
+        z2 = (values[..., 2*comp+1].transpose()+ zshift) * zscale
         im = cax.streamplot(x, y, z1, z2
                             *args,
                             density=sdensity, arrowstyle=arrowstyle,
                             color=color, linewidth=linewidth)
 
 
-      elif lineouts is not None:  #-----------------------------------
+      elif lineouts is not None:  #-------------------------------------
         num_lines = values.shape[1] if lineouts == 0 else values.shape[0]
         cc_grid = _get_cell_centered_grid(grid, cells)
 
         if lineouts == 0:
-          x = cc_grid[0] * xscale
-          vmin, vmax = cc_grid[1][0] * yscale, cc_grid[1][-1] * yscale
+          x = (cc_grid[0] + xshift) * xscale
+          vmin = (cc_grid[1][0] + yshift) * yscale
+          vmax = (cc_grid[1][-1] + yshift) * yscale
           label = clabel or axes_labels[1]
         else:
-          x = cc_grid[1] * xscale
-          vmin, vmax = cc_grid[0][0] * yscale, cc_grid[0][-1] * yscale
+          x = (cc_grid[1] + xshift) * xscale
+          vmin = (cc_grid[0][0] + yshift) * yscale
+          vmax = (cc_grid[0][-1] + yshift) * yscale
           label = clabel or axes_labels[0]
         #end
         idx = [slice(0, u) for u in values.shape]
@@ -374,7 +381,7 @@ def plot(data, args=(),
           else:
             idx[0] = line
           #end
-          y = values[tuple(idx)] * yscale
+          y = (values[tuple(idx)] + yshift) * yscale
           im = cax.plot(x, y, *args, color=color)
         #end
         mappable = cm.ScalarMappable(
@@ -386,7 +393,7 @@ def plot(data, args=(),
         legend = False
 
 
-      else: #---------------------------------------------------------
+      else: #-----------------------------------------------------------
         if zmin is not None and zmax is not None:
           extend = 'both'
         elif zmax is not None:
@@ -394,11 +401,13 @@ def plot(data, args=(),
         elif zmin is not None:
           extend = 'min'
         #end
-        x, y = grid[0] * xscale, grid[1] * yscale
-        z = (values[..., comp] * zscale).transpose()
+        x = (grid[0] + xshift) * xscale
+        y = (grid[1] + yshift) * yscale
+        z = (values[..., comp].transpose() + zshift) * zscale
         if len(x) == z.shape[1] or len(y) == z.shape[0]:
           cc_grid = _get_cell_centered_grid(grid, cells)
-          x, y = cc_grid[0] * xscale, cc_grid[1] * yscale
+          x = (cc_grid[0] + xshift) * xscale
+          y = (cc_grid[1] + yshift) * yscale
         #end
         if len(x.shape) > 1:
           x, y = x.transpose(), y.transpose()
@@ -434,9 +443,7 @@ def plot(data, args=(),
     #end
 
 
-    #-------------------------------------------------------------
-    #-- Additional Formatting ------------------------------------
-    #-------------------------------------------------------------
+    #---- Additional Formatting ----------------------------------------
     cax.grid(showgrid)
     # Legend
     if legend:
