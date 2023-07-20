@@ -8,7 +8,7 @@ import postgkyl.output.plot as gplot
 import postgkyl.data.select as select
 from postgkyl.commands.util import verb_print
 
-def update(i, data, fig, offsets, kwargs):
+def _update(i, data, fig, offsets, kwargs):
   fig.clear()
   kwargs['figure'] = fig
 
@@ -95,16 +95,26 @@ def update(i, data, fig, offsets, kwargs):
               help="Value to scale the y-axis (default: 1.0).")
 @click.option('--zscale', default=1.0, type=click.FLOAT,
               help="Value to scale the z-axis (default: 1.0).")
-@click.option('--vmax', default=None, type=click.FLOAT,
-              help="Set maximal value of data for plots.")
-@click.option('--vmin', default=None, type=click.FLOAT,
-              help="Set minimal value of data for plots.")
 @click.option('--float', is_flag=True,
               help="Choose min/max levels based on current frame (i.e., each frame uses a different color range).")
+@click.option('--xmax', default=None, type=click.FLOAT,
+              help="Set maximal x-value.")
+@click.option('--xmin', default=None, type=click.FLOAT,
+              help="Set minimal x-values.")
+@click.option('--ymax', default=None, type=click.FLOAT,
+              help="Set maximal y-value.")
+@click.option('--ymin', default=None, type=click.FLOAT,
+              help="Set minimal y-values.")
+@click.option('--zmax', default=None, type=click.FLOAT,
+              help="Set maximal z-value.")
+@click.option('--zmin', default=None, type=click.FLOAT,
+              help="Set minimal z-values.")
 @click.option('--xlim', default=None, type=click.STRING,
               help="Set limits for the x-coordinate (lower,upper)")
 @click.option('--ylim', default=None, type=click.STRING,
               help="Set limits for the y-coordinate (lower,upper).")
+@click.option('--zlim', default=None, type=click.STRING,
+              help="Set limits for the z-coordinate (lower,upper).")
 @click.option('--legend/--no-legend', default=True,
               help="Show legend.")
 @click.option('--force-legend', 'forcelegend', is_flag=True,
@@ -154,31 +164,49 @@ def animate(ctx, **kwargs):
   verb_print(ctx, 'Starting animate')
   data = ctx.obj['data']
 
-  if not kwargs['float'] and kwargs['ylim'] is None:
+  if kwargs['xlim']:
+    kwargs['xmin'] = float(kwargs['xlim'].split(',')[0])
+    kwargs['xmax'] = float(kwargs['xlim'].split(',')[1])
+  #end
+  if kwargs['ylim']:
+    kwargs['ymin'] = float(kwargs['ylim'].split(',')[0])
+    kwargs['ymax'] = float(kwargs['ylim'].split(',')[1])
+  #end
+  if kwargs['zlim']:
+    kwargs['zmin'] = float(kwargs['zlim'].split(',')[0])
+    kwargs['zmax'] = float(kwargs['zlim'].split(',')[1])
+  #end
+
+  if not kwargs['float']:
     vmin = float('inf')
     vmax = float('-inf')
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      val = dat.getValues()*kwargs['zscale']
-      if kwargs['logz']:
-        val = np.log(val)
+      num_dims = dat.getNumDims()
+      if num_dims == 1:
+        val = dat.getValues()*kwargs['yscale']
+      elif num_dims == 2:
+        val = dat.getValues()*kwargs['zscale']
       #end
       if vmin > np.nanmin(val):
         vmin = np.nanmin(val)
-      #end
       if vmax < np.nanmax(val):
         vmax = np.nanmax(val)
       #end
     #end
-    if kwargs['vmin'] is None:
-      kwargs['vmin'] = vmin
-      if kwargs['logz']:
-        kwargs['vmin'] = np.exp(vmin)
+
+    if num_dims == 1:
+      if kwargs['ymin'] is None:
+        kwargs['ymin'] = vmin
       #end
-    #end
-    if kwargs['vmax'] is None:
-      kwargs['vmax'] = vmax
-      if kwargs['logz']:
-        kwargs['vmax'] = np.exp(vmax)
+      if kwargs['ymax'] is None:
+        kwargs['ymax'] = vmax
+      #end
+    elif num_dims == 2:
+      if kwargs['zmin'] is None:
+        kwargs['zmin'] = vmin
+      #end
+      if kwargs['zmax'] is None:
+        kwargs['zmax'] = vmax
       #end
     #end
   #end
@@ -218,7 +246,7 @@ def animate(ctx, **kwargs):
         figs.append(plt.figure(figsize=figsize))
       #end
       if not kwargs['saveframes']:
-        anims.append(FuncAnimation(figs[-1], update,
+        anims.append(FuncAnimation(figs[-1], _update,
                                    int(np.nanmin((minSize, len(dataList)))),
                                    fargs=(dataList, figs[-1],
                                           offsets, kwargs),
@@ -238,7 +266,7 @@ def animate(ctx, **kwargs):
         #end
       else:
         for i in range(int(np.nanmin((minSize, len(dataList))))):
-          update(i, dataList, figs[-1], offsets, kwargs)
+          _update(i, dataList, figs[-1], offsets, kwargs)
           plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
                       dpi=kwargs['dpi'])
         #end
@@ -253,7 +281,7 @@ def animate(ctx, **kwargs):
       figs.append(plt.figure(figsize=figsize))
     #end
     if not kwargs['saveframes']:
-      anims.append(FuncAnimation(figs[-1], update,
+      anims.append(FuncAnimation(figs[-1], _update,
                                  int(np.nanmin((minSize, len(dataList)))),
                                  fargs=(dataList, figs[-1],
                                         offsets, kwargs),
@@ -269,7 +297,7 @@ def animate(ctx, **kwargs):
       #end
     else:
       for i in range(int(np.nanmin((minSize, len(dataList))))):
-        update(i, dataList, figs[-1], offsets, kwargs)
+        _update(i, dataList, figs[-1], offsets, kwargs)
         plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
                     dpi=kwargs['dpi'])
       #end

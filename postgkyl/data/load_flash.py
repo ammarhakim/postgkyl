@@ -1,7 +1,29 @@
 import numpy as np
 import math
 import tables as tbl
-import os.path
+
+# ----------------------------------------------------------------------
+# FLASH variable names
+# dens : the density in g/cc
+# tele : the electron temperature in K
+# tion : same but for the ions
+# velx : the fluid velocity in x direction
+# vely : the fluid velocity in y direction
+# temp : the overall fluid temperature in K
+# pres : the pressure in dyn/cm^2
+# ye
+# sumy
+#
+# The last two variables are used to retrieve the ion and electron
+# density in /cc:
+# n_ele = ye * Na * dens
+# n_ion = sumy * Na * dens
+# where Na=6.02e23 is the Avogadro number.
+#
+# The average ionisation Z' and average atomic mass A' can be found by:
+# Z' = ye/sumy
+# A' = 1/sumy
+# ----------------------------------------------------------------------
 
 def load_flash(file_name : str, var_name : str) -> tuple:
   fh = tbl.open_file(file_name, 'r')
@@ -14,6 +36,8 @@ def load_flash(file_name : str, var_name : str) -> tuple:
   res = bsize.min(axis=1)
   lower = (coord-bsize/2).min(axis=1)
   upper = (coord+bsize/2).max(axis=1)
+  #lower = coord.min(axis=1)
+  #upper = coord.max(axis=1)
 
   nxax = math.floor((upper[0]-lower[0]) / (res[0]/nxb))
   nyax = math.floor((upper[1]-lower[1]) / (res[1]/nyb))

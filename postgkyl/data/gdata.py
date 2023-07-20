@@ -114,8 +114,7 @@ class GData(object):
     self._source = source
   #end
 
-  #-----------------------------------------------------------------
-  #-- File Loading -------------------------------------------------
+  #---- File Loading ---------------------------------------------------
   def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
     num_dims = len(bpVar.dims)
     count = np.array(bpVar.dims)
@@ -381,8 +380,8 @@ class GData(object):
         import adios
         self.fileType = 'adios'
         fh =  adios.file(file_name)
-        timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
-        dataList = [key for key, val in fh.vars.items() if 'Data' in key]
+        timeMeshList = [key for key, _ in fh.vars.items() if 'TimeMesh' in key]
+        dataList = [key for key, _ in fh.vars.items() if 'Data' in key]
         if len(dataList) > 0:
           for i in range(len(dataList)):
             if i==0:
@@ -442,7 +441,6 @@ class GData(object):
   #end
 
 
-  #---------------------------------------------------------------------
   #---- Stuff Control --------------------------------------------------
   def getTag(self):
     return self._tag
@@ -564,8 +562,8 @@ class GData(object):
     return self
   #end
 
-  #-----------------------------------------------------------------
-  #-- Info ---------------------------------------------------------
+
+  #---- Info -----------------------------------------------------------
   def info(self):
     """Prints Data object information.
 
@@ -653,13 +651,12 @@ class GData(object):
   #end
 
 
-  #-----------------------------------------------------------------
-  #-- Write --------------------------------------------------------
+  #---- Write ----------------------------------------------------------
   def write(self,
-            bufferSize: int = 1000,
             out_name: str = None,
             mode: str = 'bp',
             var_name: str = None,
+            bufferSize: int = 1000,
             append = False,
             cleaning = True):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
@@ -728,11 +725,6 @@ class GData(object):
         adios.close(fh)
         adios.finalize()
       else:
-        # fw = adios.writer(out_name, mode='a')
-        # fw.declare_group('CartField', method='POSIX1')
-        # fw.define_var(var_name, sNumCells)
-        # fw[var_name] = self.getValues()
-        # fw.close()
         adios.init_noxml()
         adios.set_max_buffer_size(bufferSize)
         groupId = adios.declare_group('CartField', '')
