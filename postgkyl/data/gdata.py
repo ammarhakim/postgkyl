@@ -379,7 +379,7 @@ class GData(object):
       elif extension == 'bp':
         import adios
         self.fileType = 'adios'
-        fh =  adios.file(file_name)
+        fh = adios.file(file_name)
         timeMeshList = [key for key, _ in fh.vars.items() if 'TimeMesh' in key]
         dataList = [key for key, _ in fh.vars.items() if 'Data' in key]
         if len(dataList) > 0:
