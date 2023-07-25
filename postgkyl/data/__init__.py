@@ -12,6 +12,6 @@ from .select import select
 
 from . import recovData
 
-from .load_gkyl import load_gkyl
+from .read_gkyl import Read_gkyl
 from .load_h5 import load_h5
 from .load_flash import load_flash

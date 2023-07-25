@@ -23,7 +23,6 @@ import tables as tbl
 # The average ionisation Z' and average atomic mass A' can be found by:
 # Z' = ye/sumy
 # A' = 1/sumy
-# ----------------------------------------------------------------------
 
 def load_flash(file_name : str, var_name : str) -> tuple:
   fh = tbl.open_file(file_name, 'r')

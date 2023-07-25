@@ -4,7 +4,7 @@ import numpy as np
 import shutil
 from typing import Union
 
-from postgkyl.data.load_gkyl import load_gkyl
+from postgkyl.data.read_gkyl import Read_gkyl
 from postgkyl.data.load_h5 import load_h5
 from postgkyl.data.load_flash import load_flash
 from postgkyl.utils import idxParser
@@ -42,7 +42,7 @@ class GData(object):
                meta: dict = None,
                comp_grid: bool = False,
                mapc2p_name: str = None,
-               source : str = None) -> None:
+               reader_name: str = None) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -72,8 +72,6 @@ class GData(object):
     self._tag = tag
     self._comp_grid = comp_grid # disregard the mapped grid
     self._grid = None
-    self._gridType = 'uniform'
-    self._gridFile = None
     self._values = None # (N+1)D narray of values
 
     self.meta = {}
@@ -95,24 +93,44 @@ class GData(object):
     self._var_name = var_name
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
+
+    self._readers = {
+      'gkyl' : Read_gkyl
+      }
     if file_name is not None:
-      # Sequence load typically concatenates multiple files
-      # When the sequence is in just a single file, _loadFrame will
-      # fail and _loadSequence is called instead
-      if os.path.isfile(self.file_name):
-        zs = (z0, z1, z2, z3, z4, z5)
-        self._loadFrame(axes = zs, comp = comp,
-                        source = source)
+      reader_set = False
+      if reader_name in self._readers:
+        self._reader = self._readers[reader_name](file_name)
+        reader_set = True
       else:
-        self._loadSequence()
+        for key in self._readers:
+          self._reader = self._readers[key](file_name)
+          if self._reader._is_compatible():
+            reader_set = True
+            break
+          #end
+        #end
+      #end
+      if not reader_set:
+        raise TypeError('\'file_name\' but \'reader\' was either not '\
+                        'set or successfully detected')
       #end
     #end
 
-    self.color = None
+    self._grid, self._values = self._reader.get_data(
+      grid_file_name=mapc2p_name, meta=self.meta)
 
+    self.color = None
     self._status = True
-    self._source = source
   #end
+
+
+
+
+
+
+
+
 
   #---- File Loading ---------------------------------------------------
   def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
@@ -541,7 +559,7 @@ class GData(object):
   #end
 
   def getGridType(self):
-    return self._gridType
+    return self.meta['grid_type']
   #end
 
   def getValues(self):
