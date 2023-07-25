@@ -168,7 +168,6 @@ def _make1Dgrids(nInterp, Xc, numDims, gridType=None):
 
 def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
   shift = 0
-  print(cMat.shape, qIn.shape)
   numCells = np.array(qIn.shape)
   # last entry is indexing nodes, get rid of it
   numCells = numCells[:-1]
@@ -183,7 +182,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basisType, c2p=False):
     numInterp[-1] = nInterpIn+1
   #end
   if c2p:
-    qOut = np.zeros(numCells*(numInterp)+1, np.float64)
+    qOut = np.zeros(numCells*(numInterp-1)+1, np.float64)
   else:
     qOut = np.zeros(numCells*numInterp, np.float64)
   #end
@@ -479,7 +478,7 @@ class GInterpModal(GInterp):
                                basis, self.numInterp, self.read, True, True)
       grid = []
       for d in range(self.numDims):
-        grid.append(_interpOnMesh(cMat, q[d], self.numInterp, basis, True))
+        grid.append(_interpOnMesh(cMat, q[d], self.numInterp+1, basis, True))
       #end
     else:
       if self.basisType == "gkhybrid":
