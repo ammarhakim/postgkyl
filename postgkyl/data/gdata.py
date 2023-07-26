@@ -6,8 +6,8 @@ from typing import Union
 
 from postgkyl.data.read_gkyl import Read_gkyl
 from postgkyl.data.read_gkyl_adios import Read_gkyl_adios
-from postgkyl.data.load_h5 import load_h5
-from postgkyl.data.load_flash import load_flash
+from postgkyl.data.read_gkyl_h5 import Read_gkyl_h5
+from postgkyl.data.read_flash_h5 import Read_flash_h5
 
 class GData(object):
   """Provides interface to Gkeyll output data.
@@ -98,7 +98,9 @@ class GData(object):
 
     self._readers = {
       'gkyl' : Read_gkyl,
-      'adios' : Read_gkyl_adios
+      'adios' : Read_gkyl_adios,
+      'h5' : Read_gkyl_h5,
+      'flash' : Read_flash_h5
       }
     if file_name is not None:
       reader_set = False
@@ -133,130 +135,6 @@ class GData(object):
 
     self.color = None
     self._status = True
-  #end
-
-
-
-
-
-
-
-
-
-  #---- File Loading ---------------------------------------------------
-
-
-  def _loadFrame(self,
-                 axes : tuple = (None, None, None, None, None, None),
-                 comp : int = None,
-                 source : str = None):
-    self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
-    extension = self.file_name.split('.')[-1]
-    if extension == 'h5':
-      status, params = load_h5(self.file_name, self.ctx)
-      if status:
-        lower = params[0]
-        upper = params[1]
-        cells = params[2]
-        self._values = params[3]
-      else:
-        self._loadSequence()
-        return
-      #end
-    elif source == 'flash':
-      num_dims, cells, extends, values = load_flash(self.file_name,
-                                                    self._var_name)
-      lower = extends[0]
-      upper = extends[1]
-      #end
-      self._values = values[..., np.newaxis]
-    else:
-      raise NameError(
-        'File extension \'{:s}\' is not supported'.format(extension))
-      #end
-    #end
-
-    num_dims = len(cells)
-    dz = (upper - lower) / cells
-    # Adjusts bounds in case ghost layer is included in data
-    for d in range(num_dims):
-      if cells[d] != self._values.shape[d]:
-        if self._gridType == 'mapped':
-          raise ValueError(
-            'Data appears to include ghost cells which is not compatible with mapped grid.' \
-            'Use computational grid \'comp_grid\' instead.')
-        #end
-        ngl = int(np.floor((cells[d] - self._values.shape[d])*0.5))
-        ngu = int(np.ceil((cells[d] - self._values.shape[d])*0.5))
-        cells[d] = self._values.shape[d]
-        lower[d] = lower[d] - ngl*dz[d]
-        upper[d] = upper[d] + ngu*dz[d]
-      #end
-    #end
-
-    # Construct grids if not loaded already
-    if self._grid is None:
-      self._grid = [np.linspace(lower[d],
-                                upper[d],
-                                cells[d]+1)
-                    for d in range(num_dims)]
-    #end
-  #end
-
-  def _loadSequence(self):
-    # Sequence load typically cancatenates multiple files
-    files = glob.glob('{:s}*'.format(self.file_name))
-    if not files:
-      raise NameError(
-        'File(s) \'{:s}\' not found or empty.'.
-        format(self.file_name))
-
-    cnt = 0  # Counter for the number of loaded files
-    for file_name in files:
-      extension = file_name.split('.')[-1]
-      if extension == 'h5':
-        import tables
-        self.fileType = 'hdf5'
-        fh = tables.open_file(file_name, 'r')
-        if '/DataStruct/data' in fh and \
-           '/DataStruct/timeMesh' in fh:
-          grid = fh.root.DataStruct.timeMesh.read()
-          values = fh.root.DataStruct.data.read()
-          fh.close()
-        else:
-          fh.close()
-          continue
-        #end
-      else:
-        continue
-      #end
-
-      if cnt > 0:
-        self._grid = np.append(self._grid, grid, axis=0)
-        self._values = np.append(self._values, values, axis=0)
-      else:
-        self._grid = grid
-        self._values = values
-      #end
-      cnt += 1
-    #end
-
-    if cnt == 0:  # No files loaded
-      raise NameError(
-        'File(s) \'{:s}\' not found or empty.'.
-        format(self.file_name))
-    #end
-    # Squeeze the time coordinate ...
-    if len(self._grid.shape) > 1:
-      self._grid = np.squeeze(self._grid)
-    #end
-    # ... and make it a list following the Postgkyl grid conventions
-    self._grid = [self._grid]
-
-    # glob() doesn't guarantee the right order
-    sortIdx = np.argsort(self._grid[0])
-    self._grid[0] = self._grid[0][sortIdx]
-    self._values = self._values[sortIdx, ...]
   #end
 
 

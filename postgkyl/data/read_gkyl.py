@@ -94,14 +94,16 @@ class Read_gkyl(object):
   #end
 
   def _is_compatible(self) -> bool:
-    # Is gkyl format?
-    magic = np.fromfile(self.file_name, dtype=np.dtype('b'),
-                        count=5, offset=0)
-    if np.array_equal(magic, [103, 107, 121, 108, 48]):
-      self.version = np.fromfile(self.file_name, dtype=self._dti,
-                                 count=1, offset=5)[0]
-      return True
-    #end
+    try:
+      magic = np.fromfile(self.file_name, dtype=np.dtype('b'),
+                          count=5, offset=0)
+      if np.array_equal(magic, [103, 107, 121, 108, 48]):
+        self.version = np.fromfile(self.file_name, dtype=self._dti,
+                                   count=1, offset=5)[0]
+        return True
+      #end
+    except:
+      return False
     return False
   #end
 
@@ -276,7 +278,8 @@ class Read_gkyl(object):
 
   # ---- Exposed function ----------------------------------------------
   def get_data(self,
-               grid_file_name : str = None) -> tuple:
+               grid_file_name : str = None,
+               **kwargs) -> tuple:
     self._offset = 0
     self._read_header()
 

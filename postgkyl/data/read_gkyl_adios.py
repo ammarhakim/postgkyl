@@ -29,25 +29,27 @@ class Read_gkyl_adios(object):
   def _is_compatible(self) -> bool:
     # Adios has been a problematic dependency; therefore it is only
     # imported when actially needed
-    import adios
+    try:
+      import adios
+      fh = adios.file(self.file_name)
 
-    fh = adios.file(self.file_name)
-
-    for key, _ in fh.vars.items():
-      if 'TimeMesh' in key:
-        self.is_diagnostic = True
-        break
+      for key, _ in fh.vars.items():
+        if 'TimeMesh' in key:
+          self.is_diagnostic = True
+          break
+        #end
+        if self.var_name in key:
+          self.is_frame = True
+          break
+        #end
       #end
-      if self.var_name in key:
-        self.is_frame = True
-        break
-      #end
-    #end
-    fh.close()
+      fh.close()
+    except:
+      return False
     return self.is_frame or self.is_diagnostic
   #end
 
-  def _create_offset_count(self, var, zs, comp, grid=None):
+  def _create_offset_count(self, var, zs, comp, grid=None) -> tuple:
     num_dims = len(var.dims)
     count = np.array(var.dims)
     offset = np.zeros(num_dims, np.int32)
@@ -89,7 +91,7 @@ class Read_gkyl_adios(object):
     #end
   #end
 
-  def _read_frame(self):
+  def _read_frame(self) -> tuple:
     import adios
     fh = adios.file(self.file_name)
 
@@ -193,7 +195,7 @@ class Read_gkyl_adios(object):
     fh.close()
     return cells, lower, upper, data
 
-  def _read_diagnostic(self):
+  def _read_diagnostic(self) -> tuple:
     import adios
     fh = adios.file(self.file_name)
 
@@ -201,16 +203,11 @@ class Read_gkyl_adios(object):
     data_lst = [key for key, _ in fh.vars.items() if 'Data' in key]
     for i in range(len(data_lst)):
       if i==0:
-        data = np.asarray(adios.var(fh, data_lst[i]).read())
-        grid = np.asarray(adios.var(fh, time_lst[i]).read())
+        data = np.atleast_1d(adios.var(fh, data_lst[i]).read())
+        grid = np.atleast_1d(adios.var(fh, time_lst[i]).read())
       else:
-        next_data = np.asarray(adios.var(fh, data_lst[i]).read())
-        next_grid = np.asarray(adios.var(fh, time_lst[i]).read())
-        # deal with weird behavior after restart where some data is a scalar
-        if len(next_data.shape) == 0:
-          next_data = np.reshape(next_data, (1,1))
-          next_grid = np.reshape(next_grid, (1,))
-        #end
+        next_data = np.atleast_1d(adios.var(fh, data_lst[i]).read())
+        next_grid = np.atleast_1d(adios.var(fh, time_lst[i]).read())
         # deal with weird behavior after restart where some data
         # doesn't have second dimension
         if len(next_data.shape) < 2:
@@ -227,7 +224,9 @@ class Read_gkyl_adios(object):
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self, grid_file_name : str = None) -> tuple:
+  def get_data(self,
+               grid_file_name : str = None,
+               **kwargs) -> tuple:
     grid = None
 
     if self.is_frame:

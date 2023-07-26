@@ -14,5 +14,5 @@ from . import recovData
 
 from .read_gkyl import Read_gkyl
 from .read_gkyl_adios import Read_gkyl_adios
-from .load_h5 import load_h5
-from .load_flash import load_flash
+from .read_gkyl_h5 import Read_gkyl_h5
+from .read_flash_h5 import Read_flash_h5
