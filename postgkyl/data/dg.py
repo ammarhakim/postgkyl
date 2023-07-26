@@ -398,8 +398,8 @@ class GInterpModal(GInterp):
     self.numDims = data.getNumDims()
     if polyOrder is not None:
       self.polyOrder = polyOrder
-    elif data.meta['polyOrder'] is not None:
-      self.polyOrder = data.meta['polyOrder']
+    elif data.ctx['polyOrder'] is not None:
+      self.polyOrder = data.ctx['polyOrder']
     else:
       raise ValueError(
         'GInterpNodal: polynomial order is neither specified nor stored in the output file')
@@ -416,8 +416,8 @@ class GInterpModal(GInterp):
       elif basisType == 'pkpmhyb':
         self.basisType = 'pkpmhybrid'
       #end
-    elif data.meta['basisType'] is not None:
-      self.basisType = data.meta['basisType']
+    elif data.ctx['basisType'] is not None:
+      self.basisType = data.ctx['basisType']
     else:
       raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
     #end
@@ -470,7 +470,7 @@ class GInterpModal(GInterp):
       #end
     #end
 
-    if self.data.meta['grid_type'] == 'c2p':
+    if self.data.ctx['grid_type'] == 'c2p':
       q = self.data.getGrid()
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.numDims, num_comp)
@@ -501,7 +501,7 @@ class GInterpModal(GInterp):
   #end
 
   def interpolateGrid(self, overwrite=False):
-    if self.data.meta['grid_type'] == 'c2p':
+    if self.data.ctx['grid_type'] == 'c2p':
       q = self.data.getGrid()
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.numDims, num_comp)

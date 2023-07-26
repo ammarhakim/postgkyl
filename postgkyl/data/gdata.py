@@ -5,9 +5,9 @@ import shutil
 from typing import Union
 
 from postgkyl.data.read_gkyl import Read_gkyl
+from postgkyl.data.read_gkyl_adios import Read_gkyl_adios
 from postgkyl.data.load_h5 import load_h5
 from postgkyl.data.load_flash import load_flash
-from postgkyl.utils import idxParser
 
 class GData(object):
   """Provides interface to Gkeyll output data.
@@ -17,7 +17,7 @@ class GData(object):
   functions. Represents a dataset in the Postgkyl command line mode.
 
   Attributes:
-    meta: A dictionary contaioning a physics information like charge
+    ctx: A dictionary contaioning a physics information like charge
       and/or representation information like polynomial order.
     file_name: The name of the Gkeyll file used during initialization.
 
@@ -39,7 +39,7 @@ class GData(object):
                var_name: str = 'CartGridField',
                tag: str = 'default',
                label: str = None,
-               meta: dict = None,
+               ctx: dict = None,
                comp_grid: bool = False,
                mapc2p_name: str = None,
                reader_name: str = None) -> None:
@@ -62,8 +62,8 @@ class GData(object):
         Specify dataset tag for use in the command line mode.
       label: str
         Specify dataset label for use in the command line mode.
-      meta: dict
-        Copy content of the specified meta dictionary.
+      ctx: dict
+        Copy content of the specified ctx dictionary.
       comp_grid: bool
         A flag to ignore grid mapping.
       mapc2p_name: str
@@ -74,17 +74,17 @@ class GData(object):
     self._grid = None
     self._values = None # (N+1)D narray of values
 
-    self.meta = {}
-    self.meta['time'] = None
-    self.meta['frame'] = None
-    self.meta['changeset'] = None
-    self.meta['builddate'] = None
-    self.meta['polyOrder'] = None
-    self.meta['basisType'] = None
-    self.meta['isModal'] = None
-    if meta:
-      for key in meta:
-        self.meta[key] = meta[key]
+    self.ctx = {}
+    self.ctx['time'] = None
+    self.ctx['frame'] = None
+    self.ctx['changeset'] = None
+    self.ctx['builddate'] = None
+    self.ctx['polyOrder'] = None
+    self.ctx['basisType'] = None
+    self.ctx['isModal'] = None
+    if ctx:
+      for key in ctx:
+        self.ctx[key] = ctx[key]
       #end
     #end
 
@@ -94,17 +94,28 @@ class GData(object):
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
 
+    zs = (z0, z1, z2, z3, z4, z5)
+
     self._readers = {
-      'gkyl' : Read_gkyl
+      'gkyl' : Read_gkyl,
+      'adios' : Read_gkyl_adios
       }
     if file_name is not None:
       reader_set = False
       if reader_name in self._readers:
-        self._reader = self._readers[reader_name](file_name)
+        self._reader = self._readers[reader_name](
+          file_name=file_name,
+          ctx=self.ctx,
+          var_name=var_name,
+          axes=zs, comp=comp)
         reader_set = True
       else:
         for key in self._readers:
-          self._reader = self._readers[key](file_name)
+          self._reader = self._readers[key](
+            file_name=file_name,
+            ctx= self.ctx,
+            var_name=var_name,
+            axes=zs, comp=comp)
           if self._reader._is_compatible():
             reader_set = True
             break
@@ -118,7 +129,7 @@ class GData(object):
     #end
 
     self._grid, self._values = self._reader.get_data(
-      grid_file_name=mapc2p_name, meta=self.meta)
+      grid_file_name=mapc2p_name)
 
     self.color = None
     self._status = True
@@ -133,47 +144,7 @@ class GData(object):
 
 
   #---- File Loading ---------------------------------------------------
-  def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
-    num_dims = len(bpVar.dims)
-    count = np.array(bpVar.dims)
-    offset = np.zeros(num_dims, np.int32)
-    cnt = 0
-    for d, z in enumerate(zs):
-      if d < num_dims-1 and z is not None:  # Last dim stores comp
-        z = idxParser(z, grid[d])
-        if isinstance(z, int):
-          offset[d] = z
-          count[d] = 1
-        elif isinstance(z, slice):
-          offset[d] = z.start
-          count[d] = z.stop - z.start
-        else:
-          raise TypeError('\'z\' is neither number or slice')
-        #end
-        cnt = cnt + 1
-      #end
-    #end
 
-    if comp is not None:
-      comp = idxParser(comp)
-      if isinstance(comp, int):
-        offset[-1] = comp
-        count[-1] = 1
-      elif isinstance(comp, slice):
-        offset[-1] = comp.start
-        count[-1] = comp.stop - comp.start
-      else:
-        raise TypeError('\'comp\' is neither number or slice')
-      #end
-      cnt = cnt + 1
-    #end
-
-    if cnt > 0:
-      return tuple(offset), tuple(count)
-    else:
-      return (), ()
-    #end
-  #end
 
   def _loadFrame(self,
                  axes : tuple = (None, None, None, None, None, None),
@@ -182,7 +153,7 @@ class GData(object):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
-      status, params = load_h5(self.file_name, self.meta)
+      status, params = load_h5(self.file_name, self.ctx)
       if status:
         lower = params[0]
         upper = params[1]
@@ -192,129 +163,6 @@ class GData(object):
         self._loadSequence()
         return
       #end
-    elif extension == 'bp':
-      import adios
-      fh = adios.file(self.file_name)
-      if not self._var_name in fh.vars:
-        # Not a Gkyl 'frame' data; trying to load as a sequence
-        fh.close()
-        self._loadSequence()
-        return
-      #end
-      # Get the atributes
-      self.attrsList = { }
-      for k in fh.attrs.keys():
-        self.attrsList[k] = 0
-      #end
-      # Postgkyl conventions require the attributes to be
-      # narrays even for 1D data
-      lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
-      upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
-      cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
-      if 'changeset' in fh.attrs.keys():
-        self.meta['changeset'] = adios.attr(fh, 'changeset').value.decode('UTF-8')
-      #end
-      if 'builddate' in fh.attrs.keys():
-        self.meta['builddate'] = adios.attr(fh, 'builddate').value.decode('UTF-8')
-      #end
-      if 'polyOrder' in fh.attrs.keys():
-        self.meta['polyOrder'] = adios.attr(fh, 'polyOrder').value
-        self.meta['isModal'] = True
-      #end
-      if 'basisType' in fh.attrs.keys():
-        self.meta['basisType'] = adios.attr(fh, 'basisType').value.decode('UTF-8')
-        self.meta['isModal'] = True
-      #end
-      if 'charge' in fh.attrs.keys():
-        self.meta['charge'] = adios.attr(fh, 'charge').value
-      #end
-      if 'mass' in fh.attrs.keys():
-        self.meta['mass'] = adios.attr(fh, 'mass').value
-      #end
-      if 'time' in fh.vars:
-        self.meta['time'] = adios.var(fh, 'time').read()
-      #end
-      if 'frame' in fh.vars:
-        self.meta['frame'] = adios.var(fh, 'frame').read()
-      #end
-
-      # Check for mapped grid ...
-      if 'type' in fh.attrs.keys() and self._comp_grid is False:
-        self._gridType = adios.attr(fh, 'type').value.decode('UTF-8')
-      #end
-      # .. load nodal grid if provided ...
-      if self._gridType == 'uniform':
-        pass # nothing to do for uniform grids
-      elif self._gridType == 'mapped':
-        if 'grid' in fh.attrs.keys():
-          gridNm = self._file_dir + '/' +adios.attr(fh, 'grid').value.decode('UTF-8')
-        else:
-          gridNm = self._file_dir + '/grid'
-        #end
-        with adios.file(gridNm) as gridFh:
-          gridVar = adios.var(gridFh, self._var_name)
-          offset, count = self._createOffsetCountBp(gridVar, axes, None)
-          tmp = gridVar.read(offset=offset, count=count)
-          grid = [tmp[..., d].transpose()
-                  #for d in range(len(cells))]
-                  for d in range(tmp.shape[-1])]
-          self._grid = grid
-        #end
-      elif self._gridType == 'nonuniform':
-        raise TypeError('\'nonuniform\' is not presently supported')
-      else:
-        raise TypeError('Unsupported grid type info in field!')
-      #end
-
-      # Load data
-      num_dims = len(cells)
-      var = adios.var(fh, self._var_name)
-      grid = [np.linspace(lower[d],
-                          upper[d],
-                          cells[d]+1)
-              for d in range(num_dims)]
-      offset, count = self._createOffsetCountBp(var, axes, comp, grid)
-      self._values = var.read(offset=offset, count=count, nsteps=1)
-
-      # Adjust boundaries for 'offset' and 'count'
-      dz = (upper - lower) / cells
-      if offset:
-        if self._gridType == 'uniform':
-          lower = lower + offset[:num_dims]*dz
-          cells = cells - offset[:num_dims]
-        elif self._gridType == 'mapped':
-          idx = np.full(num_dims, 0)
-          for d in range(num_dims):
-            lower[d] = self._grid[d][tuple(idx)]
-            cells[d] = cells[d] - offset[d]
-          #end
-        #end
-      #end
-      if count:
-        if self._gridType == 'uniform':
-          upper = lower + count[:num_dims]*dz
-          cells = count[:num_dims]
-        elif self._gridType == 'mapped':
-          idx = np.full(num_dims, 0)
-          for d in range(num_dims):
-            idx[-d-1] = count[d]-1  #.Reverse indexing of idx because of transpose() in composing self._grid.
-            upper[d] = self._grid[d][tuple(idx)]
-            cells[d] = count[d]
-          #end
-        #end
-      #end
-      fh.close()
-    elif extension == 'gkyl':
-      num_dims, cells, grid, values = load_gkyl(self.file_name)
-      if isinstance(grid, tuple):
-        lower = grid[0]
-        upper = grid[1]
-      else:
-        lower = np.array([grid[0]])
-        upper = np.array([grid[-1]])
-        self._grid = [grid]
-      #end
-      self._values = values
     elif source == 'flash':
       num_dims, cells, extends, values = load_flash(self.file_name,
                                                     self._var_name)
@@ -325,21 +173,6 @@ class GData(object):
     else:
       raise NameError(
         'File extension \'{:s}\' is not supported'.format(extension))
-      #end
-    #end
-
-    if self.mapc2p_name is not None:
-      extension = self.mapc2p_name.split('.')[-1]
-      self._gridType = 'c2p'
-      if extension == 'gkyl':
-        num_dims, _, _, grid = load_gkyl(self.mapc2p_name)
-        num_comps = grid.shape[-1]
-        num_coeff = num_comps/num_dims
-        self._grid = [grid[..., int(d*num_coeff):int((d+1)*num_coeff)]
-                      for d in range(num_dims)]
-      else:
-        raise NameError(
-          'File extension \'{:s}\' is not supported for mapc2p'.format(extension))
       #end
     #end
 
@@ -389,38 +222,6 @@ class GData(object):
            '/DataStruct/timeMesh' in fh:
           grid = fh.root.DataStruct.timeMesh.read()
           values = fh.root.DataStruct.data.read()
-          fh.close()
-        else:
-          fh.close()
-          continue
-        #end
-      elif extension == 'bp':
-        import adios
-        self.fileType = 'adios'
-        fh = adios.file(file_name)
-        timeMeshList = [key for key, _ in fh.vars.items() if 'TimeMesh' in key]
-        dataList = [key for key, _ in fh.vars.items() if 'Data' in key]
-        if len(dataList) > 0:
-          for i in range(len(dataList)):
-            if i==0:
-              values = adios.var(fh, dataList[i]).read()
-              grid = adios.var(fh, timeMeshList[i]).read()
-            else:
-              newvals = np.asarray(adios.var(fh, dataList[i]).read())
-              newgrid = np.asarray(adios.var(fh, timeMeshList[i]).read())
-              # deal with weird behavior after restart where some data is a scalar
-              if len(newvals.shape) == 0:
-                  newvals = np.reshape(newvals, (1,1))
-                  newgrid = np.reshape(newgrid, (1,))
-              # deal with weird behavior after restart where some data
-              # doesn't have second dimension
-              if len(newvals.shape) < 2:
-                newvals = np.expand_dims(newvals, axis=1)
-              #end
-              values = np.append(values, newvals,axis=0)
-              grid = np.append(grid, newgrid,axis=0)
-            #end
-          #end
           fh.close()
         else:
           fh.close()
@@ -559,7 +360,7 @@ class GData(object):
   #end
 
   def getGridType(self):
-    return self.meta['grid_type']
+    return self.ctx['grid_type']
   #end
 
   def getValues(self):
@@ -603,11 +404,11 @@ class GData(object):
     if len(values) > 0:
       output = ''
 
-      if self.meta['time'] is not None:
-        output += '├─ Time: {:e}\n'.format(self.meta['time'])
+      if self.ctx['time'] is not None:
+        output += '├─ Time: {:e}\n'.format(self.ctx['time'])
       #end
-      if self.meta['frame'] is not None:
-        output += '├─ Frame: {:d}\n'.format(self.meta['frame'])
+      if self.ctx['frame'] is not None:
+        output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
       #end
       output += '├─ Number of components: {:d}\n'.format(numComps)
       output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
@@ -636,30 +437,25 @@ class GData(object):
       if numComps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
-      if self.meta['polyOrder'] and self.meta['basisType']:
+      if self.ctx['polyOrder'] and self.ctx['basisType']:
         output += '\n├─ DG info:\n'
-        output += '│  ├─ Polynomial Order: {:d}\n'.format(self.meta['polyOrder'])
-        if self.meta['isModal']:
-          output += '│  └─ Basis Type: {:s} (modal)'.format(self.meta['basisType'])
+        output += '│  ├─ Polynomial Order: {:d}\n'.format(self.ctx['polyOrder'])
+        if self.ctx['isModal']:
+          output += '│  └─ Basis Type: {:s} (modal)'.format(self.ctx['basisType'])
         else:
-          output += '│  └─ Basis Type: {:s}'.format(self.meta['basisType'])
+          output += '│  └─ Basis Type: {:s}'.format(self.ctx['basisType'])
         #end
       #end
-      if self.meta['changeset'] and self.meta['builddate']:
+      if self.ctx['changeset'] and self.ctx['builddate']:
         output += '\n├─ Created with Gkeyll:\n'
-        output += '│  ├─ Changeset: {:s}\n'.format(self.meta['changeset'])
-        output += '│  └─ Build Date: {:s}'.format(self.meta['builddate'])
+        output += '│  ├─ Changeset: {:s}\n'.format(self.ctx['changeset'])
+        output += '│  └─ Build Date: {:s}'.format(self.ctx['builddate'])
       #end
-      for key in self.meta:
+      for key in self.ctx:
         if key not in ['time', 'frame', 'changeset', 'builddate',
                        'basisType', 'polyOrder', 'isModal']:
-          output += '\n├─ {:s}: {}'.format(key, self.meta[key])
+          output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
         #end
-      #end
-
-      #output += '\n- Contains attributes:\n  '
-      #for k in self.attrsList:
-      #    output += '{:s} '.format(k)
       #end
 
       return output
@@ -729,10 +525,10 @@ class GData(object):
         adios.define_attribute_byvalue(groupId, 'upperBounds', '', up)
         fh = adios.open('CartField', out_name, 'w')
 
-        if self.meta['time']:
+        if self.ctx['time']:
           adios.define_var(groupId, 'time', '',
                            adios.DATATYPE.double, '', '', '')
-          adios.write(fh, 'time', self.meta['time'])
+          adios.write(fh, 'time', self.ctx['time'])
         #end
 
         adios.define_var(groupId, var_name, '',

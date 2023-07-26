@@ -49,30 +49,30 @@ def interpolate(ctx, **kwargs):
       isModal = True
     #end
   #end
-    
+
   for dat in data.iterator(kwargs['use']):
-    if kwargs['basistype'] is None and dat.meta['basisType'] is None:
+    if kwargs['basistype'] is None and dat.ctx['basisType'] is None:
       ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
     #end
-        
-    if isModal or dat.meta['isModal']:
+
+    if isModal or dat.ctx['isModal']:
       dg = GInterpModal(dat,
-                        kwargs['polyorder'], kwargs['basistype'], 
+                        kwargs['polyorder'], kwargs['basistype'],
                         kwargs['interp'], kwargs['read'])
     else:
       dg = GInterpNodal(dat,
                         kwargs['polyorder'], basisType,
                         kwargs['interp'], kwargs['read'])
     #end
-            
+
     numNodes = dg.numNodes
     numComps = int(dat.getNumComps() / numNodes)
-        
+
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       grid, values = dg.interpolate(tuple(range(numComps)))
       out.push(grid, values)
       data.add(out)

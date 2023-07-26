@@ -77,7 +77,8 @@ class Read_gkyl(object):
   """Provides a framework to read gkylzero binary output
   """
 
-  def __init__(self, file_name : str, **kwargs) -> None:
+  def __init__(self, file_name : str, ctx : dict = None,
+               **kwargs) -> None:
     self.file_name = file_name
 
     self._dtf = np.dtype('f8')
@@ -88,6 +89,8 @@ class Read_gkyl(object):
 
     self.file_type = 1
     self.version = 0
+
+    self.ctx = ctx
   #end
 
   def _is_compatible(self) -> bool:
@@ -270,15 +273,10 @@ class Read_gkyl(object):
     return cells, lower, upper, data
   #end
 
-  # ---- Exposed functions ---------------------------------------------
-  def get_meta(self) -> tuple:
-    self._offset = 0
-    self._read_header()
-  #end
 
+  # ---- Exposed function ----------------------------------------------
   def get_data(self,
-               grid_file_name : str = None,
-               meta : dict = None) -> tuple:
+               grid_file_name : str = None) -> tuple:
     self._offset = 0
     self._read_header()
 
@@ -317,8 +315,8 @@ class Read_gkyl(object):
     # Load or construct grid
     if time:
       grid = time
-      if meta:
-        meta['grid_type'] = 'nodal'
+      if self.ctx:
+        self.ctx['grid_type'] = 'nodal'
       #end
     elif grid_file_name:
       grid_reader = Read_gkyl(grid_file_name)
@@ -327,8 +325,8 @@ class Read_gkyl(object):
       num_coeff = num_comps/num_dims
       grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]
               for d in range(num_dims)]
-      if meta:
-        meta['grid_type'] = 'c2p'
+      if self.ctx:
+        self.ctx['grid_type'] = 'c2p'
       #end
     else: # Create sparse unifrom grid
       # Adjust for ghost cells
@@ -346,8 +344,8 @@ class Read_gkyl(object):
                           upper[d],
                           cells[d]+1)
               for d in range(num_dims)]
-      if meta:
-        meta['grid_type'] = 'uniform'
+      if self.ctx:
+        self.ctx['grid_type'] = 'uniform'
       #end
     #end
 
