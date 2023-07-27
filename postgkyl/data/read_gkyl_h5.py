@@ -64,7 +64,7 @@ class Read_gkyl_h5(object):
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self, **kwargs) -> tuple:
+  def get_data(self) -> tuple:
     grid = None
 
     if self.is_frame:

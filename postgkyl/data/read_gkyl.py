@@ -77,9 +77,12 @@ class Read_gkyl(object):
   """Provides a framework to read gkylzero binary output
   """
 
-  def __init__(self, file_name : str, ctx : dict = None,
+  def __init__(self, file_name : str,
+               ctx : dict = None,
+               c2p : str = None,
                **kwargs) -> None:
     self.file_name = file_name
+    self.c2p = c2p
 
     self._dtf = np.dtype('f8')
     self._dti = np.dtype('i8')
@@ -277,9 +280,7 @@ class Read_gkyl(object):
 
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self,
-               grid_file_name : str = None,
-               **kwargs) -> tuple:
+  def get_data(self) -> tuple:
     self._offset = 0
     self._read_header()
 
@@ -321,8 +322,8 @@ class Read_gkyl(object):
       if self.ctx:
         self.ctx['grid_type'] = 'nodal'
       #end
-    elif grid_file_name:
-      grid_reader = Read_gkyl(grid_file_name)
+    elif self.c2p:
+      grid_reader = Read_gkyl(self.c2p)
       _, tmp = grid_reader.get_data()
       num_comps = tmp.shape[-1]
       num_coeff = num_comps/num_dims

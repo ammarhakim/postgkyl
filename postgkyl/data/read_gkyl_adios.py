@@ -11,11 +11,13 @@ class Read_gkyl_adios(object):
                file_name : str,
                ctx : dict = None,
                var_name : str = 'CartGridField',
+               c2p :str = None,
                axes : tuple = (None, None, None, None, None, None),
                comp : int = None,
                **kwargs) -> None:
     self.file_name = file_name
     self.var_name = var_name
+    self.c2p = c2p
 
     self.axes = axes
     self.comp = comp
@@ -32,7 +34,6 @@ class Read_gkyl_adios(object):
     try:
       import adios
       fh = adios.file(self.file_name)
-
       for key, _ in fh.vars.items():
         if 'TimeMesh' in key:
           self.is_diagnostic = True
@@ -127,33 +128,7 @@ class Read_gkyl_adios(object):
       self.ctx['frame'] = adios.var(fh, 'frame').read()
     #end
 
-    # Check for mapped grid ...
-    if 'type' in fh.attrs.keys():# and self._comp_grid is False:
-      self.ctx['grid_type'] = adios.attr(fh, 'type').value.decode('UTF-8')
-    #end
-    # .. load nodal grid if provided ...
-    # if self.ctx['grid_type']  == 'uniform':
-    #   pass # nothing to do for uniform grids
-    # elif self._gridType == 'mapped':
-    #     if 'grid' in fh.attrs.keys():
-    #       gridNm = self._file_dir + '/' +adios.attr(fh, 'grid').value.decode('UTF-8')
-    #     else:
-    #       gridNm = self._file_dir + '/grid'
-    #     #end
-    #     with adios.file(gridNm) as gridFh:
-    #       gridVar = adios.var(gridFh, self._var_name)
-    #       offset, count = self._createOffsetCountBp(gridVar, axes, None)
-    #       tmp = gridVar.read(offset=offset, count=count)
-    #       grid = [tmp[..., d].transpose()
-    #               #for d in range(len(cells))]
-    #               for d in range(tmp.shape[-1])]
-    #       self._grid = grid
-    #     #end
-    #   elif self._gridType == 'nonuniform':
-    #     raise TypeError('\'nonuniform\' is not presently supported')
-    #   else:
-    #     raise TypeError('Unsupported grid type info in field!')
-    #   #end
+
 
     # Load data
     num_dims = len(cells)
@@ -192,8 +167,54 @@ class Read_gkyl_adios(object):
         #end
       #end
     #end
+
+    # Check for mapped grid ...
+    #if 'type' in fh.attrs.keys():# and self._comp_grid is False:
+    #  self.ctx['grid_type'] = adios.attr(fh, 'type').value.decode('UTF-8')
+    #end
+    if self.c2p:
+      grid_fh = adios.file(self.c2p)
+      grid_var = adios.var(grid_fh, 'CartGridField')
+      offset, count = self._create_offset_count(grid_var, self.axes, None)
+      grid = grid_var.read(offset=offset, count=count)
+      if self.ctx:
+        self.ctx['grid_type'] = 'c2p'
+      #end
+    elif 'grid' in fh.attrs.keys():
+      grid_name = adios.attr(fh, 'grid').value.decode('UTF-8')
+      grid_fh = adios.file(grid_name)
+      grid_var = adios.var(grid_fh, 'CartGridField')
+      offset, count = self._create_offset_count(grid_var, self.axes, None)
+      tmp = grid_var.read(offset=offset, count=count)
+      #grid = [tmp[..., d].transpose() for d in range(num_dims)]
+      grid = [tmp[..., d] for d in range(num_dims)]
+      if self.ctx:
+        self.ctx['grid_type'] = 'mapped'
+      #end
+    else:
+      # Create sparse unifrom grid
+      # Adjust for ghost cells
+      dz = (upper - lower) / cells
+      for d in range(num_dims):
+        if cells[d] != data.shape[d]:
+          ngl = int(np.floor((cells[d] - data.shape[d])*0.5))
+          ngu = int(np.ceil((cells[d] - data.shape[d])*0.5))
+          cells[d] = data.shape[d]
+          lower[d] = lower[d] - ngl*dz[d]
+          upper[d] = upper[d] + ngu*dz[d]
+        #end
+      #end
+      grid = [np.linspace(lower[d],
+                          upper[d],
+                          cells[d]+1)
+              for d in range(num_dims)]
+      if self.ctx:
+        self.ctx['grid_type'] = 'uniform'
+      #end
+    #end
+
     fh.close()
-    return cells, lower, upper, data
+    return grid, lower, upper, data
 
   def _read_diagnostic(self) -> tuple:
     import adios
@@ -224,51 +245,15 @@ class Read_gkyl_adios(object):
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self,
-               grid_file_name : str = None,
-               **kwargs) -> tuple:
+  def get_data(self) -> tuple:
     grid = None
 
     if self.is_frame:
-      cells, lower, upper, data = self._read_frame()
+      grid, lower, upper, data = self._read_frame()
     #end
     if self.is_diagnostic:
       grid, lower, upper, data = self._read_diagnostic()
       cells = grid[0].shape
-    #end
-
-    num_dims = len(cells)
-    # Load or construct grid
-    if grid_file_name:
-      # grid_reader = Read_gkyl(grid_file_name)
-      # _, tmp = grid_reader.get_data()
-      # num_comps = tmp.shape[-1]
-      # num_coeff = num_comps/num_dims
-      # grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]
-      #         for d in range(num_dims)]
-      if self.ctx:
-        self.ctx['grid_type'] = 'c2p'
-      #end
-    elif grid is None:
-      # Create sparse unifrom grid
-      # Adjust for ghost cells
-      dz = (upper - lower) / cells
-      for d in range(num_dims):
-        if cells[d] != data.shape[d]:
-          ngl = int(np.floor((cells[d] - data.shape[d])*0.5))
-          ngu = int(np.ceil((cells[d] - data.shape[d])*0.5))
-          cells[d] = data.shape[d]
-          lower[d] = lower[d] - ngl*dz[d]
-          upper[d] = upper[d] + ngu*dz[d]
-        #end
-      #end
-      grid = [np.linspace(lower[d],
-                          upper[d],
-                          cells[d]+1)
-              for d in range(num_dims)]
-      if self.ctx:
-        self.ctx['grid_type'] = 'uniform'
-      #end
     #end
 
     return grid, data

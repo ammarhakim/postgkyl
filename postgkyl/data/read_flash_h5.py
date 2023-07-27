@@ -84,8 +84,7 @@ class Read_flash_h5(object):
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self,
-               **kwargs) -> tuple:
+  def get_data(self) -> tuple:
     cells, lower, upper, data = self._read_frame()
     num_dims = len(cells)
     grid = [np.linspace(lower[d],

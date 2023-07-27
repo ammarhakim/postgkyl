@@ -109,6 +109,7 @@ class GData(object):
           file_name=file_name,
           ctx=self.ctx,
           var_name=var_name,
+          c2p=mapc2p_name,
           axes=zs, comp=comp)
         reader_set = True
       else:
@@ -117,6 +118,7 @@ class GData(object):
             file_name=file_name,
             ctx= self.ctx,
             var_name=var_name,
+            c2p=mapc2p_name,
             axes=zs, comp=comp)
           if self._reader._is_compatible():
             reader_set = True
@@ -125,13 +127,11 @@ class GData(object):
         #end
       #end
       if not reader_set:
-        raise TypeError('\'file_name\' but \'reader\' was either not '\
-                        'set or successfully detected')
+        raise TypeError('\'file_name\' was specified ({:s}) but \'reader\' was either not set or successfully detected'.format(self.file_name))
       #end
     #end
 
-    self._grid, self._values = self._reader.get_data(
-      grid_file_name=mapc2p_name)
+    self._grid, self._values = self._reader.get_data()
 
     self.color = None
     self._status = True
@@ -290,7 +290,7 @@ class GData(object):
       #end
       output += '├─ Number of components: {:d}\n'.format(numComps)
       output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
-      output += '├─ Grid: ({:s})\n'.format(self._gridType)
+      output += '├─ Grid: ({:s})\n'.format(self.getGridType())
       for d in range(num_dims-1):
         output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, numCells[d])
         output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[d],
