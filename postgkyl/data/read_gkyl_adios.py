@@ -180,17 +180,17 @@ class Read_gkyl_adios(object):
       if self.ctx:
         self.ctx['grid_type'] = 'c2p'
       #end
-    elif 'grid' in fh.attrs.keys():
-      grid_name = adios.attr(fh, 'grid').value.decode('UTF-8')
-      grid_fh = adios.file(grid_name)
-      grid_var = adios.var(grid_fh, 'CartGridField')
-      offset, count = self._create_offset_count(grid_var, self.axes, None)
-      tmp = grid_var.read(offset=offset, count=count)
-      #grid = [tmp[..., d].transpose() for d in range(num_dims)]
-      grid = [tmp[..., d] for d in range(num_dims)]
-      if self.ctx:
-        self.ctx['grid_type'] = 'mapped'
-      #end
+    # elif 'grid' in fh.attrs.keys():
+    #   grid_name = adios.attr(fh, 'grid').value.decode('UTF-8')
+    #   grid_fh = adios.file(grid_name)
+    #   grid_var = adios.var(grid_fh, 'CartGridField')
+    #   offset, count = self._create_offset_count(grid_var, self.axes, None)
+    #   tmp = grid_var.read(offset=offset, count=count)
+    #   #grid = [tmp[..., d].transpose() for d in range(num_dims)]
+    #   grid = [tmp[..., d] for d in range(num_dims)]
+    #   if self.ctx:
+    #     self.ctx['grid_type'] = 'mapped'
+    #   #end
     else:
       # Create sparse unifrom grid
       # Adjust for ghost cells
