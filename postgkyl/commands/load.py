@@ -55,6 +55,8 @@ def _crush(s): # Temp function used as a sorting key
               help='Specify the file name containing c2p mapped coordinates')
 @click.option('--fv', is_flag=True,
               help='Tag finite volume data when using c2p mapped coordinates')
+@click.option('--source', '-s', type=click.STRING,
+              help='Allows to specify the Adios variable name (default is \'CartGridField\')')
 @click.pass_context
 def load(ctx, **kwargs):
   verb_print(ctx, 'Starting load')
@@ -116,18 +118,19 @@ def load(ctx, **kwargs):
   if len(varNames) == 1:
     varNames = varNames[0].split(',')
   #end
-  
+
   for var in varNames:
     for fn in files:
       try:
-        dat = GData(file_name=fn, tag=kwargs['tag'],
-                    comp_grid=ctx.obj['compgrid'],
-                    z0=z0, z1=z1, z2=z2,
-                    z3=z3, z4=z4, z5=z5,
-                    comp=comp, var_name=var,
+        dat = GData(file_name = fn, tag = kwargs['tag'],
+                    comp_grid = ctx.obj['compgrid'],
+                    z0 = z0, z1 = z1, z2 = z2,
+                    z3 = z3, z4 = z4, z5 = z5,
+                    comp = comp, var_name = var,
                     label = kwargs['label'],
-                    mapc2p_name = mapc2p_name)
-        
+                    mapc2p_name = mapc2p_name,
+                    source = kwargs['source'])
+
         if kwargs['fv']:
           dg = GInterpModal(dat, 0, 'ms')
           dg.interpolateGrid(overwrite=True)

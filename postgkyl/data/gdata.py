@@ -6,8 +6,8 @@ from typing import Union
 
 from postgkyl.data.load_gkyl import load_gkyl
 from postgkyl.data.load_h5 import load_h5
+from postgkyl.data.load_flash import load_flash
 from postgkyl.utils import idxParser
-
 
 class GData(object):
   """Provides interface to Gkeyll output data.
@@ -41,7 +41,8 @@ class GData(object):
                label: str = None,
                meta: dict = None,
                comp_grid: bool = False,
-               mapc2p_name: str = None) -> None:
+               mapc2p_name: str = None,
+               source : str = None) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -100,7 +101,8 @@ class GData(object):
       # fail and _loadSequence is called instead
       if os.path.isfile(self.file_name):
         zs = (z0, z1, z2, z3, z4, z5)
-        self._loadFrame(zs, comp)
+        self._loadFrame(axes = zs, comp = comp,
+                        source = source)
       else:
         self._loadSequence()
       #end
@@ -109,10 +111,10 @@ class GData(object):
     self.color = None
 
     self._status = True
+    self._source = source
   #end
 
-  #-----------------------------------------------------------------
-  #-- File Loading -------------------------------------------------
+  #---- File Loading ---------------------------------------------------
   def _createOffsetCountBp(self, bpVar, zs, comp, grid=None):
     num_dims = len(bpVar.dims)
     count = np.array(bpVar.dims)
@@ -155,8 +157,10 @@ class GData(object):
     #end
   #end
 
-  def _loadFrame(self, axes=(None, None, None, None, None, None),
-                 comp=None):
+  def _loadFrame(self,
+                 axes : tuple = (None, None, None, None, None, None),
+                 comp : int = None,
+                 source : str = None):
     self._file_dir = os.path.dirname(os.path.realpath(self.file_name))
     extension = self.file_name.split('.')[-1]
     if extension == 'h5':
@@ -293,9 +297,17 @@ class GData(object):
         self._grid = [grid]
       #end
       self._values = values
+    elif source == 'flash':
+      num_dims, cells, extends, values = load_flash(self.file_name,
+                                                    self._var_name)
+      lower = extends[0]
+      upper = extends[1]
+      #end
+      self._values = values[..., np.newaxis]
     else:
       raise NameError(
         'File extension \'{:s}\' is not supported'.format(extension))
+      #end
     #end
 
     if self.mapc2p_name is not None:
@@ -367,9 +379,9 @@ class GData(object):
       elif extension == 'bp':
         import adios
         self.fileType = 'adios'
-        fh =  adios.file(file_name)
-        timeMeshList = [key for key, val in fh.vars.items() if 'TimeMesh' in key]
-        dataList = [key for key, val in fh.vars.items() if 'Data' in key]
+        fh = adios.file(file_name)
+        timeMeshList = [key for key, _ in fh.vars.items() if 'TimeMesh' in key]
+        dataList = [key for key, _ in fh.vars.items() if 'Data' in key]
         if len(dataList) > 0:
           for i in range(len(dataList)):
             if i==0:
@@ -429,7 +441,6 @@ class GData(object):
   #end
 
 
-  #---------------------------------------------------------------------
   #---- Stuff Control --------------------------------------------------
   def getTag(self):
     return self._tag
@@ -551,8 +562,8 @@ class GData(object):
     return self
   #end
 
-  #-----------------------------------------------------------------
-  #-- Info ---------------------------------------------------------
+
+  #---- Info -----------------------------------------------------------
   def info(self):
     """Prints Data object information.
 
@@ -640,13 +651,12 @@ class GData(object):
   #end
 
 
-  #-----------------------------------------------------------------
-  #-- Write --------------------------------------------------------
+  #---- Write ----------------------------------------------------------
   def write(self,
-            bufferSize: int = 1000,
             out_name: str = None,
             mode: str = 'bp',
             var_name: str = None,
+            bufferSize: int = 1000,
             append = False,
             cleaning = True):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
@@ -715,11 +725,6 @@ class GData(object):
         adios.close(fh)
         adios.finalize()
       else:
-        # fw = adios.writer(out_name, mode='a')
-        # fw.declare_group('CartField', method='POSIX1')
-        # fw.define_var(var_name, sNumCells)
-        # fw[var_name] = self.getValues()
-        # fw.close()
         adios.init_noxml()
         adios.set_max_buffer_size(bufferSize)
         groupId = adios.declare_group('CartField', '')
