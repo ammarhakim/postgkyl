@@ -1,215 +1,162 @@
-#!/usr/bin/env python
 """
 Postgkyl module for computing primitive variables from conservative variables
 """
 import numpy as np
-from postgkyl.tools import input_parser
+from typing import Union
 
-def get_density(in_data, overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid = in_grid
+# ---- Postgkyl imports ------------------------------------------------
+from postgkyl.data import GData
+from postgkyl.tools import _input_parser
+# ----------------------------------------------------------------------
+
+
+def get_density(in_mom : Union[GData, tuple],
+                out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = in_values[..., 0, np.newaxis]
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_vx(in_data=None,
-           in_grid=None, in_values=None,
-           overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_vx(in_mom : Union[GData, tuple],
+           out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  out_values = in_values[..., 1, np.newaxis]
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  rhovx = in_values[..., 1, np.newaxis]
-  out_values = rhovx/rho
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_vy(in_data=None,
-           in_grid=None, in_values=None,
-           overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_vy(in_mom : Union[GData, tuple],
+           out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  out_values = in_values[..., 2, np.newaxis]
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  rhovy = in_values[..., 2, np.newaxis]
-  out_values = rhovy/rho
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_vz(in_data=None,
-           in_grid=None, in_values=None,
-           overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_vz(in_mom : Union[GData, tuple],
+           out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  out_values = in_values[..., 3, np.newaxis]
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  rhovz = in_values[..., 3, np.newaxis]
-  out_values = rhovz/rho
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_vi(in_data=None,
-           in_grid=None, in_values=None,
-           overwrite=False):
+def get_vi(in_mom : Union[GData, tuple],
+           out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  out_values = in_values[..., 1:4, np.newaxis]
 
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  rhovi = in_values[..., 1:4, np.newaxis]
-  out_values = rhovi/rho
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pxx(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-
+def get_pxx(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vx = get_vx(in_mom)
   out_values = in_values[..., 4, np.newaxis] - rho*vx*vx
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pxy(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-
+def get_pxy(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vx = get_vx(in_mom)
+  _, vy = get_vy(in_mom)
   out_values = in_values[..., 5, np.newaxis] - rho*vx*vy
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pxz(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-
+def get_pxz(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vx = get_vx(in_mom)
+  _, vz = get_vz(in_mom)
   out_values = in_values[..., 6, np.newaxis] - rho*vx*vz
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pyy(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-
+def get_pyy(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vy = get_vy(in_mom)
   out_values = in_values[..., 7, np.newaxis] - rho*vy*vy
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pyz(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-
+def get_pyz(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vy = get_vy(in_mom)
+  _, vz = get_vz(in_mom)
   out_values = in_values[..., 8, np.newaxis] - rho*vy*vz
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pzz(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-
+def get_pzz(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vz = get_vz(in_mom)
   out_values = in_values[..., 9, np.newaxis] - rho*vz*vz
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_pij(in_data=None,
-            in_grid=None, in_values=None,
-            overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
+def get_pij(in_mom : Union[GData, tuple],
+            out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = np.zeros(in_values[..., 4:10].shape)
 
-  out_grid, pxx = get_pxx(in_data, in_grid, in_values)
-  out_grid, pxy = get_pxy(in_data, in_grid, in_values)
-  out_grid, pxz = get_pxz(in_data, in_grid, in_values)
-  out_grid, pyy = get_pyy(in_data, in_grid, in_values)
-  out_grid, pyz = get_pyz(in_data, in_grid, in_values)
-  out_grid, pzz = get_pzz(in_data, in_grid, in_values)
+  _, pxx = get_pxx(in_mom)
+  _, pxy = get_pxy(in_mom)
+  _, pxz = get_pxz(in_mom)
+  _, pyy = get_pyy(in_mom)
+  _, pyz = get_pyz(in_mom)
+  _, pzz = get_pzz(in_mom)
 
   out_values[..., 0] = np.squeeze(pxx)
   out_values[..., 1] = np.squeeze(pxy)
@@ -218,317 +165,245 @@ def get_pij(in_data=None,
   out_values[..., 4] = np.squeeze(pyz)
   out_values[..., 5] = np.squeeze(pzz)
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_p(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, numMom=None,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  if numMom is None:
-    if in_data.getNumComps() == 5:
-      numMom = 5
-    elif in_data.getNumComps() == 10:
-      numMom = 10
+def get_p(in_mom : Union[GData, tuple],
+          gas_gamma : float = 5.0/3,
+          num_moms : int = None,
+          out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  num_comps = in_values.shape[-1]
+  if num_moms is None:
+    if num_comps == 5:
+      num_moms = 5
+    elif num_comps == 10:
+      num_moms = 10
     else:
       raise ValueError("Number of components appears to be {:d};"
-                       "it needs to be specified using 'numMom' "
-                       "(5 or 10)".format(in_data.getNumComps()))
+                       "it needs to be specified using 'num_moms' "
+                       "(5 or 10)".format(num_comps))
     #end
   #end
 
-  if numMom == 5:
-    out_grid, rho = get_density(in_data, in_grid, in_values)
-    out_grid, vx = get_vx(in_data, in_grid, in_values)
-    out_grid, vy = get_vy(in_data, in_grid, in_values)
-    out_grid, vz = get_vz(in_data, in_grid, in_values)
-
-    out_values = (gasGamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2))
-  elif numMom == 10:
-    out_grid, pxx = get_pxx(in_data, in_grid, in_values)
-    out_grid, pyy = get_pyy(in_data, in_grid, in_values)
-    out_grid, pzz = get_pzz(in_data, in_grid, in_values)
-
+  if num_moms == 5:
+    _, rho = get_density(in_mom)
+    _, vx = get_vx(in_mom)
+    _, vy = get_vy(in_mom)
+    _, vz = get_vz(in_mom)
+    out_values = (gas_gamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2))
+  elif num_moms == 10:
+    _, pxx = get_pxx(in_mom)
+    _, pyy = get_pyy(in_mom)
+    _, pzz = get_pzz(in_mom)
     out_values = (pxx + pyy + pzz) / 3.0
   #end
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
+#end
 #end
 
-def get_ke(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, numMom=None,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  if numMom is None:
-    if in_data.getNumComps() == 5:
-      numMom = 5
-    elif in_data.getNumComps() == 10:
-      numMom = 10
+def get_ke(in_mom : Union[GData, tuple],
+           gas_gamma : float = 5.0/3,
+           num_moms : int = None,
+           out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  num_comps = in_values.shape[-1]
+  if num_moms is None:
+    if num_comps == 5:
+      num_moms = 5
+    elif num_comps == 10:
+      num_moms = 10
     else:
       raise ValueError("Number of components appears to be {:d};"
-                       "it needs to be specified using 'numMom' "
-                       "(5 or 10)".format(in_data.getNumComps()))
+                       "it needs to be specified using 'num_moms' "
+                       "(5 or 10)".format(num_comps))
     #end
   #end
 
-  if numMom == 5:
-    out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
-
-    out_values = in_values[..., 4, np.newaxis] - pr/(gasGamma - 1)
-  elif numMom == 10:
-    out_grid, rho = get_density(in_data, in_grid, in_values)
-    out_grid, vx = get_vx(in_data, in_grid, in_values)
-    out_grid, vy = get_vy(in_data, in_grid, in_values)
-    out_grid, vz = get_vz(in_data, in_grid, in_values)
-
+  if num_moms == 5:
+    _, pr = get_p(in_mom, gas_gamma=gas_gamma, num_moms=num_moms)
+    out_values = in_values[..., 4, np.newaxis] - pr/(gas_gamma - 1)
+  elif num_moms == 10:
+    _, rho = get_density(in_mom)
+    _, vx = get_vx(in_mom)
+    _, vy = get_vy(in_mom)
+    _, vz = get_vz(in_mom)
     out_values = 0.5*rho*(vx**2 + vy**2 + vz**2)
   #end
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_temp(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, numMom=None,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
-
+def get_temp(in_mom : Union[GData, tuple],
+             gas_gamma : float = 5.0/3,
+             num_moms : int = None,
+             out_mom : GData = None) -> tuple:
+  grid, rho = get_density(in_mom)
+  _, pr = get_p(in_mom, gas_gamma=gas_gamma, num_moms=num_moms)
   out_values = pr/rho
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_sound(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, numMom=None,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_sound(in_mom : Union[GData, tuple],
+              gas_gamma : float = 5.0/3,
+              num_moms : int = None,
+              out_mom : GData = None) -> tuple:
+  grid, rho = get_density(in_mom)
+  _, pr = get_p(in_mom, gas_gamma=gas_gamma, num_moms=num_moms)
+  out_values = np.sqrt(gas_gamma*pr/rho)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, pr = get_p(in_data, in_grid, in_values, gasGamma, numMom)
-
-  out_values = np.sqrt(gasGamma*pr/rho)
-
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
+#end
 #end
 
-def get_mach(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, numMom=None,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-  out_grid, cs = get_sound(in_data, in_grid, in_values, gasGamma, numMom)
-
+def get_mach(in_mom : Union[GData, tuple],
+             gas_gamma : float = 5.0/3,
+             num_moms : int = None,
+             out_mom : GData = None) -> tuple:
+  grid, vx = get_vx(in_mom)
+  _, vy = get_vy(in_mom)
+  _, vz = get_vz(in_mom)
+  _, cs = get_sound(in_mom, gas_gamma=gas_gamma, num_moms=num_moms)
   out_values = np.sqrt(vx**2+vy**2+vz**2)/cs
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_Bx(in_data=None,
-               in_grid=None, in_values=None,
-               overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid = in_grid
+# ---- MHD -------------------------------------------------------------
+def get_mhd_Bx(in_mom : Union[GData, tuple],
+               out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = in_values[..., 5, np.newaxis]
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_By(in_data=None,
-               in_grid=None, in_values=None,
-               overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid = in_grid
+def get_mhd_By(in_mom : Union[GData, tuple],
+               out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = in_values[..., 6, np.newaxis]
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_Bz(in_data=None,
-               in_grid=None, in_values=None,
-               overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid = in_grid
+def get_mhd_Bz(in_mom : Union[GData, tuple],
+               out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = in_values[..., 7, np.newaxis]
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_Bi(in_data=None,
-           in_grid=None, in_values=None,
-           overwrite=False):
-
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-  out_grid = in_grid
+def get_mhd_Bi(in_mom : Union[GData, tuple],
+               out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
   out_values = in_values[..., 5:8, np.newaxis]
-  if overwrite:
-    in_data.push(out_grid, out_values)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_mag_p(in_data=None,
-          in_grid=None, in_values=None,
-          mu0=1.0,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_mhd_mag_p(in_mom : Union[GData, tuple],
+                  mu_0=1.0,
+                  out_mom : GData = None) -> tuple:
+  grid, Bx = get_mhd_Bx(in_mom)
+  _, By = get_mhd_By(in_mom)
+  _, Bz = get_mhd_Bz(in_mom)
+  out_values = 0.5*(Bx**2 + By**2 + Bz**2)/mu_0
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-
-  out_grid, Bx = get_mhd_Bx(in_data, in_grid, in_values)
-  out_grid, By = get_mhd_By(in_data, in_grid, in_values)
-  out_grid, Bz = get_mhd_Bz(in_data, in_grid, in_values)
-
-  out_values = 0.5*(Bx**2 + By**2 + Bz**2)/mu0
-
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_p(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, mu0=1.0,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_mhd_p(in_mom : Union[GData, tuple],
+              gas_gamma=5.0/3, mu_0=1.0,
+              out_mom : GData = None) -> tuple:
+  grid, in_values = _input_parser(in_mom)
+  _, rho = get_density(in_mom)
+  _, vx = get_vx(in_mom)
+  _, vy = get_vy(in_mom)
+  _, vz = get_vz(in_mom)
+  _, mag_p = get_mhd_mag_p(in_mom, mu_0=mu_0)
+
+  out_values = (gas_gamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2) - mag_p)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-  out_grid, mag_p = get_mhd_mag_p(in_data, in_grid, in_values, mu0)
-
-  out_values = (gasGamma - 1)*(in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2) - mag_p)
-
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_temp(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, mu0=1.0,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, pr = get_mhd_p(in_data, in_grid, in_values, gasGamma, mu0)
-
+def get_mhd_temp(in_mom : Union[GData, tuple],
+                 gas_gamma=5.0/3, mu_0=1.0,
+                 out_mom : GData = None) -> tuple:
+  grid, rho = get_density(in_mom)
+  _, pr = get_mhd_p(in_mom, gas_gamma=gas_gamma, mu_0=mu_0)
   out_values = pr/rho
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_sound(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, mu0=1.0,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
+def get_mhd_sound(in_mom : Union[GData, tuple],
+                  gas_gamma=5.0/3, mu_0=1.0,
+                  out_mom : GData = None) -> tuple:
+  grid, rho = get_density(in_mom)
+  _, pr = get_mhd_p(in_mom, gas_gamma=gas_gamma, mu_0=mu_0)
+
+  out_values = np.sqrt(gas_gamma*pr/rho)
+
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-
-  out_grid, rho = get_density(in_data, in_grid, in_values)
-  out_grid, pr = get_mhd_p(in_data, in_grid, in_values, gasGamma, mu0)
-
-  out_values = np.sqrt(gasGamma*pr/rho)
-
-  if overwrite:
-    in_data.push(out_grid, out_values)
-  #end
-  return out_grid, out_values
+  return grid, out_values
 #end
 
-def get_mhd_mach(in_data=None,
-          in_grid=None, in_values=None,
-          gasGamma=5.0/3.0, mu0=1.0,
-          overwrite=False):
-  if in_data:
-    in_grid = in_data.getGrid()
-    in_values = in_data.getValues()
-  #end
-
-  out_grid, vx = get_vx(in_data, in_grid, in_values)
-  out_grid, vy = get_vy(in_data, in_grid, in_values)
-  out_grid, vz = get_vz(in_data, in_grid, in_values)
-  out_grid, cs = get_mhd_sound(in_data, in_grid, in_values, gasGamma, mu0)
-
+def get_mhd_mach(in_mom : Union[GData, tuple],
+                 gas_gamma=5.0/3, mu_0=1.0,
+                 out_mom : GData = None) -> tuple:
+  grid, vx = get_vx(in_mom)
+  _, vy = get_vy(in_mom)
+  _, vz = get_vz(in_mom)
+  _, cs = get_mhd_sound(in_mom, gas_gamma=gas_gamma, mu_0=mu_0)
   out_values = np.sqrt(vx**2+vy**2+vz**2)/cs
 
-  if overwrite:
-    in_data.push(out_grid, out_values)
+  if (out_mom):
+    out_mom.push(grid, out_values)
   #end
-  return out_grid, out_values
+  return grid, out_values
 #end

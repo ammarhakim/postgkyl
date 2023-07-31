@@ -13,6 +13,8 @@ from postgkyl.commands.util import verb_print
                                  "zvel", "vel", "pressureTensor",
                                  "pxx", "pxy", "pxz", "pyy", "pyz", "pzz",
                                  "pressure", "temp", "ke", "sound", "mach"]))
+@click.option('-g', '--gas_gamma', help="Gas adiabatic constant",
+              type=click.FLOAT, default=5.0/3.0)
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -28,52 +30,48 @@ def tenmoment(ctx, **kwargs):
   v = kwargs['variable_name']
   for dat in data.iterator(kwargs['use']):
     verb_print(ctx, 'tenmoment: Extracting {:s} from data set'.format(v))
-    overwrite = True
+    out = dat
     if kwargs['tag']:
-      overwrite = False
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
                   meta=dat.meta)
+      data.add(out)
     #end
     if v == "density":
-      grid, values = diag.get_density(dat, overwrite=overwrite)
+      diag.get_density(dat, out_mom=out)
     elif v == "xvel":
-      grid, values = diag.get_vx(dat, overwrite=overwrite)
+      diag.get_vx(dat, out_mom=out)
     elif v == "yvel":
-      grid, values = diag.get_vy(dat, overwrite=overwrite)
+      diag.get_vy(dat, out_mom=out)
     elif v == "zvel":
-      grid, values = diag.get_vz(dat, overwrite=overwrite)
+      diag.get_vz(dat, out_mom=out)
     elif v == "vel":
-      grid, values = diag.get_vi(dat, overwrite=overwrite)
+      diag.get_vi(dat, out_mom=out)
     elif v == "pressureTensor":
-      grid, values = diag.get_pij(dat, overwrite=overwrite)
+      diag.get_pij(dat, out_mom=out)
     elif v == "pxx":
-      grid, values = diag.get_pxx(dat, overwrite=overwrite)
+      diag.get_pxx(dat, out_mom=out)
     elif v == "pxy":
-      grid, values = diag.get_pxy(dat, overwrite=overwrite)
+      diag.get_pxy(dat, out_mom=out)
     elif v == "pxz":
-      grid, values = diag.get_pxz(dat, overwrite=overwrite)
+      diag.get_pxz(dat, out_mom=out)
     elif v == "pyy":
-      grid, values = diag.get_pyy(dat, overwrite=overwrite)
+      diag.get_pyy(dat, out_mom=out)
     elif v == "pyz":
-      grid, values = diag.get_pyz(dat, overwrite=overwrite)
+      diag.get_pyz(dat, out_mom=out)
     elif v == "pzz":
-      grid, values = diag.get_pzz(dat, overwrite=overwrite)
+      diag.get_pzz(dat, out_mom=out)
     elif v == "pressure":
-      grid, values = diag.get_p(dat, numMom=10, overwrite=overwrite)
+      diag.get_p(dat, gas_gamma=kwargs['gas_gamma'], num_moms=10, out_mom=out)
     elif v == "ke":
-      grid, values = diag.get_ke(dat, numMom=10, overwrite=overwrite)
+      diag.get_ke(dat, gas_gamma=kwargs['gas_gamma'], num_moms=10, out_mom=out)
     elif v == "temp":
-      grid, values = diag.get_temp(dat, numMom=10, overwrite=overwrite)
+      diag.get_temp(dat, gas_gamma=kwargs['gas_gamma'], num_moms=10, out_mom=out)
     elif v == "sound":
-      grid, values = diag.get_sound(dat, numMom=10, overwrite=overwrite)
+      diag.get_sound(dat, gas_gamma=kwargs['gas_gamma'], num_moms=10, out_mom=out)
     elif v == "mach":
-      grid, values = diag.get_mach(dat, numMom=10, overwrite=overwrite)
-    #end
-    if kwargs['tag']:
-      out.push(grid, values)
-      data.add(out)
+      diag.get_mach(dat, gas_gamma=kwargs['gas_gamma'], num_moms=10, out_mom=out)
     #end
   #end
   verb_print(ctx, 'Finishing tenmoment')
