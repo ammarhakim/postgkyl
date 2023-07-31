@@ -129,7 +129,6 @@ class Read_gkyl_adios(object):
     #end
 
 
-
     # Load data
     num_dims = len(cells)
     var = adios.var(fh, self.var_name)
@@ -176,7 +175,11 @@ class Read_gkyl_adios(object):
       grid_fh = adios.file(self.c2p)
       grid_var = adios.var(grid_fh, 'CartGridField')
       offset, count = self._create_offset_count(grid_var, self.axes, None)
-      grid = grid_var.read(offset=offset, count=count)
+      tmp = grid_var.read(offset=offset, count=count)
+      num_comps = tmp.shape[-1]
+      num_coeff = num_comps/num_dims
+      grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]
+              for d in range(num_dims)]
       if self.ctx:
         self.ctx['grid_type'] = 'c2p'
       #end

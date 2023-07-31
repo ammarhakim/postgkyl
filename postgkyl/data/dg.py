@@ -404,7 +404,7 @@ class GInterpModal(GInterp):
       raise ValueError(
         'GInterpNodal: polynomial order is neither specified nor stored in the output file')
     #end
-    if basisType is not None:
+    if basisType:
       if basisType == 'ms':
         self.basisType = 'serendipity'
       elif basisType == 'mo':
@@ -416,7 +416,7 @@ class GInterpModal(GInterp):
       elif basisType == 'pkpmhyb':
         self.basisType = 'pkpmhybrid'
       #end
-    elif data.ctx['basisType'] is not None:
+    elif data.ctx['basisType']:
       self.basisType = data.ctx['basisType']
     else:
       raise ValueError('GInterpModal: basis type is neither specified nor stored in the output file')
@@ -469,7 +469,6 @@ class GInterpModal(GInterp):
                            axis=-1)
       #end
     #end
-
     if self.data.ctx['grid_type'] == 'c2p':
       q = self.data.getGrid()
       num_comp = q[0].shape[-1]
@@ -493,6 +492,7 @@ class GInterpModal(GInterp):
         nInterp = [int(round(cMat.shape[0] ** (1.0/self.numDims)))]*self.numDims
       grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
     #end
+
     if overwrite:
       self.data.push(grid, values)
     else:
