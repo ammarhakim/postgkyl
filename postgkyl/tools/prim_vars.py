@@ -289,6 +289,7 @@ def get_mach(in_mom : Union[GData, tuple],
   return grid, out_values
 #end
 
+
 # ---- MHD -------------------------------------------------------------
 def get_mhd_Bx(in_mom : Union[GData, tuple],
                out_mom : GData = None) -> tuple:
@@ -335,7 +336,7 @@ def get_mhd_Bi(in_mom : Union[GData, tuple],
 #end
 
 def get_mhd_mag_p(in_mom : Union[GData, tuple],
-                  mu_0=1.0,
+                  mu_0 : float = 1.0,
                   out_mom : GData = None) -> tuple:
   grid, Bx = get_mhd_Bx(in_mom)
   _, By = get_mhd_By(in_mom)
@@ -349,7 +350,8 @@ def get_mhd_mag_p(in_mom : Union[GData, tuple],
 #end
 
 def get_mhd_p(in_mom : Union[GData, tuple],
-              gas_gamma=5.0/3, mu_0=1.0,
+              gas_gamma : float = 5.0/3,
+              mu_0 : float = 1.0,
               out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
   _, rho = get_density(in_mom)
@@ -367,7 +369,8 @@ def get_mhd_p(in_mom : Union[GData, tuple],
 #end
 
 def get_mhd_temp(in_mom : Union[GData, tuple],
-                 gas_gamma=5.0/3, mu_0=1.0,
+                 gas_gamma : float = 5.0/3,
+                 mu_0 : float = 1.0,
                  out_mom : GData = None) -> tuple:
   grid, rho = get_density(in_mom)
   _, pr = get_mhd_p(in_mom, gas_gamma=gas_gamma, mu_0=mu_0)
@@ -380,7 +383,8 @@ def get_mhd_temp(in_mom : Union[GData, tuple],
 #end
 
 def get_mhd_sound(in_mom : Union[GData, tuple],
-                  gas_gamma=5.0/3, mu_0=1.0,
+                  gas_gamma : float = 5.0/3,
+                  mu_0 : float = 1.0,
                   out_mom : GData = None) -> tuple:
   grid, rho = get_density(in_mom)
   _, pr = get_mhd_p(in_mom, gas_gamma=gas_gamma, mu_0=mu_0)
@@ -394,7 +398,8 @@ def get_mhd_sound(in_mom : Union[GData, tuple],
 #end
 
 def get_mhd_mach(in_mom : Union[GData, tuple],
-                 gas_gamma=5.0/3, mu_0=1.0,
+                 gas_gamma : float = 5.0/3,
+                 mu_0 : float = 1.0,
                  out_mom : GData = None) -> tuple:
   grid, vx = get_vx(in_mom)
   _, vy = get_vy(in_mom)
