@@ -367,10 +367,9 @@ def plot(data, args=(),
         y = (nodal_grid[1] + yshift) * yscale
         z1 = (values[..., 2*comp].transpose() + zshift) * zscale
         z2 = (values[..., 2*comp+1].transpose() + zshift) * zscale
-        print(x.shape, y.shape, z1.shape, z2.shape)
         im = cax.streamplot(x, y, z1, z2,
                             *args,
-                            density=sdensity,
+                            density=sdensity, broken_streamlines=False,
                             color=cl, linewidth=linewidth)
 
 
