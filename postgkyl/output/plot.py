@@ -340,8 +340,13 @@ def plot(data, args=(),
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
         nodal_grid = _get_nodal_grid(grid, cells)
-        x = (nodal_grid[0][skip2::skip] + xshift) * xscale
-        y = (nodal_grid[1][skip2::skip] + yshift) * yscale
+        if len(nodal_grid[0].shape) == 1:
+          x = (nodal_grid[0][skip2::skip] + xshift) * xscale
+          y = (nodal_grid[1][skip2::skip] + yshift) * yscale
+        else:
+          x = (nodal_grid[0][skip2::skip, skip2::skip] + xshift) * xscale
+          y = (nodal_grid[1][skip2::skip, skip2::skip] + yshift) * yscale
+        #end
         z1 = (values[skip2::skip, skip2::skip, 2*comp].transpose()
               + zshift) * zscale
         z2 = (values[skip2::skip, skip2::skip, 2*comp+1].transpose()
