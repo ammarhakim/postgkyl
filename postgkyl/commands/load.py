@@ -130,7 +130,6 @@ def load(ctx, **kwargs):
                     label = kwargs['label'],
                     mapc2p_name = mapc2p_name,
                     reader_name = kwargs['reader'])
-
         if kwargs['fv']:
           dg = GInterpModal(dat, 0, 'ms')
           dg.interpolateGrid(overwrite=True)

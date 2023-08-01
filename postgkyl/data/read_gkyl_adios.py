@@ -47,6 +47,7 @@ class Read_gkyl_adios(object):
       fh.close()
     except:
       return False
+    #end
     return self.is_frame or self.is_diagnostic
   #end
 

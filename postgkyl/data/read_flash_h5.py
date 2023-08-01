@@ -48,6 +48,7 @@ class Read_flash_h5(object):
       fh.close()
     except:
       return False
+    #end
     return False
   #end
 
