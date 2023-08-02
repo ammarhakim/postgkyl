@@ -24,7 +24,7 @@ def get_density(in_mom : Union[GData, tuple],
 def get_vx(in_mom : Union[GData, tuple],
            out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
-  out_values = in_values[..., 1, np.newaxis]
+  out_values = in_values[..., 1, np.newaxis]/in_values[..., 0, np.newaxis]
 
   if (out_mom):
     out_mom.push(grid, out_values)
@@ -35,7 +35,7 @@ def get_vx(in_mom : Union[GData, tuple],
 def get_vy(in_mom : Union[GData, tuple],
            out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
-  out_values = in_values[..., 2, np.newaxis]
+  out_values = in_values[..., 2, np.newaxis]/in_values[..., 0, np.newaxis]
 
   if (out_mom):
     out_mom.push(grid, out_values)
@@ -46,7 +46,7 @@ def get_vy(in_mom : Union[GData, tuple],
 def get_vz(in_mom : Union[GData, tuple],
            out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
-  out_values = in_values[..., 3, np.newaxis]
+  out_values = in_values[..., 3, np.newaxis]/in_values[..., 0, np.newaxis]
 
   if (out_mom):
     out_mom.push(grid, out_values)
@@ -57,7 +57,7 @@ def get_vz(in_mom : Union[GData, tuple],
 def get_vi(in_mom : Union[GData, tuple],
            out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
-  out_values = in_values[..., 1:4, np.newaxis]
+  out_values = in_values[..., 1:4, np.newaxis]/in_values[..., 0, np.newaxis]
 
   if (out_mom):
     out_mom.push(grid, out_values)
