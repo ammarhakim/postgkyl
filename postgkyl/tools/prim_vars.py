@@ -61,7 +61,7 @@ def get_vi(in_mom : Union[GData, tuple],
            out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
   _, rho = get_density(in_mom)
-  out_values = in_values[..., 1:4, np.newaxis] / rho
+  out_values = in_values[..., 1:4] / rho
 
   if (out_mom):
     out_mom.push(grid, out_values)
@@ -331,7 +331,7 @@ def get_mhd_Bz(in_mom : Union[GData, tuple],
 def get_mhd_Bi(in_mom : Union[GData, tuple],
                out_mom : GData = None) -> tuple:
   grid, in_values = _input_parser(in_mom)
-  out_values = in_values[..., 5:8, np.newaxis]
+  out_values = in_values[..., 5:8]
 
   if (out_mom):
     out_mom.push(grid, out_values)
