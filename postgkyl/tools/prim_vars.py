@@ -211,7 +211,6 @@ def get_p(in_mom : Union[GData, tuple],
   #end
   return grid, out_values
 #end
-#end
 
 def get_ke(in_mom : Union[GData, tuple],
            gas_gamma : float = 5.0/3,
