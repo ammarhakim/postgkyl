@@ -27,9 +27,7 @@ def gkylpkpm(ctx, **kwargs):
 
   gf = GData('{:s}-{:s}_{:s}.gkyl'.format(
     kwargs['name'], kwargs['species'], kwargs['idx']))
-  gmoms = GData('{:s}-{:s}_pkpm_moms_{:s}.gkyl'.format(
-    kwargs['name'], kwargs['species'], kwargs['idx']))
-  gu = GData('{:s}-fluid_{:s}_u_{:s}.gkyl'.format(
+  gvars = GData('{:s}-{:s}_pkpm_vars_{:s}.gkyl'.format(
     kwargs['name'], kwargs['species'], kwargs['idx']))
 
   num_dims = gf.getNumDims()
@@ -38,14 +36,12 @@ def gkylpkpm(ctx, **kwargs):
   dg = GInterpModal(gf, kwargs['polyorder'], 'pkpmhyb')
   dg.interpolate((0,1), overwrite=True)
 
-  dg = GInterpModal(gmoms, kwargs['polyorder'], 'ms')
-  dg.interpolate((0,1,2,3,4,5,6), overwrite=True)
+  dg = GInterpModal(gvars, kwargs['polyorder'], 'ms')
+  grid_and_T_m = dg.interpolate(3)
+  grid_and_us = dg.interpolate((0,1,2))
 
-  dg = GInterpModal(gu, kwargs['polyorder'], 'ms')
-  dg.interpolate((0,1,2), overwrite=True)
-
-  laguerre_compose(gf, gmoms, gf)
-  transform_frame(gf, gu, c_dim, gf)
+  laguerre_compose(gf, grid_and_T_m, gf)
+  transform_frame(gf, grid_and_us, c_dim, gf)
 
   gf.setTag(kwargs['tag'])
   gf.setLabel(kwargs['label'])
