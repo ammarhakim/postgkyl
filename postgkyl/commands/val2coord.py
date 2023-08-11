@@ -9,7 +9,7 @@ def _getRange(strIn, length):
     return np.array(strIn.split(','), np.int)
   elif strIn.find(':') >= 0:
     strSplit = strIn.split(':')
-    
+
     if strSplit[0] == '':
       sIdx = 0
     else:
@@ -18,7 +18,7 @@ def _getRange(strIn, length):
         sIdx = length+sIdx
       #end
     #end
-        
+
     if strSplit[1] == '':
       eIdx = length
     else:
@@ -73,7 +73,7 @@ def val2coord(ctx, **kwargs):
       outTag = 'val2coord'
     #end
   #end
-    
+
   for setIdx, dat in data.iterator(kwargs['use'], enum=True):
     values = dat.getValues()
     xComps = _getRange(kwargs['x'], len(values[0, :]))
@@ -83,7 +83,7 @@ def val2coord(ctx, **kwargs):
       click.echo(click.style("ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(len(xComps), len(yComps)), fg='red'))
       ctx.exit()
     #end
-        
+
     for i, yc in enumerate(yComps):
       if len(xComps) > 1:
         xc = xComps[i]
@@ -97,7 +97,7 @@ def val2coord(ctx, **kwargs):
       out = GData(tag=outTag,
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       out.push([x], y)
       out.color = 'C0'
       data.add(out)

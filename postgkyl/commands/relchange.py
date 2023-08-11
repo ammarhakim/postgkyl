@@ -32,7 +32,7 @@ def relchange(ctx, **kwargs):
       if kwargs['tag']:
         out = GData(tag=kwargs['tag'],
                     compgrid=ctx.obj['compgrid'],
-                    meta=dat.meta)
+                    ctx=dat.ctx)
         grid, values = diag.rel_change(reference, dat, kwargs['comp'])
         dat.deactivate()
         out.push(grid, values)

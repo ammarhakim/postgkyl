@@ -6,8 +6,8 @@ class DataSpace(object):
     self._datasetDict = {}
   #end
 
-  #-----------------------------------------------------------------
-  #-- Iterators ----------------------------------------------------
+  #---------------------------------------------------------------------
+  #---- Iterators ------------------------------------------------------
 
   def _getIterableIdx(idx, length):
     def _int(i, length):
@@ -41,7 +41,7 @@ class DataSpace(object):
       return [_int(idx, length)]
     #end
   #end
-    
+
   def iterator(self, tag=None, enum=False, onlyActive=True, select=None):
     # Process 'select'
     if enum and select:
@@ -87,18 +87,18 @@ class DataSpace(object):
           for i, dat in enumerate(self._datasetDict[t][idxSel]):
             if (not onlyActive) or dat.getStatus(): # implication
               if enum:
-                yield i, dat 
+                yield i, dat
               else:
                 yield dat
               #end
-            #end    
+            #end
           #end
         else: #isinstance(idxSel, list)
           for i in idxSel:
             dat = self._datasetDict[t][i]
             if (not onlyActive) or dat.getStatus(): # implication
               yield dat
-            #end    
+            #end
           #end
         #end
       except KeyError as err:
@@ -114,7 +114,7 @@ class DataSpace(object):
       #end
     #end
   #end
-    
+
   def tagIterator(self, tag=None, onlyActive=True):
     if tag:
       out = tag.split(',')
@@ -130,7 +130,7 @@ class DataSpace(object):
     #end
     return iter(out)
   #end
-        
+
   #-----------------------------------------------------------------
   #-- Labels -------------------------------------------------------
   def setUniqueLabels(self):
@@ -150,7 +150,7 @@ class DataSpace(object):
     #end
     maxElem = np.max(numComps)
     idxMax = np.argmax(numComps)
-    for i in range(maxElem): 
+    for i in range(maxElem):
       include = False
       reference = names[idxMax][i]
       for nm in names:
@@ -176,7 +176,7 @@ class DataSpace(object):
       cnt += 1
     #end
   #end
-    
+
   #-----------------------------------------------------------------
   #-- Adding datasets ----------------------------------------------
   def add(self, data):
@@ -200,13 +200,13 @@ class DataSpace(object):
       dat.deactivate()
     #end
   #end
-    
+
   #-----------------------------------------------------------------
   #-- Stuff :-P ----------------------------------------------------
   def getDataset(self, tag, idx):
     return self._datasetDict[tag][idx]
   #end
-        
+
   def getNumDatasets(self, tag=None, onlyActive=True):
     numSets = 0
     for dat in self.iterator(tag=tag, onlyActive=onlyActive):

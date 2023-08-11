@@ -28,7 +28,7 @@ def fft(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       grid, values = diag.fft(dat, kwargs['psd'], kwargs['iso'])
       out.push(grid, values)
       data.add(out)

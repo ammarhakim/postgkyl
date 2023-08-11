@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.commands import tm
 from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
-from postgkyl.commands.output import verb_print
+from postgkyl.commands.util import verb_print
 
 def getParPerp(pij, B):
     tmp = np.copy(pij[..., 0:2])
@@ -84,4 +84,4 @@ def cglpressure(ctx, **inputs):
 
     verb_print(ctx, 'Finishing CGL pressure')
 
-    
+

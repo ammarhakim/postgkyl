@@ -19,19 +19,19 @@ from postgkyl.data import GData
 @click.pass_context
 def velocity(ctx, **kwargs):
   verb_print(ctx, 'Starting velocity')
-    
+
   data = ctx.obj['data'] # shortcut
-    
+
   for m0, m1 in zip(data.iterator(kwargs['density']),
                     data.iterator(kwargs['momentum'])):
-    grid = m0.getGrid()        
+    grid = m0.getGrid()
     valsM0 = m0.getValues()
     valsM1 = m1.getValues()
-            
+
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=m0.meta)
+                ctx=m0.ctx)
     out.push(grid, valsM1/valsM0)
     data.add(out)
   #end

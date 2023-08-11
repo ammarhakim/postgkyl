@@ -37,7 +37,7 @@ def parrotate(ctx, **kwargs):
                 stack=ctx.obj['stack'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=a.meta)
+                ctx=a.ctx)
     out.push(outrot, grid)
     data.add(out)
   #end

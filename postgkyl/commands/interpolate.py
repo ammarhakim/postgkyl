@@ -52,7 +52,7 @@ def interpolate(ctx, **kwargs):
 
   for dat in data.iterator(kwargs['use']):
     if kwargs['basistype'] is None and dat.ctx['basisType'] is None:
-      ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required metadata".format(dat.getLabel()), fg='red'))
+      ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required ctxdata".format(dat.getLabel()), fg='red'))
     #end
 
     if isModal or dat.ctx['isModal']:

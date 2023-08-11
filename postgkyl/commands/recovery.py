@@ -40,7 +40,7 @@ def recovery(ctx, **kwargs):
 
   for dat in data.iterator(kwargs['use']):
     dg = GInterpModal(dat,
-                      kwargs['polyorder'], basisType, 
+                      kwargs['polyorder'], basisType,
                       kwargs['interp'], kwargs['periodic'])
     numNodes = dg.numNodes
     numComps = int(dat.getNumComps() / numNodes)
@@ -51,7 +51,7 @@ def recovery(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       grid, values = dg.recovery(0, kwargs['c1'])
       out.push(grid, values)
       data.add(out)

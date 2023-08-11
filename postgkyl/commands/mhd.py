@@ -38,7 +38,7 @@ def mhd(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
     #end
     if v == "density":
       grid, values = diag.get_density(dat, overwrite=overwrite)

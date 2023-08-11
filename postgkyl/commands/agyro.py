@@ -41,7 +41,7 @@ def agyro(ctx, **kwargs):
     out = GData(tag=tag,
                 label=kwargs['label'],
                 comp_grid=ctx.obj['compgrid'],
-                meta=pressure.meta)
+                ctx=pressure.ctx)
     out.push(grid, agyro)
     data.add(out)
   #end
@@ -83,7 +83,7 @@ def mom_agyro(ctx, **kwargs):
     out = GData(tag=tag,
                label=kwargs['label'],
                comp_grid=ctx.obj['compgrid'],
-               meta=species.meta)
+               ctx=species.ctx)
     out.push(grid, agyro)
     data.add(out)
   #end
