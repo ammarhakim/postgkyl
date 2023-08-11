@@ -8,9 +8,9 @@ from postgkyl.tools import laguerre_compose
 
 @click.command(help='Compose PKPM Laguerre coefficients together.')
 @click.option('--distribution', '-f', type=click.STRING, prompt=True,
-              help='Specify the PKPM distribution function.')
-@click.option('--moments', '-m', type=click.STRING, prompt=True,
-              help='Specify the PKPM moments.')
+              help='Specify the PKPM distribution function dataset.')
+@click.option('--tm', type=click.STRING, prompt=True,
+              help='Specify the PKPM vars dataset.')
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
@@ -20,16 +20,16 @@ def laguerrecompose(ctx, **kwargs):
   verb_print(ctx, 'Starting laguerrecompose')
   data = ctx.obj['data']
 
-  for f, mom in zip(data.iterator(kwargs['distribution']),
-                    data.iterator(kwargs['moments'])):
+  for f, tm in zip(data.iterator(kwargs['distribution']),
+                    data.iterator(kwargs['tm'])):
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
                   ctx=f.ctx)
-      laguerre_compose(f, mom, out)
+      laguerre_compose(f, tm, out)
     else:
-      laguerre_compose(f, mom, f)
+      laguerre_compose(f, tm, f)
     #end
   #end
   verb_print(ctx, 'Finishing laguerrecompose')

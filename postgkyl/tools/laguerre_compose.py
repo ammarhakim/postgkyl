@@ -7,7 +7,7 @@ from postgkyl.tools import _input_parser
 # ----------------------------------------------------------------------
 
 def laguerre_compose(in_f : Union[GData, tuple],
-                     in_mom : Union[GData, tuple],
+                     in_T_m : Union[GData, tuple],
                      out_f : GData = None) -> tuple:
   """Compose PKPM expansion coefficients into a single f.
 
@@ -17,7 +17,7 @@ def laguerre_compose(in_f : Union[GData, tuple],
 
   Args:
     in_f: 2-component Laguerre expansion coefficients.
-    in_mom: PKPM moments to calculate T over m.
+    in_T_m: PKPM T over m.
     out_f: (Optional) GData to store output.
 
   Returns:
@@ -25,7 +25,7 @@ def laguerre_compose(in_f : Union[GData, tuple],
     dimension) and a numpy array with values.
   """
   in_f_grid, in_f_values = _input_parser(in_f)
-  _, in_mom_values = _input_parser(in_mom)
+  _, in_T_m_values = _input_parser(in_T_m)
 
   x, vpar = in_f_grid[0], in_f_grid[1]
   vperp = np.copy(vpar)
@@ -36,12 +36,9 @@ def laguerre_compose(in_f : Union[GData, tuple],
 
   _, _, vperp_3D = np.meshgrid(x_cc, vpar_cc, vperp_cc, indexing='ij')
 
-  rho = in_mom_values[..., 0]
-  p_perp = in_mom_values[..., 2]
-  T_m = p_perp/rho
-
   F0 = in_f_values[..., 0]
   G = in_f_values[..., 1]
+  T_m = in_T_m_values[..., 0]
 
   F1 = F0 - (G.transpose()/T_m).transpose()
 
