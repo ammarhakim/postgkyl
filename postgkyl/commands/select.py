@@ -36,13 +36,13 @@ def select(ctx, **kwargs):
   """
   verb_print(ctx, 'Starting select')
   data = ctx.obj['data']
-  
+
   for dat in data.iterator(kwargs['use']):
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       grid, values = postgkyl.data.select(dat,
                                           z0=kwargs['z0'],
                                           z1=kwargs['z1'],

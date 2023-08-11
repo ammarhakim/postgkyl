@@ -26,7 +26,7 @@ def laguerrecompose(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=f.meta)
+                  ctx=f.ctx)
       laguerre_compose(f, tm, out)
     else:
       laguerre_compose(f, tm, f)

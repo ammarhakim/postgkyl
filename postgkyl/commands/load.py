@@ -55,7 +55,7 @@ def _crush(s): # Temp function used as a sorting key
               help='Specify the file name containing c2p mapped coordinates')
 @click.option('--fv', is_flag=True,
               help='Tag finite volume data when using c2p mapped coordinates')
-@click.option('--source', '-s', type=click.STRING,
+@click.option('--reader', '-r', type=click.STRING,
               help='Allows to specify the Adios variable name (default is \'CartGridField\')')
 @click.pass_context
 def load(ctx, **kwargs):
@@ -129,8 +129,7 @@ def load(ctx, **kwargs):
                     comp = comp, var_name = var,
                     label = kwargs['label'],
                     mapc2p_name = mapc2p_name,
-                    source = kwargs['source'])
-
+                    reader_name = kwargs['reader'])
         if kwargs['fv']:
           dg = GInterpModal(dat, 0, 'ms')
           dg.interpolateGrid(overwrite=True)

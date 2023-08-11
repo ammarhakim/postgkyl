@@ -35,7 +35,7 @@ def energetics(ctx, **kwargs):
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=em.meta)
+                ctx=em.ctx)
     grid, outEnergetics = diag.energetics(elc, ion, em)
     out.push(grid, outEnergetics)
     data.add(out)

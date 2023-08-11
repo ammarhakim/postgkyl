@@ -39,7 +39,7 @@ def bparrotate(ctx, **kwargs):
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=a.meta)
+                ctx=a.ctx)
     out.push(grid, outrot)
     data.add(out)
   #end

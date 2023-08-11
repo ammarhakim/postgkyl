@@ -23,7 +23,7 @@ def _colorbar(obj, fig, cax, label="", extend=None):
   #return fig.colorbar(obj, cax=cax2, label=label or "")
 #end
 
-def _get_cell_centered_grid(grid, cells):
+def _get_nodal_grid(grid, cells):
   num_dims = len(grid)
   grid_out = []
   if num_dims != len(cells):  # sanity check
@@ -39,8 +39,17 @@ def _get_cell_centered_grid(grid, cells):
         raise ValueError("Something is terribly wrong...")
       #end
     else:
-      grid_out = grid
-      break
+      if grid[d].shape[d] == cells[d]:
+        grid_out.append(grid[d])
+      elif grid[d].shape[d] == cells[d]+1:
+        if num_dims ==1 :
+          grid_out.append(0.5*(grid[d][:-1] + grid[d][1:]))
+        else:
+          grid_out.append(0.5*(grid[d][:-1,:-1] + grid[d][1:,1:]))
+        #end
+      else:
+        raise ValueError("Something is terribly wrong...")
+      #end
     #end
   #end
   return grid_out
@@ -293,8 +302,8 @@ def plot(data, args=(),
     label = ('{:s}_c{:d}'.format(label_prefix, comp)).strip('_') if len(idx_comps) > 1 else label_prefix
 
     if num_dims == 1:
-      cc_grid = _get_cell_centered_grid(grid, cells)
-      x = (cc_grid[0] + xshift) * xscale
+      nodal_grid = _get_nodal_grid(grid, cells)
+      x = (nodal_grid[0] + xshift) * xscale
       y = (values[..., comp] + yshift) * yscale
       im = cax.plot(x, y,
                     *args, color=color, label=label, markersize=markersize)
@@ -315,9 +324,9 @@ def plot(data, args=(),
             levels = np.array(clevels.split(','))
           #end
         #end
-        cc_grid = _get_cell_centered_grid(grid, cells)
-        x = (cc_grid[0] + xshift) * xscale
-        y = (cc_grid[1] + yshift) * yscale
+        nodal_grid = _get_nodal_grid(grid, cells)
+        x = (nodal_grid[0] + xshift) * xscale
+        y = (nodal_grid[1] + yshift) * yscale
         z = (values[..., comp].transpose() + zshift) * zscale
         im = cax.contour(x, y, z,
                          levels, *args,
@@ -327,12 +336,17 @@ def plot(data, args=(),
         #end
 
 
-      elif quiver:  #---------------------------------------------------
+      elif quiver: #----------------------------------------------------
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
-        cc_grid = _get_cell_centered_grid(grid, cells)
-        x = (cc_grid[0][skip2::skip] + xshift) * xscale
-        y = (cc_grid[1][skip2::skip] + yshift) * yscale
+        nodal_grid = _get_nodal_grid(grid, cells)
+        if len(nodal_grid[0].shape) == 1:
+          x = (nodal_grid[0][skip2::skip] + xshift) * xscale
+          y = (nodal_grid[1][skip2::skip] + yshift) * yscale
+        else:
+          x = (nodal_grid[0][skip2::skip, skip2::skip] + xshift) * xscale
+          y = (nodal_grid[1][skip2::skip, skip2::skip] + yshift) * yscale
+        #end
         z1 = (values[skip2::skip, skip2::skip, 2*comp].transpose()
               + zshift) * zscale
         z2 = (values[skip2::skip, skip2::skip, 2*comp+1].transpose()
@@ -340,36 +354,38 @@ def plot(data, args=(),
         im = cax.quiver(x, y, z1, z2)
 
 
-      elif streamline:  #-----------------------------------------------
-        if not bool(color):
+      elif streamline: #------------------------------------------------
+        if bool(color):
+          cl = color
+        else:
           # magnitude
           cl = np.sqrt(values[..., 2*comp]**2
                        + values[..., 2*comp+1]**2).transpose()
         #end
-        cc_grid = _get_cell_centered_grid(grid, cells)
-        x = (cc_grid[0] + xshift) * xscale
-        y = (cc_grid[1] + yshift) * yscale
+        nodal_grid = _get_nodal_grid(grid, cells)
+        x = (nodal_grid[0] + xshift) * xscale
+        y = (nodal_grid[1] + yshift) * yscale
         z1 = (values[..., 2*comp].transpose() + zshift) * zscale
-        z2 = (values[..., 2*comp+1].transpose()+ zshift) * zscale
-        im = cax.streamplot(x, y, z1, z2
+        z2 = (values[..., 2*comp+1].transpose() + zshift) * zscale
+        im = cax.streamplot(x, y, z1, z2,
                             *args,
-                            density=sdensity, arrowstyle=arrowstyle,
-                            color=color, linewidth=linewidth)
+                            density=sdensity, broken_streamlines=False,
+                            color=cl, linewidth=linewidth)
 
 
       elif lineouts is not None:  #-------------------------------------
         num_lines = values.shape[1] if lineouts == 0 else values.shape[0]
-        cc_grid = _get_cell_centered_grid(grid, cells)
+        nodal_grid = _get_nodal_grid(grid, cells)
 
         if lineouts == 0:
-          x = (cc_grid[0] + xshift) * xscale
-          vmin = (cc_grid[1][0] + yshift) * yscale
-          vmax = (cc_grid[1][-1] + yshift) * yscale
+          x = (nodal_grid[0] + xshift) * xscale
+          vmin = (nodal_grid[1][0] + yshift) * yscale
+          vmax = (nodal_grid[1][-1] + yshift) * yscale
           label = clabel or axes_labels[1]
         else:
-          x = (cc_grid[1] + xshift) * xscale
-          vmin = (cc_grid[0][0] + yshift) * yscale
-          vmax = (cc_grid[0][-1] + yshift) * yscale
+          x = (nodal_grid[1] + xshift) * xscale
+          vmin = (nodal_grid[0][0] + yshift) * yscale
+          vmax = (nodal_grid[0][-1] + yshift) * yscale
           label = clabel or axes_labels[0]
         #end
         idx = [slice(0, u) for u in values.shape]
@@ -405,9 +421,9 @@ def plot(data, args=(),
         y = (grid[1] + yshift) * yscale
         z = (values[..., comp].transpose() + zshift) * zscale
         if len(x) == z.shape[1] or len(y) == z.shape[0]:
-          cc_grid = _get_cell_centered_grid(grid, cells)
-          x = (cc_grid[0] + xshift) * xscale
-          y = (cc_grid[1] + yshift) * yscale
+          nodal_grid = _get_nodal_grid(grid, cells)
+          x = (nodal_grid[0] + xshift) * xscale
+          y = (nodal_grid[1] + yshift) * yscale
         #end
         if len(x.shape) > 1:
           x, y = x.transpose(), y.transpose()
@@ -434,7 +450,7 @@ def plot(data, args=(),
                             linewidth=0.1, shading='auto',
                             *args)
       #end
-      if not bool(color) and colorbar:
+      if not bool(color) and colorbar and streamline is None:
         cb = _colorbar(im, fig, cax, extend=extend, label=clabel)
       #end
     else:

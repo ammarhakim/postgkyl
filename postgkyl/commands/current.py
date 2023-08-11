@@ -30,7 +30,7 @@ def current(ctx, **kwargs):
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=dat.meta)
+                ctx=dat.ctx)
     out.push(grid, outcurrent)
     data.add(out)
   #end

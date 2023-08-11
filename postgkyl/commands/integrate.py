@@ -23,7 +23,7 @@ def integrate(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       out.push(grid, values)
       data.add(out)
     else:

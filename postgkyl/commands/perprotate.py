@@ -33,7 +33,7 @@ def perprotate(ctx, **kwargs):
     out = GData(tag=kwargs['tag'],
                 compgrid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=a.meta)
+                ctx=a.ctx)
     out.push(outrot, grid)
     data.add(out)
   #end

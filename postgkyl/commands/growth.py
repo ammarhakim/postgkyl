@@ -78,7 +78,7 @@ def growth(ctx, **kwargs):
         out = GData(tag='growth',
                     label='Fit',
                     comp_grid=ctx.obj['compgrid'],
-                    meta=dat.meta)
+                    ctx=dat.ctx)
         t = 0.5*(time[0][:-1] + time[0][1:])
         out_val = exp2(t, *bestParams)
         out.push([time[0]], out_val[..., np.newaxis])
@@ -110,7 +110,7 @@ def growth(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       out.push([ks], growth_rates[..., np.newaxis])
       data.add(out)
     #end

@@ -33,7 +33,7 @@ def euler(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=dat.meta)
+                  ctx=dat.ctx)
       data.add(out)
     #end
     if v == "density":

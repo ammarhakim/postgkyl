@@ -35,7 +35,7 @@ def bperprotate(ctx, **kwargs):
     out = GData(tag=kwargs['tag'],
                 compgrid=ctx.obj['compgrid'],
                 label=kwargs['label'],
-                meta=a.meta)
+                ctx=a.ctx)
     out.push(grid, outrot)
     data.add(out)
   #end

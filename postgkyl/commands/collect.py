@@ -44,7 +44,7 @@ def collect(ctx, **kwargs):
     grid = [[]]
     cnt = 0
     label = None
-        
+
     for i, dat in data.iterator(tag, enum=True):
       cnt += 1
       if kwargs['chunk'] and cnt > kwargs['chunk']:
@@ -53,10 +53,10 @@ def collect(ctx, **kwargs):
         values.append([])
         grid.append([])
       #end
-      if dat.meta['time']:
-        time[-1].append(dat.meta['time'])
-      elif dat.meta['frame']:
-        time[-1].append(dat.meta['frame'])
+      if dat.ctx['time']:
+        time[-1].append(dat.ctx['time'])
+      elif dat.ctx['frame']:
+        time[-1].append(dat.ctx['frame'])
       else:
         time[-1].append(i)
       #end
@@ -92,7 +92,7 @@ def collect(ctx, **kwargs):
     if kwargs['label']:
       label = kwargs['label']
     #end
-        
+
     for i in range(len(time)):
       time[i] = np.array(time[i])
       values[i] = np.array(values[i])

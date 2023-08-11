@@ -28,12 +28,11 @@ from postgkyl.commands.util import verb_print
               help="Specify the number of levels for contours")
 @click.option('--contlabel', 'cont_label', is_flag=True,
               help="Add labels to contours")
-
 @click.option('-q', '--quiver', is_flag=True,
               help="Make quiver plot.")
 @click.option('-l', '--streamline', is_flag=True,
               help="Make streamline plot.")
-@click.option('--sdensity', type=click.FLOAT,
+@click.option('--sdensity', type=click.INT, default=1,
               help="Control density of the streamlines.")
 @click.option('--arrowstyle', type=click.STRING,
               help="Set the style for streamline arrows.")
@@ -223,7 +222,6 @@ def plot(ctx, **kwargs):
     else:
       label = ''
     #end
-
 
     # Plot -------------------------------------------------------------
     gplot(dat, kwargs['arg'], label_prefix=label, **kwargs)

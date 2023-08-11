@@ -14,13 +14,13 @@ for s in cmdBase.cmds.keys():
   helpStr += " '{:s}',".format(s)
 #end
 
-def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
+def _data(ctx, grid_stack, value_stack, ctx_stack, strIn, tags, only_active):
   strInSplit = strIn.split('[')
   if strIn[0] == 'f' or strInSplit[0] in tags:
-    tagNm = None
+    tag_nm = None
     if strInSplit[0] in tags:
-      tagNm = strInSplit[0]
-      onlyActive = False
+      tag_nm = strInSplit[0]
+      only_active = False
     #end
     setIdx = None
     if len(strInSplit) >= 2:
@@ -30,48 +30,48 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
     if len(strInSplit) == 3:
       compIdx = strInSplit[2].split(']')[0]
     #end
-    metaKey = None
+    ctx_key = None
     if len(strIn.split('.')) == 2:
-      metaKey = strIn.split('.')[1]
+      ctx_key = strIn.split('.')[1]
     #end
 
-    gridStack.append([])
-    valueStack.append([])
-    metaStack.append([])
- 
-    for dat in ctx.obj['data'].iterator(tag=tagNm, select=setIdx,
-                                        onlyActive=onlyActive):
-      tagNm = dat.getTag()
-      if metaKey:
+    grid_stack.append([])
+    value_stack.append([])
+    ctx_stack.append([])
+
+    for dat in ctx.obj['data'].iterator(tag=tag_nm, select=setIdx,
+                                        only_active=only_active):
+      tag_nm = dat.getTag()
+      if ctx_key:
         grid = None
-        if metaKey in dat.meta:
-          values = np.array(dat.meta[metaKey])
+        if ctx_key in dat.ctx:
+          values = np.array(dat.ctx[ctx_key])
         else:
-          ctx.fail(click.style("Wrong meta key '{:s}' specified".format(metaKey), fg='red'))
+          ctx.fail(click.style("Wrong ctx key '{:s}' specified".format(ctx_key), fg='red'))
         #end
       else:
         grid, values = pselect(dat, comp=compIdx)
       #end
-      gridStack[-1].append(grid)
-      valueStack[-1].append(values)
-      metaStack[-1].append(dat.meta)
+      grid_stack[-1].append(grid)
+      value_stack[-1].append(values)
+      ctx_stack[-1].append(dat.ctx)
     #end
-    return True, (tagNm, setIdx)
+    return True, (tag_nm, setIdx)
   elif '(' in strIn or '[' in strIn:
-    valueStack.append([eval(strIn)])
-    gridStack.append([None])
-    metaStack.append([{}])
+    value_stack.append([eval(strIn)])
+    grid_stack.append([None])
+    ctx_stack.append([{}])
     return True, ()
   elif ':' in strIn or ',' in strIn:
-    valueStack.append([str(strIn)])
-    gridStack.append([None])
-    metaStack.append([{}])
+    value_stack.append([str(strIn)])
+    grid_stack.append([None])
+    ctx_stack.append([{}])
     return True, ()
   else:
     try:
-      valueStack.append([np.array(float(strIn))])
-      gridStack.append([None])
-      metaStack.append([{}])
+      value_stack.append([np.array(float(strIn))])
+      grid_stack.append([None])
+      ctx_stack.append([{}])
       return True, ()
     except Exception:
       return False, ()
@@ -79,7 +79,7 @@ def _data(ctx, gridStack, valueStack, metaStack, strIn, tags, onlyActive):
   #end
 #end
 
-def _command(ctx, gridStack, valueStack, metaStack, strIn):
+def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
   if strIn in cmdBase.cmds:
     numIn = cmdBase.cmds[strIn]['numIn']
     numOut = cmdBase.cmds[strIn]['numOut']
@@ -87,26 +87,26 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
   else:
     return False
   #end
-    
-  inGrid, inValues, inMeta, numSets = [], [], [], []
+
+  inGrid, inValues, in_ctx, numSets = [], [], [], []
   for i in range(numIn):
-    inGrid.append(gridStack.pop())
-    inValues.append(valueStack.pop())
-    inMeta.append(metaStack.pop())
+    inGrid.append(grid_stack.pop())
+    inValues.append(value_stack.pop())
+    in_ctx.append(ctx_stack.pop())
     numSets.append(len(inValues[-1]))
   #end
   for i in range(numOut):
-    gridStack.append([])
-    valueStack.append([])
-    metaStack.append([])
+    grid_stack.append([])
+    value_stack.append([])
+    ctx_stack.append([])
   #end
 
   for setIdx in range(max(numSets)):
-    tmpGrid, tmpValues, tmpMeta  = [], [], []
+    tmpGrid, tmpValues, tmp_ctx  = [], [], []
     for i in range(numIn):
       tmpGrid.append(inGrid[i][min(setIdx,numSets[i]-1)])
       tmpValues.append(inValues[i][min(setIdx,numSets[i]-1)])
-      tmpMeta.append(inMeta[i][min(setIdx,numSets[i]-1)])
+      tmp_ctx.append(in_ctx[i][min(setIdx,numSets[i]-1)])
     #end
     try:
       outGrid, outValues = func(tmpGrid, tmpValues)
@@ -114,35 +114,34 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
       ctx.fail(click.style("{}".format(err), fg='red'))
     #end
 
-    # Compare the metadata of all the inputs and copy them to a
-    # metadata dictionary of the output
-    outMeta = {}
+    # Compare the ctxdata of all the inputs and copy them to a
+    # ctxdata dictionary of the output
+    out_ctx = {}
     for i in range(numIn):
-      for k in tmpMeta[i]:
-        if k in outMeta and tmpMeta[i][k] == outMeta[k]:
+      for k in tmp_ctx[i]:
+        if k in out_ctx and tmp_ctx[i][k] == out_ctx[k]:
           pass # This key has been already copied and
                # matches the output; no action needed
-        elif k in outMeta:
-          outMeta[k] = None # There is a discrepancy between
-                            # the metadata; set it to None
+        elif k in out_ctx:
+          out_ctx[k] = None # There is a discrepancy between
+                            # the ctxdata; set it to None
                             # and remove later
         else:
-          outMeta[k] = tmpMeta[i][k] # Copy the metadata
+          out_ctx[k] = tmp_ctx[i][k] # Copy the ctxdata
         #end
       #end
     #end
     # Remove the discrepancies, i.e. the keys with None
-    keys = list(outMeta)
-    for k in keys:
-      if outMeta[k] is None:
-        outMeta.pop(k)
+    for k in out_ctx:
+      if out_ctx[k] is None:
+        out_ctx.pop(k)
       #end
     #end
-        
+
     for i in range(numOut):
-      gridStack[-numOut+i].append(outGrid[i])
-      valueStack[-numOut+i].append(outValues[i])
-      metaStack[-numOut+i].append(outMeta)
+      grid_stack[-numOut+i].append(outGrid[i])
+      value_stack[-numOut+i].append(outValues[i])
+      ctx_stack[-numOut+i].append(out_ctx)
     #end
   #end
   return True
@@ -161,17 +160,17 @@ def _command(ctx, gridStack, valueStack, metaStack, strIn):
 def ev(ctx, **kwargs):
   verb_print(ctx, 'Starting evaluate')
   data = ctx.obj['data']
-    
-  gridStack, valueStack, metaStack = [], [], []
+
+  grid_stack, value_stack, ctx_stack = [], [], []
   chainSplit = kwargs['chain'].split(' ')
   chainSplit = list(filter(None, chainSplit))
 
-  onlyActive = True
+  only_active = True
   if kwargs['all']:
-    onlyActive = False
+    only_active = False
   #end
 
-  tags = list(data.tagIterator(onlyActive=onlyActive))
+  tags = list(data.tagIterator(onlyActive=only_active))
   # outTag = kwargs['tag']
   # if outTag is None:
   #     if len(tags) == 1:
@@ -188,31 +187,31 @@ def ev(ctx, **kwargs):
   numDatasetsInChain = 0
   outDataId = ()
   for s in chainSplit:
-    isData, dataId = _data(ctx, gridStack, valueStack, metaStack, s, tags,
-                           onlyActive)
+    isData, dataId = _data(ctx, grid_stack, value_stack, ctx_stack, s, tags,
+                           only_active)
     if isData and len(dataId) > 0 and dataId != outDataId:
       numDatasetsInChain += 1
       outDataId = dataId
     #end
     if not isData:
-      isCommand = _command(ctx, gridStack, valueStack, metaStack, s)
+      isCommand = _command(ctx, grid_stack, value_stack, ctx_stack, s)
     #end
     if not isData and not isCommand:
       ctx.fail(click.style("Evaluate input '{:s}' represents neither data nor commad".format(s), fg='red'))
     #end
   #end
 
-  if len(valueStack) == 0:
+  if len(value_stack) == 0:
     ctx.fail(click.style("Evaluate stack is empty, there is nothing to return", fg='red'))
-  elif len(valueStack) > 1:
+  elif len(value_stack) > 1:
     click.echo(click.style("WARNING: Length of the evaluate stack is bigger than 1, there is a posibility of unintended behavior", fg='yellow'))
   #end
   if numDatasetsInChain == 1 and kwargs['tag'] is None:
     cnt = 0
     tag = outDataId[0]
     for out in ctx.obj['data'].iterator(tag=tag, select=outDataId[1],
-                                        onlyActive=onlyActive):
-      out.push(gridStack[-1][cnt], valueStack[-1][cnt])
+                                        onlyActive=only_active):
+      out.push(grid_stack[-1][cnt], value_stack[-1][cnt])
       cnt += 1
     #end
   else:
@@ -222,11 +221,11 @@ def ev(ctx, **kwargs):
     else:
       data.deactivateAll()
     #end
-    for grid, values, meta in zip(gridStack[-1], valueStack[-1], metaStack[-1]):
+    for grid, values, ctx in zip(grid_stack[-1], value_stack[-1], ctx_stack[-1]):
       out = GData(tag=tag,
                   comp_grid=ctx.obj['compgrid'],
                   label=label,
-                  meta=meta)
+                  ctx=ctx)
       out.push(grid, values)
       data.add(out)
     #end

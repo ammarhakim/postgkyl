@@ -16,11 +16,11 @@ def _update(i, data, fig, offsets, kwargs):
     dat = data[i+n]
     kwargs['title'] = ''
     if not kwargs['notitle']:
-      if dat.meta['frame'] is not None:
-        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.meta['frame'])
+      if dat.ctx['frame'] is not None:
+        kwargs['title'] = kwargs['title'] + 'F: {:d} '.format(dat.ctx['frame'])
       #end
-      if dat.meta['time'] is not None:
-        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.meta['time'])
+      if dat.ctx['time'] is not None:
+        kwargs['title'] = kwargs['title'] + 'T: {:.4e}'.format(dat.ctx['time'])
       #end
     #end
     if kwargs['arg'] is not None:

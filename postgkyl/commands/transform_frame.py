@@ -28,7 +28,7 @@ def transformframe(ctx, **kwargs):
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
-                  meta=f.meta)
+                  ctx=f.ctx)
       transform_frame(f, bulk, kwargs['cdim'], out)
     else:
       transform_frame(f, bulk, kwargs['cdim'], f)
