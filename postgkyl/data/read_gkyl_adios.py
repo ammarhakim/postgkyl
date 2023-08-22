@@ -139,7 +139,8 @@ class Read_gkyl_adios(object):
             for d in range(num_dims)]
     var_dims = fh.available_variables()[self.var_name]['Shape']
     var_dims = [int(v) for v in var_dims.split(',')]
-    offset, count = self._create_offset_count(var_dims, self.axes, self.comp, grid)
+    offset, count = self._create_offset_count(
+            var_dims, self.axes, self.comp, grid)
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
@@ -175,10 +176,11 @@ class Read_gkyl_adios(object):
     #  self.ctx['grid_type'] = adios.attr(fh, 'type').value.decode('UTF-8')
     #end
     if self.c2p:
-      grid_fh = adios.file(self.c2p)
-      grid_var = adios.var(grid_fh, 'CartGridField')
-      offset, count = self._create_offset_count(grid_var, self.axes, None)
-      tmp = grid_var.read(offset=offset, count=count)
+      grid_fh = adios2.open(self.c2p, 'r')
+      grid_dims = grid_fh.available_variables()['CartGridField']['Shape']
+      grid_dims = [int(v) for v in grid_dims.split(',')]
+      offset, count = self._create_offset_count(grid_dims, self.axes, None)
+      tmp = grid_fh.read('CartGridField', start=offset, count=count)
       num_comps = tmp.shape[-1]
       num_coeff = num_comps/num_dims
       grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]
