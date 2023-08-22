@@ -1,5 +1,6 @@
 import numpy as np
 import os.path
+import re
 
 from postgkyl.utils import idxParser
 
@@ -223,8 +224,16 @@ class Read_gkyl_adios(object):
     import adios2
     fh = adios2.open(self.file_name, "r")
 
+    def natural_sort(l):
+        convert = lambda text: int(text) if text.isdigit() else text.lower()
+        alphanum_key = lambda key: [convert(c) for c in re.split("([0-9]+)", key)]
+        return sorted(l, key=alphanum_key)
+
     time_lst = [key for key in fh.available_variables() if 'TimeMesh' in key]
     data_lst = [key for key in fh.available_variables() if 'Data' in key]
+    time_lst = natural_sort(time_lst)
+    data_lst = natural_sort(data_lst)
+
     for i in range(len(data_lst)):
       if i==0:
         data = np.atleast_1d(fh.read(data_lst[i]))
