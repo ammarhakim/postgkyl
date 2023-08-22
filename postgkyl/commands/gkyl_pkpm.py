@@ -21,7 +21,7 @@ from postgkyl.tools import transform_frame
 @click.option('--label', '-l',
               help="Custom label for the result")
 @click.pass_context
-def gkylpkpm(ctx, **kwargs):
+def pkpm(ctx, **kwargs):
   verb_print(ctx, 'Starting Gkyl PKPM')
   data = ctx.obj['data']
 

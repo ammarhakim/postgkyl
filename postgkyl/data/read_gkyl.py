@@ -211,7 +211,7 @@ class Read_gkyl(object):
   #end
 
   # ---- Read multi-range field data (version 1) -----------------------
-  def _load_t3_v1(self):
+  def _read_t3_v1(self):
     # read grid dimensions
     num_dims = np.fromfile(self.file_name, dtype=self._dti,
                            count=1, offset=self._offset)[0]
