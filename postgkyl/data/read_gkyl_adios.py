@@ -137,7 +137,9 @@ class Read_gkyl_adios(object):
                         upper[d],
                         cells[d]+1)
             for d in range(num_dims)]
-    offset, count = self._create_offset_count(cells, self.axes, self.comp, grid)
+    var_dims = fh.available_variables()[self.var_name]['Shape']
+    var_dims = [int(v) for v in var_dims.split(',')]
+    offset, count = self._create_offset_count(var_dims, self.axes, self.comp, grid)
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
