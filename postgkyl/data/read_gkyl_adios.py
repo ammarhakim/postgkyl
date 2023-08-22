@@ -32,9 +32,9 @@ class Read_gkyl_adios(object):
     # Adios has been a problematic dependency; therefore it is only
     # imported when actially needed
     try:
-      import adios
-      fh = adios.file(self.file_name)
-      for key, _ in fh.vars.items():
+      import adios2
+      fh = adios2.open(self.file_name, "r")
+      for key in fh.available_variables():
         if 'TimeMesh' in key:
           self.is_diagnostic = True
           break
@@ -51,9 +51,9 @@ class Read_gkyl_adios(object):
     return self.is_frame or self.is_diagnostic
   #end
 
-  def _create_offset_count(self, var, zs, comp, grid=None) -> tuple:
-    num_dims = len(var.dims)
-    count = np.array(var.dims)
+  def _create_offset_count(self, dims, zs, comp, grid=None) -> tuple:
+    num_dims = len(dims)
+    count = np.array(dims)
     offset = np.zeros(num_dims, np.int32)
     cnt = 0
     for d, z in enumerate(zs):
@@ -94,51 +94,50 @@ class Read_gkyl_adios(object):
   #end
 
   def _read_frame(self) -> tuple:
-    import adios
-    fh = adios.file(self.file_name)
+    import adios2
+    fh = adios2.open(self.file_name, "r")
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
-    lower = np.atleast_1d(adios.attr(fh, 'lowerBounds').value)
-    upper = np.atleast_1d(adios.attr(fh, 'upperBounds').value)
-    cells = np.atleast_1d(adios.attr(fh, 'numCells').value)
-    if 'changeset' in fh.attrs.keys():
-      self.ctx['changeset'] = adios.attr(fh, 'changeset').value.decode('UTF-8')
+    lower = np.atleast_1d(fh.read_attribute('lowerBounds'))
+    upper = np.atleast_1d(fh.read_attribute('upperBounds'))
+    cells = np.atleast_1d(fh.read_attribute('numCells'))
+    if 'changeset' in fh.available_attributes().keys():
+      self.ctx['changeset'] = fh.read_attribute_string('changeset')[0]
     #end
-    if 'builddate' in fh.attrs.keys():
-      self.ctx['builddate'] = adios.attr(fh, 'builddate').value.decode('UTF-8')
+    if 'builddate' in fh.available_attributes().keys():
+      self.ctx['builddate'] = fh.read_attribute_string('builddate')[0]
     #end
-    if 'polyOrder' in fh.attrs.keys():
-      self.ctx['polyOrder'] = adios.attr(fh, 'polyOrder').value
+    if 'polyOrder' in fh.available_attributes().keys():
+      self.ctx['polyOrder'] = fh.read_attribute('polyOrder')
       self.ctx['isModal'] = True
     #end
-    if 'basisType' in fh.attrs.keys():
-      self.ctx['basisType'] = adios.attr(fh, 'basisType').value.decode('UTF-8')
+    if 'basisType' in fh.available_attributes().keys():
+      self.ctx['basisType'] = fh.read_attribute_string('basisType')[0]
       self.ctx['isModal'] = True
     #end
-    if 'charge' in fh.attrs.keys():
-      self.ctx['charge'] = adios.attr(fh, 'charge').value
+    if 'charge' in fh.available_attributes().keys():
+      self.ctx['charge'] = fh.read_attribute('charge')
     #end
-    if 'mass' in fh.attrs.keys():
-      self.ctx['mass'] = adios.attr(fh, 'mass').value
+    if 'mass' in fh.available_attributes().keys():
+      self.ctx['mass'] = fh.read_attribute('mass')
     #end
-    if 'time' in fh.vars:
-      self.ctx['time'] = adios.var(fh, 'time').read()
+    if 'time' in fh.available_variables():
+      self.ctx['time'] = fh.read('time')
     #end
-    if 'frame' in fh.vars:
-      self.ctx['frame'] = adios.var(fh, 'frame').read()
-    #end
+    if 'frame' in fh.available_variables():
+      self.ctx['frame'] = fh.read('frame')
+     #end
 
 
     # Load data
     num_dims = len(cells)
-    var = adios.var(fh, self.var_name)
     grid = [np.linspace(lower[d],
                         upper[d],
                         cells[d]+1)
             for d in range(num_dims)]
-    offset, count = self._create_offset_count(var, self.axes, self.comp, grid)
-    data = var.read(offset=offset, count=count, nsteps=1)
+    offset, count = self._create_offset_count(cells, self.axes, self.comp, grid)
+    data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
     dz = (upper - lower) / cells

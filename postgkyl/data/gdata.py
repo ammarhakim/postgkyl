@@ -173,9 +173,9 @@ class GData(object):
   #end
 
   def getInputFile(self):
-    import adios
-    fh = adios.file(self.file_name)
-    inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
+    import adios2
+    fh = adios2.open(self.file_name, 'r')
+    inputFile = fh.read_attribute_string('inputfile')[0]
     fh.close()
     return inputFile
   #end
