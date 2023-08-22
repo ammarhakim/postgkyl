@@ -220,18 +220,18 @@ class Read_gkyl_adios(object):
     return grid, lower, upper, data
 
   def _read_diagnostic(self) -> tuple:
-    import adios
-    fh = adios.file(self.file_name)
+    import adios2
+    fh = adios2.open(self.file_name, "r")
 
-    time_lst = [key for key, _ in fh.vars.items() if 'TimeMesh' in key]
-    data_lst = [key for key, _ in fh.vars.items() if 'Data' in key]
+    time_lst = [key for key in fh.available_variables() if 'TimeMesh' in key]
+    data_lst = [key for key in fh.available_variables() if 'Data' in key]
     for i in range(len(data_lst)):
       if i==0:
-        data = np.atleast_1d(adios.var(fh, data_lst[i]).read())
-        grid = np.atleast_1d(adios.var(fh, time_lst[i]).read())
+        data = np.atleast_1d(fh.read(data_lst[i]))
+        grid = np.atleast_1d(fh.read(time_lst[i]))
       else:
-        next_data = np.atleast_1d(adios.var(fh, data_lst[i]).read())
-        next_grid = np.atleast_1d(adios.var(fh, time_lst[i]).read())
+        next_data = np.atleast_1d(fh.read(data_lst[i]))
+        next_grid = np.atleast_1d(fh.read(time_lst[i]))
         # deal with weird behavior after restart where some data
         # doesn't have second dimension
         if len(next_data.shape) < 2:
