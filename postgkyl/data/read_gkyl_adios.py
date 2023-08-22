@@ -34,7 +34,7 @@ class Read_gkyl_adios(object):
     # imported when actially needed
     try:
       import adios2
-      fh = adios2.open(self.file_name, "r")
+      fh = adios2.open(self.file_name, "rra")
       for key in fh.available_variables():
         if 'TimeMesh' in key:
           self.is_diagnostic = True
@@ -96,7 +96,7 @@ class Read_gkyl_adios(object):
 
   def _read_frame(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, "r")
+    fh = adios2.open(self.file_name, "rra")
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
