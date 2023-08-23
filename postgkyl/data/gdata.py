@@ -353,7 +353,6 @@ class GData(object):
             cleaning = True):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
     """
-    import adios
     # Create output file name
     if out_name is None:
       if self.file_name is not None:
@@ -375,73 +374,41 @@ class GData(object):
     numComps = self.getNumComps()
     numCells = self.getNumCells()
 
+    full_shape = list(numCells) + [numComps]
+    offset = [0] * (num_dims + 1)
+
+    if var_name is None:
+      var_name = self._var_name
+    #end
+
     if mode == 'bp':
-      # Create string number of cells and offsets
-      sNumCells = ''
-      sOffsets = ''
-      for i in range(num_dims):
-        sNumCells += '{:d},'.format(int(numCells[i]))
-        sOffsets += '0,'
-      #end
-      sNumCells += '{:d}'.format(numComps)
-      sOffsets += '0'
 
-      if var_name is None:
-        var_name = self._var_name
-      #end
-
+      import adios2
       if not append:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
 
-        # Define variables and attributes
-        adios.define_attribute_byvalue(groupId, 'numCells', '', numCells)
+        fh = adios2.open(out_name, "w")
+
         lo, up = self.getBounds()
-        adios.define_attribute_byvalue(groupId, 'lowerBounds', '', lo)
-        adios.define_attribute_byvalue(groupId, 'upperBounds', '', up)
-        fh = adios.open('CartField', out_name, 'w')
+        fh.write_attribute('numCells', numCells)
+        fh.write_attribute('lowerBounds', lo)
+        fh.write_attribute('upperBounds', up)
 
         if self.ctx['time']:
-          adios.define_var(groupId, 'time', '',
-                           adios.DATATYPE.double, '', '', '')
-          adios.write(fh, 'time', self.ctx['time'])
+          fh.write('time', self.ctx['time'])
         #end
 
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, self.getValues())
+        fh.write(var_name, self.getValues(), full_shape, offset, full_shape)
 
-        adios.close(fh)
-        adios.finalize()
+        fh.close()
+
       else:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
 
-        fh = adios.open('CartField', out_name, 'a')
+        fh = adios2.open(out_name, "a")
+        fh.write(var_name, self.getValues(), full_shape, offset, full_shape)
+        fh.close()
 
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, self.getValues())
-        adios.close(fh)
-        adios.finalize()
       #end
 
-      # Cleaning
-      if cleaning:
-        if len(out_name.split('/')) > 1:
-          nm = out_name.split('/')[-1]
-        else:
-          nm = out_name
-        #end
-        shutil.move(out_name + '.dir/' + nm + '.0', out_name)
-        shutil.rmtree(out_name + '.dir')
-      #end
     elif mode == 'txt':
       numRows = int(numCells.prod())
       grid = self.getGrid()
