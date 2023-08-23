@@ -126,24 +126,25 @@ class TestGData(unittest.TestCase):
 
         nc = data.getNumCells()
         assert(isinstance(nc, np.ndarray))
-        assert(isinstance(nc[0], np.int64))
-        assert(isinstance(nc[1], np.int64))
+        assert(isinstance(nc[0], np.int32))
+        assert(isinstance(nc[1], np.int32))
         self.assertEqual(nc[0], 64)
         self.assertEqual(nc[1], 32)
 
-        grid = data.peakGrid()
+        grid = data._grid
         assert(isinstance(grid, list))
         self.assertEqual(len(grid), 2)
         assert(isinstance(grid[0], np.ndarray))
         assert(isinstance(grid[1], np.ndarray))
-        self.assertEqual(grid[0].shape, (64,))
-        self.assertEqual(grid[1].shape, (32,))
+        self.assertEqual(grid[0].shape, (65,))
+        self.assertEqual(grid[1].shape, (33,))
 
-        values = data.peakValues()
+        values = data._values
         assert(isinstance(values, np.ndarray))
         self.assertEqual(values.shape, (64, 32, 8))
 
-        remove('data/frame_0_mod.bp')
+        import shutil
+        shutil.rmtree('data/frame_0_mod.bp')
 
     # def test_WriteTxt(self):
     #     pass
