@@ -389,7 +389,7 @@ class GData(object):
       import adios2
       if not append:
 
-        fh = adios2.open(out_name, "w")
+        fh = adios2.open(out_name, "w", engine_type="BP3")
 
         lo, up = self.getBounds()
         fh.write_attribute('numCells', numCells)
@@ -406,7 +406,7 @@ class GData(object):
 
       else:
 
-        fh = adios2.open(out_name, "a")
+        fh = adios2.open(out_name, "a", engine_type="BP3")
         fh.write(var_name, values, full_shape, offset, full_shape)
         fh.close()
 
