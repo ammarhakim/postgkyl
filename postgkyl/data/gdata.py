@@ -381,6 +381,9 @@ class GData(object):
       var_name = self._var_name
     #end
 
+    values = np.empty_like(self.getValues())
+    values[...] = self.getValues()
+
     if mode == 'bp':
 
       import adios2
@@ -397,14 +400,14 @@ class GData(object):
           fh.write('time', self.ctx['time'])
         #end
 
-        fh.write(var_name, self.getValues(), full_shape, offset, full_shape)
+        fh.write(var_name, values, full_shape, offset, full_shape)
 
         fh.close()
 
       else:
 
         fh = adios2.open(out_name, "a")
-        fh.write(var_name, self.getValues(), full_shape, offset, full_shape)
+        fh.write(var_name, values, full_shape, offset, full_shape)
         fh.close()
 
       #end
@@ -415,7 +418,6 @@ class GData(object):
       for d in range(num_dims):
         grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
       #end
-      values = self.getValues()
 
       basis = np.full(num_dims, 1.0)
       for d in range(num_dims-1):
@@ -442,7 +444,6 @@ class GData(object):
       #end
       fh.close()
     elif mode == 'npy':
-      values = self.getValues()
       np.save(out_name, values.squeeze())
     #end
   #end
