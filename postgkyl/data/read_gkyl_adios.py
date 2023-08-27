@@ -110,7 +110,7 @@ class Read_gkyl_adios(object):
       self.ctx['builddate'] = fh.read_attribute_string('builddate')[0]
     #end
     if 'polyOrder' in fh.available_attributes().keys():
-      self.ctx['polyOrder'] = fh.read_attribute('polyOrder')
+      self.ctx['polyOrder'] = fh.read_attribute('polyOrder')[0]
       self.ctx['isModal'] = True
     #end
     if 'basisType' in fh.available_attributes().keys():
@@ -118,17 +118,17 @@ class Read_gkyl_adios(object):
       self.ctx['isModal'] = True
     #end
     if 'charge' in fh.available_attributes().keys():
-      self.ctx['charge'] = fh.read_attribute('charge')
+      self.ctx['charge'] = fh.read_attribute('charge')[0]
     #end
     if 'mass' in fh.available_attributes().keys():
-      self.ctx['mass'] = fh.read_attribute('mass')
+      self.ctx['mass'] = fh.read_attribute('mass')[0]
     #end
     if 'time' in fh.available_variables():
       self.ctx['time'] = fh.read('time')
     #end
     if 'frame' in fh.available_variables():
       self.ctx['frame'] = fh.read('frame')
-     #end
+    #end
 
 
     # Load data
