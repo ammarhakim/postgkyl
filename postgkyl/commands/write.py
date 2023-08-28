@@ -8,7 +8,7 @@ from postgkyl.commands.util import verb_print
               help='Specify a \'tag\' to apply to (default all tags).')
 @click.option('-f', '--filename', type=click.STRING, prompt=True,
               help="Output file name")
-@click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy']),
+@click.option('-m', '--mode', type=click.Choice(['bp', 'txt', 'npy', 'gkyl']),
               default='bp',
               help="Output file mode. One of `bp` (ADIOS BP file; default), `txt` (ASCII text file), or `npy` (NumPy binary file)")
 @click.option('-s', '--single', is_flag=True,

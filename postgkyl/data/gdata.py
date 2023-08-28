@@ -372,33 +372,33 @@ class GData(object):
     #end
 
     num_dims = self.getNumDims()
-    numComps = self.getNumComps()
-    numCells = self.getNumCells()
+    num_comps = self.getNumComps()
+    num_cells = self.getNumCells()
+    lo, up = self.getBounds()
+    values = self.getValues()
 
     if mode == 'bp':
       # Create string number of cells and offsets
       sNumCells = ''
       sOffsets = ''
       for i in range(num_dims):
-        sNumCells += '{:d},'.format(int(numCells[i]))
+        sNumCells += '{:d},'.format(int(num_cells[i]))
         sOffsets += '0,'
       #end
-      sNumCells += '{:d}'.format(numComps)
+      sNumCells += '{:d}'.format(num_comps)
       sOffsets += '0'
 
       if var_name is None:
         var_name = self._var_name
       #end
 
+      adios.init_noxml()
+      adios.set_max_buffer_size(bufferSize)
+      groupId = adios.declare_group('CartField', '')
+      adios.select_method(groupId, 'POSIX1', '', '')
       if not append:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
-
         # Define variables and attributes
-        adios.define_attribute_byvalue(groupId, 'numCells', '', numCells)
-        lo, up = self.getBounds()
+        adios.define_attribute_byvalue(groupId, 'numCells', '', num_cells)
         adios.define_attribute_byvalue(groupId, 'lowerBounds', '', lo)
         adios.define_attribute_byvalue(groupId, 'upperBounds', '', up)
         fh = adios.open('CartField', out_name, 'w')
@@ -408,29 +408,14 @@ class GData(object):
                            adios.DATATYPE.double, '', '', '')
           adios.write(fh, 'time', self.ctx['time'])
         #end
-
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, self.getValues())
-
-        adios.close(fh)
-        adios.finalize()
-      else:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
-
-        fh = adios.open('CartField', out_name, 'a')
-
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, self.getValues())
-        adios.close(fh)
-        adios.finalize()
       #end
+      adios.define_var(groupId, var_name, '',
+                       adios.DATATYPE.double,
+                       sNumCells, sNumCells, sOffsets)
+      adios.write(fh, var_name, values)
+
+      adios.close(fh)
+      adios.finalize()
 
       # Cleaning
       if cleaning:
@@ -442,8 +427,39 @@ class GData(object):
         shutil.move(out_name + '.dir/' + nm + '.0', out_name)
         shutil.rmtree(out_name + '.dir')
       #end
+    elif mode == 'gkyl':
+      dti = np.dtype('i8')
+      dtf = np.dtype('f8')
+
+      fh = open(out_name, 'w')
+
+      np.array([103, 107, 121, 108, 48], dtype=np.dtype('b')).tofile(fh, sep='')  # sep='' results in a binary file
+      # version 1
+      np.array([1], dtype=dti).tofile(fh, sep='')
+      # type 1
+      np.array([1], dtype=dti).tofile(fh, sep='')
+      # meta size
+      np.array([0], dtype=dti).tofile(fh, sep='')
+      # real type (double)
+      np.array([2], dtype=dti).tofile(fh, sep='')
+      # num dims
+      np.array([num_dims], dtype=dti).tofile(fh, sep='')
+      # num cells
+      np.array(num_cells, dtype=dti).tofile(fh, sep='')
+      # lower
+      np.array(lo, dtype=dtf).tofile(fh, sep='')
+      # upper
+      np.array(up, dtype=dtf).tofile(fh, sep='')
+      # elem_sz
+      np.array([num_comps*8], dtype=dti).tofile(fh, sep='')
+      # asize
+      np.array([len(values)], dtype=dti).tofile(fh, sep='')
+      # data
+      np.array(values, dtype=dtf).tofile(fh, sep='')
+
+      fh.close()
     elif mode == 'txt':
-      numRows = int(numCells.prod())
+      numRows = int(num_cells.prod())
       grid = self.getGrid()
       for d in range(num_dims):
         grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
@@ -452,7 +468,7 @@ class GData(object):
 
       basis = np.full(num_dims, 1.0)
       for d in range(num_dims-1):
-        basis[d] = numCells[(d+1):].prod()
+        basis[d] = num_cells[(d+1):].prod()
       #end
 
       fh = open(out_name, 'w')
@@ -467,15 +483,14 @@ class GData(object):
         for d in range(num_dims):
           line += '{:.15e}, '.format(grid[d][idxs[d]])
         #end
-        for c in range(numComps-1):
+        for c in range(num_comps-1):
           line += '{:.15e}, '.format(values[tuple(idxs)][c])
         #end
-        line += '{:.15e}\n'.format(values[tuple(idxs)][numComps-1])
+        line += '{:.15e}\n'.format(values[tuple(idxs)][num_comps-1])
         fh.write(line)
       #end
       fh.close()
     elif mode == 'npy':
-      values = self.getValues()
       np.save(out_name, values.squeeze())
     #end
   #end
