@@ -129,9 +129,9 @@ class GData(object):
       if not reader_set:
         raise TypeError('\'file_name\' was specified ({:s}) but \'reader\' was either not set or successfully detected'.format(self.file_name))
       #end
-    #end
 
-    self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.get_data()
+    #end
 
     self.color = None
     self._status = True
@@ -346,7 +346,7 @@ class GData(object):
   #---- Write ----------------------------------------------------------
   def write(self,
             out_name: str = None,
-            mode: str = 'bp',
+            mode: str = 'gkyl',
             var_name: str = None,
             bufferSize: int = 1000,
             append = False,
