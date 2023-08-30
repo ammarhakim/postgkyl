@@ -392,11 +392,12 @@ class GData(object):
         var_name = self._var_name
       #end
 
-      adios.init_noxml()
-      adios.set_max_buffer_size(bufferSize)
-      groupId = adios.declare_group('CartField', '')
-      adios.select_method(groupId, 'POSIX1', '', '')
       if not append:
+        adios.init_noxml()
+        adios.set_max_buffer_size(bufferSize)
+        groupId = adios.declare_group('CartField', '')
+        adios.select_method(groupId, 'POSIX1', '', '')
+
         # Define variables and attributes
         adios.define_attribute_byvalue(groupId, 'numCells', '', num_cells)
         adios.define_attribute_byvalue(groupId, 'lowerBounds', '', lo)
@@ -408,14 +409,29 @@ class GData(object):
                            adios.DATATYPE.double, '', '', '')
           adios.write(fh, 'time', self.ctx['time'])
         #end
-      #end
-      adios.define_var(groupId, var_name, '',
-                       adios.DATATYPE.double,
-                       sNumCells, sNumCells, sOffsets)
-      adios.write(fh, var_name, values)
 
-      adios.close(fh)
-      adios.finalize()
+        adios.define_var(groupId, var_name, '',
+                         adios.DATATYPE.double,
+                         sNumCells, sNumCells, sOffsets)
+        adios.write(fh, var_name, values)
+
+        adios.close(fh)
+        adios.finalize()
+      else:
+        adios.init_noxml()
+        adios.set_max_buffer_size(bufferSize)
+        groupId = adios.declare_group('CartField', '')
+        adios.select_method(groupId, 'POSIX1', '', '')
+
+        fh = adios.open('CartField', out_name, 'a')
+
+        adios.define_var(groupId, var_name, '',
+                         adios.DATATYPE.double,
+                         sNumCells, sNumCells, sOffsets)
+        adios.write(fh, var_name, values)
+        adios.close(fh)
+        adios.finalize()
+      #end
 
       # Cleaning
       if cleaning:
