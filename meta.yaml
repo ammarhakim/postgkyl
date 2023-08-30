@@ -32,8 +32,6 @@ requirements:
     - click
     - sympy
     - conda-forge::adios2=2.9.1
-    - adios
-    - adios-python
     - msgpack-python
 
 test:
