@@ -450,7 +450,7 @@ def plot(data, args=(),
                             linewidth=0.1, shading='auto',
                             *args)
       #end
-      if not bool(color) and colorbar and streamline is None:
+      if not bool(color) and colorbar and not streamline:
         cb = _colorbar(im, fig, cax, extend=extend, label=clabel)
       #end
     else:
