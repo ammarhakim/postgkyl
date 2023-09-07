@@ -42,7 +42,7 @@ class DataSpace(object):
     #end
   #end
 
-  def iterator(self, tag=None, enum=False, onlyActive=True, select=None):
+  def iterator(self, tag=None, enum=False, only_active=True, select=None):
     # Process 'select'
     if enum and select:
       click.echo(click.style(
@@ -85,7 +85,7 @@ class DataSpace(object):
       try:
         if not select or isinstance(idxSel, slice):
           for i, dat in enumerate(self._datasetDict[t][idxSel]):
-            if (not onlyActive) or dat.getStatus(): # implication
+            if (not only_active) or dat.getStatus(): # implication
               if enum:
                 yield i, dat
               else:
@@ -96,7 +96,7 @@ class DataSpace(object):
         else: #isinstance(idxSel, list)
           for i in idxSel:
             dat = self._datasetDict[t][i]
-            if (not onlyActive) or dat.getStatus(): # implication
+            if (not only_active) or dat.getStatus(): # implication
               yield dat
             #end
           #end
@@ -115,10 +115,10 @@ class DataSpace(object):
     #end
   #end
 
-  def tagIterator(self, tag=None, onlyActive=True):
+  def tagIterator(self, tag=None, only_active=True):
     if tag:
       out = tag.split(',')
-    elif onlyActive:
+    elif only_active:
       out = []
       for t in self._datasetDict:
         if True in (dat.getStatus() for dat in self.iterator(t)):
@@ -191,12 +191,12 @@ class DataSpace(object):
   #-----------------------------------------------------------------
   #-- Staus control ------------------------------------------------
   def activateAll(self, tag=None):
-    for dat in self.iterator(tag=tag, onlyActive=False):
+    for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     #end
   #end
   def deactivateAll(self, tag=None):
-    for dat in self.iterator(tag=tag, onlyActive=False):
+    for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     #end
   #end
@@ -207,9 +207,9 @@ class DataSpace(object):
     return self._datasetDict[tag][idx]
   #end
 
-  def getNumDatasets(self, tag=None, onlyActive=True):
+  def getNumDatasets(self, tag=None, only_active=True):
     numSets = 0
-    for dat in self.iterator(tag=tag, onlyActive=onlyActive):
+    for dat in self.iterator(tag=tag, only_active=only_active):
       numSets += 1
     #end
     return numSets

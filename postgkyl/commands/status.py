@@ -34,7 +34,7 @@ def activate(ctx, **kwargs):
   #end
 
   for dat in data.iterator(tag=kwargs['tag'],
-                           onlyActive=False,
+                           only_active=False,
                            select=kwargs['index']):
     dat.activate()
   #end
@@ -73,7 +73,7 @@ def deactivate(ctx, **kwargs):
   #end
 
   for dat in data.iterator(tag=kwargs['tag'],
-                           onlyActive=False,
+                           only_active=False,
                            select=kwargs['index']):
     dat.deactivate()
   #end
