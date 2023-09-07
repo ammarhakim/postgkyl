@@ -102,6 +102,7 @@ class GData(object):
       'h5' : Read_gkyl_h5,
       'flash' : Read_flash_h5
       }
+    self._reader = None
     if file_name is not None:
       reader_set = False
       if reader_name in self._readers:
@@ -131,7 +132,9 @@ class GData(object):
       #end
     #end
 
-    self._grid, self._values = self._reader.get_data()
+    if self._reader:
+      self._grid, self._values = self._reader.get_data()
+    #end
 
     self.color = None
     self._status = True
