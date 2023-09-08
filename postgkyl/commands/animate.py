@@ -67,6 +67,8 @@ def _update(i, data, fig, offsets, kwargs):
               help="Set marker size for scatter plots.")
 @click.option('--linewidth', type=click.FLOAT,
               help="Set the linewidth.")
+@click.option('--linestyle', type=click.Choice(['solid','dashed','dotted','dashdot']),
+              help="Set the linestyle.")
 @click.option('--color', type=click.STRING,
               help="Set color when available.")
 @click.option('--style',

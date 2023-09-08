@@ -61,7 +61,7 @@ def plot(data, args=(),
          figure=None, squeeze=False,
          num_axes=None, start_axes=0,
          num_subplot_row=None, num_subplot_col=None,
-         streamline=False, sdensity=1, arrowstyle='simple',
+         streamline=False, sdensity=1,
          quiver=False,
          contour=False, clevels=None, cnlevels=None, cont_label=False,
          diverging=False,
@@ -76,7 +76,7 @@ def plot(data, args=(),
          fixaspect=False, aspect=None,
          edgecolors=None, showgrid=True,
          hashtag=False, xkcd=False,
-         color=None, markersize=None, linewidth=None,
+         color=None, markersize=None, linewidth=None, linestyle=None,
          #transpose=False, # trasnspose should be done before plotting
          figsize=None,
          jet=False,
@@ -137,6 +137,9 @@ def plot(data, args=(),
   #end
   if bool(linewidth):
     mpl.rcParams['lines.linewidth'] = linewidth
+  #end
+  if bool(linestyle):
+    mpl.rcParams['lines.linestyle'] = linestyle
   #end
 
   #---- Data Loading ---------------------------------------------------
