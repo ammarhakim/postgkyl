@@ -102,6 +102,7 @@ class GData(object):
       'h5' : Read_gkyl_h5,
       'flash' : Read_flash_h5
       }
+
     if file_name is not None:
       reader_set = False
       if reader_name in self._readers:
@@ -129,9 +130,9 @@ class GData(object):
       if not reader_set:
         raise TypeError('\'file_name\' was specified ({:s}) but \'reader\' was either not set or successfully detected'.format(self.file_name))
       #end
-    #end
 
-    self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.get_data()
+    #end
 
     self.color = None
     self._status = True
@@ -346,7 +347,7 @@ class GData(object):
   #---- Write ----------------------------------------------------------
   def write(self,
             out_name: str = None,
-            mode: str = 'bp',
+            mode: str = 'gkyl',
             var_name: str = None,
             bufferSize: int = 1000,
             append = False,
@@ -371,10 +372,12 @@ class GData(object):
     #end
 
     num_dims = self.getNumDims()
-    numComps = self.getNumComps()
-    numCells = self.getNumCells()
+    num_comps = self.getNumComps()
+    num_cells = self.getNumCells()
+    lo, up = self.getBounds()
+    values = self.getValues()
 
-    full_shape = list(numCells) + [numComps]
+    full_shape = list(num_cells) + [num_comps]
     offset = [0] * (num_dims + 1)
 
     if var_name is None:
@@ -385,35 +388,65 @@ class GData(object):
     values[...] = self.getValues()
 
     if mode == 'bp':
-
       import adios2
       if not append:
-
         fh = adios2.open(out_name, "w", engine_type="BP3")
-
-        lo, up = self.getBounds()
-        fh.write_attribute('numCells', numCells)
+        fh.write_attribute('numCells', num_cells)
         fh.write_attribute('lowerBounds', lo)
         fh.write_attribute('upperBounds', up)
 
         if self.ctx['time']:
           fh.write('time', self.ctx['time'])
         #end
-
-        fh.write(var_name, values, full_shape, offset, full_shape)
-
-        fh.close()
-
       else:
-
         fh = adios2.open(out_name, "a", engine_type="BP3")
-        fh.write(var_name, values, full_shape, offset, full_shape)
-        fh.close()
-
       #end
+      fh.write(var_name, values, full_shape, offset, full_shape)
+      fh.close()
 
+      # Cleaning
+      if cleaning:
+        if len(out_name.split('/')) > 1:
+          nm = out_name.split('/')[-1]
+        else:
+          nm = out_name
+        #end
+        shutil.move(out_name + '.dir/' + nm + '.0', out_name)
+        shutil.rmtree(out_name + '.dir')
+      #end
+    elif mode == 'gkyl':
+      dti = np.dtype('i8')
+      dtf = np.dtype('f8')
+
+      fh = open(out_name, 'w')
+
+      np.array([103, 107, 121, 108, 48], dtype=np.dtype('b')).tofile(fh, sep='')  # sep='' results in a binary file
+      # version 1
+      np.array([1], dtype=dti).tofile(fh, sep='')
+      # type 1
+      np.array([1], dtype=dti).tofile(fh, sep='')
+      # meta size
+      np.array([0], dtype=dti).tofile(fh, sep='')
+      # real type (double)
+      np.array([2], dtype=dti).tofile(fh, sep='')
+      # num dims
+      np.array([num_dims], dtype=dti).tofile(fh, sep='')
+      # num cells
+      np.array(num_cells, dtype=dti).tofile(fh, sep='')
+      # lower
+      np.array(lo, dtype=dtf).tofile(fh, sep='')
+      # upper
+      np.array(up, dtype=dtf).tofile(fh, sep='')
+      # elem_sz
+      np.array([num_comps*8], dtype=dti).tofile(fh, sep='')
+      # asize
+      np.array([len(values)], dtype=dti).tofile(fh, sep='')
+      # data
+      np.array(values, dtype=dtf).tofile(fh, sep='')
+
+      fh.close()
     elif mode == 'txt':
-      numRows = int(numCells.prod())
+      numRows = int(num_cells.prod())
       grid = self.getGrid()
       for d in range(num_dims):
         grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
@@ -421,7 +454,7 @@ class GData(object):
 
       basis = np.full(num_dims, 1.0)
       for d in range(num_dims-1):
-        basis[d] = numCells[(d+1):].prod()
+        basis[d] = num_cells[(d+1):].prod()
       #end
 
       fh = open(out_name, 'w')
@@ -436,10 +469,10 @@ class GData(object):
         for d in range(num_dims):
           line += '{:.15e}, '.format(grid[d][idxs[d]])
         #end
-        for c in range(numComps-1):
+        for c in range(num_comps-1):
           line += '{:.15e}, '.format(values[tuple(idxs)][c])
         #end
-        line += '{:.15e}\n'.format(values[tuple(idxs)][numComps-1])
+        line += '{:.15e}\n'.format(values[tuple(idxs)][num_comps-1])
         fh.write(line)
       #end
       fh.close()

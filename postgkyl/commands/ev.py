@@ -114,28 +114,28 @@ def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
       ctx.fail(click.style("{}".format(err), fg='red'))
     #end
 
-    # Compare the ctxdata of all the inputs and copy them to a
-    # ctxdata dictionary of the output
+    # Compare the ctx data of all the inputs and copy them to a
+    # ctx data dictionary of the output
     out_ctx = {}
+    remove_list = []
     for i in range(numIn):
       for k in tmp_ctx[i]:
         if k in out_ctx and tmp_ctx[i][k] == out_ctx[k]:
           pass # This key has been already copied and
                # matches the output; no action needed
         elif k in out_ctx:
-          out_ctx[k] = None # There is a discrepancy between
-                            # the ctxdata; set it to None
-                            # and remove later
+          remove_list.append(k) # There is a discrepancy between
+                                # the ctxdata; set it to remove later
         else:
-          out_ctx[k] = tmp_ctx[i][k] # Copy the ctxdata
+          out_ctx[k] = tmp_ctx[i][k] # Copy the ctx data
         #end
       #end
     #end
-    # Remove the discrepancies, i.e. the keys with None
-    for k in out_ctx:
-      if out_ctx[k] is None:
-        out_ctx.pop(k)
-      #end
+    # Remove duplicates
+    remove_list = list(dict.fromkeys(remove_list))
+    # Remove the discrepancies
+    for k in remove_list:
+      out_ctx.pop(k)
     #end
 
     for i in range(numOut):
@@ -170,7 +170,7 @@ def ev(ctx, **kwargs):
     only_active = False
   #end
 
-  tags = list(data.tagIterator(onlyActive=only_active))
+  tags = list(data.tagIterator(only_active=only_active))
   # outTag = kwargs['tag']
   # if outTag is None:
   #     if len(tags) == 1:
@@ -210,7 +210,7 @@ def ev(ctx, **kwargs):
     cnt = 0
     tag = outDataId[0]
     for out in ctx.obj['data'].iterator(tag=tag, select=outDataId[1],
-                                        onlyActive=only_active):
+                                        only_active=only_active):
       out.push(grid_stack[-1][cnt], value_stack[-1][cnt])
       cnt += 1
     #end
@@ -221,11 +221,11 @@ def ev(ctx, **kwargs):
     else:
       data.deactivateAll()
     #end
-    for grid, values, ctx in zip(grid_stack[-1], value_stack[-1], ctx_stack[-1]):
+    for grid, values, data_ctx in zip(grid_stack[-1], value_stack[-1], ctx_stack[-1]):
       out = GData(tag=tag,
-                  comp_grid=ctx.obj['compgrid'],
+                  #comp_grid=ctx.obj['compgrid'],
                   label=label,
-                  ctx=ctx)
+                  ctx=data_ctx)
       out.push(grid, values)
       data.add(out)
     #end
