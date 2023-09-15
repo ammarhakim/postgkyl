@@ -1,6 +1,6 @@
 package:
   name: postgkyl
-  version: 1.6.9
+  version: 1.7.0
 
 source:
   path: ./
@@ -25,7 +25,7 @@ requirements:
 
   run:
     - python
-    - numpy=1.21.*
+    - numpy
     - scipy
     - matplotlib
     - pytables
