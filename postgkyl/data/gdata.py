@@ -82,6 +82,7 @@ class GData(object):
     self.ctx['polyOrder'] = None
     self.ctx['basisType'] = None
     self.ctx['isModal'] = None
+    self.ctx['grid_type'] = 'uniform'
     if ctx:
       for key in ctx:
         self.ctx[key] = ctx[key]
