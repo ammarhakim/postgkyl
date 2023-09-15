@@ -91,6 +91,7 @@ class GData(object):
     self._label = ''
     self._customLabel = label
     self._var_name = var_name
+    file_name = str(file_name)
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
 
