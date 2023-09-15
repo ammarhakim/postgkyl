@@ -5,32 +5,20 @@ export CUSTOM_BUILD_NUMBER=$(date +'%Y%m%d')
 conda config --set anaconda_upload yes
 
 # Linux builds
-conda build . --python=3.6 --numpy 1.21.5 --channel conda-forge
-conda build . --python=3.7 --numpy 1.21.5 --channel conda-forge
-conda build . --python=3.8 --numpy 1.21.5 --channel conda-forge
-conda build . --python=3.9 --numpy 1.21.5 --channel conda-forge
+conda build . --python=3.11 --channel conda-forge
 
 # Convert
 OS=$(uname)
-PKG36=$(conda build . --python=3.6 --output)
-PKG37=$(conda build . --python=3.7 --output)
-PKG38=$(conda build . --python=3.8 --output)
-PKG39=$(conda build . --python=3.9 --output)
+PKG311=$(conda build . --python=3.11 --output)
 if [ $OS="Linux" ]
-then 
-    conda convert --platform osx-64 $PKG36
-    conda convert --platform osx-64 $PKG37
-    conda convert --platform osx-64 $PKG38
-    conda convert --platform osx-64 $PKG39
+then
+    conda convert --platform osx-64 $PKG311
     cd osx-64
     anaconda upload * --force
     cd ..
     rm -rf osx-64
 else
-    conda convert --platform linux-64 $PKG36
-    conda convert --platform linux-64 $PKG37
-    conda convert --platform linux-64 $PKG38
-    conda convert --platform linux-64 $PKG39
+    conda convert --platform linux-64 $PKG311
     cd linux-64
     anaconda upload * --force
     cd ..
