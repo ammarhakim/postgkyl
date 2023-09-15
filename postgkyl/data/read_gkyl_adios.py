@@ -35,13 +35,11 @@ class Read_gkyl_adios(object):
     try:
       import adios2
       fh = adios2.open(self.file_name, "rra")
+      if self.var_name in fh.available_variables():
+        self.is_frame = True
       for key in fh.available_variables():
         if 'TimeMesh' in key:
           self.is_diagnostic = True
-          break
-        #end
-        if self.var_name in key:
-          self.is_frame = True
           break
         #end
       #end
