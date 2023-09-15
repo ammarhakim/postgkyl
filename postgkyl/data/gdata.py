@@ -82,6 +82,7 @@ class GData(object):
     self.ctx['polyOrder'] = None
     self.ctx['basisType'] = None
     self.ctx['isModal'] = None
+    self.ctx['grid_type'] = 'uniform'
     if ctx:
       for key in ctx:
         self.ctx[key] = ctx[key]
@@ -174,9 +175,9 @@ class GData(object):
   #end
 
   def getInputFile(self):
-    import adios
-    fh = adios.file(self.file_name)
-    inputFile = adios.attr(fh, 'inputfile').value.decode('UTF-8')
+    import adios2
+    fh = adios2.open(self.file_name, 'rra')
+    inputFile = fh.read_attribute_string('inputfile')[0]
     fh.close()
     return inputFile
   #end
@@ -354,7 +355,6 @@ class GData(object):
             cleaning = True):
     """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file
     """
-    import adios
     # Create output file name
     if out_name is None:
       if self.file_name is not None:
@@ -378,61 +378,32 @@ class GData(object):
     lo, up = self.getBounds()
     values = self.getValues()
 
+    full_shape = list(num_cells) + [num_comps]
+    offset = [0] * (num_dims + 1)
+
+    if var_name is None:
+      var_name = self._var_name
+    #end
+
+    values = np.empty_like(self.getValues())
+    values[...] = self.getValues()
+
     if mode == 'bp':
-      # Create string number of cells and offsets
-      sNumCells = ''
-      sOffsets = ''
-      for i in range(num_dims):
-        sNumCells += '{:d},'.format(int(num_cells[i]))
-        sOffsets += '0,'
-      #end
-      sNumCells += '{:d}'.format(num_comps)
-      sOffsets += '0'
-
-      if var_name is None:
-        var_name = self._var_name
-      #end
-
+      import adios2
       if not append:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
-
-        # Define variables and attributes
-        adios.define_attribute_byvalue(groupId, 'numCells', '', num_cells)
-        adios.define_attribute_byvalue(groupId, 'lowerBounds', '', lo)
-        adios.define_attribute_byvalue(groupId, 'upperBounds', '', up)
-        fh = adios.open('CartField', out_name, 'w')
+        fh = adios2.open(out_name, "w", engine_type="BP3")
+        fh.write_attribute('numCells', num_cells)
+        fh.write_attribute('lowerBounds', lo)
+        fh.write_attribute('upperBounds', up)
 
         if self.ctx['time']:
-          adios.define_var(groupId, 'time', '',
-                           adios.DATATYPE.double, '', '', '')
-          adios.write(fh, 'time', self.ctx['time'])
+          fh.write('time', self.ctx['time'])
         #end
-
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, values)
-
-        adios.close(fh)
-        adios.finalize()
       else:
-        adios.init_noxml()
-        adios.set_max_buffer_size(bufferSize)
-        groupId = adios.declare_group('CartField', '')
-        adios.select_method(groupId, 'POSIX1', '', '')
-
-        fh = adios.open('CartField', out_name, 'a')
-
-        adios.define_var(groupId, var_name, '',
-                         adios.DATATYPE.double,
-                         sNumCells, sNumCells, sOffsets)
-        adios.write(fh, var_name, values)
-        adios.close(fh)
-        adios.finalize()
+        fh = adios2.open(out_name, "a", engine_type="BP3")
       #end
+      fh.write(var_name, values, full_shape, offset, full_shape)
+      fh.close()
 
       # Cleaning
       if cleaning:
@@ -481,7 +452,6 @@ class GData(object):
       for d in range(num_dims):
         grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
       #end
-      values = self.getValues()
 
       basis = np.full(num_dims, 1.0)
       for d in range(num_dims-1):

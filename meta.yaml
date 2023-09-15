@@ -31,10 +31,7 @@ requirements:
     - pytables
     - click
     - sympy
-    - conda-forge::adios=1.13.1
-    - conda-forge::adios-python=1.13.1=py38h522c649_1006
-    - adios
-    - adios-python
+    - conda-forge::adios2=2.9.1
     - msgpack-python
 
 test:
