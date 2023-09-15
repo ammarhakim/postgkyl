@@ -38,7 +38,7 @@ class Read_gkyl_adios(object):
       if self.var_name in fh.available_variables():
         self.is_frame = True
       for key in fh.available_variables():
-        if 'TimeMesh' in key:
+        if re.findall(r'TimeMesh\d+', key):
           self.is_diagnostic = True
           break
         #end
