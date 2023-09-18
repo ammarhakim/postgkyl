@@ -23,7 +23,6 @@ class Read_gkyl_adios(object):
     self.axes = axes
     self.comp = comp
 
-    self.checked_compatibility = False
     self.is_frame = False
     self.is_diagnostic = False
 
@@ -48,7 +47,6 @@ class Read_gkyl_adios(object):
     except:
       return False
     #end
-    self.checked_compatibility = True
     return self.is_frame or self.is_diagnostic
   #end
 
@@ -262,9 +260,6 @@ class Read_gkyl_adios(object):
 
   # ---- Exposed function ----------------------------------------------
   def get_data(self) -> tuple:
-    if not self.checked_compatibility:
-      self._is_compatible()
-
     grid, data = None, None
 
     if self.is_frame:
@@ -272,7 +267,6 @@ class Read_gkyl_adios(object):
     #end
     if self.is_diagnostic:
       grid, lower, upper, data = self._read_diagnostic()
-      cells = grid[0].shape
     #end
 
     return grid, data

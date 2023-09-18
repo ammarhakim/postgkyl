@@ -94,6 +94,9 @@ class GData(object):
     file_name = str(file_name)
     self.file_name = file_name
     self.mapc2p_name = mapc2p_name
+    self.color = None
+
+    self._status = True
 
     zs = (z0, z1, z2, z3, z4, z5)
 
@@ -112,7 +115,11 @@ class GData(object):
           var_name=var_name,
           c2p=mapc2p_name,
           axes=zs, comp=comp)
-        reader_set = True
+        if self._reader._is_compatible():
+          reader_set = True
+        else:
+          raise TypeError('{:s} cannot be read with the specified {:s} reader.'.format(self.file_name, reader_name))
+        #end
       else:
         for key in self._readers:
           self._reader = self._readers[key](
@@ -128,14 +135,11 @@ class GData(object):
         #end
       #end
       if not reader_set:
-        raise TypeError('\'file_name\' was specified ({:s}) but \'reader\' was either not set or successfully detected'.format(self.file_name))
+        raise TypeError('"file_name" was specified ({:s}) but "reader" was either not set or successfully detected'.format(self.file_name))
       #end
     #end
 
     self._grid, self._values = self._reader.get_data()
-
-    self.color = None
-    self._status = True
   #end
 
 
