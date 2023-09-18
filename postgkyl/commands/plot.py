@@ -44,6 +44,8 @@ from postgkyl.commands.util import verb_print
               help="Set marker size for scatter plots.")
 @click.option('--linewidth', type=click.FLOAT,
               help="Set the linewidth.")
+@click.option('--linestyle', type=click.Choice(['solid','dashed','dotted','dashdot']),
+              help="Set the linestyle.")
 @click.option('--style',
               help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option('-d', '--diverging', is_flag=True,

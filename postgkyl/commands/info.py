@@ -14,14 +14,14 @@ def info(ctx, **kwargs):
   verb_print(ctx, 'Starting info')
   data = ctx.obj['data']
   if kwargs['allsets']:
-    onlyActive = False
+    only_active = False
   else:
-    onlyActive = True
+    only_active = True
   #end
 
   for i, dat in data.iterator(kwargs['use'],
                               enum=True,
-                              onlyActive=onlyActive):
+                              only_active=only_active):
     if dat.getStatus():
       color = 'green'
       bold = True
@@ -32,7 +32,7 @@ def info(ctx, **kwargs):
     click.echo(
       click.style('{:s}{:s}({:s}#{:d})'.format(dat.getLabel(),
                                                ' ' if dat.getLabel()
-                                               else '', 
+                                               else '',
                                                dat.getTag(),
                                                i),
                   fg=color, bold=bold))

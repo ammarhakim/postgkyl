@@ -207,7 +207,7 @@ class Read_gkyl(object):
                            count=num_comp*cells, offset=self._offset)
     self._offset += cells * elem_sz_raw
     gshape = np.array((cells, num_comp), dtype=self._dti)
-    return cells, time, data_raw.reshape(gshape)
+    return [cells], time, data_raw.reshape(gshape)
   #end
 
   # ---- Read multi-range field data (version 1) -----------------------
@@ -318,8 +318,8 @@ class Read_gkyl(object):
 
     num_dims = len(cells)
     # Load or construct grid
-    if time:
-      grid = time
+    if time is not None:
+      grid = [time]
       if self.ctx:
         self.ctx['grid_type'] = 'nodal'
       #end

@@ -144,7 +144,7 @@ class Read_gkyl_adios(object):
     # Adjust boundaries for 'offset' and 'count'
     dz = (upper - lower) / cells
     if offset:
-      if self.ctx['grid_type']== 'uniform':
+      if self.ctx['grid_type'] == 'uniform':
         lower = lower + offset[:num_dims]*dz
         cells = cells - offset[:num_dims]
       elif self.ctx['grid_type'] == 'mapped':
@@ -156,10 +156,10 @@ class Read_gkyl_adios(object):
       #end
     #end
     if count:
-      if self._gridType == 'uniform':
+      if self.ctx['grid_type']  == 'uniform':
         upper = lower + count[:num_dims]*dz
         cells = count[:num_dims]
-      elif self._gridType == 'mapped':
+      elif self.ctx['grid_type']  == 'mapped':
         idx = np.full(num_dims, 0)
         for d in range(num_dims):
           idx[-d-1] = count[d]-1  #.Reverse indexing of idx because of transpose() in composing self._grid.
