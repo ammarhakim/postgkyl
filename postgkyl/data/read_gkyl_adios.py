@@ -35,13 +35,11 @@ class Read_gkyl_adios(object):
     try:
       import adios2
       fh = adios2.open(self.file_name, "rra")
+      if self.var_name in fh.available_variables():
+        self.is_frame = True
       for key in fh.available_variables():
-        if 'TimeMesh' in key:
+        if re.findall(r'TimeMesh\d+', key):
           self.is_diagnostic = True
-          break
-        #end
-        if self.var_name in key:
-          self.is_frame = True
           break
         #end
       #end
@@ -262,14 +260,13 @@ class Read_gkyl_adios(object):
 
   # ---- Exposed function ----------------------------------------------
   def get_data(self) -> tuple:
-    grid = None
+    grid, data = None, None
 
     if self.is_frame:
       grid, lower, upper, data = self._read_frame()
     #end
     if self.is_diagnostic:
       grid, lower, upper, data = self._read_diagnostic()
-      cells = grid[0].shape
     #end
 
     return grid, data
