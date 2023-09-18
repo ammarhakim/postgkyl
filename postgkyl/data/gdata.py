@@ -28,7 +28,7 @@ class GData(object):
   """
 
   def __init__(self,
-               file_name: str = None,
+               file_name: str = '',
                comp: Union[int, str] = None,
                z0: Union[int, str] = None,
                z1: Union[int, str] = None,
@@ -107,8 +107,7 @@ class GData(object):
       'h5' : Read_gkyl_h5,
       'flash' : Read_flash_h5
       }
-
-    if file_name is not None:
+    if self.file_name != '':
       reader_set = False
       if reader_name in self._readers:
         self._reader = self._readers[reader_name](
