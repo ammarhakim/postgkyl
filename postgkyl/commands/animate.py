@@ -186,7 +186,7 @@ def animate(ctx, **kwargs):
       num_dims = dat.getNumDims()
       if num_dims == 1:
         val = dat.getValues()*kwargs['yscale']
-      elif num_dims == 2:
+      else:
         val = dat.getValues()*kwargs['zscale']
       #end
       if vmin > np.nanmin(val):
@@ -203,7 +203,7 @@ def animate(ctx, **kwargs):
       if kwargs['ymax'] is None:
         kwargs['ymax'] = vmax
       #end
-    elif num_dims == 2:
+    else:
       if kwargs['zmin'] is None:
         kwargs['zmin'] = vmin
       #end
