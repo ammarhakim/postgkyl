@@ -34,7 +34,7 @@ class Read_gkyl_adios(object):
     # imported when actially needed
     try:
       import adios2
-      fh = adios2.open(self.file_name, "rra")
+      fh = adios2.open(self.file_name, 'rra')
       if self.var_name in fh.available_variables():
         self.is_frame = True
       for key in fh.available_variables():
@@ -94,7 +94,7 @@ class Read_gkyl_adios(object):
 
   def _read_frame(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, "rra")
+    fh = adios2.open(self.file_name, 'rra')
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
@@ -174,7 +174,7 @@ class Read_gkyl_adios(object):
     #  self.ctx['grid_type'] = adios.attr(fh, 'type').value.decode('UTF-8')
     #end
     if self.c2p:
-      grid_fh = adios2.open(self.c2p, 'r')
+      grid_fh = adios2.open(self.c2p, 'rra')
       grid_dims = grid_fh.available_variables()['CartGridField']['Shape']
       grid_dims = [int(v) for v in grid_dims.split(',')]
       offset, count = self._create_offset_count(grid_dims, self.axes, None)
@@ -224,11 +224,11 @@ class Read_gkyl_adios(object):
 
   def _read_diagnostic(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, "r")
+    fh = adios2.open(self.file_name, 'rra')
 
     def natural_sort(l):
         convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [convert(c) for c in re.split("([0-9]+)", key)]
+        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
         return sorted(l, key=alphanum_key)
 
     time_lst = [key for key in fh.available_variables() if 'TimeMesh' in key]
