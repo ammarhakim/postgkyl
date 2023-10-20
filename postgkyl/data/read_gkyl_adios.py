@@ -38,7 +38,7 @@ class Read_gkyl_adios(object):
       if self.var_name in fh.available_variables():
         self.is_frame = True
       for key in fh.available_variables():
-        if re.findall(r'TimeMesh\d+', key):
+        if 'TimeMesh' in key:
           self.is_diagnostic = True
           break
         #end
@@ -138,7 +138,7 @@ class Read_gkyl_adios(object):
     var_dims = fh.available_variables()[self.var_name]['Shape']
     var_dims = [int(v) for v in var_dims.split(',')]
     offset, count = self._create_offset_count(
-            var_dims, self.axes, self.comp, grid)
+      var_dims, self.axes, self.comp, grid)
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
@@ -227,9 +227,10 @@ class Read_gkyl_adios(object):
     fh = adios2.open(self.file_name, 'rra')
 
     def natural_sort(l):
-        convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-        return sorted(l, key=alphanum_key)
+      convert = lambda text: int(text) if text.isdigit() else text.lower()
+      alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+      return sorted(l, key=alphanum_key)
+    #end
 
     time_lst = [key for key in fh.available_variables() if 'TimeMesh' in key]
     data_lst = [key for key in fh.available_variables() if 'Data' in key]
