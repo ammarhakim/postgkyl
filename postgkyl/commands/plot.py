@@ -229,7 +229,6 @@ def plot(ctx, **kwargs):
     gplot(dat, kwargs['arg'], label_prefix=label, **kwargs)
     # ------------------------------------------------------------------
 
-
     if kwargs['subplots']:
       kwargs['start_axes'] = kwargs['start_axes'] + dat.getNumComps()
     #end

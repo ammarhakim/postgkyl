@@ -49,6 +49,8 @@ def _getRange(strIn, length):
               help="Select components that will became the grid of the new dataset.")
 @click.option('-y', type=click.STRING,
               help="Select components that will became the values of the new dataset.")
+@click.option('--periodic', '-p', is_flag=True,
+              help="Set the last component to match the first one")
 @click.pass_context
 def val2coord(ctx, **kwargs):
   """Given a dataset (typically a DynVector) selects columns from it to
@@ -92,7 +94,14 @@ def val2coord(ctx, **kwargs):
       #end
 
       x = values[..., xc]
-      y = values[..., yc, np.newaxis]
+      y = values[..., yc]
+
+      if kwargs['periodic']:
+        x = np.append(x, np.atleast_1d(x[0]), axis=0)
+        y = np.append(y, np.atleast_1d(y[0]), axis=0)
+      #end
+
+      y = y[..., np.newaxis] # Adding the required component index
 
       out = GData(tag=outTag,
                   label=kwargs['label'],
