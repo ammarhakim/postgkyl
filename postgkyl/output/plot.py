@@ -17,10 +17,7 @@ if sys.version_info[0] >= 3:
 def _colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
-  #if extend:
   return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
-  #end
-  #return fig.colorbar(obj, cax=cax2, label=label or "")
 #end
 
 def _get_nodal_grid(grid, cells):
@@ -333,6 +330,7 @@ def plot(data, args=(),
         z = (values[..., comp].transpose() + zshift) * zscale
         im = cax.contour(x, y, z,
                          levels, *args,
+                         origin="lower",
                          colors=color, linewidths=linewidth)
         if cont_label:
           cax.clabel(im, inline=1)
@@ -461,7 +459,6 @@ def plot(data, args=(),
                        format(num_dims))
     #end
 
-
     #---- Additional Formatting ----------------------------------------
     cax.grid(showgrid)
     # Legend
@@ -491,13 +488,16 @@ def plot(data, args=(),
     if logy:
       cax.set_yscale('log')
     #end
-    plt.autoscale(enable=True, axis='x', tight=True)
-    plt.autoscale(enable=True, axis='y')
+    if num_dims == 1: # this causes troubles with contours
+      plt.autoscale(enable=True, axis='x', tight=True)
+      plt.autoscale(enable=True, axis='y')
+    #end
     if xmin is not None or xmax is not None:
       cax.set_xlim(xmin, xmax)
+    #end
     if ymin is not None or ymax is not None:
       cax.set_ylim(ymin, ymax)
-
+    #end
     if num_dims == 2:
       if fixaspect:
         plt.setp(cax, aspect=aspect)
