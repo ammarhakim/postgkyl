@@ -498,10 +498,8 @@ def plot(data, args=(),
     if ymin is not None or ymax is not None:
       cax.set_ylim(ymin, ymax)
     #end
-    if num_dims == 2:
-      if fixaspect:
-        plt.setp(cax, aspect=aspect)
-      #end
+    if fixaspect:
+      plt.setp(cax, aspect=aspect)
     #end
   #end
 
