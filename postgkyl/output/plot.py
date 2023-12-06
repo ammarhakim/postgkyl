@@ -66,6 +66,7 @@ def plot(data, args=(),
          xmin=None, xmax=None, xscale=1.0, xshift=0.0,
          ymin=None, ymax=None, yscale=1.0, yshift=0.0,
          zmin=None, zmax=None, zscale=1.0, zshift=0.0,
+         relax=False,
          style=None, rcParams=None,
          legend=True, label_prefix='', colorbar=True,
          xlabel=None, ylabel=None, clabel=None, title=None,
@@ -488,7 +489,7 @@ def plot(data, args=(),
     if logy:
       cax.set_yscale('log')
     #end
-    if num_dims == 1: # this causes troubles with contours
+    if num_dims == 1 and not relax: # this causes troubles with contours
       plt.autoscale(enable=True, axis='x', tight=True)
       plt.autoscale(enable=True, axis='y')
     #end
