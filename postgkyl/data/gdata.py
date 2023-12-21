@@ -92,12 +92,12 @@ class GData(object):
     self._label = ''
     self._customLabel = label
     self._var_name = var_name
-    file_name = str(file_name)
-    self.file_name = file_name
+    self.file_name = str(file_name)
     self.mapc2p_name = mapc2p_name
     self.color = None
 
     self._status = True
+    self._is_loaded = False
 
     zs = (z0, z1, z2, z3, z4, z5)
 
@@ -111,7 +111,7 @@ class GData(object):
       reader_set = False
       if reader_name in self._readers:
         self._reader = self._readers[reader_name](
-          file_name=file_name,
+          file_name=self.file_name,
           ctx=self.ctx,
           var_name=var_name,
           c2p=mapc2p_name,
@@ -124,7 +124,7 @@ class GData(object):
       else:
         for key in self._readers:
           self._reader = self._readers[key](
-            file_name=file_name,
+            file_name=self.file_name,
             ctx= self.ctx,
             var_name=var_name,
             c2p=mapc2p_name,
@@ -139,7 +139,8 @@ class GData(object):
         raise TypeError('"file_name" was specified ({:s}) but "reader" was either not set or successfully detected'.format(self.file_name))
       #end
 
-      self._grid, self._values = self._reader.get_data()
+      self._reader.get_meta()
+      #self._grid, self._values = self._reader.get_data()
     #end
   #end
 
@@ -201,6 +202,10 @@ class GData(object):
   #end
 
   def getNumComps(self):
+    if not self._is_loaded:
+      self._grid, self._values = self._reader.get_data()
+      self._is_loaded = True
+    #end
     if self._values is not None:
       return int(self._values.shape[-1])
     else:
@@ -209,6 +214,10 @@ class GData(object):
   #end
 
   def getNumDims(self, squeeze=False):
+    if not self._is_loaded:
+      self._grid, self._values = self._reader.get_data()
+      self._is_loaded = True
+    #end
     if self._values is not None:
       num_dims = int(len(self._values.shape)-1)
       if squeeze:
@@ -240,6 +249,10 @@ class GData(object):
   #end
 
   def getGrid(self):
+    if not self._is_loaded:
+      self._grid, self._values = self._reader.get_data()
+      self._is_loaded = True
+    #end
     return self._grid
   #end
 
@@ -248,20 +261,27 @@ class GData(object):
   #end
 
   def getValues(self):
+    if not self._is_loaded:
+      self._grid, self._values = self._reader.get_data()
+      self._is_loaded = True
+    #end
     return self._values
   #end
 
   def setGrid(self, grid):
     self._grid = grid
+    self._is_loaded = True
   #end
 
   def setValues(self, values):
     self._values = values
+    self._is_loaded = True
   #end
 
   def push(self, grid, values):
     self._values = values
     self._grid = grid
+    self._is_loaded = True
     return self
   #end
 

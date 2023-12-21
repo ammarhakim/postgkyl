@@ -113,7 +113,9 @@ class Read_gkyl(object):
 
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
-  def _read_header(self):
+  def get_meta(self) -> None:
+    self._offset = 0
+
     if self._is_compatible():
       self._offset += 5 # Header contatins the gkyl magic sequence
 
@@ -144,7 +146,7 @@ class Read_gkyl(object):
   #end
 
   # ---- Read field data (version 1) -----------------------------------
-  def _read_t1_v1(self):
+  def _read_t1_v1(self) -> tuple:
     # read grid dimensions
     num_dims = np.fromfile(self.file_name, dtype=self._dti,
                            count=1, offset=self._offset)[0]
@@ -188,7 +190,7 @@ class Read_gkyl(object):
   #end
 
   # ---- Read dynvector data (version 1) -------------------------------
-  def _read_t2_v1(self):
+  def _read_t2_v1(self) -> tuple:
     elem_sz_raw = int(
       np.fromfile(self.file_name, dtype=self._dti,
                   count=1, offset=self._offset)[0])
@@ -211,7 +213,7 @@ class Read_gkyl(object):
   #end
 
   # ---- Read multi-range field data (version 1) -----------------------
-  def _read_t3_v1(self):
+  def _read_t3_v1(self) -> tuple:
     # read grid dimensions
     num_dims = np.fromfile(self.file_name, dtype=self._dti,
                            count=1, offset=self._offset)[0]
@@ -282,10 +284,6 @@ class Read_gkyl(object):
 
   # ---- Exposed function ----------------------------------------------
   def get_data(self) -> tuple:
-    self._offset = 0
-    self._read_header()
-
-    # Load values
     time = None
     if self.file_type == 1 or self.version == 0:
       cells, lower, upper, data = self._read_t1_v1()
@@ -356,5 +354,4 @@ class Read_gkyl(object):
 
     return grid, data
   #end
-
 #end
