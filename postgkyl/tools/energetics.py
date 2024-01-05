@@ -22,8 +22,8 @@ def energetics(dataElc, dataIon, dataField, overwrite=False, stack=False):
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
     # Grid is the same for each of the input objects
-    grid = dataField.getGrid()
-    valuesField = dataField.getValues()
+    grid = dataField.get_grid()
+    valuesField = dataField.get_values()
     # Output array is a seven component field
     # 1) Electron thermal, 2) Electron kinetic, 3) Ion thermal, 4) Ion kinetic
     # 5) Electric, 6) Magnetic, 7) Total

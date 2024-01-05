@@ -41,7 +41,7 @@ def write(ctx, **kwargs):
                               enum=True):
     out_name = '{:s}.{:s}'.format(fn, mode)
     if kwargs['single']:
-      var_name = '{:s}_{:d}'.format(dat.getTag(), i)
+      var_name = '{:s}_{:d}'.format(dat.get_tag(), i)
       cleaning = False
     else:
       if num_files > 1:

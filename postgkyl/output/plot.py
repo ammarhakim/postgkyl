@@ -128,7 +128,7 @@ def plot(data, args=(),
   #end
 
   if not bool(color):
-    cl = data.color
+    cl = data._color
   #end
   if bool(color):
     mpl.rcParams['lines.color'] = color
@@ -141,15 +141,15 @@ def plot(data, args=(),
   #end
 
   #---- Data Loading ---------------------------------------------------
-  num_dims = data.getNumDims(squeeze=True)
+  num_dims = data.get_num_dims(squeeze=True)
   if num_dims > 2:
     raise Exception('Only 1D and 2D plots are currently supported')
   #end
   # Get the handles on the grid and values
-  grid = data.getGrid().copy()
-  values = data.getValues()
-  lower, upper = data.getBounds()
-  cells = data.getNumCells()
+  grid = data.get_grid().copy()
+  values = data.get_values()
+  lower, upper = data.get_bounds()
+  cells = data.get_num_cells()
 
   # Squeeze the data (get rid of "collapsed" dimensions)
   axes_labels = ['$z_0$', '$z_1$', '$z_2$', '$z_3$', '$z_4$', '$z_5$']

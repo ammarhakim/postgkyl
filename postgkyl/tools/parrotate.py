@@ -11,24 +11,24 @@ def parrotate(data, rotator, rotateCoords='0:3', overwrite=False, stack=False):
     Parameters:
     data -- input GData object being rotated
     rotator -- GData object used for the rotation
-    rotateCoords -- optional input to specify a different set of coordinates in the rotator array used 
+    rotateCoords -- optional input to specify a different set of coordinates in the rotator array used
     for the rotation (e.g., if rotating to the local magnetic field of a finite volume simulation, rotateCoords='3:6')
 
     Notes:
     Assumes three component fields, and that the number of components is the last dimension.
     For a three-component field, the output is a new vector
     whose components are (u_{v_x}, u_{v_y}, u_{v_z}), i.e.,
-    the x, y, and z components of the vector u parallel to v. 
+    the x, y, and z components of the vector u parallel to v.
     """
     if stack:
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    grid = data.getGrid()
-    values = data.getValues()
+    grid = data.get_grid()
+    values = data.get_values()
     # Because rotateCoords is an input string, need to split and parse it to get the right coordinates
     s = rotateCoords.split(':')
-    valuesrot = rotator.getValues()[...,slice(int(s[0]), int(s[1]))]
+    valuesrot = rotator.get_values()[...,slice(int(s[0]), int(s[1]))]
 
     outrot = np.zeros(values.shape)
     # Assumes three component fields and that the number of components is the last dimension

@@ -13,12 +13,12 @@ import postgkyl.tools as diag
 def _get_pb(p_data=None, p_grid=None, p_values=None,
             b_data=None, b_grid=None, b_values=None):
   if p_data:
-    p_grid = p_data.getGrid()
-    p_values = p_data.getValues()
+    p_grid = p_data.get_grid()
+    p_values = p_data.get_values()
   #end
   if b_data:
-    b_grid = b_data.getGrid()
-    b_values = b_data.getValues()
+    b_grid = b_data.get_grid()
+    b_values = b_data.get_values()
   #end
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -37,12 +37,12 @@ def _get_pb(p_data=None, p_grid=None, p_values=None,
 def _get_sf(species_data=None, species_grid=None, species_values=None,
             field_data=None, field_grid=None, field_values=None):
   if species_data:
-    species_grid = species_data.getGrid()
-    species_values = species_data.getValues()
+    species_grid = species_data.get_grid()
+    species_values = species_data.get_values()
   #end
   if field_data:
-    field_grid = field_data.getGrid()
-    field_values = field_data.getValues()
+    field_grid = field_data.get_grid()
+    field_values = field_data.get_values()
   #end
 
   p_grid, p_values = diag.get_pij(species_grid, species_values)
@@ -54,12 +54,12 @@ def _get_sf(species_data=None, species_grid=None, species_values=None,
 def get_p_par(p_data=None, p_grid=None, p_values=None,
               b_data=None, b_grid=None, b_values=None):
   if p_data:
-    p_grid = p_data.getGrid()
-    p_values = p_data.getValues()
+    p_grid = p_data.get_grid()
+    p_values = p_data.get_values()
   #end
   if b_data:
-    b_grid = b_data.getGrid()
-    b_values = b_data.getValues()
+    b_grid = b_data.get_grid()
+    b_values = b_data.get_values()
   #end
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -82,12 +82,12 @@ def get_p_par(p_data=None, p_grid=None, p_values=None,
 def get_gkyl_10m_p_par(species_data=None, species_grid=None, species_values=None,
                        field_data=None, field_grid=None, field_values=None):
   if species_data:
-    species_grid = species_data.getGrid()
-    species_values = species_data.getValues()
+    species_grid = species_data.get_grid()
+    species_values = species_data.get_values()
   #end
   if field_data:
-    field_grid = field_data.getGrid()
-    field_values = field_data.getValues()
+    field_grid = field_data.get_grid()
+    field_values = field_data.get_values()
   #end
 
   p_grid, p_values = diag.get_pij(in_grid=species_grid, in_values=species_values)
@@ -101,12 +101,12 @@ def get_gkyl_10m_p_par(species_data=None, species_grid=None, species_values=None
 def get_p_perp(p_data=None, p_grid=None, p_values=None,
                b_data=None, b_grid=None, b_values=None):
   if p_data:
-    p_grid = p_data.getGrid()
-    p_values = p_data.getValues()
+    p_grid = p_data.get_grid()
+    p_values = p_data.get_values()
   #end
   if b_data:
-    b_grid = b_data.getGrid()
-    b_values = b_data.getValues()
+    b_grid = b_data.get_grid()
+    b_values = b_data.get_values()
   #end
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -122,12 +122,12 @@ def get_p_perp(p_data=None, p_grid=None, p_values=None,
 def get_gkyl_10m_p_perp(species_data=None, species_grid=None, species_values=None,
                         field_data=None, field_grid=None, field_values=None):
   if species_data:
-    species_grid = species_data.getGrid()
-    species_values = species_data.getValues()
+    species_grid = species_data.get_grid()
+    species_values = species_data.get_values()
   #end
   if field_data:
-    field_grid = field_data.getGrid()
-    field_values = field_data.getValues()
+    field_grid = field_data.get_grid()
+    field_values = field_data.get_values()
   #end
 
   p_grid, p_values =  diag.get_pij(in_grid=species_grid, in_values=species_values)
@@ -142,12 +142,12 @@ def get_agyro(p_data=None, p_grid=None, p_values=None,
               b_data=None, b_grid=None, b_values=None,
               measure="swisdak"):
   if p_data:
-    p_grid = p_data.getGrid()
-    p_values = p_data.getValues()
+    p_grid = p_data.get_grid()
+    p_values = p_data.get_values()
   #end
   if b_data:
-    b_grid = b_data.getGrid()
-    b_values = b_data.getValues()
+    b_grid = b_data.get_grid()
+    b_values = b_data.get_values()
   #end
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -191,12 +191,12 @@ def get_gkyl_10m_agyro(species_data=None, species_grid=None, species_values=None
                        field_data=None, field_grid=None, field_values=None,
                        measure="swisdak"):
   if species_data:
-    species_grid = species_data.getGrid()
-    species_values = species_data.getValues()
+    species_grid = species_data.get_grid()
+    species_values = species_data.get_values()
   #end
   if field_data:
-    field_grid = field_data.getGrid()
-    field_values = field_data.getValues()
+    field_grid = field_data.get_grid()
+    field_values = field_data.get_values()
   #end
 
   p_grid, p_values = diag.get_pij(in_grid=species_grid, in_values=species_values)

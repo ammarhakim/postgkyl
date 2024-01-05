@@ -11,7 +11,7 @@ from postgkyl.commands.util import verb_print
 def mult(ctx, **kwargs):
     verb_print(ctx, 'Multiplying by {:f}'.format(kwargs['factor']))
     for s in ctx.obj['sets']:
-        values = ctx.obj['dataSets'][s].getValues()
+        values = ctx.obj['dataSets'][s].get_values()
         values = values * kwargs['factor']
         ctx.obj['dataSets'][s].push(values)
     #end
@@ -23,7 +23,7 @@ def mult(ctx, **kwargs):
 def pow(ctx, **kwargs):
     verb_print(ctx, 'Calculating the power of {:f}'.format(kwargs['power']))
     for s in ctx.obj['sets']:
-        values = ctx.obj['dataSets'][s].getValues()
+        values = ctx.obj['dataSets'][s].get_values()
         values = values ** kwargs['power']
         ctx.obj['dataSets'][s].push(values)
     #end
@@ -34,18 +34,18 @@ def pow(ctx, **kwargs):
 def log(ctx):
     verb_print(ctx, 'Calculating the natural log')
     for s in ctx.obj['sets']:
-        values = ctx.obj['dataSets'][s].getValues()
+        values = ctx.obj['dataSets'][s].get_values()
         values = np.log(values)
         ctx.obj['dataSets'][s].push(values)
     #end
-#end    
+#end
 
 @click.command(help='Calculate absolute values of data')
 @click.pass_context
 def abs(ctx):
     verb_print(ctx, 'Calculating the absolute value')
     for s in ctx.obj['sets']:
-        values = ctx.obj['dataSets'][s].getValues()
+        values = ctx.obj['dataSets'][s].get_values()
         values = np.abs(values)
         ctx.obj['dataSets'][s].push(values)
     #end
@@ -60,8 +60,8 @@ def abs(ctx):
 def norm(ctx, **kwargs):
     verb_print(ctx, 'Normalizing data')
     for s in ctx.obj['sets']:
-        values = ctx.obj['dataSets'][s].getValues()
-        numComps = ctx.obj['dataSets'][s].getNumComps()
+        values = ctx.obj['dataSets'][s].get_values()
+        numComps = ctx.obj['dataSets'][s].get_num_comps()
         valuesOut = values.copy()
         for comp in range(numComps):
             if kwargs['shift']:

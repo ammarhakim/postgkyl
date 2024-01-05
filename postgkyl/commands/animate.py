@@ -183,11 +183,11 @@ def animate(ctx, **kwargs):
     vmin = float('inf')
     vmax = float('-inf')
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      num_dims = dat.getNumDims()
+      num_dims = dat.get_num_dims()
       if num_dims == 1:
-        val = dat.getValues()*kwargs['yscale']
+        val = dat.get_values()*kwargs['yscale']
       else:
-        val = dat.getValues()*kwargs['zscale']
+        val = dat.get_values()*kwargs['zscale']
       #end
       if vmin > np.nanmin(val):
         vmin = np.nanmin(val)

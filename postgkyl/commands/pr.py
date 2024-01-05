@@ -13,15 +13,15 @@ from postgkyl.commands.util import verb_print
 def pr(ctx, **kwargs):
   verb_print(ctx, 'Starting pr')
   data = ctx.obj['data']
-    
+
   for dat in data.iterator(kwargs['use']):
     if kwargs['grid']:
-      grid = dat.getGrid()
+      grid = dat.get_grid()
       for g in grid:
         click.echo(g)
       #end
     else:
-      click.echo(dat.getValues().squeeze())
+      click.echo(dat.get_values().squeeze())
     #end
   #end
 

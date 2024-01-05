@@ -5,8 +5,8 @@ def integrate(data, axis, overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    grid = list(data.getGrid())
-    values = np.copy(data.getValues())
+    grid = list(data.get_grid())
+    values = np.copy(data.get_values())
 
     # Convert Python input to an input Numpy understands
     if axis is not None:
@@ -30,7 +30,7 @@ def integrate(data, axis, overwrite=False, stack=False):
             raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
         #end
     else:
-        numDims = data.getNumDims()
+        numDims = data.get_num_dims()
         axis = tuple(range(numDims))
     #end
 

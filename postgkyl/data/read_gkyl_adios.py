@@ -16,7 +16,7 @@ class Read_gkyl_adios(object):
                axes : tuple = (None, None, None, None, None, None),
                comp : int = None,
                **kwargs) -> None:
-    self.file_name = file_name
+    self._file_name = file_name
     self.var_name = var_name
     self.c2p = c2p
 
@@ -34,7 +34,7 @@ class Read_gkyl_adios(object):
     # imported when actially needed
     try:
       import adios2
-      fh = adios2.open(self.file_name, 'rra')
+      fh = adios2.open(self._file_name, 'rra')
       if self.var_name in fh.available_variables():
         self.is_frame = True
       for key in fh.available_variables():
@@ -94,7 +94,7 @@ class Read_gkyl_adios(object):
 
   def _read_frame(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, 'rra')
+    fh = adios2.open(self._file_name, 'rra')
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
@@ -107,13 +107,13 @@ class Read_gkyl_adios(object):
     if 'builddate' in fh.available_attributes().keys():
       self.ctx['builddate'] = fh.read_attribute_string('builddate')[0]
     #end
-    if 'polyOrder' in fh.available_attributes().keys():
-      self.ctx['polyOrder'] = fh.read_attribute('polyOrder')[0]
-      self.ctx['isModal'] = True
+    if 'poly_order' in fh.available_attributes().keys():
+      self.ctx['poly_order'] = fh.read_attribute('poly_order')[0]
+      self.ctx['is_modal'] = True
     #end
-    if 'basisType' in fh.available_attributes().keys():
-      self.ctx['basisType'] = fh.read_attribute_string('basisType')[0]
-      self.ctx['isModal'] = True
+    if 'basis_type' in fh.available_attributes().keys():
+      self.ctx['basis_type'] = fh.read_attribute_string('basis_type')[0]
+      self.ctx['is_modal'] = True
     #end
     if 'charge' in fh.available_attributes().keys():
       self.ctx['charge'] = fh.read_attribute('charge')[0]
@@ -224,7 +224,7 @@ class Read_gkyl_adios(object):
 
   def _read_diagnostic(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, 'rra')
+    fh = adios2.open(self._file_name, 'rra')
 
     def natural_sort(l):
       convert = lambda text: int(text) if text.isdigit() else text.lower()

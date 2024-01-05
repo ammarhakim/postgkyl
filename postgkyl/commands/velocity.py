@@ -24,9 +24,9 @@ def velocity(ctx, **kwargs):
 
   for m0, m1 in zip(data.iterator(kwargs['density']),
                     data.iterator(kwargs['momentum'])):
-    grid = m0.getGrid()
-    valsM0 = m0.getValues()
-    valsM1 = m1.getValues()
+    grid = m0.get_grid()
+    valsM0 = m0.get_values()
+    valsM1 = m1.get_values()
 
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],

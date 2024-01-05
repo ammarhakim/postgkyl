@@ -32,28 +32,28 @@ class Read_flash_h5(object):
                var_name : str,
                ctx : dict = None,
                **kwargs) -> None:
-    self.file_name = file_name
+    self._file_name = file_name
     self.var_name = var_name
 
     self.ctx = ctx
   #end
 
   def _is_compatible(self) -> bool:
+    out = False
     try:
-      fh = tables.open_file(self.file_name, 'r')
-      if 'coordinates' in fh.root:
-        fh.close()
-        return True
-      #end
-      fh.close()
+      fh = tables.open_file(self._file_name, 'r')
     except:
       return False
     #end
-    return False
+    if 'coordinates' in fh.root:
+      out = True
+    #end
+    fh.close()
+    return out
   #end
 
   def _read_frame(self) -> tuple:
-    fh = tables.open_file(self.file_name, 'r')
+    fh = tables.open_file(self._file_name, 'r')
     coord = fh.root['coordinates'].read().transpose()
     bsize = fh.root['block size'].read().transpose()
     ntype = fh.root['node type'].read().transpose()

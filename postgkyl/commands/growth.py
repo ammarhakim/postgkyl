@@ -36,8 +36,8 @@ def growth(ctx, **kwargs):
   data = ctx.obj['data']
 
   for dat in data.iterator(kwargs['use']):
-    time = dat.getGrid()
-    values = dat.getValues()
+    time = dat.get_grid()
+    values = dat.get_values()
     num_dims = len(np.array(values.shape).squeeze())
 
     growth_rates = np.zeros(1)

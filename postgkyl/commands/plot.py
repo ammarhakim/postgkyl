@@ -167,7 +167,7 @@ def plot(ctx, **kwargs):
     kwargs['num_axes'] = 0
     kwargs['start_axes'] = 0
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      kwargs['num_axes'] = kwargs['num_axes'] + dat.getNumComps()
+      kwargs['num_axes'] = kwargs['num_axes'] + dat.get_num_comps()
     #end
     if kwargs['figure'] is None:
       kwargs['figure'] = 0
@@ -196,7 +196,7 @@ def plot(ctx, **kwargs):
     vmin = float('inf')
     vmax = float('-inf')
     for dat in ctx.obj['data'].iterator(kwargs['use']):
-      val = dat.getValues() * kwargs['zscale']
+      val = dat.get_values() * kwargs['zscale']
       if vmin > np.nanmin(val):
         vmin = np.nanmin(val)
       #end
@@ -222,7 +222,7 @@ def plot(ctx, **kwargs):
       kwargs['figure'] = int(i)
     #end
     if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
-      label = dat.getLabel()
+      label = dat.get_label()
     else:
       label = ''
     #end
@@ -232,7 +232,7 @@ def plot(ctx, **kwargs):
     # ------------------------------------------------------------------
 
     if kwargs['subplots']:
-      kwargs['start_axes'] = kwargs['start_axes'] + dat.getNumComps()
+      kwargs['start_axes'] = kwargs['start_axes'] + dat.get_num_comps()
     #end
 
     if (kwargs['save'] or kwargs['saveas']):
@@ -242,8 +242,8 @@ def plot(ctx, **kwargs):
         if file_name != "":
           file_name = file_name + "_"
         #end
-        if dat.file_name:
-          file_name = file_name + dat.file_name.split('.')[0]
+        if dat._file_name:
+          file_name = file_name + dat._file_name.split('.')[0]
         else:
           file_name = file_name + 'ev_'+ctx.obj['labels'][i].replace(' ', '_')
         #end

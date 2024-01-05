@@ -60,16 +60,16 @@ def collect(ctx, **kwargs):
       else:
         time[-1].append(i)
       #end
-      val = dat.getValues()
+      val = dat.get_values()
       if kwargs['sumdata']:
-        numDims = dat.getNumDims()
+        numDims = dat.get_num_dims()
         axis = tuple(range(numDims))
         values[-1].append(np.nansum(val, axis=axis))
       else:
         values[-1].append(val)
       #end
       if not grid[-1]:
-        grid[-1] = dat.getGrid().copy()
+        grid[-1] = dat.get_grid().copy()
       #end
       label = dat.getCustomLabel()
     #end

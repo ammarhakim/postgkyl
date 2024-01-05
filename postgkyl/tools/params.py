@@ -9,8 +9,8 @@ import postgkyl.tools as diag
 def get_magB(species_data=None, species_grid=None, species_values=None,
              field_data=None, field_grid=None, field_values=None):
   if field_data:
-    field_grid = field_data.getGrid()
-    field_values = field_data.getValues()
+    field_grid = field_data.get_grid()
+    field_values = field_data.get_values()
   #end
   b_grid = field_grid
   b_values = field_values[..., 3:6]
@@ -25,8 +25,8 @@ def get_vt(species_data=None, species_grid=None, species_values=None,
            gasGamma=5.0/3.0, numMom=None,
            mass=1.0, mu0=1.0, sqrt2=True, mhd=False):
   if species_data:
-    species_grid = species_data.getGrid()
-    species_values = species_data.getValues()
+    species_grid = species_data.get_grid()
+    species_values = species_data.get_values()
   #end
   if (mhd):
     out_grid, temp = diag.get_mhd_temp(species_data, gasGamma, mu0)

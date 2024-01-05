@@ -12,11 +12,11 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
     #surface)
     #only for 3D
     #compares the two results and determines if incompressibility is conserved
-    
+
     #get the matrices: rho, px, py, pz
     frame = postgkyl.GData(info_file + str(initFrame) + '.bp')
-    data = frame.getValues()
-    grid = frame.getGrid()
+    data = frame.get_values()
+    grid = frame.get_grid()
     dx = grid[0][1]-grid[0][0]
     dy = grid[1][1]-grid[1][0]
     dz = grid[2][1]-grid[2][0]
@@ -28,7 +28,7 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
 
     for i in range(initFrame, finalFrame+1):
         frame = postgkyl.GData(info_file + "%d.bp" %i)
-        data = frame.getValues()
+        data = frame.get_values()
 
         rho = data[:,:,:,0]
         px = data[:,:,:,1]
@@ -44,7 +44,7 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
         w_gradient = (np.gradient(w, dx, dy, dz, edge_order=2))
         A = [u_gradient, v_gradient, w_gradient]
         A = np.array(A)
-        
+
         u_x = np.array(u_gradient[0])
         u_y = np.array(u_gradient[1])
         u_z = np.array(u_gradient[2])
@@ -54,11 +54,11 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
         w_x = np.array(w_gradient[0])
         w_y = np.array(w_gradient[1])
         w_z = np.array(w_gradient[2])
-        
+
         #find enstrophy in terms of curl magnitude squared integrand
         curl_mag =((w_y-v_z)**2 + (u_z-w_x)**2 + (v_x - u_y)**2)
         enstrophy[0,r] = (np.sum(curl_mag, axis=(0,1,2))*dx*dy*dz)
-        
+
         #find incompressible enstrophy magnitude squared integrand
         for c in range(0, (len(u[:,0,0])-1)):
             for j in range(0, (len(u[0,:,0])-1)):
@@ -66,5 +66,5 @@ def calc_enstrophy(info_file, initFrame, finalFrame):
                     incom_mag[c,j,k] = np.trace(np.transpose(A[:,:,c,j,k])*A[:,:,c,j,k])*rho[c,j,k]
         incom_enstrophy[0,r] = (np.sum(incom_mag, axis=(0,1,2))*dx*dy*dz)
         r += 1
-      
-    return enstrophy, incom_enstrophy; 
+
+    return enstrophy, incom_enstrophy;

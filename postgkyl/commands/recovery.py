@@ -12,10 +12,10 @@ from postgkyl.data import GData
               help='Optional tag for the resulting array')
 @click.option('--label', '-l',
               help="Custom label for the result")
-@click.option('--basistype', '-b',
+@click.option('--basis_type', '-b',
               type=click.Choice(['ms', 'ns', 'mo']),
               help='Specify DG basis')
-@click.option('--polyorder', '-p', type=click.INT,
+@click.option('--poly_order', '-p', type=click.INT,
               help='Specify polynomial order')
 @click.option('--interp', '-i', type=click.INT,
               help='Number of poins to evaluate on')
@@ -28,22 +28,22 @@ def recovery(ctx, **kwargs):
   verb_print(ctx, 'Starting recovery')
   data = ctx.obj['data']
 
-  if kwargs['basistype'] is not None:
-    if kwargs['basistype'] == 'ms' or kwargs['basistype'] == 'ns':
-      basisType = 'serendipity'
-    elif kwargs['basistype'] == 'mo':
-      basisType = 'maximal-order'
+  if kwargs['basis_type'] is not None:
+    if kwargs['basis_type'] == 'ms' or kwargs['basis_type'] == 'ns':
+      basis_type = 'serendipity'
+    elif kwargs['basis_type'] == 'mo':
+      basis_type = 'maximal-order'
     #end
   else:
-    basisType = None
+    basis_type = None
   #end
 
   for dat in data.iterator(kwargs['use']):
     dg = GInterpModal(dat,
-                      kwargs['polyorder'], basisType,
+                      kwargs['poly_order'], basis_type,
                       kwargs['interp'], kwargs['periodic'])
     numNodes = dg.numNodes
-    numComps = int(dat.getNumComps() / numNodes)
+    numComps = int(dat.get_num_comps() / numNodes)
 
     #verb_print(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
     #dg.recovery(tuple(range(numComps)), stack=True)

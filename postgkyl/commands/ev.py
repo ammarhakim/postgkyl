@@ -41,7 +41,7 @@ def _data(ctx, grid_stack, value_stack, ctx_stack, strIn, tags, only_active):
 
     for dat in ctx.obj['data'].iterator(tag=tag_nm, select=setIdx,
                                         only_active=only_active):
-      tag_nm = dat.getTag()
+      tag_nm = dat.get_tag()
       if ctx_key:
         grid = None
         if ctx_key in dat.ctx:

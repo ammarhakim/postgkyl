@@ -23,8 +23,8 @@ def current(ctx, **kwargs):
   data = ctx.obj['data']
 
   for dat in data.iterator(kwargs['use']):
-    grid = dat.getGrid()
-    outcurrent = np.zeros(dat.getValues().shape)
+    grid = dat.get_grid()
+    outcurrent = np.zeros(dat.get_values().shape)
     grid, outcurrent = diag.accumulate_current(dat, kwargs['qbym'])
     dat.deactivate()
     out = GData(tag=kwargs['tag'],

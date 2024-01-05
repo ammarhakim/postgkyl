@@ -18,8 +18,8 @@ def accumulate_current(data, qbym=False, overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    grid = data.getGrid()
-    values = data.getValues()
+    grid = data.get_grid()
+    values = data.get_values()
     out = np.zeros(values.shape)
     factor = 0.0
     if (qbym and data.mass is not None and data.charge is not None):

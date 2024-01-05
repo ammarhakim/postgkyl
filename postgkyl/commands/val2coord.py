@@ -77,7 +77,7 @@ def val2coord(ctx, **kwargs):
   #end
 
   for setIdx, dat in data.iterator(kwargs['use'], enum=True):
-    values = dat.getValues()
+    values = dat.get_values()
     xComps = _getRange(kwargs['x'], len(values[0, :]))
     yComps = _getRange(kwargs['y'], len(values[0, :]))
 
@@ -108,7 +108,7 @@ def val2coord(ctx, **kwargs):
                   comp_grid=ctx.obj['compgrid'],
                   ctx=dat.ctx)
       out.push([x], y)
-      out.color = 'C0'
+      out._color = 'C0'
       data.add(out)
     #end
     dat.deactivate()

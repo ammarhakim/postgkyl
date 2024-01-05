@@ -2,8 +2,8 @@ kill(all) $
 
 load("modal-basis")$
 load("basis-precalc/basisSer1x1v")$
-polyOrder : 3 $
-basisX : basisC[polyOrder]
+poly_order : 3 $
+basisX : basisC[poly_order]
 N : length(basisX)$
 eta(xc, dx, basis) := subst(wx=x, subst(x=(wx-xc)/(dx/2), basis))$
 baL : eta(-dx/2, dx, basisX) $
@@ -23,7 +23,7 @@ substList : append(
 ) $
 out : float(expand(subst(substList, r1s))) $
 fh : openw("~/max-out/pgkyl_recov")$
-printf(fh, sconcat("def p", polyOrder, "e(x, fL, fR, dx):~%"))$
+printf(fh, sconcat("def p", poly_order, "e(x, fL, fR, dx):~%"))$
 printf(fh, "    return ~a~%~%", out) $
 
 qh : sum(q[j,i]*baC[i], i, 1,N) $
@@ -56,7 +56,7 @@ substList : append(
   makelist(q[j-1,i]=fL[i-1],i,1,N)
 ) $
 out : float(expand(subst(substList, r2s))) $
-printf(fh, sconcat("def p", polyOrder, "c1(x, f, fL, fR, dx):~%"))$
+printf(fh, sconcat("def p", poly_order, "c1(x, f, fL, fR, dx):~%"))$
 printf(fh, "    return ~a~%~%", out) $
 
 r2p : doExpand(r2, create_list(x^i, i, 0, N-1+2)) $
@@ -68,6 +68,6 @@ eqList2 : append(
 r2Sol : linsolve(eqList2, makelist(r2[i], i, 1, N+2)) $
 r2s : fullratsimp(subst(r2Sol, r2p)) $
 out : float(expand(subst(substList, r2s))) $
-printf(fh, sconcat("def p", polyOrder, "c0(x, f, fL, fR, dx):~%"))$
+printf(fh, sconcat("def p", poly_order, "c0(x, f, fL, fR, dx):~%"))$
 printf(fh, "    return ~a", out) $
 close(fh)$

@@ -23,8 +23,8 @@ def perprotate(data, rotator, rotateCoords='0:3', overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    grid = data.getGrid()
-    values = data.getValues()
+    grid = data.get_grid()
+    values = data.get_values()
 
     outrot = np.zeros(values.shape)
     outrot = values - diag.parrotate(data, rotator, rotateCoords)
