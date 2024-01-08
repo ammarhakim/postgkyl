@@ -77,9 +77,9 @@ class Read_gkyl(object):
   """Provides a framework to read gkylzero binary output
   """
 
-  def __init__(self, file_name : str,
-               ctx : dict = None,
-               c2p : str = None,
+  def __init__(self, file_name: str,
+               ctx: dict = None,
+               c2p: str = None,
                **kwargs) -> None:
     self.file_name = file_name
     self.c2p = c2p
@@ -92,6 +92,11 @@ class Read_gkyl(object):
 
     self.file_type = 1
     self.version = 0
+
+    self.lower = None
+    self.upper = None
+    self.num_comps = None
+    self.cells = None
 
     self.ctx = ctx
   #end
@@ -275,22 +280,28 @@ class Read_gkyl(object):
   # ---- Exposed function ----------------------------------------------
   def preload(self) -> None:
     self._read_header()
+    if self.file_type == 1 or self.file_type == 3 or self.version == 0:
+      self._read_domain_t1a3_v1()
+      if self.ctx:
+        self.ctx['cells'] = self.cells
+        self.ctx['lower'] = self.lower
+        self.ctx['upper'] = self.upper
+        self.ctx['num_comps'] = self.num_comps
+      #end
+    #end
   #end
 
   def load(self) -> tuple:
     time = None
     if self.file_type == 1 or self.version == 0:
-      self._read_domain_t1a3_v1()
       data = self._read_data_t1_v1()
     elif self.file_type == 2:
       time, data = self._read_t2_v1()
     elif self.file_type == 3:
-      self._read_domain_t1a3_v1()
       data = self._read_data_t3_v1()
     else:
       raise TypeError('This g0 format is not presently supported')
     #end
-
 
     # Load or construct grid
     if time is not None:
@@ -300,7 +311,8 @@ class Read_gkyl(object):
       #end
     elif self.c2p:
       grid_reader = Read_gkyl(self.c2p)
-      _, tmp = grid_reader.get_data()
+      grid_reader.preload()
+      _, tmp = grid_reader.load()
       num_comps = tmp.shape[-1]
       num_coeff = num_comps/num_dims
       grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]

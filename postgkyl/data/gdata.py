@@ -40,7 +40,8 @@ class GData(object):
                ctx: dict = {},
                comp_grid: bool = False,
                mapc2p_name: str = '',
-               reader_name: str = '') -> None:
+               reader_name: str = '',
+               load: bool = True) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -70,14 +71,14 @@ class GData(object):
     self._grid = None
     self._values = None # (N+1)D narray of values
 
-    self._lower = None
-    self._upper = None
-    self._num_cells = None
-    self._num_comps = None
 
     self.ctx = {}
     self.ctx['time']: float = None
     self.ctx['frame']: int = None
+    self.ctx['lower'] = None
+    self.ctx['upper'] = None
+    self.ctx['cells'] = None
+    self.ctx['num_comps'] = None
     self.ctx['changeset'] = None
     self.ctx['builddate'] = None
     self.ctx['poly_order']: int = None
@@ -142,7 +143,9 @@ class GData(object):
       #end
 
       self._reader.preload()
-      #self._grid, self._values = self._reader.get_data()
+      if load:
+        self._grid, self._values = self._reader.load()
+      #end
     #end
   #end
 
@@ -191,7 +194,9 @@ class GData(object):
 
 
   def get_num_cells(self):
-    if self._values is not None:
+    if self.ctx['cells'] is not None:
+      return self.ctx['cells']
+    elif self._values is not None:
       num_dims = len(self._values.shape)-1
       cells = np.zeros(num_dims, np.int32)
       for d in range(num_dims):
@@ -204,11 +209,9 @@ class GData(object):
   #end
 
   def get_num_comps(self):
-    if not self._is_loaded:
-      self._grid, self._values = self._reader.load()
-      self._is_loaded = True
-    #end
-    if self._values is not None:
+    if self.ctx['num_comps'] is not None:
+      return self.ctx['num_comps']
+    elif self._values is not None:
       return int(self._values.shape[-1])
     else:
       return 0
@@ -216,11 +219,9 @@ class GData(object):
   #end
 
   def get_num_dims(self, squeeze=False):
-    if not self._is_loaded:
-      self._grid, self._values = self._reader.load()
-      self._is_loaded = True
-    #end
-    if self._values is not None:
+    if self.ctx['cells'] is not None:
+      return len(self.ctx['cells'])
+    elif self._values is not None:
       num_dims = int(len(self._values.shape)-1)
       if squeeze:
         cells = self.get_num_cells()
@@ -237,7 +238,9 @@ class GData(object):
   #end
 
   def get_bounds(self):
-    if self._grid is not None:
+    if self.ctx['lower'] is not None:
+      return self.ctx['lower'], self.ctx['upper']
+    elif self._grid is not None:
       num_dims = len(self._values.shape)-1
       lo, up = np.zeros(num_dims), np.zeros(num_dims)
       for d in range(num_dims):
@@ -246,15 +249,11 @@ class GData(object):
       #end
       return lo, up
     else:
-      return np.array([]), np.array([])
+      return None, None
     #end
   #end
 
   def get_grid(self):
-    if not self._is_loaded:
-      self._grid, self._values = self._reader.load()
-      self._is_loaded = True
-    #end
     return self._grid
   #end
 
@@ -263,10 +262,6 @@ class GData(object):
   #end
 
   def get_values(self):
-    if not self._is_loaded:
-      self._grid, self._values = self._reader.load()
-      self._is_loaded = True
-    #end
     return self._values
   #end
 
@@ -307,26 +302,28 @@ class GData(object):
     numCells = self.get_num_cells()
     lower, upper = self.get_bounds()
 
-    if len(values) > 0:
-      output = ''
+    output = ''
 
-      if self.ctx['time'] is not None:
-        output += '├─ Time: {:e}\n'.format(self.ctx['time'])
-      #end
-      if self.ctx['frame'] is not None:
-        output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
-      #end
-      output += '├─ Number of components: {:d}\n'.format(numComps)
-      output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
+    if self.ctx['time'] is not None:
+      output += '├─ Time: {:e}\n'.format(self.ctx['time'])
+    #end
+    if self.ctx['frame'] is not None:
+      output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
+    #end
+    output += '├─ Number of components: {:d}\n'.format(numComps)
+    output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
+    if lower is not None:
       output += '├─ Grid: ({:s})\n'.format(self.get_gridType())
       for d in range(num_dims-1):
         output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, numCells[d])
         output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[d],
                                                       upper[d])
-        #end
+      #end
       output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, numCells[num_dims-1])
       output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[num_dims-1],
                                                     upper[num_dims-1])
+    #end
+    if values is not None:
       maximum = np.nanmax(values)
       maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
       minimum = np.nanmin(values)
@@ -339,35 +336,34 @@ class GData(object):
         output += '\n'
       #end
       output += '├─ Minimum: {:e} at {:s}'.format(minimum,
-                                                       str(minIdx[:num_dims]))
+                                                 str(minIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
-      if self.ctx['poly_order'] and self.ctx['basis_type']:
-        output += '\n├─ DG info:\n'
-        output += '│  ├─ Polynomial Order: {:d}\n'.format(self.ctx['poly_order'])
-        if self.ctx['is_modal']:
-          output += '│  └─ Basis Type: {:s} (modal)'.format(self.ctx['basis_type'])
-        else:
-          output += '│  └─ Basis Type: {:s}'.format(self.ctx['basis_type'])
-        #end
-      #end
-      if self.ctx['changeset'] and self.ctx['builddate']:
-        output += '\n├─ Created with Gkeyll:\n'
-        output += '│  ├─ Changeset: {:s}\n'.format(self.ctx['changeset'])
-        output += '│  └─ Build Date: {:s}'.format(self.ctx['builddate'])
-      #end
-      for key in self.ctx:
-        if key not in ['time', 'frame', 'changeset', 'builddate',
-                       'basis_type', 'poly_order', 'is_modal']:
-          output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
-        #end
-      #end
-
-      return output
-    else:
-      return 'No data'
     #end
+    if self.ctx['poly_order'] and self.ctx['basis_type']:
+      output += '\n├─ DG info:\n'
+      output += '│  ├─ Polynomial Order: {:d}\n'.format(self.ctx['poly_order'])
+      if self.ctx['is_modal']:
+        output += '│  └─ Basis Type: {:s} (modal)'.format(self.ctx['basis_type'])
+      else:
+        output += '│  └─ Basis Type: {:s}'.format(self.ctx['basis_type'])
+      #end
+    #end
+    if self.ctx['changeset'] and self.ctx['builddate']:
+      output += '\n├─ Created with Gkeyll:\n'
+      output += '│  ├─ Changeset: {:s}\n'.format(self.ctx['changeset'])
+      output += '│  └─ Build Date: {:s}'.format(self.ctx['builddate'])
+    #end
+    for key in self.ctx:
+      if key not in ['time', 'frame', 'changeset', 'builddate',
+                     'basis_type', 'poly_order', 'is_modal', 'lower',
+                     'upper', 'cells', 'num_comps', 'grid_type']:
+        output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
+      #end
+    #end
+
+    return output
   #end
 
 
