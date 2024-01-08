@@ -320,15 +320,15 @@ class GData(object):
                                                       upper[d])
       #end
       output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, numCells[num_dims-1])
-      output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[num_dims-1],
-                                                    upper[num_dims-1])
+      output += 'Lower: {:e}; Upper: {:e}'.format(lower[num_dims-1],
+                                                  upper[num_dims-1])
     #end
     if values is not None:
       maximum = np.nanmax(values)
       maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
       minimum = np.nanmin(values)
       minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-      output += '├─ Maximum: {:e} at {:s}'.format(maximum,
+      output += '\n├─ Maximum: {:e} at {:s}'.format(maximum,
                                                   str(maxIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}\n'.format(maxIdx[-1])
