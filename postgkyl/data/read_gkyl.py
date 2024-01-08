@@ -113,7 +113,7 @@ class Read_gkyl(object):
 
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
-  def get_meta(self) -> None:
+  def _read_header(self) -> None:
     self.offset = 0
 
     if self._is_compatible():
@@ -132,7 +132,8 @@ class Read_gkyl(object):
       self.offset += 8
 
       # read meta
-      self.offset += meta_size # Skip this for now
+      ## skip this for now
+      self.offset += meta_size
     #end
 
     # read real-type
@@ -226,7 +227,7 @@ class Read_gkyl(object):
 
   # ---- Read dynvector data (version 1) -------------------------------
   def _read_t2_v1(self) -> tuple:
-    cells = [0]
+    cells = 0
     time = np.array([])
     data = np.array([[]])
     while True: # Python does not have DO .. WHILE loop
@@ -241,22 +242,22 @@ class Read_gkyl(object):
       self.offset += 8
 
       loop_time = np.fromfile(self.file_name, dtype=self.dtf,
-                              count=cells, offset=self.offset)
+                              count=loop_cells, offset=self.offset)
       self.offset += loop_cells * 8
 
       data_raw = np.fromfile(self.file_name, dtype=self.dtf,
-                             count=num_comps * cells,
+                             count=num_comps * loop_cells,
                              offset=self.offset)
       self.offset += loop_cells * elem_sz_raw
       gshape = np.array((loop_cells, num_comps), dtype=self.dti)
 
       time = np.append(time, loop_time)
-      if cells[0] == 0:
+      if cells == 0:
         data = data_raw.reshape(gshape)
       else:
           data = np.append(data, data_raw.reshape(gshape), axis=0)
       #end
-      cells[0] += loop_cells[0]
+      cells += loop_cells
       if self.offset == os.path.getsize(self.file_name):
         break
       #end
@@ -264,15 +265,19 @@ class Read_gkyl(object):
       if self.file_type != 2:
         raise TypeError('Inconsitent data in g0 dynVector file.')
       #end
-      self.cells = cells
-      self.lower = np.atleast_1d(time.min())
-      self.upper = np.atleast_1d(time.max())
-      return time, data
     #end
+    self.cells = [cells]
+    self.lower = np.atleast_1d(time.min())
+    self.upper = np.atleast_1d(time.max())
+    return time, data
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self) -> tuple:
+  def preload(self) -> None:
+    self._read_header()
+  #end
+
+  def load(self) -> tuple:
     time = None
     if self.file_type == 1 or self.version == 0:
       self._read_domain_t1a3_v1()

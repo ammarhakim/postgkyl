@@ -141,7 +141,7 @@ class GData(object):
         raise TypeError('"file_name" was specified ({:s}) but "reader" was either not set or successfully detected'.format(self._file_name))
       #end
 
-      self._reader.get_meta()
+      self._reader.preload()
       #self._grid, self._values = self._reader.get_data()
     #end
   #end
@@ -205,7 +205,7 @@ class GData(object):
 
   def get_num_comps(self):
     if not self._is_loaded:
-      self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.load()
       self._is_loaded = True
     #end
     if self._values is not None:
@@ -217,7 +217,7 @@ class GData(object):
 
   def get_num_dims(self, squeeze=False):
     if not self._is_loaded:
-      self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.load()
       self._is_loaded = True
     #end
     if self._values is not None:
@@ -252,7 +252,7 @@ class GData(object):
 
   def get_grid(self):
     if not self._is_loaded:
-      self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.load()
       self._is_loaded = True
     #end
     return self._grid
@@ -264,7 +264,7 @@ class GData(object):
 
   def get_values(self):
     if not self._is_loaded:
-      self._grid, self._values = self._reader.get_data()
+      self._grid, self._values = self._reader.load()
       self._is_loaded = True
     #end
     return self._values
