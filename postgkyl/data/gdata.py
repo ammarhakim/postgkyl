@@ -41,7 +41,8 @@ class GData(object):
                comp_grid: bool = False,
                mapc2p_name: str = '',
                reader_name: str = '',
-               load: bool = True) -> None:
+               load: bool = True,
+               click_mode: bool = False) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -104,7 +105,7 @@ class GData(object):
 
     zs = (z0, z1, z2, z3, z4, z5)
 
-    self._readers = {
+    _readers = {
       'gkyl' : Read_gkyl,
       'adios' : Read_gkyl_adios,
       'h5' : Read_gkyl_h5,
@@ -112,34 +113,27 @@ class GData(object):
       }
     if self._file_name != '':
       reader_set = False
-      if reader_name in self._readers:
-        self._reader = self._readers[reader_name](
+      if reader_name in _readers:
+        # Keep only the user-specified reader
+        reader = _readers[reader_name]
+        _readers.clear()
+        _readers[reader_name] = reader
+      #end
+      for key in _readers:
+        self._reader = _readers[key](
           file_name=self._file_name,
-          ctx=self.ctx,
+          ctx= self.ctx,
           var_name=var_name,
           c2p=mapc2p_name,
-          axes=zs, comp=comp)
+          axes=zs, comp=comp,
+          click_mode=click_mode)
         if self._reader._is_compatible():
           reader_set = True
-        else:
-          raise TypeError('{:s} cannot be read with the specified {:s} reader.'.format(self._file_name, reader_name))
-        #end
-      else:
-        for key in self._readers:
-          self._reader = self._readers[key](
-            file_name=self._file_name,
-            ctx= self.ctx,
-            var_name=var_name,
-            c2p=mapc2p_name,
-            axes=zs, comp=comp)
-          if self._reader._is_compatible():
-            reader_set = True
-            break
-          #end
+          break
         #end
       #end
       if not reader_set:
-        raise TypeError('"file_name" was specified ({:s}) but "reader" was either not set or successfully detected'.format(self._file_name))
+        raise TypeError('"file_name" was specified ({:s}) but cannot be read with {:s}'.format(self._file_name, _readers))
       #end
 
       self._reader.preload()
@@ -404,7 +398,7 @@ class GData(object):
     offset = [0] * (num_dims + 1)
 
     if var_name is None:
-      var_name = self._var_name
+      var_name = "TestName" #self._var_name
     #end
 
     values = np.empty_like(self.get_values())

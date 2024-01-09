@@ -1,5 +1,5 @@
 import numpy as np
-import os.path
+import click
 import re
 
 from postgkyl.utils import idxParser
@@ -9,12 +9,13 @@ class Read_gkyl_adios(object):
   """
 
   def __init__(self,
-               file_name : str,
-               ctx : dict = None,
-               var_name : str = 'CartGridField',
-               c2p :str = None,
-               axes : tuple = (None, None, None, None, None, None),
-               comp : int = None,
+               file_name: str,
+               ctx: dict = None,
+               var_name: str = 'CartGridField',
+               c2p: str = None,
+               axes: tuple = (None, None, None, None, None, None),
+               comp: int = None,
+               click_mode: bool = False,
                **kwargs) -> None:
     self._file_name = file_name
     self.var_name = var_name
@@ -30,6 +31,7 @@ class Read_gkyl_adios(object):
 
     self.is_frame = False
     self.is_diagnostic = False
+    self.click_mode = click_mode
 
     self.ctx = ctx
   #end
@@ -39,19 +41,27 @@ class Read_gkyl_adios(object):
       import adios2 # Adios has been a problematic dependency;
         # therefore it is only imported when actially needed
       fh = adios2.open(self._file_name, 'rra')
-      if self.var_name in fh.available_variables():
-        self.is_frame = True
-      for key in fh.available_variables():
-        if 'TimeMesh' in key:
+      for vn in fh.available_variables():
+        if 'TimeMesh' in vn:
           self.is_diagnostic = True
-          break
+          fh.close()
+          return True
         #end
       #end
+
+      available_var_names = ''
+      for vn in fh.available_variables():
+        available_var_names += '\'{:s}\', '.format(str(vn))
+      #end
+      if self.var_name not in fh.available_variables():
+        self.ctx['var_names'] = available_var_names[:-2]
+      #end
+      self.is_frame = True
       fh.close()
+      return True
     except:
       return False
     #end
-    return self.is_frame or self.is_diagnostic
   #end
 
   def _create_offset_count(self, dims, zs, comp, grid=None) -> tuple:
@@ -138,6 +148,22 @@ class Read_gkyl_adios(object):
   def _load_frame(self) -> tuple:
     import adios2
     fh = adios2.open(self._file_name, 'rra')
+
+    if self.var_name not in fh.available_variables():
+      if self.click_mode:
+        var_name = self.var_name
+        while True:
+          var_name = click.prompt('Variable name \'{:s}\' is not available please select from the available ones: {:s}'.format(var_name, self.ctx['var_names']))
+          if var_name in fh.available_variables():
+            self.var_name = var_name
+            self.ctx.pop('var_names', None)
+            break
+          #end
+        #end
+      else:
+        raise ValueError('Could not find the variable \'{:s}\'; available variables are: {:s}'. format(var_name, self.ctx['var_names']))
+      #end
+    #end
 
     num_dims = len(self.cells)
     grid = [np.linspace(self.lower[d],
