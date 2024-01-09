@@ -323,8 +323,14 @@ def plot(data, args=(),
             levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
           else:
             levels = np.array(clevels.split(','))
+            # Filter out empty elements
+            levels = np.array(list(filter(None, levels)))
           #end
         #end
+        if type(levels) == np.ndarray and len(levels) == 1:
+          colorbar = False
+        #end
+        print(levels)
         nodal_grid = _get_nodal_grid(grid, cells)
         x = (nodal_grid[0] + xshift) * xscale
         y = (nodal_grid[1] + yshift) * yscale
