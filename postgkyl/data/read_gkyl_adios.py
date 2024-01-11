@@ -153,7 +153,7 @@ class Read_gkyl_adios(object):
       if self.click_mode:
         var_name = self.var_name
         while True:
-          var_name = click.prompt('Variable name \'{:s}\' is not available please select from the available ones: {:s}'.format(var_name, self.ctx['var_names']))
+          var_name = click.prompt('Variable name \'{:s}\' is not available, please select from the available ones: {:s}'.format(var_name, self.ctx['var_names']))
           if var_name in fh.available_variables():
             self.var_name = var_name
             self.ctx.pop('var_names', None)

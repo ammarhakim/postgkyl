@@ -101,7 +101,6 @@ class GData(object):
     self._color = None
 
     self._status = True
-    self._is_loaded = False
 
     zs = (z0, z1, z2, z3, z4, z5)
 
@@ -214,21 +213,21 @@ class GData(object):
 
   def get_num_dims(self, squeeze=False):
     if self.ctx['cells'] is not None:
-      return len(self.ctx['cells'])
+      num_dims = len(self.ctx['cells'])
     elif self._values is not None:
       num_dims = int(len(self._values.shape)-1)
-      if squeeze:
-        cells = self.get_num_cells()
-        for d in range(num_dims):
-          if cells[d] == 1:
-            num_dims = num_dims - 1
-          #end
-        #end
-      #end
-      return num_dims
     else:
       return 0
     #end
+    if squeeze:
+      cells = self.get_num_cells()
+      for d in range(num_dims):
+        if cells[d] == 1:
+          num_dims = num_dims - 1
+        #end
+      #end
+    #end
+    return num_dims
   #end
 
   def get_bounds(self):
@@ -247,32 +246,35 @@ class GData(object):
     #end
   #end
 
-  def get_grid(self):
+  def get_grid(self) -> list:
     return self._grid
   #end
 
-  def get_gridType(self):
+  def get_gridType(self) -> str:
     return self.ctx['grid_type']
   #end
 
-  def get_values(self):
+  def get_values(self) -> np.ndarray:
     return self._values
   #end
 
-  def set_grid(self, grid):
+  def set_grid(self, grid) -> None:
     self._grid = grid
-    self._is_loaded = True
   #end
 
-  def set_values(self, values):
+  def set_values(self, values) -> None:
     self._values = values
-    self._is_loaded = True
+    if not np.array_equal(values.shape[:-1], self.ctx['cells']):
+      self.ctx['cells'] = values.shape[:-1]
+    #end
+    if values.shape[-1] != self.ctx['num_comps']:
+      self.ctx['num_comps'] = values.shape[-1]
+    #end
   #end
 
-  def push(self, grid, values):
-    self._values = values
-    self._grid = grid
-    self._is_loaded = True
+  def push(self, grid, values) -> None:
+    self.set_values(values)
+    self.set_grid(grid)
     return self
   #end
 
@@ -398,7 +400,7 @@ class GData(object):
     offset = [0] * (num_dims + 1)
 
     if var_name is None:
-      var_name = "TestName" #self._var_name
+      var_name = self._var_name
     #end
 
     values = np.empty_like(self.get_values())
@@ -437,7 +439,9 @@ class GData(object):
 
       fh = open(out_name, 'w')
 
-      np.array([103, 107, 121, 108, 48], dtype=np.dtype('b')).tofile(fh, sep='')  # sep='' results in a binary file
+      # sep='' results in a binary file
+      np.array([103, 107, 121, 108, 48],
+               dtype=np.dtype('b')).tofile(fh, sep='')
       # version 1
       np.array([1], dtype=dti).tofile(fh, sep='')
       # type 1
