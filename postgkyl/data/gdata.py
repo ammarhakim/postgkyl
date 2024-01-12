@@ -186,7 +186,7 @@ class GData(object):
   #end
 
 
-  def get_num_cells(self):
+  def get_num_cells(self) -> np.ndarray:
     if self.ctx['cells'] is not None:
       return self.ctx['cells']
     elif self._values is not None:
@@ -201,7 +201,7 @@ class GData(object):
     #end
   #end
 
-  def get_num_comps(self):
+  def get_num_comps(self) -> int:
     if self.ctx['num_comps'] is not None:
       return self.ctx['num_comps']
     elif self._values is not None:
@@ -211,7 +211,7 @@ class GData(object):
     #end
   #end
 
-  def get_num_dims(self, squeeze=False):
+  def get_num_dims(self, squeeze=False) -> int:
     if self.ctx['cells'] is not None:
       num_dims = len(self.ctx['cells'])
     elif self._values is not None:
@@ -230,7 +230,7 @@ class GData(object):
     return num_dims
   #end
 
-  def get_bounds(self):
+  def get_bounds(self) -> np.ndarray:
     if self.ctx['lower'] is not None:
       return self.ctx['lower'], self.ctx['upper']
     elif self._grid is not None:
@@ -258,8 +258,17 @@ class GData(object):
     return self._values
   #end
 
+
   def set_grid(self, grid) -> None:
     self._grid = grid
+    num_dims = self.get_num_dims()
+    lo, up = np.zeros(num_dims), np.zeros(num_dims)
+    for d in range(num_dims):
+      lo[d] = self._grid[d].min()
+      up[d] = self._grid[d].max()
+    #end
+    self.ctx['lower'] = lo
+    self.ctx['upper'] = up
   #end
 
   def set_values(self, values) -> None:

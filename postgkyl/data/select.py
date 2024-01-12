@@ -36,19 +36,19 @@ def select(data, comp=None, overwrite=False,
       else:
         len_grid = grid[d].shape[d]
       #end
-      nodal = (values.shape[d] == len_grid)
-      idx = idxParser(z, grid[d], nodal)
+      is_matching = (values.shape[d] == len_grid)
+      idx = idxParser(z, grid[d], is_matching)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
         vIdx = slice(idx, idx+1)
-        gIdx = slice(idx, idx+2) if nodal else slice(idx, idx+1)
+        gIdx = slice(idx, idx+2) if not is_matching else slice(idx, idx+1)
       elif isinstance(idx, slice):
         vIdx = idx
-        gIdx = slice(idx.start, idx.stop+1) if nodal else idx
+        gIdx = slice(idx.start, idx.stop+1) if not is_matching else idx
       else:
-        raise TypeError("The coordinate select can be only single index (int) or a slice")
+        raise TypeError('The coordinate select can be only single index (int) or a slice')
       #end
       if uniform_grid:
         grid[d] = grid[d][gIdx]
