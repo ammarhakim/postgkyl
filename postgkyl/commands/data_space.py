@@ -138,7 +138,7 @@ class DataSpace(object):
     names = []
     labels = []
     for dat in self.iterator():
-      file_name = dat.file_name
+      file_name = dat._file_name
       extensionLen = len(file_name.split('.')[-1])
       file_name = file_name[:-(extensionLen+1)]
       # only remove the file extension but take into account
@@ -172,7 +172,7 @@ class DataSpace(object):
     #end
     cnt = 0
     for dat in self.iterator():
-      dat.setLabel(labels[cnt])
+      dat.set_label(labels[cnt])
       cnt += 1
     #end
   #end
@@ -180,11 +180,11 @@ class DataSpace(object):
   #-----------------------------------------------------------------
   #-- Adding datasets ----------------------------------------------
   def add(self, data):
-    tagNm = data.getTag()
-    if tagNm in self._datasetDict:
-      self._datasetDict[tagNm].append(data)
+    tag_nm = data.get_tag()
+    if tag_nm in self._datasetDict:
+      self._datasetDict[tag_nm].append(data)
     else:
-      self._datasetDict[tagNm] = [data]
+      self._datasetDict[tag_nm] = [data]
     #end
   #end
 

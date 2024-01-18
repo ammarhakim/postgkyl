@@ -1,5 +1,5 @@
 import numpy as np
-import os.path
+import click
 import re
 
 from postgkyl.utils import idxParser
@@ -9,45 +9,59 @@ class Read_gkyl_adios(object):
   """
 
   def __init__(self,
-               file_name : str,
-               ctx : dict = None,
-               var_name : str = 'CartGridField',
-               c2p :str = None,
-               axes : tuple = (None, None, None, None, None, None),
-               comp : int = None,
+               file_name: str,
+               ctx: dict = None,
+               var_name: str = 'CartGridField',
+               c2p: str = None,
+               axes: tuple = (None, None, None, None, None, None),
+               comp: int = None,
+               click_mode: bool = False,
                **kwargs) -> None:
-    self.file_name = file_name
+    self._file_name = file_name
     self.var_name = var_name
     self.c2p = c2p
 
     self.axes = axes
     self.comp = comp
 
+    self.lower = None
+    self.upper = None
+    self.num_comps = None
+    self.cells = None
+
     self.is_frame = False
     self.is_diagnostic = False
+    self.click_mode = click_mode
 
     self.ctx = ctx
   #end
 
   def _is_compatible(self) -> bool:
-    # Adios has been a problematic dependency; therefore it is only
-    # imported when actially needed
     try:
-      import adios2
-      fh = adios2.open(self.file_name, 'rra')
-      if self.var_name in fh.available_variables():
-        self.is_frame = True
-      for key in fh.available_variables():
-        if 'TimeMesh' in key:
+      import adios2 # Adios has been a problematic dependency;
+        # therefore it is only imported when actially needed
+      fh = adios2.open(self._file_name, 'rra')
+      for vn in fh.available_variables():
+        if 'TimeMesh' in vn:
           self.is_diagnostic = True
-          break
+          fh.close()
+          return True
         #end
       #end
+
+      available_var_names = ''
+      for vn in fh.available_variables():
+        available_var_names += '\'{:s}\', '.format(str(vn))
+      #end
+      if self.var_name not in fh.available_variables():
+        self.ctx['var_names'] = available_var_names[:-2]
+      #end
+      self.is_frame = True
       fh.close()
+      return True
     except:
       return False
     #end
-    return self.is_frame or self.is_diagnostic
   #end
 
   def _create_offset_count(self, dims, zs, comp, grid=None) -> tuple:
@@ -92,15 +106,15 @@ class Read_gkyl_adios(object):
     #end
   #end
 
-  def _read_frame(self) -> tuple:
+  def _preload_frame(self) -> None:
     import adios2
-    fh = adios2.open(self.file_name, 'rra')
+    fh = adios2.open(self._file_name, 'rra')
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
-    lower = np.atleast_1d(fh.read_attribute('lowerBounds'))
-    upper = np.atleast_1d(fh.read_attribute('upperBounds'))
-    cells = np.atleast_1d(fh.read_attribute('numCells'))
+    self.lower = np.atleast_1d(fh.read_attribute('lowerBounds'))
+    self.upper = np.atleast_1d(fh.read_attribute('upperBounds'))
+    self.cells = np.atleast_1d(fh.read_attribute('numCells'))
     if 'changeset' in fh.available_attributes().keys():
       self.ctx['changeset'] = fh.read_attribute_string('changeset')[0]
     #end
@@ -108,12 +122,12 @@ class Read_gkyl_adios(object):
       self.ctx['builddate'] = fh.read_attribute_string('builddate')[0]
     #end
     if 'polyOrder' in fh.available_attributes().keys():
-      self.ctx['polyOrder'] = fh.read_attribute('polyOrder')[0]
-      self.ctx['isModal'] = True
+      self.ctx['poly_order'] = fh.read_attribute('polyOrder')[0]
+      self.ctx['is_modal'] = True
     #end
     if 'basisType' in fh.available_attributes().keys():
-      self.ctx['basisType'] = fh.read_attribute_string('basisType')[0]
-      self.ctx['isModal'] = True
+      self.ctx['basis_type'] = fh.read_attribute_string('basisType')[0]
+      self.ctx['is_modal'] = True
     #end
     if 'charge' in fh.available_attributes().keys():
       self.ctx['charge'] = fh.read_attribute('charge')[0]
@@ -128,12 +142,33 @@ class Read_gkyl_adios(object):
       self.ctx['frame'] = fh.read('frame')
     #end
 
+    fh.close()
+  #end
 
-    # Load data
-    num_dims = len(cells)
-    grid = [np.linspace(lower[d],
-                        upper[d],
-                        cells[d]+1)
+  def _load_frame(self) -> tuple:
+    import adios2
+    fh = adios2.open(self._file_name, 'rra')
+
+    if self.var_name not in fh.available_variables():
+      if self.click_mode:
+        var_name = self.var_name
+        while True:
+          var_name = click.prompt('Variable name \'{:s}\' is not available, please select from the available ones: {:s}'.format(var_name, self.ctx['var_names']))
+          if var_name in fh.available_variables():
+            self.var_name = var_name
+            self.ctx.pop('var_names', None)
+            break
+          #end
+        #end
+      else:
+        raise ValueError('Could not find the variable \'{:s}\'; available variables are: {:s}'. format(var_name, self.ctx['var_names']))
+      #end
+    #end
+
+    num_dims = len(self.cells)
+    grid = [np.linspace(self.lower[d],
+                        self.upper[d],
+                        self.cells[d]+1)
             for d in range(num_dims)]
     var_dims = fh.available_variables()[self.var_name]['Shape']
     var_dims = [int(v) for v in var_dims.split(',')]
@@ -142,29 +177,29 @@ class Read_gkyl_adios(object):
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
-    dz = (upper - lower) / cells
+    dz = (self.upper - self.lower) / self.cells
     if offset:
       if self.ctx['grid_type'] == 'uniform':
-        lower = lower + offset[:num_dims]*dz
-        cells = cells - offset[:num_dims]
+        self.lower = self.lower + offset[:num_dims]*dz
+        self.cells = self.cells - offset[:num_dims]
       elif self.ctx['grid_type'] == 'mapped':
         idx = np.full(num_dims, 0)
         for d in range(num_dims):
-          lower[d] = self._grid[d][tuple(idx)]
-          cells[d] = cells[d] - offset[d]
+          self.lower[d] = self._grid[d][tuple(idx)]
+          self.cells[d] = self.cells[d] - offset[d]
         #end
       #end
     #end
     if count:
       if self.ctx['grid_type']  == 'uniform':
-        upper = lower + count[:num_dims]*dz
-        cells = count[:num_dims]
+        self.upper = self.lower + count[:num_dims]*dz
+        self.cells = count[:num_dims]
       elif self.ctx['grid_type']  == 'mapped':
         idx = np.full(num_dims, 0)
         for d in range(num_dims):
           idx[-d-1] = count[d]-1  #.Reverse indexing of idx because of transpose() in composing self._grid.
-          upper[d] = self._grid[d][tuple(idx)]
-          cells[d] = count[d]
+          self.upper[d] = self._grid[d][tuple(idx)]
+          self.cells[d] = count[d]
         #end
       #end
     #end
@@ -200,19 +235,19 @@ class Read_gkyl_adios(object):
     else:
       # Create sparse unifrom grid
       # Adjust for ghost cells
-      dz = (upper - lower) / cells
+      dz = (self.upper - self.lower) / self.cells
       for d in range(num_dims):
-        if cells[d] != data.shape[d]:
-          ngl = int(np.floor((cells[d] - data.shape[d])*0.5))
-          ngu = int(np.ceil((cells[d] - data.shape[d])*0.5))
-          cells[d] = data.shape[d]
-          lower[d] = lower[d] - ngl*dz[d]
-          upper[d] = upper[d] + ngu*dz[d]
+        if self.cells[d] != data.shape[d]:
+          ngl = int(np.floor((self.cells[d] - data.shape[d])*0.5))
+          ngu = int(np.ceil((self.cells[d] - data.shape[d])*0.5))
+          self.cells[d] = data.shape[d]
+          self.lower[d] = self.lower[d] - ngl*dz[d]
+          self.upper[d] = self.upper[d] + ngu*dz[d]
         #end
       #end
-      grid = [np.linspace(lower[d],
-                          upper[d],
-                          cells[d]+1)
+      grid = [np.linspace(self.lower[d],
+                          self.upper[d],
+                          self.cells[d]+1)
               for d in range(num_dims)]
       if self.ctx:
         self.ctx['grid_type'] = 'uniform'
@@ -220,11 +255,11 @@ class Read_gkyl_adios(object):
     #end
 
     fh.close()
-    return grid, lower, upper, data
+    return grid, data
 
-  def _read_diagnostic(self) -> tuple:
+  def _load_diagnostic(self) -> tuple:
     import adios2
-    fh = adios2.open(self.file_name, 'rra')
+    fh = adios2.open(self._file_name, 'rra')
 
     def natural_sort(l):
       convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -256,19 +291,32 @@ class Read_gkyl_adios(object):
     fh.close()
     #end
 
-    return [np.squeeze(grid)], [grid[0]], [grid[-1]], data
+    return [np.squeeze(grid)], data
   #end
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self) -> tuple:
+  def preload(self) -> None:
+    if self.is_frame:
+      self._preload_frame()
+      if self.ctx:
+        self.ctx['cells'] = self.cells
+        self.ctx['lower'] = self.lower
+        self.ctx['upper'] = self.upper
+      #end
+    #end
+  #end
+
+  def load(self) -> tuple:
     grid, data = None, None
 
     if self.is_frame:
-      grid, lower, upper, data = self._read_frame()
+      grid, data = self._load_frame()
     #end
     if self.is_diagnostic:
-      grid, lower, upper, data = self._read_diagnostic()
+      grid, data = self._load_diagnostic()
     #end
+
+    self.ctx['num_comps'] = data.shape[-1]
 
     return grid, data
   #end

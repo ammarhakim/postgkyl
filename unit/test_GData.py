@@ -9,42 +9,42 @@ class TestGData(unittest.TestCase):
     def test_EmptyFile(self):
         data = pg.GData()
 
-        nd = data.getNumDims()
+        nd = data.get_num_dims()
         assert(isinstance(nd, int))
         self.assertEqual(nd, 0)
 
-        nc = data.getNumComps()
+        nc = data.get_num_comps()
         assert(isinstance(nc, int))
         self.assertEqual(nc, 0)
 
-        lo, up = data.getBounds()
+        lo, up = data.get_bounds()
         assert(isinstance(lo, np.ndarray))
         assert(isinstance(up, np.ndarray))
         self.assertEqual(len(lo), 0)
         self.assertEqual(len(up), 0)
 
-        nc = data.getNumCells()
+        nc = data.get_num_cells()
         assert(isinstance(nc, np.ndarray))
         self.assertEqual(len(nc), 0)
-        
+
     def test_LoadBpFrame(self):
         data = pg.GData('data/frame_0.bp')
 
-        nd = data.getNumDims()
+        nd = data.get_num_dims()
         assert(isinstance(nd, int))
         self.assertEqual(nd, 2)
 
-        nc = data.getNumComps()
+        nc = data.get_num_comps()
         assert(isinstance(nc, int))
         self.assertEqual(nc, 8)
 
-        lo, up = data.getBounds()
+        lo, up = data.get_bounds()
         assert(isinstance(lo, np.ndarray))
         assert(isinstance(up, np.ndarray))
         self.assertEqual(len(lo), 2)
         self.assertEqual(len(up), 2)
 
-        nc = data.getNumCells()
+        nc = data.get_num_cells()
         assert(isinstance(nc, np.ndarray))
         assert(isinstance(nc[0], np.int64))
         assert(isinstance(nc[1], np.int64))
@@ -66,21 +66,21 @@ class TestGData(unittest.TestCase):
     def test_LoadBpHistory(self):
         data = pg.GData('data/hist_')
 
-        nd = data.getNumDims()
+        nd = data.get_num_dims()
         assert(isinstance(nd, int))
         self.assertEqual(nd, 1)
 
-        nc = data.getNumComps()
+        nc = data.get_num_comps()
         assert(isinstance(nc, int))
         self.assertEqual(nc, 8)
 
-        lo, up = data.getBounds()
+        lo, up = data.get_bounds()
         assert(isinstance(lo, np.ndarray))
         assert(isinstance(up, np.ndarray))
         self.assertEqual(len(lo), 1)
         self.assertEqual(len(up), 1)
 
-        nc = data.getNumCells()
+        nc = data.get_num_cells()
         assert(isinstance(nc, np.ndarray))
         assert(isinstance(nc[0], np.int64))
         self.assertEqual(nc[0], 7641)
@@ -110,21 +110,21 @@ class TestGData(unittest.TestCase):
         data.write()
 
         data = pg.GData('data/frame_0_mod.bp')
-        nd = data.getNumDims()
+        nd = data.get_num_dims()
         assert(isinstance(nd, int))
         self.assertEqual(nd, 2)
 
-        nc = data.getNumComps()
+        nc = data.get_num_comps()
         assert(isinstance(nc, int))
         self.assertEqual(nc, 8)
 
-        lo, up = data.getBounds()
+        lo, up = data.get_bounds()
         assert(isinstance(lo, np.ndarray))
         assert(isinstance(up, np.ndarray))
         self.assertEqual(len(lo), 2)
         self.assertEqual(len(up), 2)
 
-        nc = data.getNumCells()
+        nc = data.get_num_cells()
         assert(isinstance(nc, np.ndarray))
         assert(isinstance(nc[0], np.int32))
         assert(isinstance(nc[1], np.int32))

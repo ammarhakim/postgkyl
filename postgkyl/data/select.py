@@ -18,37 +18,37 @@ def select(data, comp=None, overwrite=False,
     comp (index, slice (e.g. '1:5'), or multiple (e.g. '1,5')
   """
   zs = (z0, z1, z2, z3, z4, z5)
-  grid = data.getGrid()
+  grid = data.get_grid()
   grid = list(grid)  # copy the grid
-  values = data.getValues()
-  num_dims = data.getNumDims()
+  values = data.get_values()
+  num_dims = data.get_num_dims()
   values_idx = [slice(0, values.shape[d]) for d in range(num_dims+1)]
   uniform_grid = (len(grid[0].shape) == 1)
   if not uniform_grid:
     grid_idx = [slice(0, grid[d].shape[d]) for d in range(num_dims)]
   #end
-    
+
   # Loop for coordinates
   for d, z in enumerate(zs):
     if d < num_dims and z is not None:
       if uniform_grid:
         len_grid = grid[d].shape[0]
-      else: 
+      else:
         len_grid = grid[d].shape[d]
       #end
-      nodal = (values.shape[d] == len_grid)
-      idx = idxParser(z, grid[d], nodal)
+      is_matching = (values.shape[d] == len_grid)
+      idx = idxParser(z, grid[d], is_matching)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
         vIdx = slice(idx, idx+1)
-        gIdx = slice(idx, idx+2) if nodal else slice(idx, idx+1)
+        gIdx = slice(idx, idx+2) if not is_matching else slice(idx, idx+1)
       elif isinstance(idx, slice):
         vIdx = idx
-        gIdx = slice(idx.start, idx.stop+1) if nodal else idx
+        gIdx = slice(idx.start, idx.stop+1) if not is_matching else idx
       else:
-        raise TypeError("The coordinate select can be only single index (int) or a slice")
+        raise TypeError('The coordinate select can be only single index (int) or a slice')
       #end
       if uniform_grid:
         grid[d] = grid[d][gIdx]

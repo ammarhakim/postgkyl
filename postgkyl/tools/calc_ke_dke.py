@@ -17,7 +17,7 @@ def calc_ke_dke(root_file_name, initFrame, finalFrame, dim, Vol, initTime, final
     ke = np.zeros((1,(finalFrame-initFrame+1)))
     dEk = ke
     f = postgkyl.GData(root_file_name + str(initFrame) + '.bp')
-    grid = f.getGrid()
+    grid = f.get_grid()
     dx = grid[0][1]-grid[0][0]
     dy = grid[1][1]-grid[1][0]
     dt = (finalTime-initTime+1)/(finalFrame-initFrame+1)
@@ -30,7 +30,7 @@ def calc_ke_dke(root_file_name, initFrame, finalFrame, dim, Vol, initTime, final
 
     for c in range(initFrame, finalFrame+1):
         frame = postgkyl.GData(root_file_name + "%d.bp" %c)
-        data = frame.getValues()
+        data = frame.get_values()
         if dim == 2:
             rho = data[:,:,0]
             px = data[:,:,1]

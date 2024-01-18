@@ -9,7 +9,7 @@ class Read_gkyl_h5(object):
                file_name : str,
                ctx : dict = None,
                **kwargs) -> None:
-    self.file_name = file_name
+    self._file_name = file_name
 
     self.is_frame = False
     self.is_diagnostic = False
@@ -19,7 +19,7 @@ class Read_gkyl_h5(object):
 
   def _is_compatible(self) -> bool:
     try:
-      fh = tables.open_file(self.file_name, 'r')
+      fh = tables.open_file(self._file_name, 'r')
 
       if '/DataStruct/data' in fh:
         self.is_diagnostic = True
@@ -36,7 +36,7 @@ class Read_gkyl_h5(object):
   #end
 
   def _read_frame(self) -> tuple:
-    fh = tables.open_file(self.file_name, 'r')
+    fh = tables.open_file(self._file_name, 'r')
 
     # Postgkyl conventions require the attributes to be
     # narrays even for 1D data
@@ -53,7 +53,7 @@ class Read_gkyl_h5(object):
     return cells, lower, upper, data
 
   def _read_diagnostic(self):
-    fh = tables.open_file(self.file_name, 'r')
+    fh = tables.open_file(self._file_name, 'r')
 
     grid = fh.root.DataStruct.timeMesh.read()
     data = fh.root.DataStruct.data.read()

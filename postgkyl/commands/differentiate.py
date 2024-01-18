@@ -6,10 +6,10 @@ from postgkyl.commands.util import verb_print
 from postgkyl.data import GData
 
 @click.command(help='Interpolate a derivative of DG data on a uniform mesh')
-@click.option('--basistype', '-b',
+@click.option('--basis_type', '-b',
               type=click.Choice(['ms', 'ns', 'mo']),
               help='Specify DG basis')
-@click.option('--polyorder', '-p', type=click.INT,
+@click.option('--poly_order', '-p', type=click.INT,
               help='Specify polynomial order')
 @click.option('--interp', '-i', type=click.INT,
               help='Interpolation onto a general mesh of specified amount')
@@ -28,36 +28,36 @@ def differentiate(ctx, **kwargs):
   verb_print(ctx, 'Starting differentiate')
   data = ctx.obj['data']
 
-  basisType = None
-  isModal = None
-  if kwargs['basistype'] is not None:
-    if kwargs['basistype'] == 'ms':
-      basisType = 'serendipity'
-      isModal = True
-    elif kwargs['basistype'] == 'ns':
-      basisType = 'serendipity'
-      isModal = False
-    elif kwargs['basistype'] == 'mo':
-      basisType = 'maximal-order'
-      isModal = True
-    elif kwargs['basistype'] == 'mt':
-      basisType = 'tensor'
-      isModal = True
+  basis_type = None
+  is_modal = None
+  if kwargs['basis_type'] is not None:
+    if kwargs['basis_type'] == 'ms':
+      basis_type = 'serendipity'
+      is_modal = True
+    elif kwargs['basis_type'] == 'ns':
+      basis_type = 'serendipity'
+      is_modal = False
+    elif kwargs['basis_type'] == 'mo':
+      basis_type = 'maximal-order'
+      is_modal = True
+    elif kwargs['basis_type'] == 'mt':
+      basis_type = 'tensor'
+      is_modal = True
     #end
   #end
 
   for dat in data.iterator(kwargs['use']):
-    if kwargs['basistype'] is None and dat.ctx['basisType'] is None:
-      ctx.fail(click.style("ERROR in interpolate: no 'basistype' was specified and dataset {:s} does not have required ctxdata".format(dat.getLabel()), fg='red'))
+    if kwargs['basis_type'] is None and dat.ctx['basis_type'] is None:
+      ctx.fail(click.style("ERROR in interpolate: no 'basis_type' was specified and dataset {:s} does not have required ctxdata".format(dat.get_label()), fg='red'))
     #end
 
-    if isModal or dat.ctx['isModal']:
+    if is_modal or dat.ctx['is_modal']:
       dg = GInterpModal(dat,
-                        kwargs['polyorder'], kwargs['basistype'],
+                        kwargs['poly_order'], kwargs['basis_type'],
                         kwargs['interp'], kwargs['read'])
     else:
       dg = GInterpNodal(dat,
-                        kwargs['polyorder'], basisType,
+                        kwargs['poly_order'], basis_type,
                         kwargs['interp'], kwargs['read'])
     #end
 

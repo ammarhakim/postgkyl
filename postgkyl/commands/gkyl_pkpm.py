@@ -14,7 +14,7 @@ from postgkyl.tools import transform_frame
               help="Set species name")
 @click.option('--idx', '-i', type=click.STRING, prompt=True,
               help="Set the file number")
-@click.option('--polyorder', '-p', type=click.INT, prompt=True,
+@click.option('--poly_order', '-p', type=click.INT, prompt=True,
               help="Set the polynomial order")
 @click.option('--tag', '-t',
               help='Optional tag for the resulting array')
@@ -30,21 +30,21 @@ def pkpm(ctx, **kwargs):
   gvars = GData('{:s}-{:s}_pkpm_vars_{:s}.gkyl'.format(
     kwargs['name'], kwargs['species'], kwargs['idx']))
 
-  num_dims = gf.getNumDims()
+  num_dims = gf.get_num_dims()
   c_dim = num_dims - 1
 
-  dg = GInterpModal(gf, kwargs['polyorder'], 'pkpmhyb')
+  dg = GInterpModal(gf, kwargs['poly_order'], 'pkpmhyb')
   dg.interpolate((0,1), overwrite=True)
 
-  dg = GInterpModal(gvars, kwargs['polyorder'], 'ms')
+  dg = GInterpModal(gvars, kwargs['poly_order'], 'ms')
   grid_and_T_m = dg.interpolate(3)
   grid_and_us = dg.interpolate((0,1,2))
 
   laguerre_compose(gf, grid_and_T_m, gf)
   transform_frame(gf, grid_and_us, c_dim, gf)
 
-  gf.setTag(kwargs['tag'])
-  gf.setLabel(kwargs['label'])
+  gf.set_tag(kwargs['tag'])
+  gf.set_label(kwargs['label'])
   data.add(gf)
 
   verb_print(ctx, 'Finishing Gkyl PKPM')

@@ -30,10 +30,10 @@ def info(ctx, **kwargs):
       bold = False
     #end
     click.echo(
-      click.style('{:s}{:s}({:s}#{:d})'.format(dat.getLabel(),
-                                               ' ' if dat.getLabel()
+      click.style('{:s}{:s}({:s}#{:d})'.format(dat.get_label(),
+                                               ' ' if dat.get_label()
                                                else '',
-                                               dat.getTag(),
+                                               dat.get_tag(),
                                                i),
                   fg=color, bold=bold))
     if not kwargs['compact']:

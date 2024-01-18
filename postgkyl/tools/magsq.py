@@ -10,7 +10,7 @@ def mag_sq(in_data=None, in_grid=None, in_values=None, coords='0:3', overwrite=F
     Parameters:
     data -- input GData data structure
     coords -- specific coordinates to compute magnitude squared of
-              by default assume a three component field and that you 
+              by default assume a three component field and that you
               want the magnitude squared of the those three components
 
     Notes:
@@ -18,8 +18,8 @@ def mag_sq(in_data=None, in_grid=None, in_values=None, coords='0:3', overwrite=F
 
     """
     if in_data:
-        in_grid = in_data.getGrid()
-        in_values = in_data.getValues()
+        in_grid = in_data.get_grid()
+        in_values = in_data.get_values()
     #end
     # Because coords is an input string, need to split and parse it to get the right coordinates
     s = coords.split(':')

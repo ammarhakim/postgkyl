@@ -77,21 +77,26 @@ class Read_gkyl(object):
   """Provides a framework to read gkylzero binary output
   """
 
-  def __init__(self, file_name : str,
-               ctx : dict = None,
-               c2p : str = None,
+  def __init__(self, file_name: str,
+               ctx: dict = None,
+               c2p: str = None,
                **kwargs) -> None:
     self.file_name = file_name
     self.c2p = c2p
 
-    self._dtf = np.dtype('f8')
-    self._dti = np.dtype('i8')
+    self.dtf = np.dtype('f8')
+    self.dti = np.dtype('i8')
 
-    self._offset = 0
-    self._doffset = 8
+    self.offset = 0
+    self.doffset = 8
 
     self.file_type = 1
     self.version = 0
+
+    self.lower = None
+    self.upper = None
+    self.num_comps = None
+    self.cells = None
 
     self.ctx = ctx
   #end
@@ -101,7 +106,7 @@ class Read_gkyl(object):
       magic = np.fromfile(self.file_name, dtype=np.dtype('b'),
                           count=5, offset=0)
       if np.array_equal(magic, [103, 107, 121, 108, 48]):
-        self.version = np.fromfile(self.file_name, dtype=self._dti,
+        self.version = np.fromfile(self.file_name, dtype=self.dti,
                                    count=1, offset=5)[0]
         return True
       #end
@@ -113,210 +118,191 @@ class Read_gkyl(object):
 
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
-  def _read_header(self):
+  def _read_header(self) -> None:
+    self.offset = 0
+
     if self._is_compatible():
-      self._offset += 5 # Header contatins the gkyl magic sequence
+      self.offset += 5 # Header contatins the gkyl magic sequence
 
-      self.version = np.fromfile(self.file_name, dtype=self._dti,
-                                 count=1, offset=self._offset)[0]
-      self._offset += 8
+      self.version = np.fromfile(self.file_name, dtype=self.dti,
+                                 count=1, offset=self.offset)[0]
+      self.offset += 8
 
-      self.file_type = np.fromfile(self.file_name, dtype=self._dti,
-                                   count=1, offset=self._offset)[0]
-      self._offset += 8
+      self.file_type = np.fromfile(self.file_name, dtype=self.dti,
+                                   count=1, offset=self.offset)[0]
+      self.offset += 8
 
-      meta_size = np.fromfile(self.file_name, dtype=self._dti,
-                              count=1, offset=self._offset)[0]
-      self._offset += 8
+      meta_size = np.fromfile(self.file_name, dtype=self.dti,
+                              count=1, offset=self.offset)[0]
+      self.offset += 8
 
       # read meta
-      self._offset += meta_size # Skip this for now
+      ## skip this for now
+      self.offset += meta_size
     #end
 
     # read real-type
-    real_type = np.fromfile(self.file_name, dtype=self._dti, count=1,
-                            offset=self._offset)[0]
+    real_type = np.fromfile(self.file_name, dtype=self.dti, count=1,
+                            offset=self.offset)[0]
     if real_type == 1:
-      self._dtf = np.dtype('f4')
-      self._doffset = 4
+      self.dtf = np.dtype('f4')
+      self.doffset = 4
     #end
-    self._offset += 8
+    self.offset += 8
   #end
 
   # ---- Read field data (version 1) -----------------------------------
-  def _read_t1_v1(self):
+  def _read_domain_t1a3_v1(self) -> None:
     # read grid dimensions
-    num_dims = np.fromfile(self.file_name, dtype=self._dti,
-                           count=1, offset=self._offset)[0]
-    self._offset += 8
+    self.num_dims = np.fromfile(self.file_name, dtype=self.dti,
+                                count=1, offset=self.offset)[0]
+    self.offset += 8
 
     # read grid shape
-    cells = np.fromfile(self.file_name, dtype=self._dti,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims*8
+    self.cells = np.fromfile(self.file_name, dtype=self.dti,
+                             count=self.num_dims, offset=self.offset)
+    self.offset += self.num_dims * 8
 
     # read lower/upper
-    lower = np.fromfile(self.file_name, dtype=self._dtf,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims*self._doffset
-    upper = np.fromfile(self.file_name, dtype=self._dtf,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims*self._doffset
+    self.lower = np.fromfile(self.file_name, dtype=self.dtf,
+                             count=self.num_dims, offset=self.offset)
+    self.offset += self.num_dims * self.doffset
+    self.upper = np.fromfile(self.file_name, dtype=self.dtf,
+                        count=self.num_dims, offset=self.offset)
+    self.offset += self.num_dims * self.doffset
 
     # read array elem_ez (the div by doffset is as elem_sz includes
     # sizeof(real_type) = doffset)
     elem_sz_raw = int(
-      np.fromfile(self.file_name, dtype=self._dti,
-                  count=1, offset=self._offset)[0])
-    elem_sz = elem_sz_raw / self._doffset
-    self._offset += 8
+      np.fromfile(self.file_name, dtype=self.dti,
+                  count=1, offset=self.offset)[0])
+    elem_sz = elem_sz_raw / self.doffset
+    self.num_comps = int(elem_sz)
+    self.offset += 8
 
     # read array size
-    asize = np.fromfile(self.file_name, dtype=self._dti,
-                        count=1, offset=self._offset)[0]
-    self._offset += 8
+    self.asize = np.fromfile(self.file_name, dtype=self.dti,
+                             count=1, offset=self.offset)[0]
+    self.offset += 8
 
-    data_raw = np.fromfile(self.file_name, dtype=self._dtf,
-                           offset=self._offset)
-    gshape = np.ones(num_dims+1, dtype=self._dti)
-    for d in range(num_dims):
-      gshape[d] = cells[d]
+  def _read_data_t1_v1(self) -> np.ndarray:
+    data_raw = np.fromfile(self.file_name, dtype=self.dtf,
+                           offset=self.offset)
+    gshape = np.ones(self.num_dims+1, dtype=self.dti)
+    for d in range(self.num_dims):
+      gshape[d] = self.cells[d]
     #end
-    num_comp = int(elem_sz)
-    gshape[-1] = num_comp
-    return cells, lower, upper, data_raw.reshape(gshape)
+    gshape[-1] = self.num_comps
+    return data_raw.reshape(gshape)
+  #end
+
+  def _read_data_t3_v1(self) -> np.ndarray:
+    # get the number of stored ranges
+    num_range = np.fromfile(self.file_name, dtype=self.dti,
+                            count=1, offset=self.offset)[0]
+    self.offset += 8
+
+    gshape = np.ones(self.num_dims+1, dtype=self.dti)
+    gshape[-1] = self.num_comps
+
+    data = np.zeros(gshape, dtype=self.dtf)
+    for i in range(num_range):
+      loidx = np.fromfile(self.file_name, dtype=self.dti,
+                          count=self.num_dims, offset=self.offset)
+      self.offset += self.num_dims * 8
+      upidx = np.fromfile(self.file_name, dtype=self.dti,
+                          count=self.num_dims, offset=self.offset)
+      self.offset += self.num_dims * 8
+      for d in range(self.num_dims):
+        gshape[d] = upidx[d] - loidx[d] + 1
+      #end
+      slices = [slice(loidx[d]-1,upidx[d]) for d in range(self.num_dims)]
+
+      asize = np.fromfile(self.file_name, dtype=self.dti,
+                          count=1, offset=self.offset)[0]
+      self.offset += 8
+      data_raw = np.fromfile(self.file_name, dtype=self.dtf,
+                             count=asize*self.num_comps,
+                             offset=self.offset)
+      self.offset += asize * self.num_comps * self.doffset
+      data[tuple(slices)] = data_raw.reshape(gshape)
+    #end
+    return data
   #end
 
   # ---- Read dynvector data (version 1) -------------------------------
-  def _read_t2_v1(self):
-    elem_sz_raw = int(
-      np.fromfile(self.file_name, dtype=self._dti,
-                  count=1, offset=self._offset)[0])
-    num_comp = int(elem_sz_raw / self._doffset)
-    self._offset += 8
+  def _read_t2_v1(self) -> tuple:
+    cells = 0
+    time = np.array([])
+    data = np.array([[]])
+    while True: # Python does not have DO .. WHILE loop
+      elem_sz_raw = int(
+        np.fromfile(self.file_name, dtype=self.dti,
+                    count=1, offset=self.offset)[0])
+      num_comps = int(elem_sz_raw / self.doffset)
+      self.offset += 8
 
-    cells = int(np.fromfile(self.file_name, dtype=self._dti,
-                            count=1, offset=self._offset)[0])
-    self._offset += 8
+      loop_cells = int(np.fromfile(self.file_name, dtype=self.dti,
+                                   count=1, offset=self.offset)[0])
+      self.offset += 8
 
-    time = np.fromfile(self.file_name, dtype=self._dtf,
-                       count=cells, offset=self._offset)
-    self._offset += cells * 8
+      loop_time = np.fromfile(self.file_name, dtype=self.dtf,
+                              count=loop_cells, offset=self.offset)
+      self.offset += loop_cells * 8
 
-    data_raw = np.fromfile(self.file_name, dtype=self._dtf,
-                           count=num_comp*cells, offset=self._offset)
-    self._offset += cells * elem_sz_raw
-    gshape = np.array((cells, num_comp), dtype=self._dti)
-    return [cells], time, data_raw.reshape(gshape)
-  #end
+      data_raw = np.fromfile(self.file_name, dtype=self.dtf,
+                             count=num_comps * loop_cells,
+                             offset=self.offset)
+      self.offset += loop_cells * elem_sz_raw
+      gshape = np.array((loop_cells, num_comps), dtype=self.dti)
 
-  # ---- Read multi-range field data (version 1) -----------------------
-  def _read_t3_v1(self):
-    # read grid dimensions
-    num_dims = np.fromfile(self.file_name, dtype=self._dti,
-                           count=1, offset=self._offset)[0]
-    self._offset += 8
-
-    # read grid shape
-    cells = np.fromfile(self.file_name, dtype=self._dti,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims * 8
-
-    # read lower/upper
-    lower = np.fromfile(self.file_name, dtype=self._dtf,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims * self._doffset
-
-    upper = np.fromfile(self.file_name, dtype=self._dtf,
-                        count=num_dims, offset=self._offset)
-    self._offset += num_dims * self._doffset
-
-    # read array elem_sz (the div by doffset is as elem_sz includes
-    # sizeof(real_type) = doffset)
-    elem_sz_raw = int(
-      np.fromfile(self.file_name, dtype=self._dti,
-                  count=1, offset=self._offset)[0])
-    elem_sz = elem_sz_raw / self._doffset
-    self._offset += 8
-
-    # read array size
-    asize = np.fromfile(self.file_name, dtype=self._dti,
-                        count=1, offset=self._offset)[0]
-    self._offset += 8
-
-    # get the number of stored ranges
-    num_range = np.fromfile(self.file_name, dtype=self._dti,
-                            count=1, offset=self._offset)[0]
-    self._offset += 8
-
-    num_comp = int(elem_sz)
-    gshape = np.ones(num_dims+1, dtype=self._dti)
-    for d in range(num_dims):
-      gshape[d] = cells[d]
-    #end
-    gshape[-1] = num_comp
-    data = np.zeros(gshape, dtype=self._dtf)
-    for i in range(num_range):
-      loidx = np.fromfile(self.file_name, dtype=self._dti,
-                          count=num_dims, offset=self._offset)
-      self._offset += num_dims * 8
-      upidx = np.fromfile(self.file_name, dtype=self._dti,
-                          count=num_dims, offset=self._offset)
-      self._offset += num_dims * 8
-      for d in range(num_dims):
-        gshape[d] = upidx[d] - loidx[d] + 1
+      time = np.append(time, loop_time)
+      if cells == 0:
+        data = data_raw.reshape(gshape)
+      else:
+          data = np.append(data, data_raw.reshape(gshape), axis=0)
       #end
-      slices = [slice(loidx[d]-1,upidx[d]) for d in range(num_dims)]
-
-      asize = np.fromfile(self.file_name, dtype=self._dti,
-                          count=1, offset=self._offset)[0]
-      self._offset += 8
-      data_raw = np.fromfile(self.file_name, dtype=self._dtf,
-                          count=asize*num_comp, offset=self._offset)
-      self._offset += asize * num_comp * self._doffset
-      data[tuple(slices)] = data_raw.reshape(gshape)
+      cells += loop_cells
+      if self.offset == os.path.getsize(self.file_name):
+        break
+      #end
+      self._read_header()
+      if self.file_type != 2:
+        raise TypeError('Inconsitent data in g0 dynVector file.')
+      #end
     #end
-    return cells, lower, upper, data
+    self.cells = [cells]
+    self.lower = np.atleast_1d(time.min())
+    self.upper = np.atleast_1d(time.max())
+    return time, data
   #end
-
 
   # ---- Exposed function ----------------------------------------------
-  def get_data(self) -> tuple:
-    self._offset = 0
+  def preload(self) -> None:
     self._read_header()
+    if self.file_type == 1 or self.file_type == 3 or self.version == 0:
+      self._read_domain_t1a3_v1()
+      if self.ctx:
+        self.ctx['cells'] = self.cells
+        self.ctx['lower'] = self.lower
+        self.ctx['upper'] = self.upper
+        self.ctx['num_comps'] = self.num_comps
+      #end
+    #end
+  #end
 
-    # Load values
+  def load(self) -> tuple:
     time = None
     if self.file_type == 1 or self.version == 0:
-      cells, lower, upper, data = self._read_t1_v1()
-    elif self.file_type == 3:
-      cells, lower, upper, data = self._read_t3_v1()
+      data = self._read_data_t1_v1()
     elif self.file_type == 2:
-      cells = [0]
-      time = np.array([])
-      data = np.array([[]])
-      while True:
-        cells1, time1, data1 = self._read_t2_v1()
-        time = np.append(time, time1)
-        if cells[0] == 0:
-          data = data1
-        else:
-          data = np.append(data, data1, axis=0)
-        #end
-        cells[0] += cells1[0]
-        if self._offset == os.path.getsize(self.file_name):
-          break
-        #end
-        self._read_header()
-        if self.file_type != 2:
-          raise TypeError('Inconsitent data in g0 dynVector file.')
-        #end
-      #end
+      time, data = self._read_t2_v1()
+    elif self.file_type == 3:
+      data = self._read_data_t3_v1()
     else:
       raise TypeError('This g0 format is not presently supported')
     #end
 
-    num_dims = len(cells)
     # Load or construct grid
     if time is not None:
       grid = [time]
@@ -325,7 +311,8 @@ class Read_gkyl(object):
       #end
     elif self.c2p:
       grid_reader = Read_gkyl(self.c2p)
-      _, tmp = grid_reader.get_data()
+      grid_reader.preload()
+      _, tmp = grid_reader.load()
       num_comps = tmp.shape[-1]
       num_coeff = num_comps/num_dims
       grid = [tmp[..., int(d*num_coeff):int((d+1)*num_coeff)]
@@ -334,20 +321,21 @@ class Read_gkyl(object):
         self.ctx['grid_type'] = 'c2p'
       #end
     else: # Create sparse unifrom grid
+      num_dims = len(self.cells)
       # Adjust for ghost cells
-      dz = (upper - lower) / cells
+      dz = (self.upper - self.lower) / self.cells
       for d in range(num_dims):
-        if cells[d] != data.shape[d]:
-          ngl = int(np.floor((cells[d] - data.shape[d])*0.5))
-          ngu = int(np.ceil((cells[d] - data.shape[d])*0.5))
-          cells[d] = data.shape[d]
-          lower[d] = lower[d] - ngl*dz[d]
-          upper[d] = upper[d] + ngu*dz[d]
+        if self.cells[d] != data.shape[d]:
+          ngl = int(np.floor((self.cells[d] - data.shape[d])*0.5))
+          ngu = int(np.ceil((self.cells[d] - data.shape[d])*0.5))
+          self.cells[d] = data.shape[d]
+          self.lower[d] = self.lower[d] - ngl*dz[d]
+          self.upper[d] = self.upper[d] + ngu*dz[d]
         #end
       #end
-      grid = [np.linspace(lower[d],
-                          upper[d],
-                          cells[d]+1)
+      grid = [np.linspace(self.lower[d],
+                          self.upper[d],
+                          self.cells[d]+1)
               for d in range(num_dims)]
       if self.ctx:
         self.ctx['grid_type'] = 'uniform'
@@ -356,5 +344,4 @@ class Read_gkyl(object):
 
     return grid, data
   #end
-
 #end

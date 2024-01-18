@@ -3,7 +3,7 @@ from sympy import *
 
 from optparse import OptionParser
 
-def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
+def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False):
   if c2p:
     interp += 1
   #end
@@ -20,12 +20,12 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
   interpListND = list()
   for d in range(dim):
     interp_true = interp
-    if basisType == 'gkhybrid':
+    if basis_type == 'gkhybrid':
       # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
       if ((dim==2 or dim==3) and d==1) or (dim==4 and d==2) or (dim==5 and d==3):
         interp_true = interp+1
       #end
-    elif basisType == 'pkpmhybrid':
+    elif basis_type == 'pkpmhybrid':
       # 1x1v, 2x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
       if d == dim-1:
         interp_true = interp+1
@@ -155,7 +155,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
   elif dim == 2:
     x = Symbol('x')
     y = Symbol('y')
-    if modal and basisType == 'maximal-order':
+    if modal and basis_type == 'maximal-order':
       if order == 1:
         functionVector = Matrix([[0.5], [0.8660254037844385*x], [0.8660254037844385*y]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -190,7 +190,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'serendipity':
+    elif modal and basis_type == 'serendipity':
       if order == 0:
         functionVector = Matrix([[0.5]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -232,7 +232,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'tensor':
+    elif modal and basis_type == 'tensor':
       if order == 1:
         functionVector = Matrix([[0.5], [0.8660254037844385*x], [0.8660254037844385*y], [1.5*x*y]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -259,7 +259,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <4".format(order))
 
-    elif modal == False and basisType == 'serendipity':
+    elif modal == False and basis_type == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(x*y)/4.0 - y/4.0 - x/4.0 + 1.0/4.0], [x/4.0 - y/4.0 - (x*y)/4.0 + 1.0/4.0], [y/4.0 - x/4.0 - (x*y)/4.0 + 1.0/4.0], [x/4.0 + y/4.0 + (x*y)/4.0 + 1.0/4.0]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -278,7 +278,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3 for nodal Serendipity in 2D".format(order))
 
-    elif modal and basisType == 'gkhybrid':
+    elif modal and basis_type == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.5],[0.8660254037844386*x],[0.8660254037844386*y],[1.5*x*y],[1.677050983124842*(y**2-0.3333333333333333)],[2.904737509655563*(x*y**2-0.3333333333333333*x)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0], functionVector.shape[0]))
@@ -290,7 +290,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basisType == 'pkpmhybrid':
+    elif modal and basis_type == 'pkpmhybrid':
       if order == 1:
         functionVector = Matrix([[0.5],[0.8660254037844386*x],[0.8660254037844386*y],[1.5*x*y],[1.677050983124842*(y**2-0.3333333333333333)],[2.904737509655563*(x*y**2-0.3333333333333333*x)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0], functionVector.shape[0]))
@@ -302,12 +302,12 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
     else:
-      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))
+      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basis_type))
   elif dim == 3:
     x = Symbol('x')
     y = Symbol('y')
     z = Symbol('z')
-    if modal and basisType == 'maximal-order':
+    if modal and basis_type == 'maximal-order':
       if order == 1:
         functionVector = Matrix([[0.3535533905932734], [0.6123724356957931*x], [0.6123724356957931*y], [0.6123724356957931*z]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -346,7 +346,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'serendipity':
+    elif modal and basis_type == 'serendipity':
       if order == 0:
         functionVector = Matrix([[0.3535533905932734]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -394,7 +394,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'tensor':
+    elif modal and basis_type == 'tensor':
       if order == 1:
         functionVector = Matrix([[0.3535533905932734], [0.6123724356957931*x], [0.6123724356957931*y], [0.6123724356957931*z], [1.060660171779822*x*y], [1.060660171779822*x*z], [1.060660171779822*y*z], [1.837117307087383*x*y*z]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -424,7 +424,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <4".format(order))
 
-    elif modal and basisType == 'gkhybrid':
+    elif modal and basis_type == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.3535533905932737],[0.6123724356957944*x],[0.6123724356957944*y],[0.6123724356957944*z],[1.060660171779821*x*y],[1.060660171779821*x*z],[1.060660171779821*y*z],[1.837117307087383*x*y*z],[1.185854122563142*(y**2-0.3333333333333333)],[2.053959590644372*(x*y**2-0.3333333333333333*x)],[2.053959590644372*(y**2*z-0.3333333333333333*z)],[3.557562367689425*(x*y**2*z-0.3333333333333333*x*z)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0], functionVector.shape[0]))
@@ -437,7 +437,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basisType == 'pkpmhybrid':
+    elif modal and basis_type == 'pkpmhybrid':
       if order == 1:
         functionVector = Matrix([[0.3535533905932737],[0.6123724356957945*x],[0.6123724356957945*y],[0.6123724356957945*z],[1.060660171779821*x*y],[1.060660171779821*x*z],[1.060660171779821*y*z],[1.837117307087384*x*y*z],[1.185854122563142*(z**2-0.3333333333333333)],[2.053959590644373*(x*z**2-0.3333333333333333*x)],[2.053959590644373*(y*z**2-0.3333333333333333*y)],[3.557562367689427*(x*y*z**2-0.3333333333333332*x*y)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0], functionVector.shape[0]))
@@ -450,7 +450,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal == False and basisType == 'serendipity':
+    elif modal == False and basis_type == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(x*y)/8.0 - y/8.0 - z/8.0 - x/8.0 + (x*z)/8.0 + (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [x/8.0 - y/8.0 - z/8.0 - (x*y)/8.0 - (x*z)/8.0 + (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [y/8.0 - x/8.0 - z/8.0 - (x*y)/8.0 + (x*z)/8.0 - (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [x/8.0 + y/8.0 - z/8.0 + (x*y)/8.0 - (x*z)/8.0 - (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [z/8.0 - y/8.0 - x/8.0 + (x*y)/8.0 - (x*z)/8.0 - (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0], [x/8.0 - y/8.0 + z/8.0 - (x*y)/8.0 + (x*z)/8.0 - (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [y/8.0 - x/8.0 + z/8.0 - (x*y)/8.0 - (x*z)/8.0 + (y*z)/8.0 - (x*y*z)/8.0 + 1.0/8.0], [x/8.0 + y/8.0 + z/8.0 + (x*y)/8.0 + (x*z)/8.0 + (y*z)/8.0 + (x*y*z)/8.0 + 1.0/8.0]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -472,13 +472,13 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3 for nodal Serendipity in 3D".format(order))
 
     else:
-      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))
+      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basis_type))
   elif dim == 4:
     x = Symbol('x')
     y = Symbol('y')
     z = Symbol('z')
     w = Symbol('w')
-    if modal and basisType == 'maximal-order':
+    if modal and basis_type == 'maximal-order':
       if order == 1:
         functionVector = Matrix([[0.25], [0.4330127018922192*x], [0.4330127018922192*y], [0.4330127018922192*z], [0.4330127018922192*w]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -520,7 +520,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
                   interpMatrix[l+k*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], m] = functionVector[m].subs(x, interpList[l]).subs(y, interpList[k]).subs(z, interpList[j]).subs(w, interpList[i])
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
-    elif modal and basisType == 'serendipity':
+    elif modal and basis_type == 'serendipity':
       if order == 0:
         functionVector = Matrix([[0.25]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -572,7 +572,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
                   interpMatrix[l+k*interpList.shape[0]+j*interpList.shape[0]*interpList.shape[0]+i*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], m] = functionVector[m].subs(x, interpList[l]).subs(y, interpList[k]).subs(z, interpList[j]).subs(w, interpList[i])
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
-    elif modal and basisType == 'tensor':
+    elif modal and basis_type == 'tensor':
       if order == 1:
         functionVector = Matrix([[0.25], [0.4330127018922192*x], [0.4330127018922192*y], [0.4330127018922192*z], [0.4330127018922192*w], [0.75*x*y], [0.75*x*z], [0.75*y*z], [0.75*x*w], [0.75*y*w], [0.75*z*w], [1.299038105676659*x*y*z], [1.299038105676659*x*y*w], [1.299038105676659*x*z*w], [1.299038105676659*y*z*w], [2.25*x*y*z*w]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -595,7 +595,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3".format(order))
 
-    elif modal and basisType == 'gkhybrid':
+    elif modal and basis_type == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.25],[0.4330127018922193*x],[0.4330127018922193*y],[0.4330127018922193*z],[0.4330127018922193*w],[0.75*x*y],[0.75*x*z],[0.75*y*z],[0.75*w*x],[0.75*w*y],[0.75*w*z],[1.299038105676658*x*y*z],[1.299038105676658*w*x*y],[1.299038105676658*w*x*z],[1.299038105676658*w*y*z],[2.25*w*x*y*z],[0.8385254915624212*(z**2-0.3333333333333333)],[1.452368754827781*(x*z**2-0.3333333333333333*x)],[1.452368754827781*(y*z**2-0.3333333333333333*y)],[1.452368754827781*(w*z**2-0.3333333333333333*w)],[2.515576474687264*(x*y*z**2-0.3333333333333333*x*y)],[2.515576474687264*(w*x*z**2-0.3333333333333333*w*x)],[2.515576474687264*(w*y*z**2-0.3333333333333333*w*y)],[4.357106264483344*(w*x*y*z**2-0.3333333333333333*w*x*y)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0]*interpListND[3].shape[0], functionVector.shape[0]))
@@ -609,7 +609,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basisType == 'pkpmhybrid':
+    elif modal and basis_type == 'pkpmhybrid':
       if order == 1:
         functionVector = Matrix([[0.25],[0.4330127018922194*x],[0.4330127018922194*y],[0.4330127018922194*z],[0.4330127018922194*w],[0.75*x*y],[0.75*x*z],[0.75*y*z],[0.75*w*x],[0.75*w*y],[0.75*w*z],[1.299038105676658*x*y*z],[1.299038105676658*w*x*y],[1.299038105676658*w*x*z],[1.299038105676658*w*y*z],[2.25*w*x*y*z],[0.8385254915624211*(w**2-0.3333333333333333)],[1.452368754827781*(w**2*x-0.3333333333333333*x)],[1.452368754827781*(w**2*y-0.3333333333333333*y)],[1.452368754827781*(w**2*z-0.3333333333333333*z)],[2.515576474687264*(w**2*x*y-0.3333333333333333*x*y)],[2.515576474687264*(w**2*x*z-0.3333333333333333*x*z)],[2.515576474687264*(w**2*y*z-0.3333333333333333*y*z)],[4.357106264483344*(w**2*x*y*z-0.3333333333333333*x*y*z)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0]*interpListND[3].shape[0], functionVector.shape[0]))
@@ -622,7 +622,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal == False and basisType == 'serendipity':
+    elif modal == False and basis_type == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(w*x)/16.0-x/16.0-y/16.0-z/16.0-w/16.0+(w*y)/16.0+(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0-y/16.0-z/16.0-(w*x)/16.0+(w*y)/16.0+(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [y/16.0-x/16.0-w/16.0-z/16.0+(w*x)/16.0-(w*y)/16.0+(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0+y/16.0-z/16.0-(w*x)/16.0-(w*y)/16.0+(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [z/16.0-x/16.0-y/16.0-w/16.0+(w*x)/16.0+(w*y)/16.0-(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0-y/16.0+z/16.0-(w*x)/16.0+(w*y)/16.0-(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [y/16.0-x/16.0-w/16.0+z/16.0+(w*x)/16.0-(w*y)/16.0-(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [x/16.0-w/16.0+y/16.0+z/16.0-(w*x)/16.0-(w*y)/16.0-(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0-y/16.0-z/16.0-(w*x)/16.0-(w*y)/16.0-(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0-y/16.0-z/16.0+(w*x)/16.0-(w*y)/16.0-(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0+y/16.0-z/16.0-(w*x)/16.0+(w*y)/16.0-(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0+y/16.0-z/16.0+(w*x)/16.0+(w*y)/16.0-(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0-y/16.0+z/16.0-(w*x)/16.0-(w*y)/16.0+(w*z)/16.0+(x*y)/16.0-(x*z)/16.0-(y*z)/16.0+(w*x*y)/16.0-(w*x*z)/16.0-(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0-y/16.0+z/16.0+(w*x)/16.0-(w*y)/16.0+(w*z)/16.0-(x*y)/16.0+(x*z)/16.0-(y*z)/16.0-(w*x*y)/16.0+(w*x*z)/16.0-(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0-x/16.0+y/16.0+z/16.0-(w*x)/16.0+(w*y)/16.0+(w*z)/16.0-(x*y)/16.0-(x*z)/16.0+(y*z)/16.0-(w*x*y)/16.0-(w*x*z)/16.0+(w*y*z)/16.0-(x*y*z)/16.0-(w*x*y*z)/16.0+1.0/16.0], [w/16.0+x/16.0+y/16.0+z/16.0+(w*x)/16.0+(w*y)/16.0+(w*z)/16.0+(x*y)/16.0+(x*z)/16.0+(y*z)/16.0+(w*x*y)/16.0+(w*x*z)/16.0+(w*y*z)/16.0+(x*y*z)/16.0+(w*x*y*z)/16.0+1.0/16.0]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -646,7 +646,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <3 for nodal Serendipity in 4D".format(order))
 
     else:
-      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))
+      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basis_type))
 
   elif dim == 5:
     x = Symbol('x')
@@ -654,7 +654,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
     z = Symbol('z')
     w = Symbol('w')
     v = Symbol('v')
-    if modal and basisType == 'maximal-order':
+    if modal and basis_type == 'maximal-order':
       if order == 1:
         functionVector = Matrix([[0.1767766952966367], [0.3061862178478966*x], [0.3061862178478966*y], [0.3061862178478966*z], [0.3061862178478966*w], [0.3061862178478966*v]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -701,7 +701,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'serendipity':
+    elif modal and basis_type == 'serendipity':
       if order == 0:
         functionVector = Matrix([[0.1767766952966367]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -759,7 +759,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be <5".format(order))
 
-    elif modal and basisType == 'gkhybrid':
+    elif modal and basis_type == 'gkhybrid':
       if order == 1:
         functionVector = Matrix([[0.1767766952966368],[0.3061862178478971*x],[0.3061862178478971*y],[0.3061862178478971*z],[0.3061862178478971*w],[0.3061862178478971*v],[0.5303300858899105*x*y],[0.5303300858899105*x*z],[0.5303300858899105*y*z],[0.5303300858899105*w*x],[0.5303300858899105*w*y],[0.5303300858899105*w*z],[0.5303300858899105*v*x],[0.5303300858899105*v*y],[0.5303300858899105*v*z],[0.5303300858899105*v*w],[0.9185586535436913*x*y*z],[0.9185586535436913*w*x*y],[0.9185586535436913*w*x*z],[0.9185586535436913*w*y*z],[0.9185586535436913*v*x*y],[0.9185586535436913*v*x*z],[0.9185586535436913*v*y*z],[0.9185586535436913*v*w*x],[0.9185586535436913*v*w*y],[0.9185586535436913*v*w*z],[1.590990257669731*w*x*y*z],[1.590990257669731*v*x*y*z],[1.590990257669731*v*w*x*y],[1.590990257669731*v*w*x*z],[1.590990257669731*v*w*y*z],[2.755675960631073*v*w*x*y*z],[0.592927061281571*(w**2-0.3333333333333333)],[1.026979795322186*(w**2*x-0.3333333333333333*x)],[1.026979795322186*(w**2*y-0.3333333333333333*y)],[1.026979795322186*(w**2*z-0.3333333333333333*z)],[1.026979795322186*(v*w**2-0.3333333333333333*v)],[1.778781183844713*(w**2*x*y-0.3333333333333333*x*y)],[1.778781183844713*(w**2*x*z-0.3333333333333333*x*z)],[1.778781183844713*(w**2*y*z-0.3333333333333333*y*z)],[1.778781183844713*(v*w**2*x-0.3333333333333333*v*x)],[1.778781183844713*(v*w**2*y-0.3333333333333333*v*y)],[1.778781183844713*(v*w**2*z-0.3333333333333333*v*z)],[3.080939385966558*(w**2*x*y*z-0.3333333333333333*x*y*z)],[3.080939385966558*(v*w**2*x*y-0.3333333333333333*v*x*y)],[3.080939385966558*(v*w**2*x*z-0.3333333333333333*v*x*z)],[3.080939385966558*(v*w**2*y*z-0.3333333333333333*v*y*z)],[5.336343551534138*(v*w**2*x*y*z-0.3333333333333333*v*x*y*z)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0]*interpListND[3].shape[0]*interpListND[4].shape[0], functionVector.shape[0]))
@@ -774,7 +774,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal == False and basisType == 'serendipity':
+    elif modal == False and basis_type == 'serendipity':
       if order == 1:
         functionVector = Matrix([[(v*w)/32.0-w/32.0-x/32.0-y/32.0-z/32.0-v/32.0+(v*x)/32.0+(v*y)/32.0+(w*x)/32.0+(v*z)/32.0+(w*y)/32.0+(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [x/32.0-w/32.0-v/32.0-y/32.0-z/32.0+(v*w)/32.0-(v*x)/32.0+(v*y)/32.0-(w*x)/32.0+(v*z)/32.0+(w*y)/32.0+(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [y/32.0-w/32.0-x/32.0-v/32.0-z/32.0+(v*w)/32.0+(v*x)/32.0-(v*y)/32.0+(w*x)/32.0+(v*z)/32.0-(w*y)/32.0+(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [x/32.0-w/32.0-v/32.0+y/32.0-z/32.0+(v*w)/32.0-(v*x)/32.0-(v*y)/32.0-(w*x)/32.0+(v*z)/32.0-(w*y)/32.0+(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [z/32.0-w/32.0-x/32.0-y/32.0-v/32.0+(v*w)/32.0+(v*x)/32.0+(v*y)/32.0+(w*x)/32.0-(v*z)/32.0+(w*y)/32.0-(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [x/32.0-w/32.0-v/32.0-y/32.0+z/32.0+(v*w)/32.0-(v*x)/32.0+(v*y)/32.0-(w*x)/32.0-(v*z)/32.0+(w*y)/32.0-(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [y/32.0-w/32.0-x/32.0-v/32.0+z/32.0+(v*w)/32.0+(v*x)/32.0-(v*y)/32.0+(w*x)/32.0-(v*z)/32.0-(w*y)/32.0-(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [x/32.0-w/32.0-v/32.0+y/32.0+z/32.0+(v*w)/32.0-(v*x)/32.0-(v*y)/32.0-(w*x)/32.0-(v*z)/32.0-(w*y)/32.0-(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0-x/32.0-y/32.0-z/32.0-(v*w)/32.0+(v*x)/32.0+(v*y)/32.0-(w*x)/32.0+(v*z)/32.0-(w*y)/32.0-(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0+x/32.0-y/32.0-z/32.0-(v*w)/32.0-(v*x)/32.0+(v*y)/32.0+(w*x)/32.0+(v*z)/32.0-(w*y)/32.0-(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0-x/32.0+y/32.0-z/32.0-(v*w)/32.0+(v*x)/32.0-(v*y)/32.0-(w*x)/32.0+(v*z)/32.0+(w*y)/32.0-(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0+x/32.0+y/32.0-z/32.0-(v*w)/32.0-(v*x)/32.0-(v*y)/32.0+(w*x)/32.0+(v*z)/32.0+(w*y)/32.0-(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0-x/32.0-y/32.0+z/32.0-(v*w)/32.0+(v*x)/32.0+(v*y)/32.0-(w*x)/32.0-(v*z)/32.0-(w*y)/32.0+(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0+x/32.0-y/32.0+z/32.0-(v*w)/32.0-(v*x)/32.0+(v*y)/32.0+(w*x)/32.0-(v*z)/32.0-(w*y)/32.0+(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0-x/32.0+y/32.0+z/32.0-(v*w)/32.0+(v*x)/32.0-(v*y)/32.0-(w*x)/32.0-(v*z)/32.0+(w*y)/32.0+(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [w/32.0-v/32.0+x/32.0+y/32.0+z/32.0-(v*w)/32.0-(v*x)/32.0-(v*y)/32.0+(w*x)/32.0-(v*z)/32.0+(w*y)/32.0+(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0-x/32.0-y/32.0-z/32.0-(v*w)/32.0-(v*x)/32.0-(v*y)/32.0+(w*x)/32.0-(v*z)/32.0+(w*y)/32.0+(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0+x/32.0-y/32.0-z/32.0-(v*w)/32.0+(v*x)/32.0-(v*y)/32.0-(w*x)/32.0-(v*z)/32.0+(w*y)/32.0+(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0-x/32.0+y/32.0-z/32.0-(v*w)/32.0-(v*x)/32.0+(v*y)/32.0+(w*x)/32.0-(v*z)/32.0-(w*y)/32.0+(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0+x/32.0+y/32.0-z/32.0-(v*w)/32.0+(v*x)/32.0+(v*y)/32.0-(w*x)/32.0-(v*z)/32.0-(w*y)/32.0+(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0-x/32.0-y/32.0+z/32.0-(v*w)/32.0-(v*x)/32.0-(v*y)/32.0+(w*x)/32.0+(v*z)/32.0+(w*y)/32.0-(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0+x/32.0-y/32.0+z/32.0-(v*w)/32.0+(v*x)/32.0-(v*y)/32.0-(w*x)/32.0+(v*z)/32.0+(w*y)/32.0-(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0-x/32.0+y/32.0+z/32.0-(v*w)/32.0-(v*x)/32.0+(v*y)/32.0+(w*x)/32.0+(v*z)/32.0-(w*y)/32.0-(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0-w/32.0+x/32.0+y/32.0+z/32.0-(v*w)/32.0+(v*x)/32.0+(v*y)/32.0-(w*x)/32.0+(v*z)/32.0-(w*y)/32.0-(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0-x/32.0-y/32.0-z/32.0+(v*w)/32.0-(v*x)/32.0-(v*y)/32.0-(w*x)/32.0-(v*z)/32.0-(w*y)/32.0-(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0+x/32.0-y/32.0-z/32.0+(v*w)/32.0+(v*x)/32.0-(v*y)/32.0+(w*x)/32.0-(v*z)/32.0-(w*y)/32.0-(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0-x/32.0+y/32.0-z/32.0+(v*w)/32.0-(v*x)/32.0+(v*y)/32.0-(w*x)/32.0-(v*z)/32.0+(w*y)/32.0-(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0+x/32.0+y/32.0-z/32.0+(v*w)/32.0+(v*x)/32.0+(v*y)/32.0+(w*x)/32.0-(v*z)/32.0+(w*y)/32.0-(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0-(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0-x/32.0-y/32.0+z/32.0+(v*w)/32.0-(v*x)/32.0-(v*y)/32.0-(w*x)/32.0+(v*z)/32.0-(w*y)/32.0+(w*z)/32.0+(x*y)/32.0-(x*z)/32.0-(y*z)/32.0-(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0-(v*x*z)/32.0+(w*x*y)/32.0-(v*y*z)/32.0-(w*x*z)/32.0-(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0-(v*w*x*z)/32.0-(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0+x/32.0-y/32.0+z/32.0+(v*w)/32.0+(v*x)/32.0-(v*y)/32.0+(w*x)/32.0+(v*z)/32.0-(w*y)/32.0+(w*z)/32.0-(x*y)/32.0+(x*z)/32.0-(y*z)/32.0+(v*w*x)/32.0-(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0+(v*x*z)/32.0-(w*x*y)/32.0-(v*y*z)/32.0+(w*x*z)/32.0-(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0+(v*w*x*z)/32.0-(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0-x/32.0+y/32.0+z/32.0+(v*w)/32.0-(v*x)/32.0+(v*y)/32.0-(w*x)/32.0+(v*z)/32.0+(w*y)/32.0+(w*z)/32.0-(x*y)/32.0-(x*z)/32.0+(y*z)/32.0-(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0-(v*x*y)/32.0-(v*x*z)/32.0-(w*x*y)/32.0+(v*y*z)/32.0-(w*x*z)/32.0+(w*y*z)/32.0-(x*y*z)/32.0-(v*w*x*y)/32.0-(v*w*x*z)/32.0+(v*w*y*z)/32.0-(v*x*y*z)/32.0-(w*x*y*z)/32.0-(v*w*x*y*z)/32.0+1.0/32.0], [v/32.0+w/32.0+x/32.0+y/32.0+z/32.0+(v*w)/32.0+(v*x)/32.0+(v*y)/32.0+(w*x)/32.0+(v*z)/32.0+(w*y)/32.0+(w*z)/32.0+(x*y)/32.0+(x*z)/32.0+(y*z)/32.0+(v*w*x)/32.0+(v*w*y)/32.0+(v*w*z)/32.0+(v*x*y)/32.0+(v*x*z)/32.0+(w*x*y)/32.0+(v*y*z)/32.0+(w*x*z)/32.0+(w*y*z)/32.0+(x*y*z)/32.0+(v*w*x*y)/32.0+(v*w*x*z)/32.0+(v*w*y*z)/32.0+(v*x*y*z)/32.0+(w*x*y*z)/32.0+(v*w*x*y*z)/32.0+1.0/32.0]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -789,7 +789,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be 1 for nodal Serendipity in 5D".format(order))
 
     else:
-      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basisType))
+      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'nodal Serendipity', 'modal Serendipity', and 'modal maximal order'".format(basis_type))
 
   elif dim == 6:
     x = Symbol('x')
@@ -798,7 +798,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
     w = Symbol('w')
     v = Symbol('v')
     u = Symbol('u')
-    if modal and basisType == 'serendipity':
+    if modal and basis_type == 'serendipity':
       if order == 0:
         functionVector = Matrix([[0.125]])
         interpMatrix = numpy.zeros((interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0]*interpList.shape[0], functionVector.shape[0]))
@@ -825,7 +825,7 @@ def createInterpMatrix(dim, order, basisType, interp, modal=True, c2p=False):
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be 1 for modal Serendipity in 6D".format(order))
 
     else:
-      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'modal Serendipity' in 6D".format(basisType))
+      raise NameError("interpMatrix: Basis {} is not supported!\nSupported basis are currently 'modal Serendipity' in 6D".format(basis_type))
 
   else:
     raise NameError("interpMatrix: Dimension {} is not supported.".format(dim))
@@ -856,11 +856,11 @@ if __name__ == '__main__':
 
   dim = int(options.dim)
   order = int(options.order)
-  basisType = options.basis
+  basis_type = options.basis
   modal = options.modal
   interp = int(options.interp)
 
-  interpMatrix = createInterpMatrix(dim, order, basisType, interp, modal)
+  interpMatrix = createInterpMatrix(dim, order, basis_type, interp, modal)
   fh = tables.open_file('interpMatrix.h5', mode = 'w')
   fh.create_array('/', 'interpolation_matrix', interpMatrix)
   fh.close()

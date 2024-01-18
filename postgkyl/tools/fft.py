@@ -7,8 +7,8 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         overwrite = stack
         print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     #end
-    grid = data.getGrid()
-    values = data.getValues()
+    grid = data.get_grid()
+    values = data.get_values()
 
     # Remove dummy dimensions
     numDims = len(grid)
@@ -24,7 +24,7 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         numDims = len(grid)
     #end
 
-    numComps = data.getNumComps()
+    numComps = data.get_num_comps()
     if numDims == 1:
         N = len(grid[0])
         dx = grid[0][1] - grid[0][0]

@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 
-def _getGrid(grid0, grid1):
+def _get_grid(grid0, grid1):
   if grid0 is not None and grid1 is not None:
     if len(grid0) > len(grid1):
       return grid0
@@ -19,19 +19,19 @@ def _getGrid(grid0, grid1):
 #end
 
 def add(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   outValues = inValues[0] + inValues[1]
   return [outGrid], [outValues]
 #end
 
 def subtract(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   outValues = inValues[1] - inValues[0]
   return [outGrid], [outValues]
 #end
 
 def mult(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   a, b = inValues[1], inValues[0]
   if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
     outValues = a*b
@@ -49,13 +49,13 @@ def mult(inGrid, inValues):
 #end
 
 def dot(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   outValues = np.sum(inValues[1]*inValues[0], axis=-1)[..., np.newaxis]
   return [outGrid], [outValues]
 #end
 
 def divide(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   a, b = inValues[1], inValues[0]
   if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
     outValues = a/b
@@ -105,7 +105,7 @@ def log(inGrid, inValues):
 def log10(inGrid, inValues):
   outGrid = inGrid[0]
   outValues = np.log10(inValues[0])
-  return [outGrid], [outValues] 
+  return [outGrid], [outValues]
 #end
 
 def minimum(inGrid, inValues):
@@ -114,18 +114,18 @@ def minimum(inGrid, inValues):
 #end
 
 def minimum2(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   outValues = np.fmin(inValues[0], inValues[1])
   return [outGrid], [outValues]
 #end
 
 def maximum(inGrid, inValues):
   outValues = np.atleast_1d(np.nanmax(inValues[0]))
-  return [[]], [outValues] 
+  return [[]], [outValues]
 #end
 
 def maximum2(inGrid, inValues):
-  outGrid = _getGrid(inGrid[0], inGrid[1])
+  outGrid = _get_grid(inGrid[0], inGrid[1])
   outValues = np.fmax(inValues[0], inValues[1])
   return [outGrid], [outValues]
 #end
@@ -138,7 +138,7 @@ def mean(inGrid, inValues):
 def power(inGrid, inValues):
   outGrid = inGrid[1]
   outValues = np.power(inValues[1], inValues[0])
-  return [outGrid], [outValues] 
+  return [outGrid], [outValues]
 #end
 
 def sq(inGrid, inValues):
@@ -158,7 +158,7 @@ def length(inGrid, inValues):
   length = inGrid[1][ax][-1] - inGrid[1][ax][0]
   if len(inGrid[1][ax]) == inValues[1].shape[ax]:
     length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
-  #end  
+  #end
   return [[]], [length]
 
 def grad(inGrid, inValues):
@@ -168,7 +168,7 @@ def grad(inGrid, inValues):
   nc = inValues[0].shape[-1]
   out_shape[-1] = nc*nd
   out_values = np.zeros(out_shape)
-  
+
   for d in range(nd):
     zc = 0.5*(inGrid[0][d][1:] + inGrid[0][d][:-1]) # get cell centered values
     out_values[..., d*nc:(d+1)*nc] = np.gradient(inValues[0],
@@ -192,13 +192,13 @@ def grad2(inGrid, inValues):
   else:
     rng = range(int(ax), int(ax+1))
   #end
-    
+
   numDims = len(rng)
   outShape = list(inValues[1].shape)
   numComps = inValues[1].shape[-1]
   outShape[-1] = outShape[-1]*numDims
   outValues = np.zeros(outShape)
-  
+
   for cnt, d in enumerate(rng):
     zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
     outValues[..., cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1],
@@ -212,7 +212,7 @@ def grad2(inGrid, inValues):
 def integrate(inGrid, inValues, avg=False):
   grid = inGrid[1].copy()
   values = np.array(inValues[1])
-  
+
   axis = inValues[0]
   if isinstance(axis, float):
     axis = tuple([int(axis)])
@@ -234,7 +234,7 @@ def integrate(inGrid, inValues, avg=False):
   else:
     raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
   #end
-    
+
   dz = []
   for d, coord in enumerate(grid):
     dz.append(coord[1:] - coord[:-1])
@@ -286,7 +286,7 @@ def curl(inGrid, inValues):
   outGrid = inGrid[0]
   numDims = len(inGrid[0])
   numComps = inValues[0].shape[-1]
-  
+
   outShape = list(inValues[0].shape)
 
   if numDims == 1:
@@ -332,7 +332,7 @@ def curl(inGrid, inValues):
   return [outGrid], [outValues]
 #end
 
-cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add }, 
+cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
          '-' : { 'numIn' : 2, 'numOut' : 1, 'func' : subtract },
          '*' : { 'numIn' : 2, 'numOut' : 1, 'func' : mult },
          '/' : { 'numIn' : 2, 'numOut' : 1, 'func' : divide },

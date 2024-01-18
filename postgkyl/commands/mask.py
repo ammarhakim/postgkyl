@@ -17,28 +17,28 @@ from postgkyl.commands.util import verb_print
 def mask(ctx, **kwargs):
   verb_print(ctx, 'Starting mask')
   data = ctx.obj('data')
-    
+
   if kwargs['filename']:
-    maskFld = GData(kwargs['filename']).getValues()
+    maskFld = GData(kwargs['filename']).get_values()
   #end
 
   for dat in data.interator(kwargs['use']):
-    values = dat.getValues()
+    values = dat.get_values()
 
     if kwargs['filename']:
-      maskFldRep = np.repeat(maskFld, dat.getNumComps(), axis=-1)
-      data.setValues(np.ma.masked_where(maskFldRep < 0.0, values))
+      maskFldRep = np.repeat(maskFld, dat.get_num_comps(), axis=-1)
+      data.set_values(np.ma.masked_where(maskFldRep < 0.0, values))
     elif kwargs['lower'] is not None and kwargs['upper'] is not None:
-      dat.setValues(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']))
+      dat.set_values(np.ma.masked_outside(values, kwargs['lower'], kwargs['upper']))
     elif kwargs['lower'] is not None:
-      dat.setValues(np.ma.masked_less(values, kwargs['lower']))
+      dat.set_values(np.ma.masked_less(values, kwargs['lower']))
     elif kwargs['upper'] is not None:
-      dat.setValues(np.ma.masked_greater(values, kwargs['upper']))
+      dat.set_values(np.ma.masked_greater(values, kwargs['upper']))
     else:
-      data.setValues(values)
+      data.set_values(values)
       click.echo(click.style("WARNING in 'mask': No masking information specified.", fg='yellow'))
     #end
   #end
-        
+
   verb_print(ctx, 'Finishing mask')
 #end

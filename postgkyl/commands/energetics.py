@@ -30,8 +30,8 @@ def energetics(ctx, **kwargs):
   for elc, ion, em in zip(data.iterator(kwargs['elc']),
                           data.iterator(kwargs['ion']),
                           data.iterator(kwargs['field'])):
-    grid = em.getGrid()
-    outEnergetics = np.zeros(em.getValues()[...,0:7].shape)
+    grid = em.get_grid()
+    outEnergetics = np.zeros(em.get_values()[...,0:7].shape)
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],

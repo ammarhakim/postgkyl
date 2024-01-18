@@ -10,9 +10,9 @@ from postgkyl.commands.util import verb_print
 def extractinput(ctx, **kwargs):
   verb_print(ctx, 'Starting ')
   data = ctx.obj['data']
-        
+
   for dat in data.iterator(kwargs['use']):
-    encInp = dat.getInputFile()
+    encInp = dat.get_input_file()
     if encInp:
       inpfile = base64.decodebytes(encInp.encode('utf-8')).decode('utf-8')
       click.echo(inpfile)

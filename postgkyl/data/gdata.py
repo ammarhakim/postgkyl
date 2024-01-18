@@ -1,5 +1,3 @@
-import glob
-import os.path
 import numpy as np
 import shutil
 from typing import Union
@@ -38,11 +36,13 @@ class GData(object):
                z5: Union[int, str] = None,
                var_name: str = 'CartGridField',
                tag: str = 'default',
-               label: str = None,
-               ctx: dict = None,
+               label: str = '',
+               ctx: dict = {},
                comp_grid: bool = False,
-               mapc2p_name: str = None,
-               reader_name: str = None) -> None:
+               mapc2p_name: str = '',
+               reader_name: str = '',
+               load: bool = True,
+               click_mode: bool = False) -> None:
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -69,103 +69,102 @@ class GData(object):
       mapc2p_name: str
         The name of the file containg the c2p mapping information.
     """
-    self._tag = tag
-    self._comp_grid = comp_grid # disregard the mapped grid
     self._grid = None
     self._values = None # (N+1)D narray of values
 
+
     self.ctx = {}
-    self.ctx['time'] = None
-    self.ctx['frame'] = None
+    self.ctx['time']: float = None
+    self.ctx['frame']: int = None
+    self.ctx['lower'] = None
+    self.ctx['upper'] = None
+    self.ctx['cells'] = None
+    self.ctx['num_comps'] = None
     self.ctx['changeset'] = None
     self.ctx['builddate'] = None
-    self.ctx['polyOrder'] = None
-    self.ctx['basisType'] = None
-    self.ctx['isModal'] = None
-    self.ctx['grid_type'] = 'uniform'
-    if ctx:
-      for key in ctx:
-        self.ctx[key] = ctx[key]
-      #end
+    self.ctx['poly_order']: int = None
+    self.ctx['basis_type']: str = None
+    self.ctx['is_modal']: bool = None
+    self.ctx['grid_type']: str = 'uniform'
+    # Allow to copy input context variable
+    for key in ctx:
+      self.ctx[key] = ctx[key]
     #end
 
+    self._tag = tag
+    self._comp_grid = comp_grid # disregard the mapped grid
     self._label = ''
-    self._customLabel = label
+    self._custom_label = label
     self._var_name = var_name
-    file_name = str(file_name)
-    self.file_name = file_name
-    self.mapc2p_name = mapc2p_name
-    self.color = None
+    self._file_name = str(file_name)
+    self._mapc2p_name = mapc2p_name
+    self._color = None
 
     self._status = True
 
     zs = (z0, z1, z2, z3, z4, z5)
 
-    self._readers = {
+    _readers = {
       'gkyl' : Read_gkyl,
       'adios' : Read_gkyl_adios,
       'h5' : Read_gkyl_h5,
       'flash' : Read_flash_h5
       }
-    if self.file_name != '':
+    if self._file_name != '':
       reader_set = False
-      if reader_name in self._readers:
-        self._reader = self._readers[reader_name](
-          file_name=file_name,
-          ctx=self.ctx,
+      if reader_name in _readers:
+        # Keep only the user-specified reader
+        reader = _readers[reader_name]
+        _readers.clear()
+        _readers[reader_name] = reader
+      #end
+      for key in _readers:
+        self._reader = _readers[key](
+          file_name=self._file_name,
+          ctx= self.ctx,
           var_name=var_name,
           c2p=mapc2p_name,
-          axes=zs, comp=comp)
+          axes=zs, comp=comp,
+          click_mode=click_mode)
         if self._reader._is_compatible():
           reader_set = True
-        else:
-          raise TypeError('{:s} cannot be read with the specified {:s} reader.'.format(self.file_name, reader_name))
-        #end
-      else:
-        for key in self._readers:
-          self._reader = self._readers[key](
-            file_name=file_name,
-            ctx= self.ctx,
-            var_name=var_name,
-            c2p=mapc2p_name,
-            axes=zs, comp=comp)
-          if self._reader._is_compatible():
-            reader_set = True
-            break
-          #end
+          break
         #end
       #end
       if not reader_set:
-        raise TypeError('"file_name" was specified ({:s}) but "reader" was either not set or successfully detected'.format(self.file_name))
+        raise TypeError('"file_name" was specified ({:s}) but cannot be read with {:s}'.format(self._file_name, _readers))
       #end
 
-      self._grid, self._values = self._reader.get_data()
+      self._reader.preload()
+      if load:
+        self._grid, self._values = self._reader.load()
+      #end
     #end
   #end
 
 
   #---- Stuff Control --------------------------------------------------
-  def getTag(self):
+  def get_tag(self) -> str:
     return self._tag
   #end
-  def setTag(self, tag=None):
+  def set_tag(self, tag: str = '') -> None:
     if tag:
       self._tag = tag
     #end
   #end
 
-  def setLabel(self, label):
+  def set_label(self, label):
     self._label = label
   #end
-  def getLabel(self):
-    if self._customLabel:
-      return self._customLabel
+  def get_label(self):
+    if self._custom_label:
+      return self._custom_label
     else:
       return self._label
     #end
   #end
-  def getCustomLabel(self):
-    return self._customLabel
+  def get_custom_label(self):
+    return self._custom_label
   #end
 
   def activate(self):
@@ -178,17 +177,19 @@ class GData(object):
     return self._status
   #end
 
-  def getInputFile(self):
+  def get_input_file(self):
     import adios2
-    fh = adios2.open(self.file_name, 'rra')
+    fh = adios2.open(self._file_name, 'rra')
     inputFile = fh.read_attribute_string('inputfile')[0]
     fh.close()
     return inputFile
   #end
 
 
-  def getNumCells(self):
-    if self._values is not None:
+  def get_num_cells(self) -> np.ndarray:
+    if self.ctx['cells'] is not None:
+      return self.ctx['cells']
+    elif self._values is not None:
       num_dims = len(self._values.shape)-1
       cells = np.zeros(num_dims, np.int32)
       for d in range(num_dims):
@@ -200,33 +201,39 @@ class GData(object):
     #end
   #end
 
-  def getNumComps(self):
-    if self._values is not None:
+  def get_num_comps(self) -> int:
+    if self.ctx['num_comps'] is not None:
+      return self.ctx['num_comps']
+    elif self._values is not None:
       return int(self._values.shape[-1])
     else:
       return 0
     #end
   #end
 
-  def getNumDims(self, squeeze=False):
-    if self._values is not None:
+  def get_num_dims(self, squeeze=False) -> int:
+    if self.ctx['cells'] is not None:
+      num_dims = len(self.ctx['cells'])
+    elif self._values is not None:
       num_dims = int(len(self._values.shape)-1)
-      if squeeze:
-        cells = self.getNumCells()
-        for d in range(num_dims):
-          if cells[d] == 1:
-            num_dims = num_dims - 1
-          #end
-        #end
-      #end
-      return num_dims
     else:
       return 0
     #end
+    if squeeze:
+      cells = self.get_num_cells()
+      for d in range(num_dims):
+        if cells[d] == 1:
+          num_dims = num_dims - 1
+        #end
+      #end
+    #end
+    return num_dims
   #end
 
-  def getBounds(self):
-    if self._grid is not None:
+  def get_bounds(self) -> np.ndarray:
+    if self.ctx['lower'] is not None:
+      return self.ctx['lower'], self.ctx['upper']
+    elif self._grid is not None:
       num_dims = len(self._values.shape)-1
       lo, up = np.zeros(num_dims), np.zeros(num_dims)
       for d in range(num_dims):
@@ -235,33 +242,48 @@ class GData(object):
       #end
       return lo, up
     else:
-      return np.array([]), np.array([])
+      return None, None
     #end
   #end
 
-  def getGrid(self):
+  def get_grid(self) -> list:
     return self._grid
   #end
 
-  def getGridType(self):
+  def get_gridType(self) -> str:
     return self.ctx['grid_type']
   #end
 
-  def getValues(self):
+  def get_values(self) -> np.ndarray:
     return self._values
   #end
 
-  def setGrid(self, grid):
+
+  def set_grid(self, grid) -> None:
     self._grid = grid
+    num_dims = self.get_num_dims()
+    lo, up = np.zeros(num_dims), np.zeros(num_dims)
+    for d in range(num_dims):
+      lo[d] = self._grid[d].min()
+      up[d] = self._grid[d].max()
+    #end
+    self.ctx['lower'] = lo
+    self.ctx['upper'] = up
   #end
 
-  def setValues(self, values):
+  def set_values(self, values) -> None:
     self._values = values
+    if not np.array_equal(values.shape[:-1], self.ctx['cells']):
+      self.ctx['cells'] = values.shape[:-1]
+    #end
+    if values.shape[-1] != self.ctx['num_comps']:
+      self.ctx['num_comps'] = values.shape[-1]
+    #end
   #end
 
-  def push(self, grid, values):
-    self._values = values
-    self._grid = grid
+  def push(self, grid, values) -> None:
+    self.set_values(values)
+    self.set_grid(grid)
     return self
   #end
 
@@ -279,37 +301,39 @@ class GData(object):
     Returns:
       output (str): A list of strings with the informations
         """
-    values = self.getValues()
-    numComps = self.getNumComps()
-    num_dims = self.getNumDims()
-    numCells = self.getNumCells()
-    lower, upper = self.getBounds()
+    values = self.get_values()
+    numComps = self.get_num_comps()
+    num_dims = self.get_num_dims()
+    numCells = self.get_num_cells()
+    lower, upper = self.get_bounds()
 
-    if len(values) > 0:
-      output = ''
+    output = ''
 
-      if self.ctx['time'] is not None:
-        output += '├─ Time: {:e}\n'.format(self.ctx['time'])
-      #end
-      if self.ctx['frame'] is not None:
-        output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
-      #end
-      output += '├─ Number of components: {:d}\n'.format(numComps)
-      output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
-      output += '├─ Grid: ({:s})\n'.format(self.getGridType())
+    if self.ctx['time'] is not None:
+      output += '├─ Time: {:e}\n'.format(self.ctx['time'])
+    #end
+    if self.ctx['frame'] is not None:
+      output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
+    #end
+    output += '├─ Number of components: {:d}\n'.format(numComps)
+    output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
+    if lower is not None:
+      output += '├─ Grid: ({:s})\n'.format(self.get_gridType())
       for d in range(num_dims-1):
         output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, numCells[d])
         output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[d],
                                                       upper[d])
-        #end
+      #end
       output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, numCells[num_dims-1])
-      output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[num_dims-1],
-                                                    upper[num_dims-1])
+      output += 'Lower: {:e}; Upper: {:e}'.format(lower[num_dims-1],
+                                                  upper[num_dims-1])
+    #end
+    if values is not None:
       maximum = np.nanmax(values)
       maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
       minimum = np.nanmin(values)
       minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-      output += '├─ Maximum: {:e} at {:s}'.format(maximum,
+      output += '\n├─ Maximum: {:e} at {:s}'.format(maximum,
                                                   str(maxIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}\n'.format(maxIdx[-1])
@@ -317,35 +341,34 @@ class GData(object):
         output += '\n'
       #end
       output += '├─ Minimum: {:e} at {:s}'.format(minimum,
-                                                       str(minIdx[:num_dims]))
+                                                 str(minIdx[:num_dims]))
       if numComps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
-      if self.ctx['polyOrder'] and self.ctx['basisType']:
-        output += '\n├─ DG info:\n'
-        output += '│  ├─ Polynomial Order: {:d}\n'.format(self.ctx['polyOrder'])
-        if self.ctx['isModal']:
-          output += '│  └─ Basis Type: {:s} (modal)'.format(self.ctx['basisType'])
-        else:
-          output += '│  └─ Basis Type: {:s}'.format(self.ctx['basisType'])
-        #end
-      #end
-      if self.ctx['changeset'] and self.ctx['builddate']:
-        output += '\n├─ Created with Gkeyll:\n'
-        output += '│  ├─ Changeset: {:s}\n'.format(self.ctx['changeset'])
-        output += '│  └─ Build Date: {:s}'.format(self.ctx['builddate'])
-      #end
-      for key in self.ctx:
-        if key not in ['time', 'frame', 'changeset', 'builddate',
-                       'basisType', 'polyOrder', 'isModal']:
-          output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
-        #end
-      #end
-
-      return output
-    else:
-      return 'No data'
     #end
+    if self.ctx['poly_order'] and self.ctx['basis_type']:
+      output += '\n├─ DG info:\n'
+      output += '│  ├─ Polynomial Order: {:d}\n'.format(self.ctx['poly_order'])
+      if self.ctx['is_modal']:
+        output += '│  └─ Basis Type: {:s} (modal)'.format(self.ctx['basis_type'])
+      else:
+        output += '│  └─ Basis Type: {:s}'.format(self.ctx['basis_type'])
+      #end
+    #end
+    if self.ctx['changeset'] and self.ctx['builddate']:
+      output += '\n├─ Created with Gkeyll:\n'
+      output += '│  ├─ Changeset: {:s}\n'.format(self.ctx['changeset'])
+      output += '│  └─ Build Date: {:s}'.format(self.ctx['builddate'])
+    #end
+    for key in self.ctx:
+      if key not in ['time', 'frame', 'changeset', 'builddate',
+                     'basis_type', 'poly_order', 'is_modal', 'lower',
+                     'upper', 'cells', 'num_comps', 'grid_type']:
+        output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
+      #end
+    #end
+
+    return output
   #end
 
 
@@ -361,8 +384,8 @@ class GData(object):
     """
     # Create output file name
     if out_name is None:
-      if self.file_name is not None:
-        fn = self.file_name
+      if self._file_name is not None:
+        fn = self._file_name
         out_name = fn.split('.')[0].strip('_') + '_mod.' + mode
       else:
         out_name = 'gdata.' + mode
@@ -376,11 +399,11 @@ class GData(object):
       #end
     #end
 
-    num_dims = self.getNumDims()
-    num_comps = self.getNumComps()
-    num_cells = self.getNumCells()
-    lo, up = self.getBounds()
-    values = self.getValues()
+    num_dims = self.get_num_dims()
+    num_comps = self.get_num_comps()
+    num_cells = self.get_num_cells()
+    lo, up = self.get_bounds()
+    values = self.get_values()
 
     full_shape = list(num_cells) + [num_comps]
     offset = [0] * (num_dims + 1)
@@ -389,8 +412,8 @@ class GData(object):
       var_name = self._var_name
     #end
 
-    values = np.empty_like(self.getValues())
-    values[...] = self.getValues()
+    values = np.empty_like(self.get_values())
+    values[...] = self.get_values()
 
     if mode == 'bp':
       import adios2
@@ -425,7 +448,9 @@ class GData(object):
 
       fh = open(out_name, 'w')
 
-      np.array([103, 107, 121, 108, 48], dtype=np.dtype('b')).tofile(fh, sep='')  # sep='' results in a binary file
+      # sep='' results in a binary file
+      np.array([103, 107, 121, 108, 48],
+               dtype=np.dtype('b')).tofile(fh, sep='')
       # version 1
       np.array([1], dtype=dti).tofile(fh, sep='')
       # type 1
@@ -452,7 +477,7 @@ class GData(object):
       fh.close()
     elif mode == 'txt':
       numRows = int(num_cells.prod())
-      grid = self.getGrid()
+      grid = self.get_grid()
       for d in range(num_dims):
         grid[d] = 0.5*(grid[d][1:]+grid[d][:-1])
       #end
