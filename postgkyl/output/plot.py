@@ -66,6 +66,7 @@ def plot(data, args=(),
          xmin=None, xmax=None, xscale=1.0, xshift=0.0,
          ymin=None, ymax=None, yscale=1.0, yshift=0.0,
          zmin=None, zmax=None, zscale=1.0, zshift=0.0,
+         relax=False,
          style=None, rcParams=None,
          legend=True, label_prefix='', colorbar=True,
          xlabel=None, ylabel=None, clabel=None, title=None,
@@ -322,7 +323,12 @@ def plot(data, args=(),
             levels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
           else:
             levels = np.array(clevels.split(','))
+            # Filter out empty elements
+            levels = np.array(list(filter(None, levels)))
           #end
+        #end
+        if type(levels) == np.ndarray and len(levels) == 1:
+          colorbar = False
         #end
         nodal_grid = _get_nodal_grid(grid, cells)
         x = (nodal_grid[0] + xshift) * xscale
@@ -488,7 +494,7 @@ def plot(data, args=(),
     if logy:
       cax.set_yscale('log')
     #end
-    if num_dims == 1: # this causes troubles with contours
+    if num_dims == 1 and not relax: # this causes troubles with contours
       plt.autoscale(enable=True, axis='x', tight=True)
       plt.autoscale(enable=True, axis='y')
     #end
