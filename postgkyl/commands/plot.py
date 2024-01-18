@@ -23,7 +23,7 @@ from postgkyl.commands.util import verb_print
 @click.option('-c', '--contour', is_flag=True,
               help="Make contour plot.")
 @click.option('--clevels', type=click.STRING,
-              help="Specify levels for contours: comma-separated or start:end:nlevels")
+              help="Specify levels for contours: comma-separated level values or start:end:nlevels")
 @click.option('--cnlevels', type=click.INT,
               help="Specify the number of levels for contours")
 @click.option('--contlabel', 'cont_label', is_flag=True,
