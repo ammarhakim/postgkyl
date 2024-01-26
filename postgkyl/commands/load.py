@@ -91,6 +91,8 @@ def load(ctx, **kwargs):
   z4 = _pickCut(ctx, kwargs, 4)
   z5 = _pickCut(ctx, kwargs, 5)
   comp = _pickCut(ctx, kwargs, 6)
+
+  varNames = ['CartGridField']
   if kwargs['varname'] and ctx.obj['globalVarNames']:
     varNames = kwargs['varname']
     click.echo(click.style(
@@ -100,10 +102,9 @@ def load(ctx, **kwargs):
     varNames = kwargs['varname']
   elif ctx.obj['globalVarNames']:
     varNames = ctx.obj['globalVarNames']
-  else:
-    varNames = ['CartGridField']
   #end
 
+  mapc2p_name = None
   if kwargs['c2p'] and ctx.obj['global_c2p']:
     mapc2p_name = kwargs['c2p']
     click.echo(click.style(
@@ -113,8 +114,6 @@ def load(ctx, **kwargs):
     mapc2p_name = kwargs['c2p']
   elif ctx.obj['global_c2p']:
     mapc2p_name = ctx.obj['global_c2p']
-  else:
-    mapc2p_name = None
   #end
 
   if len(varNames) == 1:
@@ -141,7 +140,7 @@ def load(ctx, **kwargs):
         data.add(dat)
       except NameError:
         ctx.fail(click.style(
-          'Failed to load the variable \'{:s}\' from \'{:s}\''.format(var, fn),
+          'Failed to load \'{:s}\''.format(fn),
           fg='red'))
       #end
     #end
