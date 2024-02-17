@@ -113,7 +113,7 @@ class Read_gkyl(object):
     except:
       return False
     #end
-    return True
+    return False
   #end
 
   # Starting with version 1, .gkyl files contatin a header; version 0
