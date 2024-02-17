@@ -304,6 +304,7 @@ class Read_gkyl(object):
     #end
 
     # Load or construct grid
+    num_dims = len(self.cells)
     if time is not None:
       grid = [time]
       if self.ctx:
@@ -321,7 +322,6 @@ class Read_gkyl(object):
         self.ctx['grid_type'] = 'c2p'
       #end
     else: # Create sparse unifrom grid
-      num_dims = len(self.cells)
       # Adjust for ghost cells
       dz = (self.upper - self.lower) / self.cells
       for d in range(num_dims):
