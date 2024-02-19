@@ -71,7 +71,7 @@ def collect(ctx, **kwargs):
       if not grid[-1]:
         grid[-1] = dat.get_grid().copy()
       #end
-      label = dat.getCustomLabel()
+      label = dat.get_custom_label()
     #end
 
     data.deactivateAll(tag)
