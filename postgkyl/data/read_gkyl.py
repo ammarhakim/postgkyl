@@ -203,6 +203,9 @@ class Read_gkyl(object):
     self.offset += 8
 
     gshape = np.ones(self.num_dims+1, dtype=self.dti)
+    for d in range(self.num_dims):
+      gshape[d] = self.cells[d]
+    #end
     gshape[-1] = self.num_comps
 
     data = np.zeros(gshape, dtype=self.dtf)
