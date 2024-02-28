@@ -1,10 +1,3 @@
 *.pyc
-*~
-#*#
-.#*
-MANIFEST
-*/_build
-pdoc
-build/*
-dist/*
 postgkyl.egg-info/
+src/postgkyl/version.py

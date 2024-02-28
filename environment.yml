@@ -1,11 +1,14 @@
 name: pgkyl
+channels:
+  - defaults
+  - conda-forge
 dependencies:
-  - python=3.8
-  - numpy=1.21.*
-  - matplotlib
-  - click
-  - conda-forge::adios2=2.9.1
-  - pytables
-  - scipy
-  - sympy
-  - msgpack-python
+  - python>=3.11
+  - numpy>=1.26.4
+  - matplotlib>=3.8.0
+  - click>=8.1.7
+  - adios2>=2.9.2
+  - pytables>=3.9.2
+  - scipy>=1.11.4
+  - sympy>=1.12
+  - msgpack-python>=1.0.3
