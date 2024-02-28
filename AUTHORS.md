@@ -5,12 +5,12 @@
 - Petr Cagas (HZDR/CASUS) <p.cagas@hzdr.de>
 
 ## Contributors (ultra alphabetically)
-- Manaure Francisquez (PPPL) <mfrancis@pppl.gov>
-- James Juno (PPPL) <jjuno@pppl.gov>
-- Noah Mandel
+- Manaure Francisquez (PPPL)
+- James Juno (PPPL)
+- Noah Mandel (PPPL)
 - Maxwell Rosen (PPPL)
 - Liang Wang
 
 ## Acknowledgement
-- Bhuvana Srinivasan (UW) <srinbhu@uw.edu>
-- Jason TenBarge (PPPL) <jtenbarg@pppl.gov>
+- Bhuvana Srinivasan (UW)
+- Jason TenBarge (PPPL)
