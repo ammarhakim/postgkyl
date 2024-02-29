@@ -1,7 +1,7 @@
 # About
 
 This is the Postgkyl project. It is both Python library and command-line tool
-designed to provide a unified access to Gkeyll 1.0 and 2.0 data together with a
+designed to provide unified access to Gkeyll 1.0 and 2.0 data together with a
 broad variety of analytical and visualization tools.
 
 # Documentation
@@ -32,7 +32,7 @@ The environment is then activated with
 conda activate pgkyl
 ```
 
-Both the libary and the command line tool `pgkyl` can then be easily installed:
+Both the library and the command line tool `pgkyl` can then be easily installed:
 ```
 pip install -e .
 ```
