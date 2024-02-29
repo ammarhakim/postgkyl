@@ -79,6 +79,14 @@ def _data(ctx, grid_stack, value_stack, ctx_stack, strIn, tags, only_active):
   #end
 #end
 
+def _compare(a, b) -> bool:
+  if type(a) == np.ndarray:
+    return np.array_equal(a, b)
+  else:
+    return a == b
+  #end
+#end
+
 def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
   if strIn in cmdBase.cmds:
     numIn = cmdBase.cmds[strIn]['numIn']
@@ -119,15 +127,15 @@ def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
     out_ctx = {}
     remove_list = []
     for i in range(numIn):
-      for k in tmp_ctx[i]:
-        if k in out_ctx and tmp_ctx[i][k] == out_ctx[k]:
+      for key in tmp_ctx[i]:
+        if key in out_ctx and _compare(tmp_ctx[i][key], out_ctx[key]): #tmp_ctx[i][k] == out_ctx[k]:
           pass # This key has been already copied and
                # matches the output; no action needed
-        elif k in out_ctx:
-          remove_list.append(k) # There is a discrepancy between
+        elif key in out_ctx:
+          remove_list.append(key) # There is a discrepancy between
                                 # the ctxdata; set it to remove later
         else:
-          out_ctx[k] = tmp_ctx[i][k] # Copy the ctx data
+          out_ctx[key] = tmp_ctx[i][key] # Copy the ctx data
         #end
       #end
     #end
