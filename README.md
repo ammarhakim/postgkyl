@@ -32,7 +32,14 @@ The environment is then activated with
 conda activate pgkyl
 ```
 
-Both the library and the command line tool `pgkyl` can then be easily installed:
+However, one can also attempt to install the dependencies directly to current
+conda environment using:
+```
+conda install --file requirements.txt
+```
+
+With all the dependencies installed, both the library and the command line tool
+`pgkyl` can then be installed from the source with `pip`:
 ```
 pip install -e .
 ```
