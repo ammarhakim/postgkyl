@@ -78,11 +78,13 @@ class Read_gkyl(object):
   """
 
   def __init__(self, file_name: str,
-               ctx: dict = None,
-               c2p: str = None,
+               ctx: dict = {},
+               c2p: str = '',
+               c2p_vel: str = '',
                **kwargs) -> None:
     self.file_name = file_name
     self.c2p = c2p
+    self.c2p_vel = c2p_vel
 
     self.dtf = np.dtype('f8')
     self.dti = np.dtype('i8')
@@ -323,6 +325,37 @@ class Read_gkyl(object):
               for d in range(num_dims)]
       if self.ctx:
         self.ctx['grid_type'] = 'c2p'
+      #end
+    elif self.c2p_vel:
+      grid_reader = Read_gkyl(self.c2p_vel)
+      grid_reader.preload()
+      _, tmp = grid_reader.load()
+
+      num_vdim = len(tmp.shape)-1
+      num_cdim = num_dims - num_vdim
+      if self.ctx:
+        self.ctx['num_vdim'] = num_vdim
+        self.ctx['num_cdim'] = num_cdim
+      #end
+
+      # Create uniform configuration space grid
+      grid = [np.linspace(self.lower[d],
+                          self.upper[d],
+                          self.cells[d]+1)
+              for d in range(num_cdim)]
+
+      # Create non-uniform velocity grid
+      num_comps = tmp.shape[-1]
+      num_coeff = num_comps/num_vdim
+      for d in range(num_vdim):
+        idx = [0] * (num_vdim+1)
+        idx[d] = slice(None)
+        idx[-1] = slice(int(d*num_coeff), int((d+1)*num_coeff))
+        grid.append(tmp[tuple(idx)])
+      #end
+
+      if self.ctx:
+        self.ctx['grid_type'] = 'c2p_vel'
       #end
     else: # Create sparse unifrom grid
       # Adjust for ghost cells

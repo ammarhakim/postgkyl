@@ -40,6 +40,7 @@ class GData(object):
                ctx: dict = {},
                comp_grid: bool = False,
                mapc2p_name: str = '',
+               mapc2p_vel_name: str = '',
                reader_name: str = '',
                load: bool = True,
                click_mode: bool = False) -> None:
@@ -79,6 +80,8 @@ class GData(object):
     self.ctx['lower'] = None
     self.ctx['upper'] = None
     self.ctx['cells'] = None
+    self.ctx['num_cdim'] = None
+    self.ctx['num_vdim'] = None
     self.ctx['num_comps'] = None
     self.ctx['changeset'] = None
     self.ctx['builddate'] = None
@@ -98,6 +101,7 @@ class GData(object):
     self._var_name = var_name
     self._file_name = str(file_name)
     self._mapc2p_name = mapc2p_name
+    self._mapc2p_vel_name = mapc2p_vel_name
     self._color = None
 
     self._status = True
@@ -120,12 +124,14 @@ class GData(object):
       #end
       for key in _readers:
         self._reader = _readers[key](
-          file_name=self._file_name,
-          ctx= self.ctx,
-          var_name=var_name,
-          c2p=mapc2p_name,
-          axes=zs, comp=comp,
-          click_mode=click_mode)
+          file_name = self._file_name,
+          ctx = self.ctx,
+          var_name = var_name,
+          c2p = mapc2p_name,
+          c2p_vel = mapc2p_vel_name,
+          axes = zs,
+          comp = comp,
+          click_mode = click_mode)
         if self._reader._is_compatible():
           reader_set = True
           break
@@ -363,7 +369,8 @@ class GData(object):
     for key in self.ctx:
       if key not in ['time', 'frame', 'changeset', 'builddate',
                      'basis_type', 'poly_order', 'is_modal', 'lower',
-                     'upper', 'cells', 'num_comps', 'grid_type']:
+                     'upper', 'cells', 'num_comps', 'grid_type',
+                     'num_cdim', 'num_vdim']:
         output += '\n├─ {:s}: {}'.format(key, self.ctx[key])
       #end
     #end
