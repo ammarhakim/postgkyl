@@ -53,6 +53,8 @@ def _crush(s): # Temp function used as a sorting key
               help='Allows to specify the custom label')
 @click.option('--c2p', type=click.STRING,
               help='Specify the file name containing c2p mapped coordinates')
+@click.option('--c2p-vel', 'c2p_vel', type=click.STRING,
+              help='Specify the file name containing c2p mapped coordinates')
 @click.option('--fv', is_flag=True,
               help='Tag finite volume data when using c2p mapped coordinates')
 @click.option('--reader', '-r', type=click.STRING,
@@ -130,6 +132,7 @@ def load(ctx, **kwargs):
                     comp = comp, var_name = var,
                     label = kwargs['label'],
                     mapc2p_name = mapc2p_name,
+                    mapc2p_vel_name = kwargs['c2p_vel'],
                     reader_name = kwargs['reader'],
                     load = kwargs['load'],
                     click_mode = True)
