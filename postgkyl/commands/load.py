@@ -118,6 +118,18 @@ def load(ctx, **kwargs):
     mapc2p_name = ctx.obj['global_c2p']
   #end
 
+  mapc2p_vel_name = None
+  if kwargs['c2p_vel'] and ctx.obj['global_c2p_vel']:
+    mapc2p_name = kwargs['c2p_vel']
+    click.echo(click.style(
+      'WARNING: The local \'c2p_vel\' is overwriting the global \'c2p_vel\'',
+      fg='yellow'))
+  elif kwargs['c2p_vel']:
+    mapc2p_vel_name = kwargs['c2p_vel']
+  elif ctx.obj['global_c2p_vel']:
+    mapc2p_vel_name = ctx.obj['global_c2p_vel']
+  #end
+
   if len(varNames) == 1:
     varNames = varNames[0].split(',')
   #end
@@ -132,7 +144,7 @@ def load(ctx, **kwargs):
                     comp = comp, var_name = var,
                     label = kwargs['label'],
                     mapc2p_name = mapc2p_name,
-                    mapc2p_vel_name = kwargs['c2p_vel'],
+                    mapc2p_vel_name = mapc2p_vel_name,
                     reader_name = kwargs['reader'],
                     load = kwargs['load'],
                     click_mode = True)
