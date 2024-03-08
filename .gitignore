@@ -1,3 +1,5 @@
 *.pyc
+build/
+dist/
 postgkyl.egg-info/
 src/postgkyl/version.py
