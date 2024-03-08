@@ -9,6 +9,7 @@ dependencies:
   - msgpack-python>=1.0.3
   - numpy>=1.26.4
   - pytables>=3.9.2
+  - pytest>=7.4.0
   - python>=3.11
   - scipy>=1.11.4
   - sympy>=1.12
