@@ -1,8 +1,9 @@
-import pytest
+#import pytest
 import os
 import numpy as np
 
 import postgkyl as pg
+
 
 class TestGkylType1:
   dir_path = os.path.dirname(__file__)
