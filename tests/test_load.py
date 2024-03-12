@@ -44,4 +44,9 @@ class TestGkyl:
 class TestAdios:
   dir_path = os.path.dirname(__file__)
 
+  def test_adios_frame(self):
+    data = pg.GData('{:s}/test_data/twostream-f-p2.bp'.format(self.dir_path))
+    num_cells = data.get_num_cells()
+    assert np.array_equal(num_cells, (64, 32))
+  #end
 #end
