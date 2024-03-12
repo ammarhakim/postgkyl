@@ -15,6 +15,13 @@ class TestGkylInterpolate:
     assert np.array_equal(values.shape, (16, 16, 1))
   #end
 
+  def test_ser_p2(self):
+    data = pg.GData('{:s}/test_data/twostream-f-p2.gkyl'.format(self.dir_path))
+    dg = pg.GInterpModal(data, poly_order=2, basis_type='ms')
+    grid, values = dg.interpolate()
+    assert np.array_equal(values.shape, (192, 96, 1))
+  #end
+
   def test_ten_p1(self):
     data = pg.GData('{:s}/test_data/shock-f-ten-p1.gkyl'.format(self.dir_path))
     dg = pg.GInterpModal(data, poly_order=1, basis_type='mt')
