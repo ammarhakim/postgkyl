@@ -1,4 +1,5 @@
 import numpy as np
+import msgpack as mp
 import os.path
 
 # Format description for raw Gkeyll output file from
@@ -137,8 +138,18 @@ class Read_gkyl(object):
       self.offset += 8
 
       # read meta
-      ## skip this for now
-      self.offset += meta_size
+      if meta_size > 0:
+        fh = open(self.file_name, 'rb')
+        fh.seek(self.offset)
+        unp = mp.unpackb(fh.read(meta_size))
+        for key in unp:
+          if self.ctx:
+            self.ctx[key] = unp[key]
+          #end
+        #end
+        self.offset += meta_size
+        fh.close()
+      #end
     #end
 
     # read real-type
