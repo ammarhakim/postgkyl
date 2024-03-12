@@ -5,7 +5,7 @@ import numpy as np
 import postgkyl as pg
 
 
-class TestGkylType1:
+class TestGkyl:
   dir_path = os.path.dirname(__file__)
 
   def test_gkyl_type1(self):
@@ -20,5 +20,11 @@ class TestGkylType1:
       mapc2p_name='{:s}/test_data/shock-rtheta-ser.gkyl'.format(self.dir_path))
     num_cells = data.get_num_cells()
     assert np.array_equal(num_cells, (8, 8))
+  #end
+
+  def test_gkyl_type3(self):
+    data = pg.GData('{:s}/test_data/hll-euler.gkyl'.format(self.dir_path))
+    num_cells = data.get_num_cells()
+    assert np.array_equal(num_cells, (50, 50))
   #end
 #end
