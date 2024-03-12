@@ -1,7 +1,7 @@
 
 name: Test Postgkyl
 
-on: workflow_dispatch
+on: [workflow_dispatch, pull_request, push]
 
 jobs:
   install_and_test:
