@@ -3,7 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - adios2>=2.9.2
+  - conda-forge::adios2==2.9.2
   - click>=8.1.7
   - matplotlib>=3.8.0
   - msgpack-python>=1.0.3
