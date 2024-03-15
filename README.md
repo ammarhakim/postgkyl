@@ -24,7 +24,7 @@ Postgkyl requires the following packages:
 We recommend creating a virtual environment and installing the dependencies
 through [conda](https://conda.io/miniconda.html):
 ```
-conda env create -f environment.yaml
+conda env create -f environment.yml
 ```
 
 The environment is then activated with
