@@ -20,10 +20,10 @@ Postgkyl requires the following packages:
   * matplotlib
   * msgpack-python
   * numpy
+  * pytables
   * pytest
   * scipy
   * sympy
-  * tables
 
 We recommend creating a virtual environment[^1] and installing the dependencies
 through [conda](https://conda.io/miniconda.html):
