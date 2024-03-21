@@ -144,7 +144,14 @@ class Read_gkyl(object):
         unp = mp.unpackb(fh.read(meta_size))
         for key in unp:
           if self.ctx:
-            self.ctx[key] = unp[key]
+            if key == 'polyOrder':
+              self.ctx['poly_order'] = unp[key]
+            elif key == 'basisType':
+              self.ctx['basis_type'] = unp[key]
+              self.ctx['is_modal'] = True
+            else:
+              self.ctx[key] = unp[key]
+            #end
           #end
         #end
         self.offset += meta_size
