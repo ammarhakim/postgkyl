@@ -25,7 +25,7 @@ def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False):
       if ((dim==2 or dim==3) and d==1) or (dim==4 and d==2) or (dim==5 and d==3):
         interp_true = interp+1
       #end
-    elif basis_type == 'pkpmhybrid':
+    elif basis_type == 'hybrid':
       # 1x1v, 2x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
       if d == dim-1:
         interp_true = interp+1
@@ -290,7 +290,7 @@ def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basis_type == 'pkpmhybrid':
+    elif modal and basis_type == 'hybrid':
       if order == 1:
         functionVector = Matrix([[0.5],[0.8660254037844386*x],[0.8660254037844386*y],[1.5*x*y],[1.677050983124842*(y**2-0.3333333333333333)],[2.904737509655563*(x*y**2-0.3333333333333333*x)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0], functionVector.shape[0]))
@@ -437,7 +437,7 @@ def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basis_type == 'pkpmhybrid':
+    elif modal and basis_type == 'hybrid':
       if order == 1:
         functionVector = Matrix([[0.3535533905932737],[0.6123724356957945*x],[0.6123724356957945*y],[0.6123724356957945*z],[1.060660171779821*x*y],[1.060660171779821*x*z],[1.060660171779821*y*z],[1.837117307087384*x*y*z],[1.185854122563142*(z**2-0.3333333333333333)],[2.053959590644373*(x*z**2-0.3333333333333333*x)],[2.053959590644373*(y*z**2-0.3333333333333333*y)],[3.557562367689427*(x*y*z**2-0.3333333333333332*x*y)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0], functionVector.shape[0]))
@@ -609,7 +609,7 @@ def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False):
       else:
         raise NameError("interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(order))
 
-    elif modal and basis_type == 'pkpmhybrid':
+    elif modal and basis_type == 'hybrid':
       if order == 1:
         functionVector = Matrix([[0.25],[0.4330127018922194*x],[0.4330127018922194*y],[0.4330127018922194*z],[0.4330127018922194*w],[0.75*x*y],[0.75*x*z],[0.75*y*z],[0.75*w*x],[0.75*w*y],[0.75*w*z],[1.299038105676658*x*y*z],[1.299038105676658*w*x*y],[1.299038105676658*w*x*z],[1.299038105676658*w*y*z],[2.25*w*x*y*z],[0.8385254915624211*(w**2-0.3333333333333333)],[1.452368754827781*(w**2*x-0.3333333333333333*x)],[1.452368754827781*(w**2*y-0.3333333333333333*y)],[1.452368754827781*(w**2*z-0.3333333333333333*z)],[2.515576474687264*(w**2*x*y-0.3333333333333333*x*y)],[2.515576474687264*(w**2*x*z-0.3333333333333333*x*z)],[2.515576474687264*(w**2*y*z-0.3333333333333333*y*z)],[4.357106264483344*(w**2*x*y*z-0.3333333333333333*x*y*z)]])
         interpMatrix = numpy.zeros((interpListND[0].shape[0]*interpListND[1].shape[0]*interpListND[2].shape[0]*interpListND[3].shape[0], functionVector.shape[0]))

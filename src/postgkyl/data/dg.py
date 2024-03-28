@@ -31,7 +31,7 @@ numNodesTensor = np.array([[ 2,   3,    4,     5],
                            [32, 343, 1024,  3125],
                            [64, 729, 4096, 15625]])
 numNodesGkHybrid = np.array([1, 6, 12, 24, 48])
-numNodesPkpmHybrid = np.array([1, 6, 12, 24, 48])
+numNodeshybrid = np.array([1, 6, 12, 24, 48])
 
 def _get_basis_p(num_dim, num_comp):
   basis, poly_order = None, None
@@ -57,15 +57,15 @@ def _getNumNodes(dim, poly_order, basis_type):
     numNodes = numNodesTensor[dim-1, poly_order-1]
   elif basis_type.lower() == 'gkhybrid':
     numNodes = numNodesGkHybrid[dim-1]
-  elif basis_type.lower() == 'pkpmhybrid':
-    numNodes = numNodesPkpmHybrid[dim-1]
+  elif basis_type.lower() == 'hybrid':
+    numNodes = numNodeshybrid[dim-1]
   else:
     raise NameError(
       "GInterp: Basis '{:s}' is not supported!\n"
       "Supported basis are currently 'ns' (Nodal Serendipity),"
       " 'ms' (Modal Serendipity), 'mt' (Modal Tensor product),"
       " 'mo' (Modal maximal Order), 'gkhybrid' (Modal GkHybrid),"
-      " and 'pkpmhybrid' (Modal PKPM hybrid)".
+      " and 'hybrid' (Modal PKPM hybrid)".
       format(basis_type))
   #end
   return numNodes
@@ -85,8 +85,8 @@ def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=Fals
   elif basis_type=='gkhybrid':
     mat = createInterpMatrix(dim, poly_order, 'gkhybrid', poly_order+1, True, c2p)
     return mat
-  elif basis_type=='pkpmhybrid':
-    mat = createInterpMatrix(dim, poly_order, 'pkpmhybrid', poly_order+1, True, c2p)
+  elif basis_type=='hybrid':
+    mat = createInterpMatrix(dim, poly_order, 'hybrid', poly_order+1, True, c2p)
     return mat
   else:
     # Load interpolation matrix from the pre-computed HDF5 file.
@@ -178,7 +178,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
     vpardir = 1 if (numDims==2 or numDims==3) else (2 if numDims==4  else (3 if numDims==5 else 99))
     numInterp[vpardir] = nInterpIn+1
   #end
-  if basis_type == "pkpmhybrid":
+  if basis_type == "hybrid":
     numInterp[-1] = nInterpIn+1
   #end
   if c2p:
@@ -414,7 +414,7 @@ class GInterpModal(GInterp):
       elif basis_type == 'gkhyb':
         self.basis_type = 'gkhybrid'
       elif basis_type == 'pkpmhyb':
-        self.basis_type = 'pkpmhybrid'
+        self.basis_type = 'hybrid'
       #end
     elif data.ctx['basis_type']:
       self.basis_type = data.ctx['basis_type']
@@ -425,7 +425,7 @@ class GInterpModal(GInterp):
     # PKPM hybrid base expects 2+ dimensions with the last one being
     # the parallel velocity. This allows to specify 'pkpmhyb' basis
     # and work with 1x1v and 1x data simulataneously.
-    if self.numDims == 1 and self.basis_type == 'pkpmhybrid':
+    if self.numDims == 1 and self.basis_type == 'hybrid':
       self.basis_type = 'serendipity'
     #end
 
@@ -485,7 +485,7 @@ class GInterpModal(GInterp):
         vpardir = 1 if (self.numDims==2 or self.numDims==3) else (2 if self.numDims==4  else (3 if self.numDims==5 else 99))
         nInterp = [self.numInterp]*self.numDims
         nInterp[vpardir] = self.numInterp+1
-      elif self.basis_type == 'pkpmhybrid':
+      elif self.basis_type == 'hybrid':
         nInterp = [self.numInterp]*self.numDims
         nInterp[-1] = self.numInterp+1
       else:
