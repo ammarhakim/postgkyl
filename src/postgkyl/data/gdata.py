@@ -132,7 +132,7 @@ class GData(object):
         #end
       #end
       if not reader_set:
-        raise TypeError('"file_name" was specified ({:s}) but cannot be read with {:s}'.format(self._file_name, _readers))
+        raise NameError('"file_name" was specified ({:s}) but cannot be read with {}'.format(self._file_name, list(_readers)))
       #end
 
       self._reader.preload()
