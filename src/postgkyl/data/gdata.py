@@ -75,8 +75,8 @@ class GData(object):
 
 
     self.ctx = {}
-    self.ctx['time']: float = None
-    self.ctx['frame']: int = None
+    self.ctx['time'] = None
+    self.ctx['frame'] = None
     self.ctx['lower'] = None
     self.ctx['upper'] = None
     self.ctx['cells'] = None
@@ -85,10 +85,10 @@ class GData(object):
     self.ctx['num_comps'] = None
     self.ctx['changeset'] = None
     self.ctx['builddate'] = None
-    self.ctx['poly_order']: int = None
-    self.ctx['basis_type']: str = None
-    self.ctx['is_modal']: bool = None
-    self.ctx['grid_type']: str = 'uniform'
+    self.ctx['poly_order'] = None
+    self.ctx['basis_type'] = None
+    self.ctx['is_modal'] = None
+    self.ctx['grid_type'] = 'uniform'
     # Allow to copy input context variable
     for key in ctx:
       self.ctx[key] = ctx[key]

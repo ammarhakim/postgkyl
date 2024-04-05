@@ -11,26 +11,16 @@ import click
 from postgkyl.commands import DataSpace
 from postgkyl.commands.util import load_style, verb_print
 import postgkyl.commands as cmd
+from postgkyl import __version__
 
 # Version print helper
 def _printVersion(ctx, param, value):
   if not value or ctx.resilient_parsing:
     return
   #end
-  fls = glob(os.path.dirname(os.path.realpath(__file__)) + "/*/*.py")
-  latest = 0.0
-  for f in fls:
-    if latest < os.path.getmtime(f):
-      latest = os.path.getmtime(f)
-      struct = time.gmtime(latest)
-      date = "{:d}-{:02d}-{:02d}".format(struct.tm_year,
-                                         struct.tm_mon,
-                                         struct.tm_mday)
-    #end
-  #end
-  click.echo('Postgkyl 1.7.0 {:s} ({:s})'.format(date, sys.platform))
+  click.echo('Postgkyl {:s} ({:s})'.format(__version__, sys.platform))
   click.echo('Python version: {:s}'.format(sys.version))
-  click.echo('Copyright 2016-2023 Gkeyll Team')
+  click.echo('Copyright 2016-2024 Gkeyll Team')
   click.echo('Postgkyl can be used freely for research at universities,')
   click.echo('national laboratories, and other non-profit institutions.')
   click.echo('There is NO warranty.\n')
