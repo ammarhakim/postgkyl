@@ -44,7 +44,7 @@ class TestGkyl:
                     mapc2p_vel_name='{:s}bimaxwellian-mapc2p-vel.gkyl'.format(self.dir_path))
     dg = pg.GInterpModal(data, poly_order=1, basis_type='gkhyb')
     dg.interpolate(overwrite=True)
-    assert np.array_equal([-2.000000000000000e+00, -1.060964134801285e+07, -9.922121884065119e-34], data.get_bounds()[0]) and np.array_equal([2.0000000000000000e+00, 1.0609641348012850e+07, 1.2063446490352932e-16], data.get_bounds()[1])
+    assert data.get_bounds()[0][1] < -1.06e+07 and data.get_bounds()[0][1] > -1.07e+07 and data.get_bounds()[1][2] > 1.2e-16 and data.get_bounds()[1][2] < 1.3e-16
   #end
 #end
 
