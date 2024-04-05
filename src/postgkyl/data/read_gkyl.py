@@ -122,7 +122,7 @@ class Read_gkyl(object):
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
   def _read_header(self) -> None:
-    self.offset = 0
+    #self.offset = 0
 
     if self._is_compatible():
       self.offset += 5 # Header contatins the gkyl magic sequence
@@ -283,10 +283,10 @@ class Read_gkyl(object):
       if cells == 0:
         data = data_raw.reshape(gshape)
       else:
-          data = np.append(data, data_raw.reshape(gshape), axis=0)
+        data = np.append(data, data_raw.reshape(gshape), axis=0)
       #end
       cells += loop_cells
-      if self.offset == os.path.getsize(self.file_name):
+      if self.offset >= os.path.getsize(self.file_name):
         break
       #end
       self._read_header()

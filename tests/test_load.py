@@ -23,9 +23,9 @@ class TestGkyl:
   #end
 
   def test_gkyl_type2(self):  # Dynvector
-    data = pg.GData('{:s}firehose-field-energy.gkyl'.format(self.dir_path))
+    data = pg.GData('{:s}twostream-field-energy.gkyl'.format(self.dir_path))
     num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (6400,))
+    assert np.array_equal(num_cells, (6113,))
   #end
 
   def test_gkyl_type3(self):  # Frame with distributed memory

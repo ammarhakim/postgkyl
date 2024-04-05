@@ -20,12 +20,12 @@ Postgkyl requires the following packages:
   * matplotlib
   * msgpack-python
   * numpy
+  * pytables
   * pytest
   * scipy
   * sympy
-  * tables
 
-We recommend creating a virtual environment and installing the dependencies
+We recommend creating a virtual environment[^1] and installing the dependencies
 through [conda](https://conda.io/miniconda.html):
 ```bash
 conda env create -f environment.yml
@@ -37,13 +37,17 @@ conda activate pgkyl
 ```
 
 However, one can also attempt to install the dependencies directly to current
-conda environment using:
+`conda` environment using:
+```bash
+conda env update -f environment.yml
+```
+or entirely without environments:
 ```bash
 conda install --file requirements.txt
 ```
 
 With all the dependencies installed, both the library and the command line tool
-`pgkyl` can then be installed from the source with `pip`:
+`pgkyl` can then be installed from the source with `pip`:[^2]
 ```bash
 pip install -e .
 ```
@@ -65,3 +69,14 @@ pytest [-v]
 
 See [Gkyl License](http://gkyl.readthedocs.io/en/latest/license.html)
 for usage conditions.
+
+[^1]: Note that `conda` needs to be initialized before environments can be used.
+    This is the last step of the `conda` installation, but the current default
+    behavior is _not_ to perform the initialization. It can be done afterwards
+    using `conda init [shell name]`, e.g., `conda init fish` with the fantastic
+    [fish](https://fishshell.com/) shell.
+
+[^2]: As long as `conda` has been installed properly, this does _not_ require
+    any additional modifications of `PYTHONPATH`. If Postgkyl was used
+    previously through `PYTHONPATH`, we strongly recommend removing the Postgkyl
+    repository from the variable.

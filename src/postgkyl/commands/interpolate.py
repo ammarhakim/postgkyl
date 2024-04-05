@@ -45,7 +45,7 @@ def interpolate(ctx, **kwargs):
       basis_type = 'gkhybrid'
       is_modal = True
     elif kwargs['basis_type'] == 'pkpmhyb':
-      basis_type = 'pkpmhybrid'
+      basis_type = 'hybrid'
       is_modal = True
     #end
   #end
