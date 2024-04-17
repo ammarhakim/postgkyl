@@ -80,6 +80,8 @@ class PgkylCommandGroup(click.Group):
               help="Specify the Adios variable name (default is 'CartGridField')")
 @click.option('--c2p',
               help="Specify the file name containing c2p mapped coordinates")
+@click.option('--c2p-vel', 'c2p_vel',
+              help="Specify the file name containing c2p mapped velocity coordinates")
 @click.option('--style',
               help="Sets Maplotlib rcParams style file.")
 @click.pass_context
@@ -117,6 +119,7 @@ def cli(ctx, **kwargs):
                            kwargs['z4'], kwargs['z5'],
                            kwargs['component'])
   ctx.obj['global_c2p'] = kwargs['c2p']
+  ctx.obj['global_c2p_vel'] = kwargs['c2p_vel']
 
   ctx.obj['rcParams'] = {}
   fn = kwargs['style'] if kwargs['style'] else '{:s}/output/postgkyl.mplstyle'.format(os.path.dirname(os.path.realpath(__file__)))

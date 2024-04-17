@@ -490,7 +490,20 @@ class GInterpModal(GInterp):
         nInterp[-1] = self.numInterp+1
       else:
         nInterp = [int(round(cMat.shape[0] ** (1.0/self.numDims)))]*self.numDims
-      grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
+      #end
+      grid = _make1Dgrids(nInterp, self.Xc, self.numDims, None)
+      if self.data.ctx['grid_type'] == 'c2p_vel':
+        num_cdim = self.data.ctx['num_cdim']
+        num_vdim = self.data.ctx['num_vdim']
+        q = self.data.get_grid()
+        num_comp = q[-1].shape[-1]
+        basis, poly_order = _get_basis_p(1, num_comp)
+        for d in range(num_vdim):
+          cMat = _loadInterpMatrix(1, poly_order,
+                                   basis, nInterp[num_cdim+d], self.read, True, True)
+          grid[num_cdim+d] = _interpOnMesh(cMat, q[num_cdim+d], nInterp[num_cdim+d]+1, basis, True)
+        #end
+      #end
     #end
 
     if overwrite:
@@ -511,6 +524,8 @@ class GInterpModal(GInterp):
       for d in range(self.numDims):
         grid.append(_interpOnMesh(cMat, q[d], self.numInterp, self.basis_type, True))
       #end
+    elif self.data.ctx['grid_type'] == 'c2p_vel':
+      q = self.data.get_grid()
     else:
       nInterp = [self.numInterp]*self.numDims
       grid = _make1Dgrids(nInterp, self.Xc, self.numDims, self.gridType)
