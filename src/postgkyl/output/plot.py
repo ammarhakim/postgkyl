@@ -8,11 +8,6 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-# this is needed for Python 3.0 compatibility
-import sys
-if sys.version_info[0] >= 3:
-    unicode = str
-
 # Helper functions
 def _colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
@@ -224,7 +219,7 @@ def plot(data, args=(),
     fig = plt.figure(figure, figsize=figsize)
   elif isinstance(figure, matplotlib.figure.Figure):
     fig = figure
-  elif isinstance(figure, (str, unicode)):
+  elif isinstance(figure, str):
     fig = plt.figure(int(figure), figsize=figsize)
   else:
     raise TypeError('\'fig\' keyword needs to be one of ' \

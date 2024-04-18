@@ -10,7 +10,7 @@ from postgkyl.commands.util import verb_print
               help="Specify the tag to plot.")
 @click.option('--figure', '-f', default=None,
               help="Specify figure to plot in; either number or 'dataset'.")
-@click.option('--squeeze', '-s', is_flag=True,
+@click.option('--squeeze', is_flag=True,
               help="Squeeze the components into one panel.")
 @click.option('--subplots', '-b', is_flag=True,
               help="Make subplots from multiple datasets.")
@@ -144,9 +144,11 @@ def plot(ctx, **kwargs):
 
   kwargs['rcParams'] = ctx.obj['rcParams']
 
+  args = kwargs['arg']
   if kwargs['scatter']:
-    kwargs['args'] = '.'
+    args += '.'
   #end
+  del kwargs['arg']
 
   if kwargs['jet']:
     click.echo(click.style(
@@ -228,7 +230,7 @@ def plot(ctx, **kwargs):
     #end
 
     # Plot -------------------------------------------------------------
-    gplot(dat, kwargs['arg'], label_prefix=label, **kwargs)
+    gplot(dat, args, label_prefix=label, **kwargs)
     # ------------------------------------------------------------------
 
     if kwargs['subplots']:
