@@ -302,9 +302,9 @@ class GData(object):
       output (str): A list of strings with the informations
         """
     values = self.get_values()
-    numComps = self.get_num_comps()
+    num_comps = self.get_num_comps()
     num_dims = self.get_num_dims()
-    numCells = self.get_num_cells()
+    num_cells = self.get_num_cells()
     lower, upper = self.get_bounds()
 
     output = ''
@@ -315,16 +315,16 @@ class GData(object):
     if self.ctx['frame'] is not None:
       output += '├─ Frame: {:d}\n'.format(self.ctx['frame'])
     #end
-    output += '├─ Number of components: {:d}\n'.format(numComps)
+    output += '├─ Number of components: {:d}\n'.format(num_comps)
     output += '├─ Number of dimensions: {:d}\n'.format(num_dims)
     if lower is not None:
       output += '├─ Grid: ({:s})\n'.format(self.get_gridType())
       for d in range(num_dims-1):
-        output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, numCells[d])
+        output += '│  ├─ Dim {:d}: Num. cells: {:d}; '.format(d, num_cells[d])
         output += 'Lower: {:e}; Upper: {:e}\n'.format(lower[d],
                                                       upper[d])
       #end
-      output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, numCells[num_dims-1])
+      output += '│  └─ Dim {:d}: Num. cells: {:d}; '.format(num_dims-1, num_cells[num_dims-1])
       output += 'Lower: {:e}; Upper: {:e}'.format(lower[num_dims-1],
                                                   upper[num_dims-1])
     #end
@@ -335,14 +335,14 @@ class GData(object):
       minIdx = np.unravel_index(np.nanargmin(values), values.shape)
       output += '\n├─ Maximum: {:e} at {:s}'.format(maximum,
                                                   str(maxIdx[:num_dims]))
-      if numComps > 1:
+      if num_comps > 1:
         output += ' component {:d}\n'.format(maxIdx[-1])
       else:
         output += '\n'
       #end
       output += '├─ Minimum: {:e} at {:s}'.format(minimum,
                                                  str(minIdx[:num_dims]))
-      if numComps > 1:
+      if num_comps > 1:
         output += ' component {:d}'.format(minIdx[-1])
       #end
     #end

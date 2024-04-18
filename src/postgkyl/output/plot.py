@@ -81,11 +81,6 @@ def plot(data, args=(),
   be used for both 1D an 2D data. Uses a proper colormap by default.
   """
 
-  if group is not None:
-    lineouts=group
-    print("plot.py Deprecation warning: the 'group' parameter is being renamed to 'lineouts', which is hopefully more explanatory.")
-  #end
-
   #---- Set style and process inputs -----------------------------------
   # Default to Postgkyl style file file if no style is specified
   # Use the rcParams dictionary which is passed with click contex
@@ -165,6 +160,15 @@ def plot(data, args=(),
       cells = np.delete(cells, idx)
       axes_labels = np.delete(axes_labels, idx)
       values = np.squeeze(values, tuple(idx))
+
+      # c2p grids
+      if len(grid[0].shape) > 1:
+        for d in range(num_dims):
+          for i in reversed(idx):
+            grid[d] = np.mean(grid[d], axis=i)
+          #end
+        #end
+      #end
     #end
   #end
 
