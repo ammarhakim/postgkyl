@@ -153,9 +153,9 @@ def load(ctx, **kwargs):
           dg.interpolateGrid(overwrite=True)
         #end
         data.add(dat)
-      except NameError:
+      except NameError as e:
         ctx.fail(click.style(
-          'Failed to load \'{:s}\''.format(fn),
+          r'{:s}'.format(repr(e)),
           fg='red'))
       #end
     #end

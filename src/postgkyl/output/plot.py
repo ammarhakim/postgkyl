@@ -8,11 +8,6 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-# this is needed for Python 3.0 compatibility
-import sys
-if sys.version_info[0] >= 3:
-    unicode = str
-
 # Helper functions
 def _colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
@@ -85,11 +80,6 @@ def plot(data, args=(),
   Unifies the plotting across a wide range of Gkyl applications. Can
   be used for both 1D an 2D data. Uses a proper colormap by default.
   """
-
-  if group is not None:
-    lineouts=group
-    print("plot.py Deprecation warning: the 'group' parameter is being renamed to 'lineouts', which is hopefully more explanatory.")
-  #end
 
   #---- Set style and process inputs -----------------------------------
   # Default to Postgkyl style file file if no style is specified
@@ -170,6 +160,15 @@ def plot(data, args=(),
       cells = np.delete(cells, idx)
       axes_labels = np.delete(axes_labels, idx)
       values = np.squeeze(values, tuple(idx))
+
+      # c2p grids
+      if len(grid[0].shape) > 1:
+        for d in range(num_dims):
+          for i in reversed(idx):
+            grid[d] = np.mean(grid[d], axis=i)
+          #end
+        #end
+      #end
     #end
   #end
 
@@ -224,7 +223,7 @@ def plot(data, args=(),
     fig = plt.figure(figure, figsize=figsize)
   elif isinstance(figure, matplotlib.figure.Figure):
     fig = figure
-  elif isinstance(figure, (str, unicode)):
+  elif isinstance(figure, str):
     fig = plt.figure(int(figure), figsize=figsize)
   else:
     raise TypeError('\'fig\' keyword needs to be one of ' \
