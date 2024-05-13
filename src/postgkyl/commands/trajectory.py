@@ -9,17 +9,16 @@ import click
 import postgkyl.output.plot as gplot
 from postgkyl.commands.util import verb_print
 
-def update(i, ax, ctx, leap, vel,
-           xmin, xmax, ymin, ymax, zmin, zmax,
-           tag):
+def _update(i, ax, ctx, leap, vel,
+            xmin, xmax, ymin, ymax, zmin, zmax,
+            tag):
   colors = ['C0', 'C1', 'C2', 'C3', 'C4',
             'C5', 'C6', 'C7', 'C8', 'C9']
 
-  s = -1
+  s = 0
   plt.cla()
   #for s, dat in ctx.obj['data'].iterator(tag, emum=True):
   for dat in ctx.obj['data'].iterator(tag):
-    s = s+1
     time = dat.get_grid()[0]
     coords = dat.get_values()
     tIdx = int(i*leap)
@@ -66,6 +65,7 @@ def update(i, ax, ctx, leap, vel,
               [z[tIdx], z[tIdx]+dz],
               color=colors[s%10])
     #end
+    s += 1
   #end
   plt.title('T: {:.4e}'.format(time[tIdx]))
   ax.set_xlabel('$z_0$')
@@ -154,7 +154,7 @@ def trajectory(ctx, **kwargs):
   #end
 
   fig = plt.figure()
-  ax = Axes3D(fig)
+  ax = fig.add_subplot(111, projection='3d')
   kwargs['figure'] = fig
   kwargs['legend'] = False
 
@@ -167,7 +167,7 @@ def trajectory(ctx, **kwargs):
     numPos = int(kwargs['numframes'])
   #end
 
-  anim = FuncAnimation(fig, update, numPos,
+  anim = FuncAnimation(fig, _update, numPos,
                        fargs=(ax, ctx, jump, kwargs['velocity'],
                               kwargs['xmin'], kwargs['xmax'],
                               kwargs['ymin'], kwargs['ymax'],
