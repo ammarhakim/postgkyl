@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
 from glob import glob
-import os
-import time
-import sys
 import os.path
+import sys
+import time
 
 import click
 
+from postgkyl import __version__
 from postgkyl.commands import DataSpace
 from postgkyl.commands.util import load_style, verb_print
 import postgkyl.commands as cmd
-from postgkyl import __version__
 
 # Version print helper
 def _printVersion(ctx, param, value):
@@ -45,12 +44,13 @@ class PgkylCommandGroup(click.Group):
     if matches and len(matches) == 1:
       return click.Group.get_command(self, ctx, matches[0])
     elif matches:
-      ctx.fail("Too many matches for '{:s}': {:s}".format(cmd_name, ', '.join(sorted(matches))))
+      ctx.fail("Too many matches for '{:s}': {:s}".format(
+        cmd_name, ', '.join(sorted(matches))))
     #end
 
     # cmd_name is a data set
     if glob(cmd_name):
-      ctx.obj['inDataStrings'].append(cmd_name)
+      ctx.obj['in_data_strings'].append(cmd_name)
       return click.Group.get_command(self, ctx, 'load')
     #end
 
@@ -87,13 +87,13 @@ class PgkylCommandGroup(click.Group):
 @click.pass_context
 def cli(ctx, **kwargs):
   """Postprocessing and plotting tool for Gkeyll
-  data. Datasets can be loaded, processed and plotted using a
-  command chaining mechanism. For full documentation see the Gkeyll
-  documentation webpages. Help for individual commands can be
-  obtained using the --help option for that command.
+  data. Datasets can be loaded, processed and plotted using a command chaining
+  mechanism. For full documentation see the Gkeyll documentation webpages
+  (https://gkeyll.readthedocs.io). Help for individual commands can be obtained using
+  the --help option for that command.
   """
   ctx.obj = {}  # The main contex object
-  ctx.obj['startTime'] = time.time()  # Timings are written in the verbose mode
+  ctx.obj['start_time'] = time.time()  # Timings are written in the verbose mode
   if kwargs['verbose']:
     ctx.obj['verbose'] = True
     # Monty Python references should be a part of any Python code
@@ -104,8 +104,8 @@ def cli(ctx, **kwargs):
     ctx.obj['verbose'] = False
   #end
 
-  ctx.obj['inDataStrings'] = []
-  ctx.obj['inDataStringsLoaded'] = 0
+  ctx.obj['in_data_strings'] = []
+  ctx.obj['in_data_strings_loaded'] = 0
 
   ctx.obj['data'] = DataSpace()
 
@@ -113,16 +113,17 @@ def cli(ctx, **kwargs):
   ctx.obj['ax'] = ''
 
   ctx.obj['compgrid'] = kwargs['compgrid']
-  ctx.obj['globalVarNames'] = kwargs['varname']
-  ctx.obj['globalCuts'] = (kwargs['z0'], kwargs['z1'],
-                           kwargs['z2'], kwargs['z3'],
-                           kwargs['z4'], kwargs['z5'],
-                           kwargs['component'])
+  ctx.obj['global_var_names'] = kwargs['varname']
+  ctx.obj['global_cuts'] = (kwargs['z0'], kwargs['z1'],
+                            kwargs['z2'], kwargs['z3'],
+                            kwargs['z4'], kwargs['z5'],
+                            kwargs['component'])
   ctx.obj['global_c2p'] = kwargs['c2p']
   ctx.obj['global_c2p_vel'] = kwargs['c2p_vel']
 
   ctx.obj['rcParams'] = {}
-  fn = kwargs['style'] if kwargs['style'] else '{:s}/output/postgkyl.mplstyle'.format(os.path.dirname(os.path.realpath(__file__)))
+  fn = kwargs['style'] if kwargs['style'] else '{:s}/output/postgkyl.mplstyle'.format(
+    os.path.dirname(os.path.realpath(__file__)))
   load_style(ctx, fn)
 #end
 

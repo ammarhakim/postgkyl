@@ -12,15 +12,15 @@ def _pickCut(ctx, kwargs, zn):
               # components as well
     nm = 'component'
   #end
-  if kwargs[nm] and ctx.obj['globalCuts'][zn]:
+  if kwargs[nm] and ctx.obj['global_cuts'][zn]:
     click.echo(click.style(
       'WARNING: The local \'{:s}\' is overwriting the global \'{:s}\''.format(nm, nm),
       fg='yellow'))
     return kwargs[nm]
   elif kwargs[nm]:
     return kwargs[nm]
-  elif ctx.obj['globalCuts'][zn]:
-    return ctx.obj['globalCuts'][zn]
+  elif ctx.obj['global_cuts'][zn]:
+    return ctx.obj['global_cuts'][zn]
   else:
     return None
   #end
@@ -66,8 +66,8 @@ def load(ctx, **kwargs):
   verb_print(ctx, 'Starting load')
   data = ctx.obj['data']
 
-  idx = ctx.obj['inDataStringsLoaded']
-  inDataString = ctx.obj['inDataStrings'][idx]
+  idx = ctx.obj['in_data_strings_loaded']
+  inDataString = ctx.obj['in_data_strings'][idx]
 
   # Handling the wildcard characters
   if '*' in inDataString or '?' in inDataString or '!' in inDataString:
@@ -95,15 +95,15 @@ def load(ctx, **kwargs):
   comp = _pickCut(ctx, kwargs, 6)
 
   varNames = ['CartGridField']
-  if kwargs['varname'] and ctx.obj['globalVarNames']:
+  if kwargs['varname'] and ctx.obj['global_var_names']:
     varNames = kwargs['varname']
     click.echo(click.style(
       'WARNING: The local \'varname\' is overwriting the global \'varname\'',
       fg='yellow'))
   elif kwargs['varname']:
     varNames = kwargs['varname']
-  elif ctx.obj['globalVarNames']:
-    varNames = ctx.obj['globalVarNames']
+  elif ctx.obj['global_var_names']:
+    varNames = ctx.obj['global_var_names']
   #end
 
   mapc2p_name = None
@@ -163,6 +163,6 @@ def load(ctx, **kwargs):
 
   data.set_unique_labels()
 
-  ctx.obj['inDataStringsLoaded'] += 1
+  ctx.obj['in_data_strings_loaded'] += 1
   verb_print(ctx, 'Finishing load')
 #end
