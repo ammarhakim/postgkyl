@@ -84,12 +84,12 @@ def fixGridSlice(grid, values, mode='idx',
     """
     fix = (fix1, fix2, fix3, fix4, fix5, fix6)
 
-    numDims = len(values.shape)-1
+    num_dims = len(values.shape)-1
     idxGrid = []
-    idxValues = [slice(0, values.shape[d]) for d in range(numDims)]
-    
+    idxValues = [slice(0, values.shape[d]) for d in range(num_dims)]
+
     for i, idx in enumerate(fix):
-        if i < numDims:
+        if i < num_dims:
             if idx is not None:
                 if mode == 'value':
                     idx = findNearestIdx(grid[i], float(idx))

@@ -42,8 +42,8 @@ def parrotate(ctx, **kwargs):
     data.add(out)
   #end
 
-  data.deactivateAll(tag=kwargs['array'])
-  data.deactivateAll(tag=kwargs['rotator'])
+  data.deactivate_all(tag=kwargs['array'])
+  data.deactivate_all(tag=kwargs['rotator'])
 
   verb_print(ctx, 'Finishing rotation parallel to rotator array')
 #end

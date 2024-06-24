@@ -36,8 +36,8 @@ def velocity(ctx, **kwargs):
     data.add(out)
   #end
 
-  data.deactivateAll(tag=kwargs['density'])
-  data.deactivateAll(tag=kwargs['momentum'])
+  data.deactivate_all(tag=kwargs['density'])
+  data.deactivate_all(tag=kwargs['momentum'])
 
   verb_print(ctx, 'Finishing velocity')
 #end

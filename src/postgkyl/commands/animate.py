@@ -224,51 +224,51 @@ def animate(ctx, **kwargs):
   #end
 
   offsets = [0]
-  tagIterator = list(data.tagIterator(kwargs['use']))
-  setFigure = False
-  minSize = np.NAN
+  tag_iterator = list(data.tag_iterator(kwargs['use']))
+  set_figure = False
+  min_size = np.NAN
 
   if kwargs['grouptags']:
-    for tag in data.tagIterator(kwargs['use']):
-      numDatasets = int(data.getNumDatasets(tag=tag))
-      offsets.append(numDatasets)
-      minSize = int(np.nanmin((minSize, numDatasets)))
+    for tag in data.tag_iterator(kwargs['use']):
+      num_datasets = int(data.get_num_datasets(tag=tag))
+      offsets.append(num_datasets)
+      min_size = int(np.nanmin((min_size, num_datasets)))
     #end
     offsets.pop()
-    tagIterator = list((kwargs['use'],))
+    tag_iterator = list((kwargs['use'],))
     kwargs['legend'] = True
-    setFigure = True
-    figNum = int(0)
+    set_figure = True
+    fig_num = int(0)
 
-    for tag in tagIterator:
-      dataList = list(data.iterator(tag=tag))
-      if setFigure:
-        figs.append(plt.figure(figNum, figsize=figsize))
+    for tag in tag_iterator:
+      data_lst = list(data.iterator(tag=tag))
+      if set_figure:
+        figs.append(plt.figure(fig_num, figsize=figsize))
       else:
         figs.append(plt.figure(figsize=figsize))
       #end
       if not kwargs['saveframes']:
         anims.append(FuncAnimation(figs[-1], _update,
-                                   int(np.nanmin((minSize, len(dataList)))),
-                                   fargs=(dataList, figs[-1],
+                                   int(np.nanmin((min_size, len(data_lst)))),
+                                   fargs=(data_lst, figs[-1],
                                           offsets, kwargs),
                                    interval=kwargs['interval'], blit=False))
 
         if tag is not None:
-          fName = 'anim_{:s}.mp4'.format(tag)
+          file_name = 'anim_{:s}.mp4'.format(tag)
         else:
-          fName = 'anim.mp4'
+          file_name = 'anim.mp4'
         #end
         if kwargs['saveas']:
-          fName = str(kwargs['saveas'])
+          file_name = str(kwargs['saveas'])
         #end
         if kwargs['save'] or kwargs['saveas']:
-          anims[-1].save(fName, writer='ffmpeg',
+          anims[-1].save(file_name, writer='ffmpeg',
                          fps=kwargs['fps'], dpi=kwargs['dpi'])
         #end
       else:
-        for i in range(int(np.nanmin((minSize, len(dataList))))):
-          _update(i, dataList, figs[-1], offsets, kwargs)
+        for i in range(int(np.nanmin((min_size, len(data_lst))))):
+          _update(i, data_lst, figs[-1], offsets, kwargs)
           plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
                       dpi=kwargs['dpi'])
         #end
@@ -276,30 +276,30 @@ def animate(ctx, **kwargs):
       #end
     #end
   else:
-    dataList = list(data.iterator(tag=kwargs['use']))
-    if setFigure:
-      figs.append(plt.figure(figNum, figsize=figsize))
+    data_lst = list(data.iterator(tag=kwargs['use']))
+    if set_figure:
+      figs.append(plt.figure(fig_num, figsize=figsize))
     else:
       figs.append(plt.figure(figsize=figsize))
     #end
     if not kwargs['saveframes']:
       anims.append(FuncAnimation(figs[-1], _update,
-                                 int(np.nanmin((minSize, len(dataList)))),
-                                 fargs=(dataList, figs[-1],
+                                 int(np.nanmin((min_size, len(data_lst)))),
+                                 fargs=(data_lst, figs[-1],
                                         offsets, kwargs),
                                  interval=kwargs['interval'], blit=False))
 
-      fName = 'anim.mp4'
+      file_name = 'anim.mp4'
       if kwargs['saveas']:
-        fName = str(kwargs['saveas'])
+        file_name = str(kwargs['saveas'])
       #end
       if kwargs['save'] or kwargs['saveas']:
-        anims[-1].save(fName, writer='ffmpeg',
+        anims[-1].save(file_name, writer='ffmpeg',
                        fps=kwargs['fps'], dpi=kwargs['dpi'])
       #end
     else:
-      for i in range(int(np.nanmin((minSize, len(dataList))))):
-        _update(i, dataList, figs[-1], offsets, kwargs)
+      for i in range(int(np.nanmin((min_size, len(data_lst))))):
+        _update(i, data_lst, figs[-1], offsets, kwargs)
         plt.savefig('{:s}_{:d}.png'.format(kwargs['saveframes'], i),
                     dpi=kwargs['dpi'])
       #end

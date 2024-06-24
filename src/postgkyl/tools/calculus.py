@@ -30,8 +30,8 @@ def integrate(data, axis, overwrite=False, stack=False):
             raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
         #end
     else:
-        numDims = data.get_num_dims()
-        axis = tuple(range(numDims))
+        num_dims = data.get_num_dims()
+        axis = tuple(range(num_dims))
     #end
 
     # Get dz elements

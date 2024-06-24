@@ -36,7 +36,7 @@ def write(ctx, **kwargs):
     fn =  str(fn.split('.')[0])
   #end
 
-  num_files = data.getNumDatasets(tag=kwargs['use'])
+  num_files = data.get_num_datasets(tag=kwargs['use'])
   for i, dat in data.iterator(tag=kwargs['use'],
                               enum=True):
     out_name = '{:s}.{:s}'.format(fn, mode)

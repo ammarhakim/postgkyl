@@ -39,7 +39,7 @@ def _stringToIndex(value, array=None, nodal=False):
   #end
 #end
 
-def idxParser(value, array=None, nodal=False):
+def idx_parser(value, array=None, nodal=False):
   idx = None
   if isinstance(value, int):
     idx = value
@@ -77,4 +77,4 @@ def idxParser(value, array=None, nodal=False):
   #end
 
   return idx
-#end   
+#end

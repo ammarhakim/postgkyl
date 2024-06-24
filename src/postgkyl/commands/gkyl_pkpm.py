@@ -1,11 +1,11 @@
 import click
 
-# ---- Postgkyl imports ------------------------------------------------
+#---- Postgkyl imports ------------------------------------------------
 from postgkyl.commands.util import verb_print
 from postgkyl.data import GData, GInterpModal
 from postgkyl.tools import laguerre_compose
 from postgkyl.tools import transform_frame
-# ----------------------------------------------------------------------
+#----------------------------------------------------------------------
 
 @click.command(help='Shortcut to load Gkeyll PKPM data, interpolate, and transform')
 @click.option('--name', '-n', type=click.STRING, prompt=True,

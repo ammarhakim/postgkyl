@@ -61,9 +61,9 @@ def norm(ctx, **kwargs):
     verb_print(ctx, 'Normalizing data')
     for s in ctx.obj['sets']:
         values = ctx.obj['dataSets'][s].get_values()
-        numComps = ctx.obj['dataSets'][s].get_num_comps()
+        num_comps = ctx.obj['dataSets'][s].get_num_comps()
         valuesOut = values.copy()
-        for comp in range(numComps):
+        for comp in range(num_comps):
             if kwargs['shift']:
                 valuesOut[..., comp] -= valuesOut[..., comp].min()
             if kwargs["usefirst"]:

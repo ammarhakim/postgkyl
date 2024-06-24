@@ -3,9 +3,11 @@ import click
 import numpy as np
 import matplotlib.pyplot as plt
 
+#---- Postgkyl imports -----------------------------------------------
 from postgkyl.commands.util import verb_print
 from postgkyl.tools.growth import fitGrowth, exp2
 from postgkyl.data import GData
+#---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 #---- Growth ---------------------------------------------------------

@@ -34,11 +34,11 @@ def collect(ctx, **kwargs):
   data = ctx.obj['data']
 
   if kwargs['tag']:
-    outTags = kwargs['tag'].split(',')
+    out_tags = kwargs['tag'].split(',')
   #end
 
-  tagCnt = 0
-  for tag in data.tagIterator(kwargs['use']):
+  tag_cnt = 0
+  for tag in data.tag_iterator(kwargs['use']):
     time = [[]]
     values = [[]]
     grid = [[]]
@@ -62,8 +62,8 @@ def collect(ctx, **kwargs):
       #end
       val = dat.get_values()
       if kwargs['sumdata']:
-        numDims = dat.get_num_dims()
-        axis = tuple(range(numDims))
+        num_dims = dat.get_num_dims()
+        axis = tuple(range(num_dims))
         values[-1].append(np.nansum(val, axis=axis))
       else:
         values[-1].append(val)
@@ -74,17 +74,17 @@ def collect(ctx, **kwargs):
       label = dat.get_custom_label()
     #end
 
-    data.deactivateAll(tag)
+    data.deactivate_all(tag)
 
-    outTag = tag
+    out_tag = tag
     if kwargs['tag']:
-      if len(outTags) > 1:
-        outTag = outTags[tagCnt]
+      if len(out_tags) > 1:
+        out_tag = out_tags[tag_cnt]
       else:
-        outTag = outTags[0]
+        out_tag = out_tags[0]
       #end
     #end
-    tagCnt += 1
+    tag_cnt += 1
 
     if label is None:
       label = 'collect'
@@ -101,9 +101,9 @@ def collect(ctx, **kwargs):
         time[i] = (time[i] - kwargs['offset']) % kwargs['period']
       #end
 
-      sortIdx = np.argsort(time[i])
-      time[i] = time[i][sortIdx]
-      values[i] = values[i][sortIdx]
+      sort_idx = np.argsort(time[i])
+      time[i] = time[i][sort_idx]
+      values[i] = values[i][sort_idx]
 
       if kwargs['sumdata']:
         grid[i] = [time[i]]
@@ -111,7 +111,7 @@ def collect(ctx, **kwargs):
         grid[i].insert(0, np.array(time[i]))
       #end
 
-      out = GData(tag=outTag,
+      out = GData(tag=out_tag,
                   label=label,
                   comp_grid=ctx.obj['compgrid'])
       out.push(grid[i], values[i])

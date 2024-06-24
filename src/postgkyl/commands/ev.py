@@ -178,7 +178,7 @@ def ev(ctx, **kwargs):
     only_active = False
   #end
 
-  tags = list(data.tagIterator(only_active=only_active))
+  tags = list(data.tag_iterator(only_active=only_active))
   # outTag = kwargs['tag']
   # if outTag is None:
   #     if len(tags) == 1:
@@ -227,7 +227,7 @@ def ev(ctx, **kwargs):
     if kwargs['tag']:
       tag = kwargs['tag']
     else:
-      data.deactivateAll()
+      data.deactivate_all()
     #end
     for grid, values, data_ctx in zip(grid_stack[-1], value_stack[-1], ctx_stack[-1]):
       out = GData(tag=tag,

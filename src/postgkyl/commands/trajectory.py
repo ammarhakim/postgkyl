@@ -146,7 +146,7 @@ def trajectory(ctx, **kwargs):
   verb_print(ctx, 'Starting trajectory')
   data = ctx.obj['data']
 
-  tags = list(data.tagIterator(kwargs['use']))
+  tags = list(data.tag_iterator(kwargs['use']))
   if len(tags) > 1:
     ctx.fail(click.echo("'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)), fg='red'))
   else:
@@ -158,7 +158,7 @@ def trajectory(ctx, **kwargs):
   kwargs['figure'] = fig
   kwargs['legend'] = False
 
-  dat = ctx.obj['data'].getDataset(tag, 0)
+  dat = ctx.obj['data'].get_dataset(tag, 0)
   numPos = dat.get_num_cells()[0]
 
   jump = 1

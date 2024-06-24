@@ -2,7 +2,7 @@ import numpy as np
 import click
 import re
 
-from postgkyl.utils import idxParser
+from postgkyl.utils import idx_parser
 
 class Read_gkyl_adios(object):
   """Provides a framework to read gkyl Adios output
@@ -71,7 +71,7 @@ class Read_gkyl_adios(object):
     cnt = 0
     for d, z in enumerate(zs):
       if d < num_dims-1 and z is not None:  # Last dim stores comp
-        z = idxParser(z, grid[d])
+        z = idx_parser(z, grid[d])
         if isinstance(z, int):
           offset[d] = z
           count[d] = 1
@@ -86,7 +86,7 @@ class Read_gkyl_adios(object):
     #end
 
     if comp is not None:
-      comp = idxParser(comp)
+      comp = idx_parser(comp)
       if isinstance(comp, int):
         offset[-1] = comp
         count[-1] = 1

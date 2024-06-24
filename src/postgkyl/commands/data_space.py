@@ -3,44 +3,11 @@ import numpy as np
 
 class DataSpace(object):
   def __init__(self):
-    self._datasetDict = {}
+    self._dataset_dict = {}
   #end
 
   #---------------------------------------------------------------------
   #---- Iterators ------------------------------------------------------
-
-  def _getIterableIdx(idx, length):
-    def _int(i, length):
-      i = int(i)
-      if i >= 0:
-        return i
-      else:
-        return int(length + i)
-      #end
-    #end
-
-    if idx is None:
-      return range(length)
-    elif ',' in idx:
-      s = idx.split(',')
-      return [_int(i, length) for i in s]
-    elif ':' in idx:
-      s = idx.split(':')
-      si = [0, length, 1]
-      if s[0]:
-        si[0] = _int(s[0], length)
-      #end
-      if s[1]:
-        si[1] = _int(s[1], length)
-      #end
-      if len(s) > 2:
-        si[2] = int(s[2])
-      #end
-      return range(si[0], si[1], si[2])
-    else:
-      return [_int(idx, length)]
-    #end
-  #end
 
   def iterator(self, tag=None, enum=False, only_active=True, select=None):
     # Process 'select'
@@ -79,12 +46,12 @@ class DataSpace(object):
     if tag:
       tags = tag.split(",")
     else:
-      tags = list(self._datasetDict)
+      tags = list(self._dataset_dict)
     #end
     for t in tags:
       try:
         if not select or isinstance(idxSel, slice):
-          for i, dat in enumerate(self._datasetDict[t][idxSel]):
+          for i, dat in enumerate(self._dataset_dict[t][idxSel]):
             if (not only_active) or dat.getStatus(): # implication
               if enum:
                 yield i, dat
@@ -95,7 +62,7 @@ class DataSpace(object):
           #end
         else: #isinstance(idxSel, list)
           for i in idxSel:
-            dat = self._datasetDict[t][i]
+            dat = self._dataset_dict[t][i]
             if (not only_active) or dat.getStatus(): # implication
               yield dat
             #end
@@ -115,26 +82,26 @@ class DataSpace(object):
     #end
   #end
 
-  def tagIterator(self, tag=None, only_active=True):
+  def tag_iterator(self, tag=None, only_active=True):
     if tag:
       out = tag.split(',')
     elif only_active:
       out = []
-      for t in self._datasetDict:
+      for t in self._dataset_dict:
         if True in (dat.getStatus() for dat in self.iterator(t)):
           out.append(t)
         #end
       #end
     else:
-      out = list(self._datasetDict)
+      out = list(self._dataset_dict)
     #end
     return iter(out)
   #end
 
   #-----------------------------------------------------------------
-  #-- Labels -------------------------------------------------------
-  def setUniqueLabels(self):
-    numComps = []
+  #---- Labels -----------------------------------------------------
+  def set_unique_labels(self):
+    num_comps = []
     names = []
     labels = []
     for dat in self.iterator():
@@ -145,11 +112,11 @@ class DataSpace(object):
       # that the file name might start with '../'
       sp = file_name.split('_')
       names.append(sp)
-      numComps.append(int(len(sp)))
+      num_comps.append(int(len(sp)))
       labels.append("")
     #end
-    maxElem = np.max(numComps)
-    idxMax = np.argmax(numComps)
+    maxElem = np.max(num_comps)
+    idxMax = np.argmax(num_comps)
     for i in range(maxElem):
       include = False
       reference = names[idxMax][i]
@@ -178,40 +145,40 @@ class DataSpace(object):
   #end
 
   #-----------------------------------------------------------------
-  #-- Adding datasets ----------------------------------------------
+  #---- Adding datasets --------------------------------------------
   def add(self, data):
     tag_nm = data.get_tag()
-    if tag_nm in self._datasetDict:
-      self._datasetDict[tag_nm].append(data)
+    if tag_nm in self._dataset_dict:
+      self._dataset_dict[tag_nm].append(data)
     else:
-      self._datasetDict[tag_nm] = [data]
+      self._dataset_dict[tag_nm] = [data]
     #end
   #end
 
   #-----------------------------------------------------------------
-  #-- Staus control ------------------------------------------------
-  def activateAll(self, tag=None):
+  #---- Staus control ----------------------------------------------
+  def activate_all(self, tag=None):
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     #end
   #end
-  def deactivateAll(self, tag=None):
+  def deactivate_all(self, tag=None):
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     #end
   #end
 
   #-----------------------------------------------------------------
-  #-- Stuff :-P ----------------------------------------------------
-  def getDataset(self, tag, idx):
-    return self._datasetDict[tag][idx]
+  #---- Stuff :-P --------------------------------------------------
+  def get_dataset(self, tag, idx):
+    return self._dataset_dict[tag][idx]
   #end
 
-  def getNumDatasets(self, tag=None, only_active=True):
-    numSets = 0
+  def get_num_datasets(self, tag=None, only_active=True):
+    num_sets = 0
     for dat in self.iterator(tag=tag, only_active=only_active):
-      numSets += 1
+      num_sets += 1
     #end
-    return numSets
+    return num_sets
   #end
 #end

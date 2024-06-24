@@ -12,7 +12,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
     #end
 
     # Read grid information from input file.
-    numDims = data.get_num_dims()
+    num_dims = data.get_num_dims()
     lower, upper = data.get_bounds()
     numCells = data.get_num_cells()
 
@@ -23,7 +23,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
         intGrid = [np.linspace(lower[d],
                                upper[d],
                                numCells[d]*(poly_order+1)+1)
-                   for d in range(numDims)]
+                   for d in range(num_dims)]
     #end
 
     # Calculate interpolation nodes for each element.
@@ -40,13 +40,13 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
 
     # Iterating through the node list, calculate value at each node for each element
     # simultaneously, one dimension at a time.
-    # TODO: Rework for numDims > 3, currently very slow.
-    if numDims == 1:
+    # TODO: Rework for num_dims > 3, currently very slow.
+    if num_dims == 1:
         for i, x in enumerate(nodes):
             intValues[i::len(nodes), 0] = expand_1d[int(poly_order-1)](values, x)
         #end
 
-    elif numDims == 2:
+    elif num_dims == 2:
         for i, x in enumerate(nodes):
             for j, y in enumerate(nodes):
                 intValues[i::len(nodes), j::len(nodes), 0] = expand_2d[int(poly_order-1)](values, x, y)
@@ -54,7 +54,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
         #end
     #end
 
-    elif numDims == 3:
+    elif num_dims == 3:
         for i, x in enumerate(nodes):
             for j, y in enumerate(nodes):
                 for k, z in enumerate(nodes):
@@ -64,7 +64,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
         #end
     #end
 
-    elif numDims == 4:
+    elif num_dims == 4:
         for i, x in enumerate(nodes):
             for j, y in enumerate(nodes):
                 for k, z in enumerate(nodes):
@@ -76,7 +76,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
         #end
     #end
 
-    elif numDims == 5:
+    elif num_dims == 5:
         for i, x in enumerate(nodes):
             for j, y in enumerate(nodes):
                 for k, z in enumerate(nodes):
@@ -90,7 +90,7 @@ def interpolate(data, poly_order=None, nodes=None, externalGrid=None):
         #end
     #end
 
-    elif numDims == 6:
+    elif num_dims == 6:
         for i, x in enumerate(nodes):
             for j, y in enumerate(nodes):
                 for k, z in enumerate(nodes):

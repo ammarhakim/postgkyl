@@ -223,7 +223,7 @@ def plot(ctx, **kwargs):
     if dataset_fignum:
       kwargs['figure'] = int(i)
     #end
-    if ctx.obj['data'].getNumDatasets() > 1 or kwargs['forcelegend']:
+    if ctx.obj['data'].get_num_datasets() > 1 or kwargs['forcelegend']:
       label = dat.get_label()
     else:
       label = ''

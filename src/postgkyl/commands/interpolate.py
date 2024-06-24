@@ -65,19 +65,19 @@ def interpolate(ctx, **kwargs):
                         kwargs['interp'], kwargs['read'])
     #end
 
-    numNodes = dg.numNodes
-    numComps = int(dat.get_num_comps() / numNodes)
+    num_nodes = dg.num_nodes
+    num_comps = int(dat.get_num_comps() / num_nodes)
 
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],
                   comp_grid=ctx.obj['compgrid'],
                   ctx=dat.ctx)
-      grid, values = dg.interpolate(tuple(range(numComps)))
+      grid, values = dg.interpolate(tuple(range(num_comps)))
       out.push(grid, values)
       data.add(out)
     else:
-      dg.interpolate(tuple(range(numComps)), overwrite=True)
+      dg.interpolate(tuple(range(num_comps)), overwrite=True)
     #end
   #end
   verb_print(ctx, 'Finishing interpolate')

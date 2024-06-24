@@ -66,7 +66,7 @@ def val2coord(ctx, **kwargs):
   activeSets = []
   colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
 
-  tags = list(data.tagIterator())
+  tags = list(data.tag_iterator())
   outTag = kwargs['tag']
   if outTag is None:
     if len(tags) == 1:

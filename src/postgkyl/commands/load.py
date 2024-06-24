@@ -161,7 +161,7 @@ def load(ctx, **kwargs):
     #end
   #end
 
-  data.setUniqueLabels()
+  data.set_unique_labels()
 
   ctx.obj['inDataStringsLoaded'] += 1
   verb_print(ctx, 'Finishing load')

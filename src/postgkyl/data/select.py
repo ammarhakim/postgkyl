@@ -1,6 +1,6 @@
 import numpy as np
 
-from postgkyl.utils import idxParser
+from postgkyl.utils import idx_parser
 
 
 def select(data, comp=None, overwrite=False,
@@ -37,7 +37,7 @@ def select(data, comp=None, overwrite=False,
         len_grid = grid[d].shape[d]
       #end
       is_matching = (values.shape[d] == len_grid)
-      idx = idxParser(z, grid[d], is_matching)
+      idx = idx_parser(z, grid[d], is_matching)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
@@ -61,9 +61,9 @@ def select(data, comp=None, overwrite=False,
 
   # Select components
   if comp is not None:
-    values_idx[-1] = idxParser(comp)
+    values_idx[-1] = idx_parser(comp)
   #end
-  valuesOut = values[tuple(values_idx)]
+  values_out = values[tuple(values_idx)]
   if not uniform_grid:
     for d in range(num_dims):
       grid[d] = grid[d][tuple(grid_idx)]
@@ -71,13 +71,13 @@ def select(data, comp=None, overwrite=False,
   #end
 
   # Adding a dummy dimension indicies
-  if num_dims == len(valuesOut.shape):
-    valuesOut = valuesOut[..., np.newaxis]
+  if num_dims == len(values_out.shape):
+    values_out = values_out[..., np.newaxis]
   #end
 
   if overwrite:
-    data.push(grid, valuesOut)
+    data.push(grid, values_out)
   else:
-    return grid, valuesOut
+    return grid, values_out
   #end
 #end

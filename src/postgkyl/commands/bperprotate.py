@@ -40,8 +40,8 @@ def bperprotate(ctx, **kwargs):
     data.add(out)
   #end
 
-  data.deactivateAll(tag=kwargs['array'])
-  data.deactivateAll(tag=kwargs['field'])
+  data.deactivate_all(tag=kwargs['array'])
+  data.deactivate_all(tag=kwargs['field'])
 
   verb_print(ctx, 'Finishing rotation perpendicular to magnetic field')
 #end

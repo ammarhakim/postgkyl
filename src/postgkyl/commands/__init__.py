@@ -16,6 +16,7 @@ from .euler import euler
 from .ev import ev
 from .extractinput import extractinput
 from .fft import fft
+from .gkyl_pkpm import pkpm
 from .growth import growth
 from .info import info
 from .integrate import integrate
@@ -30,7 +31,6 @@ from .parrotate import parrotate
 from .perprotate import perprotate
 from .plot import plot
 from .pr import pr
-from .recovery import recovery
 from .relchange import relchange
 from .select import select
 from .status import activate
@@ -38,11 +38,10 @@ from .status import deactivate
 from .style import style
 from .tenmoment import tenmoment
 from .trajectory import trajectory
+from .transform_frame import transformframe
 from .val2coord import val2coord
 from .velocity import velocity
 from .write import write
-from .transform_frame import transformframe
-from .gkyl_pkpm import pkpm
 
 from . import temp
 

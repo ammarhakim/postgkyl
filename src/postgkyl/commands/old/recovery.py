@@ -42,11 +42,11 @@ def recovery(ctx, **kwargs):
     dg = GInterpModal(dat,
                       kwargs['poly_order'], basis_type,
                       kwargs['interp'], kwargs['periodic'])
-    numNodes = dg.numNodes
-    numComps = int(dat.get_num_comps() / numNodes)
+    num_nodes = dg.num_nodes
+    num_comps = int(dat.get_num_comps() / num_nodes)
 
     #verb_print(ctx, 'interplolate: interpolating dataset #{:d}'.format(s))
-    #dg.recovery(tuple(range(numComps)), stack=True)
+    #dg.recovery(tuple(range(num_comps)), stack=True)
     if kwargs['tag']:
       out = GData(tag=kwargs['tag'],
                   label=kwargs['label'],

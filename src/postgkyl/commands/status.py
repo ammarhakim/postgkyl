@@ -30,7 +30,7 @@ def activate(ctx, **kwargs):
   data = ctx.obj['data']
 
   if not kwargs['focused']:
-    data.deactivateAll()
+    data.deactivate_all()
   #end
 
   for dat in data.iterator(tag=kwargs['tag'],
@@ -69,7 +69,7 @@ def deactivate(ctx, **kwargs):
   data = ctx.obj['data']
 
   if kwargs['focused']:
-    data.activateAll()
+    data.activate_all()
   #end
 
   for dat in data.iterator(tag=kwargs['tag'],

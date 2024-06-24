@@ -31,19 +31,19 @@ def energetics(ctx, **kwargs):
                           data.iterator(kwargs['ion']),
                           data.iterator(kwargs['field'])):
     grid = em.get_grid()
-    outEnergetics = np.zeros(em.get_values()[...,0:7].shape)
+    out_energetics = np.zeros(em.get_values()[...,0:7].shape)
     out = GData(tag=kwargs['tag'],
                 comp_grid=ctx.obj['compgrid'],
                 label=kwargs['label'],
                 ctx=em.ctx)
-    grid, outEnergetics = diag.energetics(elc, ion, em)
-    out.push(grid, outEnergetics)
+    grid, out_energetics = diag.energetics(elc, ion, em)
+    out.push(grid, out_energetics)
     data.add(out)
   #end
 
-  data.deactivateAll(tag=kwargs['elc'])
-  data.deactivateAll(tag=kwargs['ion'])
-  data.deactivateAll(tag=kwargs['field'])
+  data.deactivate_all(tag=kwargs['elc'])
+  data.deactivate_all(tag=kwargs['ion'])
+  data.deactivate_all(tag=kwargs['field'])
 
   verb_print(ctx, 'Finishing energetics decomposition')
 #end

@@ -26,8 +26,8 @@ def relchange(ctx, **kwargs):
   verb_print(ctx, 'Starting relative change')
 
   data = ctx.obj['data'] # shortcut
-  for tag in data.tagIterator(kwargs['use']):
-    reference = data.getDataset(tag, kwargs['index'])
+  for tag in data.tag_iterator(kwargs['use']):
+    reference = data.get_dataset(tag, kwargs['index'])
     for dat in data.iterator(tag):
       if kwargs['tag']:
         out = GData(tag=kwargs['tag'],
