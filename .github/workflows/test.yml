@@ -24,6 +24,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
+        conda update conda
         conda env update --file environment.yml --name base
     - name: Install postgkyl
       run: |
