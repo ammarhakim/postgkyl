@@ -1,15 +1,22 @@
 import click
 import numpy as np
 
-from postgkyl.commands.util import verb_print
+from postgkyl.utils import verb_print
+
 
 @click.command()
-@click.option('--tag', '-t', type=click.STRING,
-              help='Tag(s) to apply to (comma-separated)')
-@click.option('--index', '-i', type=click.STRING,
-              help="Dataset indices (e.g., '1', '0,2,5', or '1:6:2')")
-@click.option('--focused', '-f', is_flag=True,
-              help='Leave unspecified datasets untouched')
+@click.option(
+    "--tag", "-t", type=click.STRING, help="Tag(s) to apply to (comma-separated)"
+)
+@click.option(
+    "--index",
+    "-i",
+    type=click.STRING,
+    help="Dataset indices (e.g., '1', '0,2,5', or '1:6:2')",
+)
+@click.option(
+    "--focused", "-f", is_flag=True, help="Leave unspecified datasets untouched"
+)
 @click.pass_context
 def activate(ctx, **kwargs):
   """Select datasets(s) to pass further down the command
@@ -26,29 +33,38 @@ def activate(ctx, **kwargs):
   'info' command (especially with the '-ac' flags) can be helpful
   when activating/deactivating multiple datasets.
   """
-  verb_print(ctx, 'Starting activate')
-  data = ctx.obj['data']
+  verb_print(ctx, "Starting activate")
+  data = ctx.obj["data"]
 
-  if not kwargs['focused']:
+  if not kwargs["focused"]:
     data.deactivate_all()
-  #end
+  # end
 
-  for dat in data.iterator(tag=kwargs['tag'],
-                           only_active=False,
-                           select=kwargs['index']):
+  for dat in data.iterator(
+      tag=kwargs["tag"], only_active=False, select=kwargs["index"]
+  ):
     dat.activate()
-  #end
+  # end
 
-  verb_print(ctx, 'Finishing activate')
-#end
+  verb_print(ctx, "Finishing activate")
+
+
+# end
+
 
 @click.command()
-@click.option('--tag', '-t', type=click.STRING,
-              help='Tag(s) to apply to (comma-separated)')
-@click.option('--index', '-i', type=click.STRING,
-              help="Dataset indices (e.g., '1', '0,2,5', or '1:6:2')")
-@click.option('--focused', '-f', is_flag=True,
-              help='Leave unspecified datasets untouched')
+@click.option(
+    "--tag", "-t", type=click.STRING, help="Tag(s) to apply to (comma-separated)"
+)
+@click.option(
+    "--index",
+    "-i",
+    type=click.STRING,
+    help="Dataset indices (e.g., '1', '0,2,5', or '1:6:2')",
+)
+@click.option(
+    "--focused", "-f", is_flag=True, help="Leave unspecified datasets untouched"
+)
 @click.pass_context
 def deactivate(ctx, **kwargs):
   """Select datasets(s) to pass further down the command
@@ -65,18 +81,20 @@ def deactivate(ctx, **kwargs):
   'info' command (especially with the '-ac' flags) can be helpful
   when activating/deactivating multiple datasets.
   """
-  verb_print(ctx, 'Starting deactivate')
-  data = ctx.obj['data']
+  verb_print(ctx, "Starting deactivate")
+  data = ctx.obj["data"]
 
-  if kwargs['focused']:
+  if kwargs["focused"]:
     data.activate_all()
-  #end
+  # end
 
-  for dat in data.iterator(tag=kwargs['tag'],
-                           only_active=False,
-                           select=kwargs['index']):
+  for dat in data.iterator(
+      tag=kwargs["tag"], only_active=False, select=kwargs["index"]
+  ):
     dat.deactivate()
-  #end
+  # end
 
-  verb_print(ctx, 'Finishing deactivate')
-#end
+  verb_print(ctx, "Finishing deactivate")
+
+
+# end

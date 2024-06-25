@@ -1,120 +1,128 @@
 import click
 import numpy as np
 
+
 class DataSpace(object):
+
   def __init__(self):
     self._dataset_dict = {}
-  #end
 
-  #---------------------------------------------------------------------
-  #---- Iterators ------------------------------------------------------
+  # end
+
+  # ---------------------------------------------------------------------
+  # ---- Iterators ------------------------------------------------------
 
   def iterator(self, tag=None, enum=False, only_active=True, select=None):
     # Process 'select'
     if enum and select:
-      click.echo(click.style(
-        "Error: 'select' and 'enum' cannot be selected simultaneously",
-        fg='red'))
+      click.echo(
+          click.style(
+              "Error: 'select' and 'enum' cannot be selected simultaneously", fg="red"
+          )
+      )
       quit()
-    #end
+    # end
     idxSel = slice(None, None)
     if isinstance(select, int):
       idxSel = [select]
     elif isinstance(select, slice):
       idxSel = select
     elif isinstance(select, str):
-      if ':' in select:
+      if ":" in select:
         lo = None
         up = None
         step = None
-        s = select.split(':')
+        s = select.split(":")
         if s[0]:
           lo = int(s[0])
-        #end
+        # end
         if s[1]:
           up = int(s[1])
-        #end
+        # end
         if len(s) > 2:
           step = int(s[2])
-        #end
+        # end
         idxSel = slice(lo, up, step)
       else:
-        idxSel = list([int(s) for s in select.split(',')])
-      #end
-    #end
+        idxSel = list([int(s) for s in select.split(",")])
+      # end
+    # end
 
     if tag:
       tags = tag.split(",")
     else:
       tags = list(self._dataset_dict)
-    #end
+    # end
     for t in tags:
       try:
         if not select or isinstance(idxSel, slice):
           for i, dat in enumerate(self._dataset_dict[t][idxSel]):
-            if (not only_active) or dat.getStatus(): # implication
+            if (not only_active) or dat.getStatus():  # implication
               if enum:
                 yield i, dat
               else:
                 yield dat
-              #end
-            #end
-          #end
-        else: #isinstance(idxSel, list)
+              # end
+            # end
+          # end
+        else:  # isinstance(idxSel, list)
           for i in idxSel:
             dat = self._dataset_dict[t][i]
-            if (not only_active) or dat.getStatus(): # implication
+            if (not only_active) or dat.getStatus():  # implication
               yield dat
-            #end
-          #end
-        #end
+            # end
+          # end
+        # end
       except KeyError as err:
-        click.echo(click.style(
-          "ERROR: Failed to load the specified/default tag {0}".format(err),
-          fg='red'))
+        click.echo(
+            click.style(
+                "ERROR: Failed to load the specified/default tag {0}".format(err),
+                fg="red",
+            )
+        )
         quit()
       except IndexError:
-        click.echo(click.style(
-          "ERROR: Index out of the dataset range",
-          fg='red'))
+        click.echo(click.style("ERROR: Index out of the dataset range", fg="red"))
         quit()
-      #end
-    #end
-  #end
+      # end
+    # end
+
+  # end
 
   def tag_iterator(self, tag=None, only_active=True):
     if tag:
-      out = tag.split(',')
+      out = tag.split(",")
     elif only_active:
       out = []
       for t in self._dataset_dict:
         if True in (dat.getStatus() for dat in self.iterator(t)):
           out.append(t)
-        #end
-      #end
+        # end
+      # end
     else:
       out = list(self._dataset_dict)
-    #end
+    # end
     return iter(out)
-  #end
 
-  #-----------------------------------------------------------------
-  #---- Labels -----------------------------------------------------
+  # end
+
+  # -----------------------------------------------------------------
+  # ---- Labels -----------------------------------------------------
   def set_unique_labels(self):
     num_comps = []
     names = []
     labels = []
     for dat in self.iterator():
       file_name = dat._file_name
-      extensionLen = len(file_name.split('.')[-1])
-      file_name = file_name[:-(extensionLen+1)]
+      extensionLen = len(file_name.split(".")[-1])
+      file_name = file_name[: -(extensionLen + 1)]
       # only remove the file extension but take into account
       # that the file name might start with '../'
-      sp = file_name.split('_')
+      sp = file_name.split("_")
       names.append(sp)
       num_comps.append(int(len(sp)))
       labels.append("")
-    #end
+    # end
     maxElem = np.max(num_comps)
     idxMax = np.argmax(num_comps)
     for i in range(maxElem):
@@ -123,62 +131,70 @@ class DataSpace(object):
       for nm in names:
         if i < len(nm) and nm[i] != reference:
           include = True
-        #end
-      #end
+        # end
+      # end
       if include:
         for idx, nm in enumerate(names):
           if i < len(nm):
             if labels[idx] == "":
               labels[idx] += nm[i]
             else:
-              labels[idx] += '_{:s}'.format(nm[i])
-            #end
-          #end
-        #end
-      #end
-    #end
+              labels[idx] += "_{:s}".format(nm[i])
+            # end
+          # end
+        # end
+      # end
+    # end
     cnt = 0
     for dat in self.iterator():
       dat.set_label(labels[cnt])
       cnt += 1
-    #end
-  #end
+    # end
 
-  #-----------------------------------------------------------------
-  #---- Adding datasets --------------------------------------------
+  # end
+
+  # -----------------------------------------------------------------
+  # ---- Adding datasets --------------------------------------------
   def add(self, data):
     tag_nm = data.get_tag()
     if tag_nm in self._dataset_dict:
       self._dataset_dict[tag_nm].append(data)
     else:
       self._dataset_dict[tag_nm] = [data]
-    #end
-  #end
+    # end
 
-  #-----------------------------------------------------------------
-  #---- Staus control ----------------------------------------------
+  # end
+
+  # -----------------------------------------------------------------
+  # ---- Staus control ----------------------------------------------
   def activate_all(self, tag=None):
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
-    #end
-  #end
+    # end
+
+  # end
   def deactivate_all(self, tag=None):
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
-    #end
-  #end
+    # end
 
-  #-----------------------------------------------------------------
-  #---- Stuff :-P --------------------------------------------------
+  # end
+
+  # -----------------------------------------------------------------
+  # ---- Stuff :-P --------------------------------------------------
   def get_dataset(self, tag, idx):
     return self._dataset_dict[tag][idx]
-  #end
+
+  # end
 
   def get_num_datasets(self, tag=None, only_active=True):
     num_sets = 0
     for dat in self.iterator(tag=tag, only_active=only_active):
       num_sets += 1
-    #end
+    # end
     return num_sets
-  #end
-#end
+
+  # end
+
+
+# end

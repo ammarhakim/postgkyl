@@ -3,9 +3,17 @@ import numpy as np
 from postgkyl.utils import idx_parser
 
 
-def select(data, comp=None, overwrite=False,
-           z0=None, z1=None, z2=None,
-           z3=None, z4=None, z5=None):
+def select(
+    data,
+    comp=None,
+    overwrite=False,
+    z0=None,
+    z1=None,
+    z2=None,
+    z3=None,
+    z4=None,
+    z5=None,
+):
   """Selects parts of the GData.
 
   Allows to select only a part of GData (both coordinates and
@@ -22,11 +30,11 @@ def select(data, comp=None, overwrite=False,
   grid = list(grid)  # copy the grid
   values = data.get_values()
   num_dims = data.get_num_dims()
-  values_idx = [slice(0, values.shape[d]) for d in range(num_dims+1)]
-  uniform_grid = (len(grid[0].shape) == 1)
+  values_idx = [slice(0, values.shape[d]) for d in range(num_dims + 1)]
+  uniform_grid = len(grid[0].shape) == 1
   if not uniform_grid:
     grid_idx = [slice(0, grid[d].shape[d]) for d in range(num_dims)]
-  #end
+  # end
 
   # Loop for coordinates
   for d, z in enumerate(zs):
@@ -35,49 +43,53 @@ def select(data, comp=None, overwrite=False,
         len_grid = grid[d].shape[0]
       else:
         len_grid = grid[d].shape[d]
-      #end
-      is_matching = (values.shape[d] == len_grid)
+      # end
+      is_matching = values.shape[d] == len_grid
       idx = idx_parser(z, grid[d], is_matching)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
-        vIdx = slice(idx, idx+1)
-        gIdx = slice(idx, idx+2) if not is_matching else slice(idx, idx+1)
+        vIdx = slice(idx, idx + 1)
+        gIdx = slice(idx, idx + 2) if not is_matching else slice(idx, idx + 1)
       elif isinstance(idx, slice):
         vIdx = idx
-        gIdx = slice(idx.start, idx.stop+1) if not is_matching else idx
+        gIdx = slice(idx.start, idx.stop + 1) if not is_matching else idx
       else:
-        raise TypeError('The coordinate select can be only single index (int) or a slice')
-      #end
+        raise TypeError(
+            "The coordinate select can be only single index (int) or a slice"
+        )
+      # end
       if uniform_grid:
         grid[d] = grid[d][gIdx]
       else:
         grid_idx[d] = gIdx
-      #end
+      # end
       values_idx[d] = vIdx
-    #end
-  #end
+    # end
+  # end
 
   # Select components
   if comp is not None:
     values_idx[-1] = idx_parser(comp)
-  #end
+  # end
   values_out = values[tuple(values_idx)]
   if not uniform_grid:
     for d in range(num_dims):
       grid[d] = grid[d][tuple(grid_idx)]
-    #end
-  #end
+    # end
+  # end
 
   # Adding a dummy dimension indicies
   if num_dims == len(values_out.shape):
     values_out = values_out[..., np.newaxis]
-  #end
+  # end
 
   if overwrite:
     data.push(grid, values_out)
   else:
     return grid, values_out
-  #end
-#end
+  # end
+
+
+# end

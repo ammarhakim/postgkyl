@@ -5,7 +5,7 @@ from .calculus import integrate
 from .fft import fft
 
 # import correlation functions
-#from .fieldParticleCorrelation import Ce
+# from .fieldParticleCorrelation import Ce
 # import growth functions
 from .growth import fitGrowth
 

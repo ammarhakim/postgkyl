@@ -11,7 +11,7 @@ from . import data
 from . import tools
 from . import output
 from . import utils
-#from . import modalDG
+# from . import modalDG
 
 # import selected classes to the root
 from .data.gdata import GData

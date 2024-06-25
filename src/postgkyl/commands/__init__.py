@@ -1,6 +1,5 @@
 from .data_space import DataSpace
 
-from . import util
 from . import ev_cmd
 
 from .agyro import agyro
@@ -44,7 +43,3 @@ from .velocity import velocity
 from .write import write
 
 from . import temp
-
-
-
-
