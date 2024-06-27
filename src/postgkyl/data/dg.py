@@ -396,6 +396,7 @@ class GInterpModal(GInterp):
   def __init__(self, data, poly_order=None, basis_type=None,
                numInterp=None, periodic=False, read=None):
     self.numDims = data.get_num_dims()
+    print(numInterp)
     if poly_order is not None:
       self.poly_order = poly_order
     elif data.ctx['poly_order'] is not None:
@@ -430,7 +431,12 @@ class GInterpModal(GInterp):
     #end
 
     self.periodic = periodic
-    if numInterp is not None and self.poly_order > 1:
+
+    # XXX This was introduced with the c2p but I can't see the importance of the extra
+    # condition and seem to unecessarily limit the capabilities. The c2p test cases
+    # still seems to produce correct results. -- P.C.
+    # if numInterp is not None and self.poly_order > 1:
+    if numInterp:
       self.numInterp = numInterp
     else:
       self.numInterp = self.poly_order + 1
