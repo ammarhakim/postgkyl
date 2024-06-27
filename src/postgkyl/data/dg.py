@@ -396,7 +396,6 @@ class GInterpModal(GInterp):
   def __init__(self, data, poly_order=None, basis_type=None,
                numInterp=None, periodic=False, read=None):
     self.numDims = data.get_num_dims()
-    print(numInterp)
     if poly_order is not None:
       self.poly_order = poly_order
     elif data.ctx['poly_order'] is not None:
