@@ -10,13 +10,10 @@ import numpy as np
 
 
 # Helper functions
-def _colorbar(obj, fig, cax, label="", extend=None):
+def pg_colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
   return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
-
-
-# end
 
 
 def _get_nodal_grid(grid, cells):
@@ -49,9 +46,6 @@ def _get_nodal_grid(grid, cells):
     # end
   # end
   return grid_out
-
-
-# end
 
 
 def plot(
@@ -108,7 +102,6 @@ def plot(
     markersize=None,
     linewidth=None,
     linestyle=None,
-    # transpose=False, # trasnspose should be done before plotting
     figsize=None,
     jet=False,
     cmap=None,
@@ -120,7 +113,7 @@ def plot(
   be used for both 1D an 2D data. Uses a proper colormap by default.
   """
 
-  # ---- Set style and process inputs -----------------------------------
+  # ---- Set style and process inputs ----
   # Default to Postgkyl style file file if no style is specified
   # Use the rcParams dictionary which is passed with click contex
   if bool(style):
@@ -168,7 +161,7 @@ def plot(
     mpl.rcParams["lines.linestyle"] = linestyle
   # end
 
-  # ---- Data Loading ---------------------------------------------------
+  # ---- Data Loading ----
   num_dims = data.get_num_dims(squeeze=True)
   if num_dims > 2:
     raise Exception("Only 1D and 2D plots are currently supported")
@@ -447,7 +440,7 @@ def plot(
         mappable = cm.ScalarMappable(
             norm=colors.Normalize(vmin=vmin, vmax=vmax, clip=False), cmap=cm.inferno
         )
-        cb = _colorbar(mappable, fig, cax, label=label)
+        cb = pg_colorbar(mappable, fig, cax, label=label)
         colorbar = False
         legend = False
 
@@ -501,7 +494,7 @@ def plot(
         )
       # end
       if not bool(color) and colorbar and not streamline:
-        cb = _colorbar(im, fig, cax, extend=extend, label=clabel)
+        cb = pg_colorbar(im, fig, cax, extend=extend, label=clabel)
       # end
     else:
       raise ValueError("{:d}D data not supported".format(num_dims))
@@ -564,6 +557,3 @@ def plot(
 
   plt.tight_layout()
   return im
-
-
-# end

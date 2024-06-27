@@ -1,5 +1,6 @@
-import numpy as np
+from typing import Tuple
 import msgpack as mp
+import numpy as np
 import os.path
 
 # Format description for raw Gkeyll output file from
@@ -75,11 +76,11 @@ import os.path
 
 
 class Read_gkyl(object):
-  """Provides a framework to read gkylzero binary output"""
+  """Provides a framework to read Gkeyll binary output"""
 
   def __init__(
       self, file_name: str, ctx: dict = {}, c2p: str = "", c2p_vel: str = "", **kwargs
-  ) -> None:
+  ):
     self.file_name = file_name
     self.c2p = c2p
     self.c2p_vel = c2p_vel
@@ -100,9 +101,7 @@ class Read_gkyl(object):
 
     self.ctx = ctx
 
-  # end
-
-  def _is_compatible(self) -> bool:
+  def is_compatible(self) -> bool:
     try:
       magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
       if np.array_equal(magic, [103, 107, 121, 108, 48]):
@@ -114,14 +113,12 @@ class Read_gkyl(object):
     # end
     return False
 
-  # end
-
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
   def _read_header(self) -> None:
     # self.offset = 0
 
-    if self._is_compatible():
+    if self.is_compatible():
       self.offset += 5  # Header contatins the gkyl magic sequence
 
       self.version = np.fromfile(
@@ -171,9 +168,7 @@ class Read_gkyl(object):
     # end
     self.offset += 8
 
-  # end
-
-  # ---- Read field data (version 1) -----------------------------------
+  # ---- Read field data (version 1) ----
   def _read_domain_t1a3_v1(self) -> None:
     # read grid dimensions
     self.num_dims = np.fromfile(
@@ -221,8 +216,6 @@ class Read_gkyl(object):
     gshape[-1] = self.num_comps
     return data_raw.reshape(gshape)
 
-  # end
-
   def _read_data_t3_v1(self) -> np.ndarray:
     # get the number of stored ranges
     num_range = np.fromfile(
@@ -266,9 +259,7 @@ class Read_gkyl(object):
     # end
     return data
 
-  # end
-
-  # ---- Read dynvector data (version 1) -------------------------------
+  # ---- Read dynvector data (version 1) ----
   def _read_t2_v1(self) -> tuple:
     cells = 0
     time = np.array([])
@@ -319,9 +310,7 @@ class Read_gkyl(object):
     self.upper = np.atleast_1d(time.max())
     return time, data
 
-  # end
-
-  # ---- Exposed function ----------------------------------------------
+  # ---- Exposed functions -----
   def preload(self) -> None:
     self._read_header()
     if self.file_type == 1 or self.file_type == 3 or self.version == 0:
@@ -334,9 +323,7 @@ class Read_gkyl(object):
       # end
     # end
 
-  # end
-
-  def load(self) -> tuple:
+  def load(self) -> Tuple[list, np.ndarray]:
     time = None
     if self.file_type == 1 or self.version == 0:
       data = self._read_data_t1_v1()
@@ -421,8 +408,3 @@ class Read_gkyl(object):
     # end
 
     return grid, data
-
-  # end
-
-
-# end

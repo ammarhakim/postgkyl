@@ -38,4 +38,3 @@ def accumulate_current(data, qbym=False, overwrite=False, stack=False):
   else:
     return grid, out
   # end
-

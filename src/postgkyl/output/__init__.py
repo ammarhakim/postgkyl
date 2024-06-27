@@ -1,3 +1,4 @@
-# info
-from .plot import plot
-from .plot import _colorbar
+# Import plot
+from postgkyl.output.plot import plot
+
+from postgkyl.output.plot import pg_colorbar

@@ -8,7 +8,7 @@ from postgkyl.data import GData
 from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
 
-from postgkyl.data.recovData import recovC0Fn, recovC1Fn, recovEdFn
+# from postgkyl.data.recovData import recovC0Fn, recovC1Fn, recovEdFn
 
 path = os.path.dirname(os.path.realpath(__file__))
 
@@ -268,7 +268,7 @@ class GInterp(object):
     self.numEqns = data.get_num_comps() / num_nodes
     self.num_dims = data.get_num_dims()
     self.Xc = data.get_grid()
-    self.gridType = data.get_gridType()
+    self.gridType = data.get_grid_type()
 
   # end
 

@@ -1,6 +1,6 @@
+from typing import Union, Tuple
 import numpy as np
 import shutil
-from typing import Union
 
 from postgkyl.data.read_gkyl import Read_gkyl
 from postgkyl.data.read_gkyl_adios import Read_gkyl_adios
@@ -11,7 +11,7 @@ from postgkyl.data.read_flash_h5 import Read_flash_h5
 class GData(object):
   """Provides interface to Gkeyll output data.
 
-  Data serves as a baseline interface to Gkeyll data. It is used for
+  GData serves as a baseline interface to Gkeyll data. It is used for
   loading Gkeyll data and serves is input to many Postgkyl
   functions. Represents a dataset in the Postgkyl command line mode.
 
@@ -21,8 +21,8 @@ class GData(object):
     file_name: The name of the Gkeyll file used during initialization.
 
   Examples:
-    import postgkyl
-    data = postgkyl.Data('file.bp', comp=1)
+    import postgkyl as pg
+    data = pg.GData('file.gkyl', comp=1)
 
   """
 
@@ -46,7 +46,7 @@ class GData(object):
       reader_name: str = "",
       load: bool = True,
       click_mode: bool = False,
-  ) -> None:
+  ):
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -97,7 +97,7 @@ class GData(object):
     # end
 
     self._tag = tag
-    self._comp_grid = comp_grid  # disregard the mapped grid
+    self._comp_grid = comp_grid  # flag to disregard the mapped grid
     self._label = ""
     self._custom_label = label
     self._var_name = var_name
@@ -116,7 +116,7 @@ class GData(object):
         "h5": Read_gkyl_h5,
         "flash": Read_flash_h5,
     }
-    if self._file_name != "":
+    if self._file_name:
       reader_set = False
       if reader_name in _readers:
         # Keep only the user-specified reader
@@ -135,7 +135,7 @@ class GData(object):
             comp=comp,
             click_mode=click_mode,
         )
-        if self._reader._is_compatible():
+        if self._reader.is_compatible():
           reader_set = True
           break
         # end
@@ -154,51 +154,47 @@ class GData(object):
       # end
     # end
 
-  # end
-
-  # ---- Stuff Control --------------------------------------------------
+  # ---- Tag ----
   def get_tag(self) -> str:
     return self._tag
 
-  # end
   def set_tag(self, tag: str = "") -> None:
     if tag:
       self._tag = tag
     # end
 
-  # end
+  tag = property(get_tag, set_tag)
 
-  def set_label(self, label):
-    self._label = label
-
-  # end
-  def get_label(self):
+  # ---- Label ----
+  def get_label(self) -> str:
     if self._custom_label:
       return self._custom_label
     else:
       return self._label
     # end
 
-  # end
+  def set_label(self, label: str) -> None:
+    self._label = label
+
+  label = property(get_label, set_label)
+
   def get_custom_label(self):
     return self._custom_label
 
-  # end
-
-  def activate(self):
+  # ---- Status ----
+  def activate(self) -> None:
     self._status = True
 
-  # end
-  def deactivate(self):
+  def deactivate(self) -> None:
     self._status = False
 
-  # end
-  def getStatus(self):
+  def get_status(self) -> bool:
     return self._status
 
-  # end
+  status = property(get_status)
 
-  def get_input_file(self):
+  # ---- Input file ----
+  def get_input_file(self) -> str:
     import adios2
 
     fh = adios2.open(self._file_name, "rra")
@@ -206,8 +202,7 @@ class GData(object):
     fh.close()
     return inputFile
 
-  # end
-
+  # ---- Number of Cells ----
   def get_num_cells(self) -> np.ndarray:
     if self.ctx["cells"] is not None:
       return self.ctx["cells"]
@@ -222,8 +217,9 @@ class GData(object):
       return 0
     # end
 
-  # end
+  num_cells = property(get_num_cells)
 
+  # ---- Number of Components ----
   def get_num_comps(self) -> int:
     if self.ctx["num_comps"] is not None:
       return self.ctx["num_comps"]
@@ -233,9 +229,10 @@ class GData(object):
       return 0
     # end
 
-  # end
+  num_comps = property(get_num_comps)
 
-  def get_num_dims(self, squeeze=False) -> int:
+  # ---- Number of Dimensions -----
+  def get_num_dims(self, squeeze: bool = False) -> int:
     if self.ctx["cells"] is not None:
       num_dims = len(self.ctx["cells"])
     elif self._values is not None:
@@ -253,9 +250,10 @@ class GData(object):
     # end
     return num_dims
 
-  # end
+  num_dims = property(get_num_dims)
 
-  def get_bounds(self) -> np.ndarray:
+  # ---- Grid Bounds ----
+  def get_bounds(self) -> Tuple[np.ndarray, np.ndarray]:
     if self.ctx["lower"] is not None:
       return self.ctx["lower"], self.ctx["upper"]
     elif self._grid is not None:
@@ -270,24 +268,13 @@ class GData(object):
       return None, None
     # end
 
-  # end
+  bounds = property(get_bounds)
 
+  # ---- Grid and Values ----
   def get_grid(self) -> list:
     return self._grid
 
-  # end
-
-  def get_gridType(self) -> str:
-    return self.ctx["grid_type"]
-
-  # end
-
-  def get_values(self) -> np.ndarray:
-    return self._values
-
-  # end
-
-  def set_grid(self, grid) -> None:
+  def set_grid(self, grid: list) -> None:
     self._grid = grid
     num_dims = self.get_num_dims()
     lo, up = np.zeros(num_dims), np.zeros(num_dims)
@@ -298,7 +285,13 @@ class GData(object):
     self.ctx["lower"] = lo
     self.ctx["upper"] = up
 
-  # end
+  grid = property(get_grid, set_grid)
+
+  def get_grid_type(self) -> str:
+    return self.ctx["grid_type"]
+
+  def get_values(self) -> np.ndarray:
+    return self._values
 
   def set_values(self, values) -> None:
     self._values = values
@@ -309,21 +302,19 @@ class GData(object):
       self.ctx["num_comps"] = values.shape[-1]
     # end
 
-  # end
+  values = property(get_values, set_values)
 
-  def push(self, grid, values) -> None:
+  def push(self, grid, values):
     self.set_values(values)
     self.set_grid(grid)
     return self
 
-  # end
-
-  # ---- Info -----------------------------------------------------------
-  def info(self):
-    """Prints Data object information.
+  # ---- Info -----
+  def info(self) -> str:
+    """Prints GData object information.
 
     Prints time (only when available), number of components, dimension
-    spans, extremes for a Data object.
+    spans, extremes for a GData object.
 
     Args:
       none
@@ -331,11 +322,11 @@ class GData(object):
     Returns:
       output (str): A list of strings with the informations
     """
-    values = self.get_values()
-    num_comps = self.get_num_comps()
-    num_dims = self.get_num_dims()
-    num_cells = self.get_num_cells()
-    lower, upper = self.get_bounds()
+    values = self.values
+    num_comps = self.num_comps
+    num_dims = self.num_dims
+    num_cells = self.num_cells
+    lower, upper = self.bounds
 
     output = ""
 
@@ -348,7 +339,7 @@ class GData(object):
     output += "├─ Number of components: {:d}\n".format(num_comps)
     output += "├─ Number of dimensions: {:d}\n".format(num_dims)
     if lower is not None:
-      output += "├─ Grid: ({:s})\n".format(self.get_gridType())
+      output += "├─ Grid: ({:s})\n".format(self.get_grid_type())
       for d in range(num_dims - 1):
         output += "│  ├─ Dim {:d}: Num. cells: {:d}; ".format(d, num_cells[d])
         output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
@@ -413,41 +404,60 @@ class GData(object):
 
     return output
 
-  # end
-
-  # ---- Write ----------------------------------------------------------
+  # ---- Write ----
   def write(
       self,
       out_name: str = None,
-      mode: str = "gkyl",
+      format: str = "gkyl",
+      mode: str = "",
       var_name: str = None,
-      bufferSize: int = 1000,
-      append=False,
-      cleaning=True,
-  ):
-    """Writes data in ADIOS .bp file, ASCII .txt file, or NumPy .npy file"""
-    # Create output file name
+      append: bool = False,
+      cleaning: bool = True,
+  ) -> None:
+    """Writes data in a file.
+
+    The available formats are Gkeyll .gkyl (default), ADIOS .bp file, ASCII .txt file,
+    or NumPy .npy file.
+
+    Args:
+      out_name (str): Specify output file name
+      format (str; "gkyl"): Specify file format (extension)
+      var_name (str): Specify variable name for Adios
+      append (bool; False): Allows for writing multiple datasets into one file
+      cleaning (bool, True): Remove temporary files after writing
+
+    Returns:
+      None
+    """
+
+    if mode:
+      format = mode
+      print(
+          "Deprecation warning: mode of the write method is going to be renamed to format."
+      )
+    # end
+
     if out_name is None:
       if self._file_name is not None:
         fn = self._file_name
-        out_name = fn.split(".")[0].strip("_") + "_mod." + mode
+        out_name = fn.split(".")[0].strip("_") + "_mod." + format
       else:
-        out_name = "gdata." + mode
+        out_name = "gdata." + format
       # end
     else:
       if not isinstance(out_name, str):
         raise TypeError("'out_name' must be a string")
       # end
-      if out_name.split(".")[-1] != mode:
-        out_name += "." + mode
+      if out_name.split(".")[-1] != format:
+        out_name += "." + format
       # end
     # end
 
-    num_dims = self.get_num_dims()
-    num_comps = self.get_num_comps()
-    num_cells = self.get_num_cells()
-    lo, up = self.get_bounds()
-    values = self.get_values()
+    num_dims = self.num_dims
+    num_comps = self.num_comps
+    num_cells = self.num_cells
+    lo, up = self.bounds
+    values = self.values
 
     full_shape = list(num_cells) + [num_comps]
     offset = [0] * (num_dims + 1)
@@ -456,10 +466,10 @@ class GData(object):
       var_name = self._var_name
     # end
 
-    values = np.empty_like(self.get_values())
-    values[...] = self.get_values()
+    # values = np.empty_like(self.values)
+    # values[...] = self.values
 
-    if mode == "bp":
+    if format == "bp":
       import adios2
 
       if not append:
@@ -477,7 +487,6 @@ class GData(object):
       fh.write(var_name, values, full_shape, offset, full_shape)
       fh.close()
 
-      # Cleaning
       if cleaning:
         if len(out_name.split("/")) > 1:
           nm = out_name.split("/")[-1]
@@ -487,7 +496,7 @@ class GData(object):
         shutil.move(out_name + ".dir/" + nm + ".0", out_name)
         shutil.rmtree(out_name + ".dir")
       # end
-    elif mode == "gkyl":
+    elif format == "gkyl":
       dti = np.dtype("i8")
       dtf = np.dtype("f8")
 
@@ -519,8 +528,8 @@ class GData(object):
       np.array(values, dtype=dtf).tofile(fh, sep="")
 
       fh.close()
-    elif mode == "txt":
-      numRows = int(num_cells.prod())
+    elif format == "txt":
+      num_rows = int(num_cells.prod())
       grid = self.get_grid()
       for d in range(num_dims):
         grid[d] = 0.5 * (grid[d][1:] + grid[d][:-1])
@@ -532,7 +541,7 @@ class GData(object):
       # end
 
       fh = open(out_name, "w")
-      for i in range(numRows):
+      for i in range(num_rows):
         idx = i
         idxs = np.zeros(num_dims, np.int32)
         for d in range(num_dims):
@@ -550,11 +559,6 @@ class GData(object):
         fh.write(line)
       # end
       fh.close()
-    elif mode == "npy":
+    elif format == "npy":
       np.save(out_name, values.squeeze())
     # end
-
-  # end
-
-
-# end

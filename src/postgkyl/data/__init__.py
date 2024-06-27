@@ -1,16 +1,18 @@
-# import data handler
-from .gdata import GData
-# import interpolators
-# from .dg import GInterpZeroOrder
-from .dg import GInterpNodal
-from .dg import GInterpModal
-# import interpolation matrices computation
-from . import computeInterpolationMatrices
-from . import computeDerivativeMatrices
-# import select
-from .select import select
+# Import data handler
+from postgkyl.data.gdata import GData
 
-from .read_gkyl import Read_gkyl
-from .read_gkyl_adios import Read_gkyl_adios
-from .read_gkyl_h5 import Read_gkyl_h5
-from .read_flash_h5 import Read_flash_h5
+# Import interpolators
+from postgkyl.data.dg import GInterpNodal
+from postgkyl.data.dg import GInterpModal
+
+# Import interpolation matrices computation
+from postgkyl.data import computeInterpolationMatrices
+from postgkyl.data import computeDerivativeMatrices
+
+# Import select
+from postgkyl.data.select import select
+
+from postgkyl.data.read_gkyl import Read_gkyl
+from postgkyl.data.read_gkyl_adios import Read_gkyl_adios
+from postgkyl.data.read_gkyl_h5 import Read_gkyl_h5
+from postgkyl.data.read_flash_h5 import Read_flash_h5

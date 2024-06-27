@@ -1,12 +1,13 @@
-import numpy as np
+from typing import Tuple
 import click
+import numpy as np
 import re
 
 from postgkyl.utils import idx_parser
 
 
 class Read_gkyl_adios(object):
-  """Provides a framework to read gkyl Adios output"""
+  """Provides a framework to read gkyl ADIOS output"""
 
   def __init__(
       self,
@@ -18,7 +19,19 @@ class Read_gkyl_adios(object):
       comp: int = None,
       click_mode: bool = False,
       **kwargs
-  ) -> None:
+  ):
+    """Initialize the instance of ADIOS reader.
+
+    Args:
+      file_name (str)
+      ctx (dict): Passes context variable with metadata
+      var_name (str; "CartGridField")
+      c2p (str): Allows to specify a name of the file containing c2p mapping
+      axes (tuple): Coordinate indices for partial loading
+      comp (int): Component index for partial loading
+      click_mode (bool; False): Enables command-line behavior like prompting when a
+        var_name is either missing or doesn't match any available
+    """
     self._file_name = file_name
     self.var_name = var_name
     self.c2p = c2p
@@ -37,12 +50,18 @@ class Read_gkyl_adios(object):
 
     self.ctx = ctx
 
-  # end
+  def is_compatible(self) -> bool:
+    """Checks if file can be read with Gkeyll ADIOS reader
 
-  def _is_compatible(self) -> bool:
+    Args:
+      None
+
+    Returns:
+      True if the file can be read
+    """
     try:
-      import adios2  # Adios has been a problematic dependency;
-      # therefore it is only imported when actially needed
+      import adios2  # ADIOS has been a problematic dependency;
+      # therefore it is only imported when actually needed
       fh = adios2.open(self._file_name, "rra")
       for vn in fh.available_variables():
         if "TimeMesh" in vn:
@@ -66,11 +85,11 @@ class Read_gkyl_adios(object):
       return False
     # end
 
-  # end
-
-  def _create_offset_count(self, dims, zs, comp, grid=None) -> tuple:
-    num_dims = len(dims)
-    count = np.array(dims)
+  def _create_offset_count(
+      self, num_elems: np.ndarray, zs: tuple, comp: int, grid: list = None
+  ) -> Tuple[np.ndarray, np.ndarray]:
+    num_dims = len(num_elems)
+    count = np.copy(num_elems)
     offset = np.zeros(num_dims, np.int32)
     cnt = 0
     for d, z in enumerate(zs):
@@ -108,8 +127,6 @@ class Read_gkyl_adios(object):
     else:
       return (), ()
     # end
-
-  # end
 
   def _preload_frame(self) -> None:
     import adios2
@@ -150,8 +167,6 @@ class Read_gkyl_adios(object):
 
     fh.close()
 
-  # end
-
   def _load_frame(self) -> tuple:
     import adios2
 
@@ -186,9 +201,9 @@ class Read_gkyl_adios(object):
         np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1)
         for d in range(num_dims)
     ]
-    var_dims = fh.available_variables()[self.var_name]["Shape"]
-    var_dims = [int(v) for v in var_dims.split(",")]
-    offset, count = self._create_offset_count(var_dims, self.axes, self.comp, grid)
+    var_shape = fh.available_variables()[self.var_name]["Shape"]
+    num_elems = np.array([v for v in var_shape.split(",")], dtype=np.int32)
+    offset, count = self._create_offset_count(num_elems, self.axes, self.comp, grid)
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
@@ -286,8 +301,6 @@ class Read_gkyl_adios(object):
       alphanum_key = lambda key: [convert(c) for c in re.split("([0-9]+)", key)]
       return sorted(l, key=alphanum_key)
 
-    # end
-
     time_lst = [key for key in fh.available_variables() if "TimeMesh" in key]
     data_lst = [key for key in fh.available_variables() if "Data" in key]
     time_lst = natural_sort(time_lst)
@@ -314,10 +327,8 @@ class Read_gkyl_adios(object):
 
     return [np.squeeze(grid)], data
 
-  # end
-
-  # ---- Exposed function ----------------------------------------------
   def preload(self) -> None:
+    """Loads metadata."""
     if self.is_frame:
       self._preload_frame()
       if self.ctx:
@@ -327,9 +338,12 @@ class Read_gkyl_adios(object):
       # end
     # end
 
-  # end
+  def load(self) -> Tuple[list, np.ndarray]:
+    """Loads data.
 
-  def load(self) -> tuple:
+    Notes:
+      Needs to be called after the preload.
+    """
     grid, data = None, None
 
     if self.is_frame:
@@ -342,5 +356,3 @@ class Read_gkyl_adios(object):
     self.ctx["num_comps"] = data.shape[-1]
 
     return grid, data
-
-  # end

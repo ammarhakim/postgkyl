@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 from glob import glob
+import click
 import os.path
 import sys
 import time
-
-import click
 
 from postgkyl import __version__
 from postgkyl.commands import DataSpace
@@ -13,8 +12,7 @@ from postgkyl.utils import load_style, verb_print
 import postgkyl.commands as cmd
 
 
-# Version print helper
-def _printVersion(ctx, param, value):
+def _print_version(ctx, param, value):
   if not value or ctx.resilient_parsing:
     return
   # end
@@ -73,7 +71,7 @@ class PgkylCommandGroup(click.Group):
 @click.option(
     "--version",
     is_flag=True,
-    callback=_printVersion,
+    callback=_print_version,
     expose_value=False,
     is_eager=True,
     help="Print the version information.",

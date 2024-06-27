@@ -1,11 +1,12 @@
+from typing import Tuple
 import numpy as np
 import tables
 
 
 class Read_gkyl_h5(object):
-  """Provides a framework to read gkyl Adios output"""
+  """Provides a framework to read legacy Gkeyll HDF5 output"""
 
-  def __init__(self, file_name: str, ctx: dict = None, **kwargs) -> None:
+  def __init__(self, file_name: str, ctx: dict = None, **kwargs):
     self._file_name = file_name
 
     self.is_frame = False
@@ -13,9 +14,7 @@ class Read_gkyl_h5(object):
 
     self.ctx = ctx
 
-  # end
-
-  def _is_compatible(self) -> bool:
+  def is_compatible(self) -> bool:
     try:
       fh = tables.open_file(self._file_name, "r")
 
@@ -31,8 +30,6 @@ class Read_gkyl_h5(object):
       return False
     # end
     return self.is_frame or self.is_diagnostic
-
-  # end
 
   def _read_frame(self) -> tuple:
     fh = tables.open_file(self._file_name, "r")
@@ -62,10 +59,7 @@ class Read_gkyl_h5(object):
 
     return [np.squeeze(grid)], [grid[0]], [grid[-1]], data
 
-  # end
-
-  # ---- Exposed function ----------------------------------------------
-  def get_data(self) -> tuple:
+  def get_data(self) -> Tuple[list, np.ndarray]:
     grid = None
 
     if self.is_frame:
@@ -83,5 +77,3 @@ class Read_gkyl_h5(object):
     # end
 
     return grid, data
-
-  # end

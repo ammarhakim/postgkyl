@@ -1,5 +1,5 @@
-import numpy as np
 import math
+import numpy as np
 import tables
 
 # ----------------------------------------------------------------------
@@ -34,9 +34,7 @@ class Read_flash_h5(object):
 
     self.ctx = ctx
 
-  # end
-
-  def _is_compatible(self) -> bool:
+  def is_compatible(self) -> bool:
     out = False
     try:
       fh = tables.open_file(self._file_name, "r")
@@ -48,8 +46,6 @@ class Read_flash_h5(object):
     # end
     fh.close()
     return out
-
-  # end
 
   def _read_frame(self) -> tuple:
     fh = tables.open_file(self._file_name, "r")
@@ -84,8 +80,6 @@ class Read_flash_h5(object):
     fh.close()
     return data.shape, lower[:2], upper[:2], data[..., np.newaxis]
 
-  # end
-
   # ---- Exposed function ----------------------------------------------
   def get_data(self) -> tuple:
     cells, lower, upper, data = self._read_frame()
@@ -93,8 +87,3 @@ class Read_flash_h5(object):
     grid = [np.linspace(lower[d], upper[d], cells[d] + 1) for d in range(num_dims)]
 
     return grid, data
-
-  # end
-
-
-# end

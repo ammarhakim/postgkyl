@@ -57,7 +57,7 @@ class DataSpace(object):
       try:
         if not select or isinstance(idxSel, slice):
           for i, dat in enumerate(self._dataset_dict[t][idxSel]):
-            if (not only_active) or dat.getStatus():  # implication
+            if (not only_active) or dat.get_status():  # implication
               if enum:
                 yield i, dat
               else:
@@ -68,7 +68,7 @@ class DataSpace(object):
         else:  # isinstance(idxSel, list)
           for i in idxSel:
             dat = self._dataset_dict[t][i]
-            if (not only_active) or dat.getStatus():  # implication
+            if (not only_active) or dat.get_status():  # implication
               yield dat
             # end
           # end
@@ -95,7 +95,7 @@ class DataSpace(object):
     elif only_active:
       out = []
       for t in self._dataset_dict:
-        if True in (dat.getStatus() for dat in self.iterator(t)):
+        if True in (dat.get_status() for dat in self.iterator(t)):
           out.append(t)
         # end
       # end

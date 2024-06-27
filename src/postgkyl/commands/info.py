@@ -18,7 +18,7 @@ def info(ctx, **kwargs):
   # end
 
   for i, dat in data.iterator(kwargs["use"], enum=True, only_active=only_active):
-    if dat.getStatus():
+    if dat.get_status():
       color = "green"
       bold = True
     else:

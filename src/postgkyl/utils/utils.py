@@ -1,6 +1,6 @@
 from time import time
 from cycler import cycler
-
+import numpy as np
 import click
 
 
@@ -27,7 +27,7 @@ def load_style(ctx, fn):
   fh.close()
 
 
-def _findNearestIndex(array, value):
+def _find_nearest_index(array, value):
   if array is None:
     raise TypeError(
         "The index value is float but the 'array' from which to select the neares value is not specified."
@@ -43,9 +43,7 @@ def _findNearestIndex(array, value):
   # end
 
 
-
-
-def _findCellIndex(array, value):
+def _find_cell_index(array, value):
   if array is None:
     raise TypeError(
         "The index value is float but the 'array' from which to select the neares value is not specified."
@@ -55,21 +53,20 @@ def _findCellIndex(array, value):
   return int(idx)
 
 
-def _stringToIndex(value, array=None, nodal=False):
+def _string_to_index(value, array=None, nodal=False):
   if isinstance(value, str):
     if value.isdigit():
       return int(value)
     else:
       if nodal:
-        return _findCellIndex(array, float(value))
+        return _find_cell_index(array, float(value))
       else:
-        return _findNearestIndex(array, float(value))
+        return _find_nearest_index(array, float(value))
       # end
     # end
   else:
     raise TypeError("Value is not string")
   # end
-
 
 
 def idx_parser(value, array=None, nodal=False):
@@ -78,15 +75,15 @@ def idx_parser(value, array=None, nodal=False):
     idx = value
   elif isinstance(value, float):
     if nodal:
-      idx = _findCellIndex(array, value)
+      idx = _find_cell_index(array, value)
     else:
-      idx = _findNearestIndex(array, value)
+      idx = _find_nearest_index(array, value)
     # end
   else:
     if isinstance(value, str):
       if len(value.split(",")) > 1:
         idxs = value.split(",")
-        idx = tuple([_stringToIndex(i, array, nodal) for i in idxs])
+        idx = tuple([_string_to_index(i, array, nodal) for i in idxs])
       elif len(value.split(":")) == 2:
         idxs = value.split(":")
         if idxs[0] == "":
@@ -102,10 +99,11 @@ def idx_parser(value, array=None, nodal=False):
         except ValueError:
           pass
         idx = slice(
-            _stringToIndex(idxs[0], array, nodal), _stringToIndex(idxs[1], array, nodal)
+            _string_to_index(idxs[0], array, nodal),
+            _string_to_index(idxs[1], array, nodal),
         )
       else:
-        idx = _stringToIndex(value, array, nodal)
+        idx = _string_to_index(value, array, nodal)
       # end
     # end
   # end
