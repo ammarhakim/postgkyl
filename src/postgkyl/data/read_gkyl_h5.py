@@ -7,6 +7,16 @@ class Read_gkyl_h5(object):
   """Provides a framework to read legacy Gkeyll HDF5 output"""
 
   def __init__(self, file_name: str, ctx: dict = None, **kwargs):
+    """Initialize the instance of Gkeyll reader.
+
+    Args:
+      file_name: str
+      ctx: dict
+        Passes context variable with metadata.
+      **kwargs
+        This is not directly used but allowes for unified interface to all the readers
+        we use.
+    """
     self._file_name = file_name
 
     self.is_frame = False
@@ -15,6 +25,7 @@ class Read_gkyl_h5(object):
     self.ctx = ctx
 
   def is_compatible(self) -> bool:
+    """Checks if file can be read with the legacy Gkeyll HDF5 reader."""
     try:
       fh = tables.open_file(self._file_name, "r")
 
@@ -59,7 +70,19 @@ class Read_gkyl_h5(object):
 
     return [np.squeeze(grid)], [grid[0]], [grid[-1]], data
 
-  def get_data(self) -> Tuple[list, np.ndarray]:
+  def preload(self) -> None:
+    """Loads metadata."""
+    ...
+
+  def load(self) -> Tuple[list, np.ndarray]:
+    """Loads data.
+
+    Returns:
+      A tuple including a grid list and a data NumPy array
+
+    Notes:
+      Needs to be called after the preload.
+    """
     grid = None
 
     if self.is_frame:
@@ -68,6 +91,16 @@ class Read_gkyl_h5(object):
     if self.is_diagnostic:
       grid, lower, upper, data = self._read_diagnostic()
       cells = grid[0].shape
+    # end
+
+    if self.ctx:
+      self.ctx["cells"] = cells
+      self.ctx["lower"] = lower
+      self.ctx["upper"] = upper
+      self.ctx["num_comps"] = 1
+      if len(data.shape) > len(cells):
+        self.ctx["num_comps"] = data.shape[-1]
+      # end
     # end
 
     num_dims = len(cells)

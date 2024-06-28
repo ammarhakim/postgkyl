@@ -15,11 +15,6 @@ class GData(object):
   loading Gkeyll data and serves is input to many Postgkyl
   functions. Represents a dataset in the Postgkyl command line mode.
 
-  Attributes:
-    ctx: A dictionary contaioning a physics information like charge
-      and/or representation information like polynomial order.
-    file_name: The name of the Gkeyll file used during initialization.
-
   Examples:
     import postgkyl as pg
     data = pg.GData('file.gkyl', comp=1)
@@ -52,7 +47,7 @@ class GData(object):
     Args:
       fileName: str
         The name of Gkeyll output file. Currently supported are 'h5',
-        ADIOS1 'bp', and binary 'gkyl' files. Can be ommited for empty
+        ADIOS 'bp', and binary 'gkyl' files. Can be ommited for empty
         class.
       comp: int or 'int:int'
         Load only the specified component index or a slice of
@@ -71,7 +66,17 @@ class GData(object):
       comp_grid: bool
         A flag to ignore grid mapping.
       mapc2p_name: str
-        The name of the file containg the c2p mapping information.
+        The name of the file containg the c2p mapping.
+      mapc2p_vel_name: str
+        The name of the file containg the c2p mapping just for velocity.
+      reader_name: str
+        Reader can be specified to bypass the automatic selection.
+      load: bool = True
+        Automatically the data to memory; when set to False, data can be loaded later
+        using the load() method.
+      click_mode: bool = False
+        Enables command-line behavior like prompting when a
+        var_name is either missing or doesn't match any available.
     """
     self._grid = None
     self._values = None  # (N+1)D narray of values
@@ -320,7 +325,8 @@ class GData(object):
       none
 
     Returns:
-      output (str): A list of strings with the informations
+      output: str
+        A list of strings with the informations
     """
     values = self.values
     num_comps = self.num_comps
@@ -420,11 +426,16 @@ class GData(object):
     or NumPy .npy file.
 
     Args:
-      out_name (str): Specify output file name
-      format (str; "gkyl"): Specify file format (extension)
-      var_name (str): Specify variable name for Adios
-      append (bool; False): Allows for writing multiple datasets into one file
-      cleaning (bool, True): Remove temporary files after writing
+      out_name: str
+        Specify output file name.
+      format: str = "gkyl"
+        Specify file format (extension).
+      var_name: str
+        Specify variable name for Adios.
+      append: bool = False
+        Allows for writing multiple datasets into one file.
+      cleaning: bool = True
+        Remove temporary files after writing
 
     Returns:
       None

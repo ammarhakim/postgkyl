@@ -76,11 +76,27 @@ import os.path
 
 
 class Read_gkyl(object):
-  """Provides a framework to read Gkeyll binary output"""
+  """Provides a framework to read Gkeyll binary output."""
 
   def __init__(
       self, file_name: str, ctx: dict = {}, c2p: str = "", c2p_vel: str = "", **kwargs
   ):
+    """Initialize the instance of Gkeyll reader.
+
+    Args:
+      file_name: str
+      ctx: dict
+        Passes context variable with metadata.
+      var_name: str = "CartGridField"
+      c2p: str
+        Allows to specify a name of the file containing c2p mapping.
+      c2p_vel: str
+        Allows to specify a name of the file containing c2p mapping for only the
+        velocity dimension.
+      **kwargs
+        This is not directly used but allowes for unified interface to all the readers
+        we use.
+    """
     self.file_name = file_name
     self.c2p = c2p
     self.c2p_vel = c2p_vel
@@ -102,6 +118,7 @@ class Read_gkyl(object):
     self.ctx = ctx
 
   def is_compatible(self) -> bool:
+    """Checks if file can be read with Gkeyll reader."""
     try:
       magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
       if np.array_equal(magic, [103, 107, 121, 108, 48]):
@@ -312,6 +329,7 @@ class Read_gkyl(object):
 
   # ---- Exposed functions -----
   def preload(self) -> None:
+    """Loads metadata."""
     self._read_header()
     if self.file_type == 1 or self.file_type == 3 or self.version == 0:
       self._read_domain_t1a3_v1()
@@ -324,6 +342,14 @@ class Read_gkyl(object):
     # end
 
   def load(self) -> Tuple[list, np.ndarray]:
+    """Loads data.
+
+    Returns:
+      A tuple including a grid list and a data NumPy array
+
+    Notes:
+      Needs to be called after the preload.
+    """
     time = None
     if self.file_type == 1 or self.version == 0:
       data = self._read_data_t1_v1()

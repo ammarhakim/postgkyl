@@ -7,7 +7,7 @@ from postgkyl.utils import idx_parser
 
 
 class Read_gkyl_adios(object):
-  """Provides a framework to read gkyl ADIOS output"""
+  """Provides a framework to read gkyl ADIOS output."""
 
   def __init__(
       self,
@@ -23,14 +23,22 @@ class Read_gkyl_adios(object):
     """Initialize the instance of ADIOS reader.
 
     Args:
-      file_name (str)
-      ctx (dict): Passes context variable with metadata
-      var_name (str; "CartGridField")
-      c2p (str): Allows to specify a name of the file containing c2p mapping
-      axes (tuple): Coordinate indices for partial loading
-      comp (int): Component index for partial loading
-      click_mode (bool; False): Enables command-line behavior like prompting when a
-        var_name is either missing or doesn't match any available
+      file_name: str
+      ctx: dict
+        Passes context variable with metadata.
+      var_name: str = "CartGridField"
+      c2p: str
+        Allows to specify a name of the file containing c2p mapping.
+      axes: tuple
+        Coordinate indices for partial loading.
+      comp: int
+        Component index for partial loading.
+      click_mode: bool = False
+        Enables command-line behavior like prompting when a
+        var_name is either missing or doesn't match any available.
+      **kwargs
+        This is not directly used but allowes for unified interface to all the readers
+        we use.
     """
     self._file_name = file_name
     self.var_name = var_name
@@ -51,14 +59,7 @@ class Read_gkyl_adios(object):
     self.ctx = ctx
 
   def is_compatible(self) -> bool:
-    """Checks if file can be read with Gkeyll ADIOS reader
-
-    Args:
-      None
-
-    Returns:
-      True if the file can be read
-    """
+    """Checks if file can be read with Gkeyll ADIOS reader."""
     try:
       import adios2  # ADIOS has been a problematic dependency;
       # therefore it is only imported when actually needed
@@ -340,6 +341,9 @@ class Read_gkyl_adios(object):
 
   def load(self) -> Tuple[list, np.ndarray]:
     """Loads data.
+
+    Returns:
+      A tuple including a grid list and a data NumPy array
 
     Notes:
       Needs to be called after the preload.

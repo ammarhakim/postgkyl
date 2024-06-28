@@ -80,7 +80,7 @@ class Read_flash_h5(object):
     fh.close()
     return data.shape, lower[:2], upper[:2], data[..., np.newaxis]
 
-  # ---- Exposed function ----------------------------------------------
+  # ---- Exposed functions ----
   def get_data(self) -> tuple:
     cells, lower, upper, data = self._read_frame()
     num_dims = len(cells)
