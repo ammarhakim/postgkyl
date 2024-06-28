@@ -26,6 +26,3 @@ def pr(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing pr")
-
-
-# end

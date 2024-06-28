@@ -1,9 +1,8 @@
 import click
-import numpy as np
 
-import postgkyl.tools as diag
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
+import postgkyl.tools as diag
 
 
 @click.command()
@@ -111,6 +110,3 @@ def mhd(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing mhd")
-
-
-# end

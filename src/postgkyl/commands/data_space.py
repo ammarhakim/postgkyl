@@ -7,11 +7,7 @@ class DataSpace(object):
   def __init__(self):
     self._dataset_dict = {}
 
-  # end
-
-  # ---------------------------------------------------------------------
-  # ---- Iterators ------------------------------------------------------
-
+  # ---- Iterators ----
   def iterator(self, tag=None, enum=False, only_active=True, select=None):
     # Process 'select'
     if enum and select:
@@ -87,8 +83,6 @@ class DataSpace(object):
       # end
     # end
 
-  # end
-
   def tag_iterator(self, tag=None, only_active=True):
     if tag:
       out = tag.split(",")
@@ -104,10 +98,7 @@ class DataSpace(object):
     # end
     return iter(out)
 
-  # end
-
-  # -----------------------------------------------------------------
-  # ---- Labels -----------------------------------------------------
+  # ---- Labels ----
   def set_unique_labels(self):
     num_comps = []
     names = []
@@ -151,10 +142,7 @@ class DataSpace(object):
       cnt += 1
     # end
 
-  # end
-
-  # -----------------------------------------------------------------
-  # ---- Adding datasets --------------------------------------------
+  # ---- Adding datasets ----
   def add(self, data):
     tag_nm = data.get_tag()
     if tag_nm in self._dataset_dict:
@@ -163,10 +151,7 @@ class DataSpace(object):
       self._dataset_dict[tag_nm] = [data]
     # end
 
-  # end
-
-  # -----------------------------------------------------------------
-  # ---- Staus control ----------------------------------------------
+  # ---- Staus control ----
   def activate_all(self, tag=None):
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
@@ -178,10 +163,7 @@ class DataSpace(object):
       dat.deactivate()
     # end
 
-  # end
-
-  # -----------------------------------------------------------------
-  # ---- Stuff :-P --------------------------------------------------
+  # ---- Utilities ----
   def get_dataset(self, tag, idx):
     return self._dataset_dict[tag][idx]
 
@@ -193,8 +175,3 @@ class DataSpace(object):
       num_sets += 1
     # end
     return num_sets
-
-  # end
-
-
-# end

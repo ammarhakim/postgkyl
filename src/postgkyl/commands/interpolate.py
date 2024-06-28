@@ -1,9 +1,9 @@
 import click
 import numpy as np
 
+from postgkyl.data import GData
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.utils import verb_print
-from postgkyl.data import GData
 
 
 @click.command(help="Interpolate DG data onto a uniform mesh.")
@@ -99,6 +99,3 @@ def interpolate(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing interpolate")
-
-
-# end

@@ -1,12 +1,9 @@
 import click
-import shutil
 
 from postgkyl.utils import load_style, verb_print
 
 
-@click.command(
-    help="Probe and control the Matplotlib plotting style. The list of rcParams is available here:\nhttps://matplotlib.org/stable/api/matplotlib_configuration_api.html"
-)
+@click.command()
 @click.option("--file", "-f", help="Sets Maplotlib rcParams style file.")
 @click.option(
     "--set", "-s", multiple=True, help="Sets individual rcParam(s) as 'key:value'."
@@ -14,6 +11,8 @@ from postgkyl.utils import load_style, verb_print
 @click.option("--print", "-p", is_flag=True, help="Prints the current rcParams.")
 @click.pass_context
 def style(ctx, **kwargs):
+  """Probe and control the Matplotlib plotting style. The list of rcParams is available
+  here:\nhttps://matplotlib.org/stable/api/matplotlib_configuration_api.html"""
   verb_print(ctx, "Starting 'style' command")
 
   if kwargs["file"]:
@@ -34,6 +33,3 @@ def style(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing 'style' command")
-
-
-# end

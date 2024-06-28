@@ -1,12 +1,10 @@
-import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import click
+import matplotlib.pyplot as plt
 import numpy as np
 
-import click
-
-import postgkyl.output.plot as gplot
-import postgkyl.data.select as select
 from postgkyl.utils import verb_print
+import postgkyl.output.plot as gplot
 
 
 def _update(i, data, fig, offsets, kwargs):
@@ -31,9 +29,6 @@ def _update(i, data, fig, offsets, kwargs):
     # end
   # end
   return im
-
-
-# end
 
 
 @click.command()
@@ -381,6 +376,3 @@ def animate(ctx, **kwargs):
     plt.show()
   # end
   verb_print(ctx, "Finishing animate")
-
-
-# end

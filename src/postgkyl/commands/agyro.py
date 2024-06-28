@@ -2,8 +2,8 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.utils import verb_print
 from postgkyl.tools import get_agyro, get_gkyl_10m_agyro
+from postgkyl.utils import verb_print
 
 
 @click.command()
@@ -52,11 +52,7 @@ def agyro(ctx, **kwargs):
     out.push(grid, agyro)
     data.add(out)
   # end
-
   verb_print(ctx, "Finishing agyro")
-
-
-# end
 
 
 @click.command()
@@ -99,8 +95,4 @@ def mom_agyro(ctx, **kwargs):
     out.push(grid, agyro)
     data.add(out)
   # end
-
   verb_print(ctx, "Finishing agyro")
-
-
-# end

@@ -1,5 +1,4 @@
 import click
-import numpy as np
 
 from postgkyl.utils import verb_print
 
@@ -49,9 +48,6 @@ def activate(ctx, **kwargs):
   verb_print(ctx, "Finishing activate")
 
 
-# end
-
-
 @click.command()
 @click.option(
     "--tag", "-t", type=click.STRING, help="Tag(s) to apply to (comma-separated)"
@@ -95,6 +91,3 @@ def deactivate(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing deactivate")
-
-
-# end

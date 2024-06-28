@@ -40,6 +40,3 @@ def info(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing info")
-
-
-# end

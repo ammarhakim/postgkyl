@@ -1,11 +1,8 @@
 import click
 
-# ---- Postgkyl imports ------------------------------------------------
-from postgkyl.utils import verb_print
 from postgkyl.data import GData, GInterpModal
-from postgkyl.tools import laguerre_compose
-from postgkyl.tools import transform_frame
-# ----------------------------------------------------------------------
+from postgkyl.tools import laguerre_compose, transform_frame
+from postgkyl.utils import verb_print
 
 
 @click.command(help="Shortcut to load Gkeyll PKPM data, interpolate, and transform")
@@ -53,6 +50,3 @@ def pkpm(ctx, **kwargs):
   data.add(gf)
 
   verb_print(ctx, "Finishing Gkyl PKPM")
-
-
-# end

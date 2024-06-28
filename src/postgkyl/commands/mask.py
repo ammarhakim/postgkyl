@@ -54,6 +54,3 @@ def mask(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing mask")
-
-
-# end

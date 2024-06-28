@@ -1,5 +1,5 @@
-import click
 import base64
+import click
 
 from postgkyl.utils import verb_print
 
@@ -21,6 +21,3 @@ def extractinput(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing extractinput")
-
-
-# end

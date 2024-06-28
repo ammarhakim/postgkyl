@@ -1,11 +1,11 @@
 import click
 
-import postgkyl.tools as diag
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
+import postgkyl.tools as diag
 
 
-@click.command(help="Integrate data over a specified axis or axes")
+@click.command(help="Integrate data over a specified axis or axes.")
 @click.argument("axis", nargs=1, type=click.STRING)
 @click.option("--use", "-u", default=None, help="Specify the tag to integrate")
 @click.option("--tag", "-t", help="Optional tag for the resulting array")
@@ -32,6 +32,3 @@ def integrate(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing integrate")
-
-
-# end

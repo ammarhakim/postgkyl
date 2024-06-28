@@ -1,8 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -45,6 +45,3 @@ def current(ctx, **kwargs):
     data.add(out)
   # end
   verb_print(ctx, "Finishing current accumulation")
-
-
-# end

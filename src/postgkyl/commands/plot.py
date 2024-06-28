@@ -1,9 +1,9 @@
+import click
 import matplotlib.pyplot as plt
 import numpy as np
-import click
 
-import postgkyl.output.plot as gplot
 from postgkyl.utils import verb_print
+import postgkyl.output.plot as gplot
 
 
 @click.command()
@@ -283,8 +283,7 @@ def plot(ctx, **kwargs):
 
   file_name = ""
 
-  # --------------------------------------------------------------------
-  # Loop over all the datasets
+  # ---- Loop over all the datasets ----
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     if dataset_fignum:
       kwargs["figure"] = int(i)
@@ -295,9 +294,8 @@ def plot(ctx, **kwargs):
       label = ""
     # end
 
-    # Plot -------------------------------------------------------------
+    # ---- Plot ----
     gplot(dat, args, label_prefix=label, **kwargs)
-    # ------------------------------------------------------------------
 
     if kwargs["subplots"]:
       kwargs["start_axes"] = kwargs["start_axes"] + dat.get_num_comps()
@@ -338,6 +336,3 @@ def plot(ctx, **kwargs):
     plt.show()
   # end
   verb_print(ctx, "Finishing plot")
-
-
-# end

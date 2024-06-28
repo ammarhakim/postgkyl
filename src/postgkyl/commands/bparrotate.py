@@ -1,7 +1,7 @@
 import click
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -66,6 +66,3 @@ def bparrotate(ctx, **kwargs):
   data.deactivate_all(tag=kwargs["field"])
 
   verb_print(ctx, "Finishing rotation parallel to magnetic field")
-
-
-# end

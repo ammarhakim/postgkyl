@@ -1,13 +1,10 @@
 import click
 import numpy as np
-import importlib
-from os import path
-import sys
 
+from postgkyl.commands import ev_cmd as cmdBase
 from postgkyl.data import GData
 from postgkyl.data import select as pselect
 from postgkyl.utils import verb_print
-from postgkyl.commands import ev_cmd as cmdBase
 
 helpStr = ""
 for s in cmdBase.cmds.keys():
@@ -83,18 +80,12 @@ def _data(ctx, grid_stack, value_stack, ctx_stack, strIn, tags, only_active):
   # end
 
 
-# end
-
-
 def _compare(a, b) -> bool:
   if type(a) == np.ndarray:
     return np.array_equal(a, b)
   else:
     return a == b
   # end
-
-
-# end
 
 
 def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
@@ -167,9 +158,6 @@ def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
   return True
 
 
-# end
-
-
 @click.command(
     help="Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:"
     + helpStr[:-1]
@@ -194,14 +182,6 @@ def ev(ctx, **kwargs):
   # end
 
   tags = list(data.tag_iterator(only_active=only_active))
-  # outTag = kwargs['tag']
-  # if outTag is None:
-  #     if len(tags) == 1:
-  #         outTag = tags[0]
-  #     else:
-  #         outTag = 'ev'
-  #     #end
-  # #end
   label = kwargs["label"]
   if label is None:
     label = kwargs["chain"]
@@ -271,6 +251,3 @@ def ev(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing ev")
-
-
-# end

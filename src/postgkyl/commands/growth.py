@@ -1,17 +1,13 @@
-import os
 import click
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 
-# ---- Postgkyl imports -----------------------------------------------
-from postgkyl.utils import verb_print
-from postgkyl.tools.growth import fitGrowth, exp2
 from postgkyl.data import GData
-# ---------------------------------------------------------------------
+from postgkyl.tools.growth import fitGrowth, exp2
+from postgkyl.utils import verb_print
 
 
-# ---------------------------------------------------------------------
-# ---- Growth ---------------------------------------------------------
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
 @click.option("-g", "--guess", help="Specify comma-separated initial guess")
@@ -118,6 +114,3 @@ def growth(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing growth")
-
-
-# end

@@ -1,9 +1,8 @@
 import click
-import numpy as np
 
+from postgkyl.data import GData
 from postgkyl.data import GInterpModal, GInterpNodal
 from postgkyl.utils import verb_print
-from postgkyl.data import GData
 
 
 @click.command(help="Interpolate a derivative of DG data on a uniform mesh")
@@ -92,6 +91,3 @@ def differentiate(ctx, **kwargs):
       dg.differentiate(direction=kwargs["direction"], overwrite=True)
     # end
   verb_print(ctx, "Finishing differentiate")
-
-
-# end

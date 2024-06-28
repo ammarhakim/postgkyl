@@ -1,8 +1,8 @@
 import click
 import numpy as np
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -49,6 +49,3 @@ def energetics(ctx, **kwargs):
   data.deactivate_all(tag=kwargs["field"])
 
   verb_print(ctx, "Finishing energetics decomposition")
-
-
-# end

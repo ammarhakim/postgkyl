@@ -1,8 +1,8 @@
 import click
 
-import postgkyl.tools as diag
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
+import postgkyl.tools as diag
 
 
 @click.command()
@@ -46,6 +46,3 @@ def fft(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing FFT")
-
-
-# end

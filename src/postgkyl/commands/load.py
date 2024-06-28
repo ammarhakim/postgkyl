@@ -1,10 +1,9 @@
 import click
 import glob
-import numpy as np
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
 from postgkyl.data import GInterpModal
+from postgkyl.utils import verb_print
 
 
 def _pickCut(ctx, kwargs, zn):
@@ -30,18 +29,12 @@ def _pickCut(ctx, kwargs, zn):
   # end
 
 
-# end
-
-
 def _crush(s):  # Temp function used as a sorting key
   splitted = s.split("_")
   tmp = splitted[-1].split(".")
   splitted[-1] = int(tmp[0])
   splitted.append(tmp[1])
   return tuple(splitted)
-
-
-# end
 
 
 @click.command(hidden=True)
@@ -211,6 +204,3 @@ def load(ctx, **kwargs):
 
   ctx.obj["in_data_strings_loaded"] += 1
   verb_print(ctx, "Finishing load")
-
-
-# end

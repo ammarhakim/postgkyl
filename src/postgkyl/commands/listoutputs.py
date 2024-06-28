@@ -1,6 +1,6 @@
+from glob import glob
 import click
 import re
-from glob import glob
 
 from postgkyl.utils import verb_print
 
@@ -44,6 +44,3 @@ def listoutputs(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing listoutputs")
-
-
-# end

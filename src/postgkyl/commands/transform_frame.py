@@ -1,10 +1,8 @@
 import click
 
-# ---- Postgkyl imports ------------------------------------------------
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
 from postgkyl.tools import transform_frame
-# ----------------------------------------------------------------------
+from postgkyl.utils import verb_print
 
 
 @click.command(help="Compose PKPM Laguerre coefficients together.")
@@ -48,6 +46,3 @@ def transformframe(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing transformframe")
-
-
-# end

@@ -134,6 +134,3 @@ def collect(ctx, **kwargs):
   # end
 
   verb_print(ctx, "Finishing collect")
-
-
-# end

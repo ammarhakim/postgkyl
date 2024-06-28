@@ -1,9 +1,8 @@
 import click
-import numpy as np
 
 from postgkyl.data import GData
-import postgkyl.tools as diag
 from postgkyl.utils import verb_print
+import postgkyl.tools as diag
 
 
 @click.command()
@@ -102,6 +101,3 @@ def tenmoment(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing tenmoment")
-
-
-# end

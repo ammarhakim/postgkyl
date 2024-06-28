@@ -18,25 +18,16 @@ def _get_grid(grid0, grid1):
   # end
 
 
-# end
-
-
 def add(in_grid, in_values):
   out_grid = _get_grid(in_grid[0], in_grid[1])
   out_values = in_values[0] + in_values[1]
   return [out_grid], [out_values]
 
 
-# end
-
-
 def subtract(in_grid, in_values):
   out_grid = _get_grid(in_grid[0], in_grid[1])
   out_values = in_values[1] - in_values[0]
   return [out_grid], [out_values]
-
-
-# end
 
 
 def mult(in_grid, in_values):
@@ -57,16 +48,10 @@ def mult(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def dot(in_grid, in_values):
   out_grid = _get_grid(in_grid[0], in_grid[1])
   out_values = np.sum(in_values[1] * in_values[0], axis=-1)[..., np.newaxis]
   return [out_grid], [out_values]
-
-
-# end
 
 
 def divide(in_grid, in_values):
@@ -81,16 +66,10 @@ def divide(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def sqrt(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = np.sqrt(in_values[0])
   return [out_grid], [out_values]
-
-
-# end
 
 
 def psin(in_grid, in_values):
@@ -99,16 +78,10 @@ def psin(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def pcos(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = np.cos(in_values[0])
   return [out_grid], [out_values]
-
-
-# end
 
 
 def ptan(in_grid, in_values):
@@ -117,16 +90,10 @@ def ptan(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def absolute(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = np.abs(in_values[0])
   return [out_grid], [out_values]
-
-
-# end
 
 
 def log(in_grid, in_values):
@@ -135,24 +102,15 @@ def log(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def log10(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = np.log10(in_values[0])
   return [out_grid], [out_values]
 
 
-# end
-
-
 def minimum(in_grid, in_values):
   out_values = np.atleast_1d(np.nanmin(in_values[0]))
   return [[]], [out_values]
-
-
-# end
 
 
 def minimum2(in_grid, in_values):
@@ -161,15 +119,9 @@ def minimum2(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def maximum(in_grid, in_values):
   out_values = np.atleast_1d(np.nanmax(in_values[0]))
   return [[]], [out_values]
-
-
-# end
 
 
 def maximum2(in_grid, in_values):
@@ -178,15 +130,9 @@ def maximum2(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def mean(in_grid, in_values):
   out_values = np.atleast_1d(np.mean(in_values[0]))
   return [[]], [out_values]
-
-
-# end
 
 
 def power(in_grid, in_values):
@@ -195,25 +141,16 @@ def power(in_grid, in_values):
   return [out_grid], [out_values]
 
 
-# end
-
-
 def sq(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = in_values[0] ** 2
   return [out_grid], [out_values]
 
 
-# end
-
-
 def exp(in_grid, in_values):
   out_grid = in_grid[0]
   out_values = np.exp(in_values[0])
   return [out_grid], [out_values]
-
-
-# end
 
 
 def length(in_grid, in_values):
@@ -240,9 +177,6 @@ def grad(in_grid, in_values):
     )
   # end
   return [out_grid], [out_values]
-
-
-# end
 
 
 def grad2(in_grid, in_values):
@@ -272,9 +206,6 @@ def grad2(in_grid, in_values):
     )
   # end
   return [out_grid], [out_values]
-
-
-# end
 
 
 def integrate(in_grid, in_values, avg=False):
@@ -332,9 +263,6 @@ def integrate(in_grid, in_values, avg=False):
   return [grid], [values]
 
 
-# end
-
-
 def average(in_grid, in_values):
   return integrate(in_grid, in_values, True)
 
@@ -363,9 +291,6 @@ def divergence(in_grid, in_values):
     )
   # end
   return [out_grid], [out_values]
-
-
-# end
 
 
 def curl(in_grid, in_values):
@@ -460,8 +385,6 @@ def curl(in_grid, in_values):
   # end
   return [out_grid], [out_values]
 
-
-# end
 
 cmds = {
     "+": {"numIn": 2, "numOut": 1, "func": add},

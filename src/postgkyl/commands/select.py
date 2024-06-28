@@ -1,9 +1,8 @@
 import click
-import numpy as np
 
-import postgkyl.data.select
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
+import postgkyl.data.select
 
 
 @click.command()
@@ -80,6 +79,3 @@ def select(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing select")
-
-
-# end

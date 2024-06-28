@@ -1,8 +1,7 @@
 import click
-import numpy as np
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -53,6 +52,3 @@ def relchange(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing relative change")
-
-
-# end

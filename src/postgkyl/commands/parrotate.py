@@ -1,7 +1,7 @@
 import click
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -64,6 +64,3 @@ def parrotate(ctx, **kwargs):
   data.deactivate_all(tag=kwargs["rotator"])
 
   verb_print(ctx, "Finishing rotation parallel to rotator array")
-
-
-# end

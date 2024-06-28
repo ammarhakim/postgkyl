@@ -1,7 +1,7 @@
 import click
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 import postgkyl.tools as diag
 
 
@@ -60,6 +60,3 @@ def perprotate(ctx, **kwargs):
   data.deactivate_all(tag=kwargs["rotator"])
 
   verb_print(ctx, "Finishing rotation perpendicular to rotator array")
-
-
-# end

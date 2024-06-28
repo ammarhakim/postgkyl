@@ -39,9 +39,6 @@ def _getRange(strIn, length):
   # end
 
 
-# end
-
-
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
 @click.option("--tag", "-t", help="Tag for the result")
@@ -73,9 +70,6 @@ def val2coord(ctx, **kwargs):
   """
   verb_print(ctx, "Starting val2coord")
   data = ctx.obj["data"]
-
-  activeSets = []
-  colors = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"]
 
   tags = list(data.tag_iterator())
   outTag = kwargs["tag"]
@@ -131,6 +125,3 @@ def val2coord(ctx, **kwargs):
     dat.deactivate()
   # end
   verb_print(ctx, "Finishing val2coord")
-
-
-# end

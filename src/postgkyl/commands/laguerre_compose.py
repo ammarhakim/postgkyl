@@ -1,10 +1,8 @@
 import click
 
-# ---- Postgkyl imports ------------------------------------------------
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
 from postgkyl.tools import laguerre_compose
-# ----------------------------------------------------------------------
+from postgkyl.utils import verb_print
 
 
 @click.command(help="Compose PKPM Laguerre coefficients together.")
@@ -39,6 +37,3 @@ def laguerrecompose(ctx, **kwargs):
     # end
   # end
   verb_print(ctx, "Finishing laguerrecompose")
-
-
-# end

@@ -1,7 +1,7 @@
 import click
 
-from postgkyl.utils import verb_print
 from postgkyl.data import GData
+from postgkyl.utils import verb_print
 
 
 @click.command()
@@ -48,6 +48,3 @@ def velocity(ctx, **kwargs):
   data.deactivate_all(tag=kwargs["momentum"])
 
   verb_print(ctx, "Finishing velocity")
-
-
-# end

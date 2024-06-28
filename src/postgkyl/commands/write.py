@@ -17,18 +17,12 @@ from postgkyl.utils import verb_print
     help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file)",
 )
 @click.option("-s", "--single", is_flag=True, help="Write all dataset into one file")
-@click.option(
-    "-b",
-    "--buffersize",
-    default=1000,
-    help="Set the buffer size for ADIOS write (default: 1000 MB)",
-)
 @click.pass_context
 def write(ctx, **kwargs):
   """Write active dataset to a file. The output file format can be set
-  with ``--mode``, and is ADIOS BP by default. If data is
-  saved as BP file it can be later loaded back into pgkyl to further
-  manipulate or plot it.
+  with ``--format``, and is Gkeyll's .gkyl by default. Files
+  saved as .gkyl or .bp can be later loaded back into pgkyl to further
+  manipulate or plot.
 
   """
   verb_print(ctx, "Starting write")
@@ -59,7 +53,6 @@ def write(ctx, **kwargs):
     dat.write(
         out_name=out_name,
         mode=mode,
-        bufferSize=kwargs["buffersize"],
         append=append,
         var_name=var_name,
         cleaning=cleaning,
@@ -84,6 +77,3 @@ def write(ctx, **kwargs):
     shutil.rmtree("{:s}.{:s}.dir".format(fn, mode))
   # end
   verb_print(ctx, "Finishing write")
-
-
-# end

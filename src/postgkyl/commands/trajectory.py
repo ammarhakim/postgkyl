@@ -1,12 +1,9 @@
-import matplotlib.pyplot as plt
-import math
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
-
 import click
+import math
+import matplotlib.pyplot as plt
+import numpy as np
 
-import postgkyl.output.plot as gplot
 from postgkyl.utils import verb_print
 
 
@@ -75,59 +72,24 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
   ax.set_zlim3d(zmin, zmax)
 
 
-# end
-
-
-@click.command(help="Animate a particle trajectory")
-# @click.option('--squeeze', '-s', is_flag=True,
-#               help="Squeeze the components into one panel.")
-# @click.option('--arg', type=click.STRING,
-#               help="Additional plotting arguments like '*--'.")
-# @click.option('-c', '--contour', is_flag=True,
-#               help="Switch to contour mode.")
-# @click.option('-q', '--quiver', is_flag=True,
-#               help="Switch to quiver mode.")
-# @click.option('-l', '--streamline', is_flag=True,
-#               help="Switch to streamline mode.")
-# @click.option('-d', '--diverging', is_flag=True,
-#               help="Switch to diverging colormesh mode.")
-# @click.option('--style',
-#               help="Specify Matplotlib style file (default: Postgkyl).")
+@click.command(help="Animate a particle trajectory.")
 @click.option(
     "--fix-aspect",
     "fixaspect",
     is_flag=True,
     help="Enforce the same scaling on both axes.",
 )
-# @click.option('--logx', is_flag=True,
-#               help="Set x-axis to log scale.")
-# @click.option('--logy', is_flag=True,
-#               help="Set y-axis to log scale.")
-# @click.option('--legend/--no-legend', default=True,
-#               help="Show legend.")
 @click.option(
     "--show/--no-show",
     default=True,
     help="Turn showing of the plot ON and OFF (default: ON).",
 )
-# #@click.option('--color', type=click.STRING,
-# #              help="Set color when available.")
-# @click.option('-x', '--xlabel', type=click.STRING,
-#               help="Specify a x-axis label.")
-# @click.option('-y', '--ylabel', type=click.STRING,
-#               help="Specify a y-axis label.")
-# @click.option('-t', '--title', type=click.STRING,
-#               help="Specify a title label.")
 @click.option("-i", "--interval", default=100, help="Specify the animation interval.")
-# @click.option('-f', '--float', is_flag=True,
-#               help="Choose min/max levels based on current frame")
 @click.option("--save", is_flag=True, help="Save figure as PNG.")
 @click.option("--velocity/--no-velocity", default=True, help="Plot velocity vectors.")
 @click.option(
     "--saveas", type=click.STRING, default=None, help="Name to save the plot as."
 )
-# @click.option('-e', '--edgecolors', type=click.STRING,
-#               help="Set color for cell edges (default: None)")
 @click.option("-e", "--elevation", type=click.FLOAT, help="Set elevation")
 @click.option("-a", "--azimuth", type=click.FLOAT, help="Set azimuth")
 @click.option(
@@ -209,6 +171,3 @@ def trajectory(ctx, **kwargs):
     plt.show()
   # end
   verb_print(ctx, "Finishing trajectory")
-
-
-# end

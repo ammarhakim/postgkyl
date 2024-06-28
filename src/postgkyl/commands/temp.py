@@ -4,8 +4,7 @@ import numpy as np
 from postgkyl.utils import verb_print
 
 
-# ---------------------------------------------------------------------
-# -- Math -------------------------------------------------------------
+# ---- Math ----
 @click.command(help="Multiply data by a factor")
 @click.argument("factor", nargs=1, type=click.FLOAT)
 @click.pass_context
@@ -16,9 +15,6 @@ def mult(ctx, **kwargs):
     values = values * kwargs["factor"]
     ctx.obj["dataSets"][s].push(values)
   # end
-
-
-# end
 
 
 @click.command(help="Calculate power of data")
@@ -33,9 +29,6 @@ def pow(ctx, **kwargs):
   # end
 
 
-# end
-
-
 @click.command(help="Calculate natural log of data")
 @click.pass_context
 def log(ctx):
@@ -47,9 +40,6 @@ def log(ctx):
   # end
 
 
-# end
-
-
 @click.command(help="Calculate absolute values of data")
 @click.pass_context
 def abs(ctx):
@@ -59,9 +49,6 @@ def abs(ctx):
     values = np.abs(values)
     ctx.obj["dataSets"][s].push(values)
   # end
-
-
-# end
 
 
 @click.command(help="Normalize data")
@@ -91,6 +78,3 @@ def norm(ctx, **kwargs):
     # end
     ctx.obj["dataSets"][s].push(valuesOut)
   # end
-
-
-# end

@@ -2,7 +2,7 @@ import click
 import numpy as np
 
 from postgkyl.commands import tm
-from postgkyl.tools.stack import pushStack, peakStack, popStack, antiSqueeze, addStack
+from postgkyl.tools.stack import pushStack, peakStack, antiSqueeze, addStack
 from postgkyl.utils import verb_print
 
 
