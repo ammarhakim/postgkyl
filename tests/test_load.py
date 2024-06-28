@@ -34,7 +34,7 @@ class TestGkyl:
     data = pg.GData("{:s}hll-euler.gkyl".format(self.dir_path))
     assert data.ctx["frame"] == 1
 
-  def test_gkyl_c2p_vel(self):  # Frame with msgpack meta data included
+  def test_gkyl_c2p_vel(self):
     data = pg.GData(
         "{:s}bimaxwellian-elc.gkyl".format(self.dir_path),
         mapc2p_vel_name="{:s}bimaxwellian-mapc2p-vel.gkyl".format(self.dir_path),
