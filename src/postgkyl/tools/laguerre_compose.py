@@ -6,9 +6,10 @@ from postgkyl.data import GData
 from postgkyl.tools import _input_parser
 # ----------------------------------------------------------------------
 
-def laguerre_compose(in_f : Union[GData, tuple],
-                     in_T_m : Union[GData, tuple],
-                     out_f : GData = None) -> tuple:
+
+def laguerre_compose(
+    in_f: Union[GData, tuple], in_T_m: Union[GData, tuple], out_f: GData = None
+) -> tuple:
   """Compose PKPM expansion coefficients into a single f.
 
   Compose the full distribution function f(x, v_par, v_perp) out of the
@@ -30,17 +31,17 @@ def laguerre_compose(in_f : Union[GData, tuple],
   x, vpar = in_f_grid[0], in_f_grid[1]
   vperp = np.copy(vpar)
 
-  x_cc = (x[:-1]+x[1:])/2
-  vpar_cc = (vpar[:-1]+vpar[1:])/2
-  vperp_cc = (vpar[:-1]+vpar[1:])/2
+  x_cc = (x[:-1] + x[1:]) / 2
+  vpar_cc = (vpar[:-1] + vpar[1:]) / 2
+  vperp_cc = (vpar[:-1] + vpar[1:]) / 2
 
-  _, _, vperp_3D = np.meshgrid(x_cc, vpar_cc, vperp_cc, indexing='ij')
+  _, _, vperp_3D = np.meshgrid(x_cc, vpar_cc, vperp_cc, indexing="ij")
 
   F0 = in_f_values[..., 0]
   G = in_f_values[..., 1]
   T_m = in_T_m_values[..., 0]
 
-  F1 = F0 - (G.transpose()/T_m).transpose()
+  F1 = F0 - (G.transpose() / T_m).transpose()
 
   # Ading the np.newaxis allows the subsequent np.multiply (called when
   # doing * on numpy arrays) to work. The arrays need to have the same
@@ -51,13 +52,18 @@ def laguerre_compose(in_f : Union[GData, tuple],
 
   # Hardcoded for l=0, n=0,1 in
   # https://drive.google.com/file/d/1548tLF9o7vyW3bkrsq6FvAMV-8XJvKtY/view?usp=sharing
-  f =  ( F0 + F1 * (1 - vperp_3D**2/2/T_m) ) \
-    / (2*np.pi*T_m) * np.exp(-vperp_3D**2/2/T_m)
+  f = (
+      (F0 + F1 * (1 - vperp_3D**2 / 2 / T_m))
+      / (2 * np.pi * T_m)
+      * np.exp(-(vperp_3D**2) / 2 / T_m)
+  )
 
-  f = f[..., np.newaxis] # Adding the component index
+  f = f[..., np.newaxis]  # Adding the component index
 
-  if (out_f):
+  if out_f:
     out_f.push([x, vpar, vperp], f)
-  #end
+  # end
   return [x, vpar, vperp], f
-#end
+
+
+# end

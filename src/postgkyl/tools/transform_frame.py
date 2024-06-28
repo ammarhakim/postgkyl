@@ -6,10 +6,13 @@ from postgkyl.data import GData
 from postgkyl.tools import _input_parser
 # ----------------------------------------------------------------------
 
-def transform_frame(in_f : Union[GData, tuple],
-                    in_u : Union[GData, tuple],
-                    c_dim : int,
-                    out_f : GData = None) -> tuple:
+
+def transform_frame(
+    in_f: Union[GData, tuple],
+    in_u: Union[GData, tuple],
+    c_dim: int,
+    out_f: GData = None,
+) -> tuple:
   """Shift a distribution function to a different frame of reference.
 
   Shifsts the frame of reference for specified distribution function
@@ -29,7 +32,7 @@ def transform_frame(in_f : Union[GData, tuple],
   in_f_grid, in_f_values = _input_parser(in_f)
   _, u = _input_parser(in_u)
   v_dim = len(in_f_grid) - c_dim
-  out_grid = np.meshgrid(*in_f_grid, indexing='ij')
+  out_grid = np.meshgrid(*in_f_grid, indexing="ij")
 
   # There might be a better way to do this but hopefully such hardcoding
   # is ok in this instance -- PC
@@ -43,9 +46,9 @@ def transform_frame(in_f : Union[GData, tuple],
       ext_u[1:-1] = ext_u[1:-1] / 2
 
       for i in range(nx):
-        out_grid[c_dim+v_idx][i, ...] += ext_u[i]
-      #end
-    #end
+        out_grid[c_dim + v_idx][i, ...] += ext_u[i]
+      # end
+    # end
   elif c_dim == 2:
     for v_idx in range(v_dim):
       nx = in_f_grid[0].shape[0]
@@ -58,10 +61,10 @@ def transform_frame(in_f : Union[GData, tuple],
 
       for i in range(nx):
         for j in range(ny):
-          out_grid[c_dim+v_idx][i, j, ...] += ext_u[i, j]
-        #end
-      #end
-    #end
+          out_grid[c_dim + v_idx][i, j, ...] += ext_u[i, j]
+        # end
+      # end
+    # end
   else:
     for v_idx in range(v_dim):
       nx = in_f_grid[0].shape[0]
@@ -76,15 +79,17 @@ def transform_frame(in_f : Union[GData, tuple],
       for i in range(nx):
         for j in range(ny):
           for k in range(nz):
-            out_grid[c_dim+v_idx][i, j, k, ...] += ext_u[i, j, k]
-          #end
-        #end
-      #end
-    #end
-  #end
+            out_grid[c_dim + v_idx][i, j, k, ...] += ext_u[i, j, k]
+          # end
+        # end
+      # end
+    # end
+  # end
 
-  if (out_f):
+  if out_f:
     out_f.push(out_grid, in_f_values)
-  #end
+  # end
   return out_grid, in_f_values
-#end
+
+
+# end
