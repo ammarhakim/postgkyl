@@ -10,20 +10,29 @@ class TestGkylInterpolate:
   def test_ser_p1(self):
     data = pg.GData("{:s}/test_data/shock-f-ser-p1.gkyl".format(self.dir_path))
     dg = pg.GInterpModal(data, poly_order=1, basis_type="ms")
-    _, values = dg.interpolate()
+    grid, values = dg.interpolate()
+    assert len(grid[0]) == 17
+    assert len(grid[1]) == 17
     assert np.array_equal(values.shape, (16, 16, 1))
+    assert np.isclose(values.mean(), 0.5)
 
   def test_ser_p2(self):
     data = pg.GData("{:s}/test_data/twostream-f-p2.gkyl".format(self.dir_path))
     dg = pg.GInterpModal(data)
-    _, values = dg.interpolate()
+    grid, values = dg.interpolate()
+    assert len(grid[0]) == 193
+    assert len(grid[1]) == 97
     assert np.array_equal(values.shape, (192, 96, 1))
+    assert np.isclose(values.mean(), 0.08337313364405809)
 
   def test_ten_p1(self):
     data = pg.GData("{:s}/test_data/shock-f-ten-p1.gkyl".format(self.dir_path))
     dg = pg.GInterpModal(data, poly_order=1, basis_type="mt")
-    _, values = dg.interpolate()
+    grid, values = dg.interpolate()
+    assert len(grid[0]) == 17
+    assert len(grid[1]) == 17
     assert np.array_equal(values.shape, (16, 16, 1))
+    assert np.isclose(values.mean(), 0.5)
 
   def test_ser_p1_c2p(self):
     data = pg.GData(
@@ -31,8 +40,11 @@ class TestGkylInterpolate:
         mapc2p_name="{:s}/test_data/shock-rtheta-ser.gkyl".format(self.dir_path),
     )
     dg = pg.GInterpModal(data, poly_order=1, basis_type="ms")
-    _, values = dg.interpolate()
+    grid, values = dg.interpolate()
+    assert len(grid[0]) == 17
+    assert len(grid[1]) == 17
     assert np.array_equal(values.shape, (16, 16, 1))
+    assert np.isclose(values.mean(), 0.5)
 
   def test_ten_p1_c2p(self):
     data = pg.GData(
@@ -40,5 +52,8 @@ class TestGkylInterpolate:
         mapc2p_name="{:s}/test_data/shock-rtheta-ten.gkyl".format(self.dir_path),
     )
     dg = pg.GInterpModal(data, poly_order=1, basis_type="mt")
-    _, values = dg.interpolate()
+    grid, values = dg.interpolate()
+    assert len(grid[0]) == 17
+    assert len(grid[1]) == 17
     assert np.array_equal(values.shape, (16, 16, 1))
+    assert np.isclose(values.mean(), 0.5)

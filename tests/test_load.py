@@ -9,26 +9,22 @@ class TestGkyl:
 
   def test_gkyl_type1(self):  # Frame without distributed memore
     data = pg.GData("{:s}shock-f-ser-p1.gkyl".format(self.dir_path))
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (8, 8))
+    assert np.array_equal(data.num_cells, (8, 8))
 
   def test_gkyl_type1_c2p(self):  # Frame with coordinate mapping
     data = pg.GData(
         "{:s}shock-f-ser-p1.gkyl".format(self.dir_path),
         mapc2p_name="{:s}shock-rtheta-ser.gkyl".format(self.dir_path),
     )
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (8, 8))
+    assert np.array_equal(data.num_cells, (8, 8))
 
   def test_gkyl_type2(self):  # Dynvector
     data = pg.GData("{:s}twostream-field-energy.gkyl".format(self.dir_path))
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (6113,))
+    assert np.array_equal(data.num_cells, (6113,))
 
   def test_gkyl_type3(self):  # Frame with distributed memory
     data = pg.GData("{:s}hll-euler.gkyl".format(self.dir_path))
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (50, 50))
+    assert np.array_equal(data.num_cells, (50, 50))
 
   def test_gkyl_meta(self):  # Frame with msgpack meta data included
     data = pg.GData("{:s}hll-euler.gkyl".format(self.dir_path))
@@ -49,10 +45,8 @@ class TestAdios:
 
   def test_adios_frame(self):
     data = pg.GData("{:s}/test_data/twostream-f-p2.bp".format(self.dir_path))
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (64, 32))
+    assert np.array_equal(data.num_cells, (64, 32))
 
   def test_adios_dynvector(self):
     data = pg.GData("{:s}/test_data/twostream-field-energy.bp".format(self.dir_path))
-    num_cells = data.get_num_cells()
-    assert np.array_equal(num_cells, (15714,))
+    assert np.array_equal(data.num_cells, (15714,))
