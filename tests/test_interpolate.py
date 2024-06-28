@@ -27,14 +27,14 @@ class TestGkylInterpolate:
 
   def test_ser_p1_i(self):
     data = pg.GData('{:s}/test_data/shock-f-ser-p1.gkyl'.format(self.dir_path))
-    dg = pg.GInterpModal(data, poly_order=1, basis_type='ms', numInterp=3)
+    dg = pg.GInterpModal(data, poly_order=1, basis_type='ms', num_interp=3)
     grid, values = dg.interpolate()
     assert np.array_equal(values.shape, (24, 24, 1))
   #end
 
   def test_ser_p2_i(self):
     data = pg.GData('{:s}/test_data/twostream-f-p2.gkyl'.format(self.dir_path))
-    dg = pg.GInterpModal(data, numInterp=4)
+    dg = pg.GInterpModal(data, num_interp=4)
     grid, values = dg.interpolate()
     assert np.array_equal(values.shape, (256, 128, 1))
   #end

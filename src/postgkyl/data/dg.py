@@ -199,7 +199,7 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
   # last entry is indexing nodes, get rid of it
   numCells = numCells[:-1]
   num_dims = int(len(numCells))
-  numInterp = np.array([max(nInterpIn, 2)] * num_dims)
+  num_interp = np.array([max(nInterpIn, 2)] * num_dims)
   if basis_type == "gkhybrid":
     # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
     vpardir = (
@@ -207,37 +207,37 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
         if (num_dims == 2 or num_dims == 3)
         else (2 if num_dims == 4 else (3 if num_dims == 5 else 99))
     )
-    numInterp[vpardir] = nInterpIn + 1
+    num_interp[vpardir] = nInterpIn + 1
   # end
   if basis_type == "hybrid":
-    numInterp[-1] = nInterpIn + 1
+    num_interp[-1] = nInterpIn + 1
   # end
   if c2p:
-    qOut = np.zeros(numCells * (numInterp - 1) + 1, np.float64)
+    qOut = np.zeros(numCells * (num_interp - 1) + 1, np.float64)
   else:
-    qOut = np.zeros(numCells * numInterp, np.float64)
+    qOut = np.zeros(numCells * num_interp, np.float64)
   # end
   # move the node index from last to the first
   qIn = np.moveaxis(qIn, -1, 0)
   # Main loop
-  for n in range(np.prod(numInterp)):
+  for n in range(np.prod(num_interp)):
     # https://docs.scipy.org/doc/numpy/reference/generated/numpy.tensordot.html
     temp = np.tensordot(cMat[n, :], qIn, axes=1)
     # decompose n to i,j,k,... indices based on the number of dimensions
-    startIdx = np.unravel_index(n, numInterp, order="F")
+    startIdx = np.unravel_index(n, num_interp, order="F")
     # define multi-D qOut slices
     if c2p:
       idxs = [
           slice(
               int(startIdx[i]),
-              int(numCells[i] * (numInterp[i] - 1) + startIdx[i]),
-              numInterp[i] - 1,
+              int(numCells[i] * (num_interp[i] - 1) + startIdx[i]),
+              num_interp[i] - 1,
           )
           for i in range(num_dims)
       ]
     else:
       idxs = [
-          slice(int(startIdx[i]), int(numCells[i] * numInterp[i]), numInterp[i])
+          slice(int(startIdx[i]), int(numCells[i] * num_interp[i]), num_interp[i])
           for i in range(num_dims)
       ]
     # end
@@ -317,7 +317,7 @@ class GInterpNodal(GInterp):
     poly_order (int): Order of the polynomial approximation
     basis (str): Specify the basis. Currently supported is the
       nodal Serendipity 'ns'
-    numInterp (int): Specify number of points on which to
+    num_interp (int): Specify number of points on which to
       interpolate (default: poly_order + 1)
     read
 
@@ -328,7 +328,7 @@ class GInterpNodal(GInterp):
     grid, values = dg.interpolate()
   """
 
-  def __init__(self, data, poly_order, basis_type, numInterp=None, read=None):
+  def __init__(self, data, poly_order, basis_type, num_interp=None, read=None):
     self.num_dims = data.get_num_dims()
     self.poly_order = poly_order
     self.basis_type = basis_type
@@ -336,7 +336,7 @@ class GInterpNodal(GInterp):
       self.basis_type = "serendipity"
     # end
 
-    self.numInterp = numInterp
+    self.num_interp = num_interp
     self.read = read
     num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type)
     GInterp.__init__(self, data, num_nodes)
@@ -354,32 +354,32 @@ class GInterpNodal(GInterp):
         self.num_dims,
         self.poly_order,
         self.basis_type,
-        self.numInterp,
+        self.num_interp,
         self.read,
         False,
     )
     if isinstance(comp, int):
       q = self._getRawNodal(comp)
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
     elif isinstance(comp, tuple):
       q = self._getRawNodal(comp[0])
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in comp[1:]:
         q = self._getRawNodal(c)
         values = np.append(
             values,
-            _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis],
+            _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
             axis=-1,
         )
       # end
     elif isinstance(comp, slice):
       q = self._getRawNodal(comp.start)
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in range(comp.start + 1, comp.stop):
         q = self._getRawNodal(c)
         values = np.append(
             values,
-            _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis],
+            _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
             axis=-1,
         )
       # end
@@ -407,13 +407,13 @@ class GInterpNodal(GInterp):
         self.num_dims,
         self.poly_order,
         self.basis_type,
-        self.numInterp,
+        self.num_interp,
         self.read,
         False,
     )
     if direction is not None:
       values = (
-          _interpOnMesh(cMat[:, :, direction], q, self.numInterp, self.basis_type)
+          _interpOnMesh(cMat[:, :, direction], q, self.num_interp, self.basis_type)
           * 2
           / (self.Xc[direction][1] - self.Xc[direction][0])
       )
@@ -421,7 +421,7 @@ class GInterpNodal(GInterp):
     else:
       values = np.zeros(q.shape, self.num_dims)
       for i in range(self.num_dims):
-        values[:, i] = _interpOnMesh(cMat[:, :, i], q, self.numInterp, self.basis_type)
+        values[:, i] = _interpOnMesh(cMat[:, :, i], q, self.num_interp, self.basis_type)
         values[:, i] *= 2 / (self.Xc[i][1] - self.Xc[i][0])
       # end
     # end
@@ -455,7 +455,7 @@ class GInterpModal(GInterp):
     poly_order (int): Order of the polynomial approximation
     basis (str): Specify the basis. Currently supported are the
       modal Serendipity 'ms' and the maximal order basis 'mo'
-    numInterp (int): Specify number of points on which to
+    num_interp (int): Specify number of points on which to
       interpolate (default: poly_order + 1)
     read
 
@@ -471,7 +471,7 @@ class GInterpModal(GInterp):
       data,
       poly_order=None,
       basis_type=None,
-      numInterp=None,
+      num_interp=None,
       periodic=False,
       read=None,
   ):
@@ -517,11 +517,11 @@ class GInterpModal(GInterp):
     # XXX This was introduced with the c2p but I can't see the importance of the extra
     # condition and seem to unecessarily limit the capabilities. The c2p test cases
     # still seems to produce correct results. -- P.C.
-    # if numInterp is not None and self.poly_order > 1:
-    if numInterp:
-      self.numInterp = numInterp
+    # if num_interp is not None and self.poly_order > 1:
+    if num_interp:
+      self.num_interp = num_interp
     else:
-      self.numInterp = self.poly_order + 1
+      self.num_interp = self.poly_order + 1
     # end
     self.read = read
     num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type)
@@ -537,30 +537,30 @@ class GInterpModal(GInterp):
       )
     # end
     cMat = _loadInterpMatrix(
-        self.num_dims, self.poly_order, self.basis_type, self.numInterp, self.read, True
+        self.num_dims, self.poly_order, self.basis_type, self.num_interp, self.read, True
     )
     if isinstance(comp, int):
       q = self._getRawModal(comp)
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
     elif isinstance(comp, tuple):
       q = self._getRawModal(comp[0])
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in comp[1:]:
         q = self._getRawModal(c)
         values = np.append(
             values,
-            _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis],
+            _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
             axis=-1,
         )
       # end
     elif isinstance(comp, slice):
       q = self._getRawModal(comp.start)
-      values = _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis]
+      values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in range(comp.start + 1, comp.stop):
         q = self._getRawModal(c)
         values = np.append(
             values,
-            _interpOnMesh(cMat, q, self.numInterp, self.basis_type)[..., np.newaxis],
+            _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
             axis=-1,
         )
       # end
@@ -570,11 +570,11 @@ class GInterpModal(GInterp):
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
       cMat = _loadInterpMatrix(
-          self.num_dims, poly_order, basis, self.numInterp, self.read, True, True
+          self.num_dims, poly_order, basis, self.num_interp, self.read, True, True
       )
       grid = []
       for d in range(self.num_dims):
-        grid.append(_interpOnMesh(cMat, q[d], self.numInterp + 1, basis, True))
+        grid.append(_interpOnMesh(cMat, q[d], self.num_interp + 1, basis, True))
       # end
     else:
       if self.basis_type == "gkhybrid":
@@ -584,11 +584,11 @@ class GInterpModal(GInterp):
             if (self.num_dims == 2 or self.num_dims == 3)
             else (2 if self.num_dims == 4 else (3 if self.num_dims == 5 else 99))
         )
-        nInterp = [self.numInterp] * self.num_dims
-        nInterp[vpardir] = self.numInterp + 1
+        nInterp = [self.num_interp] * self.num_dims
+        nInterp[vpardir] = self.num_interp + 1
       elif self.basis_type == "hybrid":
-        nInterp = [self.numInterp] * self.num_dims
-        nInterp[-1] = self.numInterp + 1
+        nInterp = [self.num_interp] * self.num_dims
+        nInterp[-1] = self.num_interp + 1
       else:
         nInterp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
       # end
@@ -624,16 +624,16 @@ class GInterpModal(GInterp):
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
       cMat = _loadInterpMatrix(
-          self.num_dims, poly_order, basis, self.numInterp, self.read, True, True
+          self.num_dims, poly_order, basis, self.num_interp, self.read, True, True
       )
       grid = []
       for d in range(self.num_dims):
-        grid.append(_interpOnMesh(cMat, q[d], self.numInterp, self.basis_type, True))
+        grid.append(_interpOnMesh(cMat, q[d], self.num_interp, self.basis_type, True))
       # end
     elif self.data.ctx["grid_type"] == "c2p_vel":
       q = self.data.get_grid()
     else:
-      nInterp = [self.numInterp] * self.num_dims
+      nInterp = [self.num_interp] * self.num_dims
       grid = _make1Dgrids(nInterp, self.Xc, self.num_dims, self.gridType)
     # end
 
@@ -654,23 +654,23 @@ class GInterpModal(GInterp):
     # end
     q = self._getRawModal(comp)
     cMat = _loadDerivativeMatrix(
-        self.num_dims, self.poly_order, self.basis_type, self.numInterp, self.read, True
+        self.num_dims, self.poly_order, self.basis_type, self.num_interp, self.read, True
     )
     if direction is not None:
       values = (
-          _interpOnMesh(cMat[:, :, direction], q, self.numInterp, self.basis_type)
+          _interpOnMesh(cMat[:, :, direction], q, self.num_interp, self.basis_type)
           * 2
           / (self.Xc[direction][1] - self.Xc[direction][0])
       )
       values = values[..., np.newaxis]
     else:
-      values = _interpOnMesh(cMat[..., 0], q, self.numInterp, self.basis_type)
+      values = _interpOnMesh(cMat[..., 0], q, self.num_interp, self.basis_type)
       values /= self.Xc[0][1] - self.Xc[0][0]
       values = values[..., np.newaxis]
       for i in range(1, self.num_dims):
         values = np.append(
             values,
-            _interpOnMesh(cMat[..., i], q, self.numInterp, self.basis_type)[
+            _interpOnMesh(cMat[..., i], q, self.num_interp, self.basis_type)[
                 ..., np.newaxis
             ],
             axis=self.num_dims,
@@ -705,8 +705,8 @@ class GInterpModal(GInterp):
       raise ValueError("recovery: only 1D implemented so far")
     # end
 
-    if self.numInterp is not None:
-      N = self.numInterp
+    if self.num_interp is not None:
+      N = self.num_interp
     else:
       N = 100
     # end
