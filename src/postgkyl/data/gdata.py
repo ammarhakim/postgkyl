@@ -435,7 +435,7 @@ class GData(object):
       append: bool = False
         Allows for writing multiple datasets into one file.
       cleaning: bool = True
-        Remove temporary files after writing
+        Remove temporary files after writing.
 
     Returns:
       None
