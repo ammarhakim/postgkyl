@@ -25,6 +25,20 @@ class TestGkylInterpolate:
     assert np.array_equal(values.shape, (192, 96, 1))
     assert np.isclose(values.mean(), 0.08337313364405809)
 
+  def test_ser_p1_i(self):
+    data = pg.GData('{:s}/test_data/shock-f-ser-p1.gkyl'.format(self.dir_path))
+    dg = pg.GInterpModal(data, poly_order=1, basis_type='ms', numInterp=3)
+    grid, values = dg.interpolate()
+    assert np.array_equal(values.shape, (24, 24, 1))
+  #end
+
+  def test_ser_p2_i(self):
+    data = pg.GData('{:s}/test_data/twostream-f-p2.gkyl'.format(self.dir_path))
+    dg = pg.GInterpModal(data, numInterp=4)
+    grid, values = dg.interpolate()
+    assert np.array_equal(values.shape, (256, 128, 1))
+  #end
+
   def test_ten_p1(self):
     data = pg.GData("{:s}/test_data/shock-f-ten-p1.gkyl".format(self.dir_path))
     dg = pg.GInterpModal(data, poly_order=1, basis_type="mt")

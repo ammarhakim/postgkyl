@@ -513,7 +513,12 @@ class GInterpModal(GInterp):
     # end
 
     self.periodic = periodic
-    if numInterp is not None and self.poly_order > 1:
+
+    # XXX This was introduced with the c2p but I can't see the importance of the extra
+    # condition and seem to unecessarily limit the capabilities. The c2p test cases
+    # still seems to produce correct results. -- P.C.
+    # if numInterp is not None and self.poly_order > 1:
+    if numInterp:
       self.numInterp = numInterp
     else:
       self.numInterp = self.poly_order + 1
