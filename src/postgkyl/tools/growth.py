@@ -1,14 +1,8 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for computing growth rates
-"""
 import numpy as np
 import scipy.optimize as opt
 import sys
 
 
-# --------------------------------------------------------------------
-# Growth rate fitting stuff ------------------------------------------
 def exp2(x: float, a: float, b: float) -> float:
   """Define custom exponential a*exp(2b*x)
 

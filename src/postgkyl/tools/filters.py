@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl sub-module for filtering
-"""
 import numpy
 import matplotlib.pyplot as plt
 from scipy.signal import butter, lfilter, freqz

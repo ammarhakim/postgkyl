@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Postgkyl module for pressure tensor diagnostics
 Diagnostics include:
@@ -7,6 +6,7 @@ Diagnostics include:
 	Agyrotropy (either Frobenius or Swisdak measure)
 	Firehose instability threshold
 """
+
 import numpy as np
 import postgkyl.tools as diag
 
@@ -36,9 +36,6 @@ def _get_pb(
   return p_xx, p_xy, p_xz, p_yy, p_yz, p_zz, b_x, b_y, b_z
 
 
-# end
-
-
 def _get_sf(
     species_data=None,
     species_grid=None,
@@ -60,9 +57,6 @@ def _get_sf(
   b_grid = p_grid
   b_values = field_values[..., 3:6]
   return p_grid, p_values, b_grid, b_values
-
-
-# end
 
 
 def get_p_par(
@@ -99,9 +93,6 @@ def get_p_par(
   return grid, out
 
 
-# end
-
-
 def get_gkyl_10m_p_par(
     species_data=None,
     species_grid=None,
@@ -124,9 +115,6 @@ def get_gkyl_10m_p_par(
   b_values = field_values[..., 3:6]
 
   return get_p_par(p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values)
-
-
-# end
 
 
 def get_p_perp(
@@ -153,9 +141,6 @@ def get_p_perp(
   return grid, out
 
 
-# end
-
-
 def get_gkyl_10m_p_perp(
     species_data=None,
     species_grid=None,
@@ -178,9 +163,6 @@ def get_gkyl_10m_p_perp(
   b_values = field_values[..., 3:6]
 
   return get_p_perp(p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values)
-
-
-# end
 
 
 def get_agyro(
@@ -251,9 +233,6 @@ def get_agyro(
   return grid, out
 
 
-# end
-
-
 def get_gkyl_10m_agyro(
     species_data=None,
     species_grid=None,
@@ -283,6 +262,3 @@ def get_gkyl_10m_agyro(
       b_values=b_values,
       measure=measure,
   )
-
-
-# end

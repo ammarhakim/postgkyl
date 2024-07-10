@@ -1,12 +1,10 @@
-import os.path
 from glob import glob
-
-import tables
 import numpy as np
+import os.path
+import tables
 
-from postgkyl.data import GData
-from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 from postgkyl.data.computeDerivativeMatrices import createDerivativeMatrix
+from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 
 # from postgkyl.data.recovData import recovC0Fn, recovC1Fn, recovEdFn
 
@@ -61,9 +59,6 @@ def _get_basis_p(num_dim, num_comp):
   return basis, poly_order
 
 
-# end
-
-
 def _getnum_nodes(dim, poly_order, basis_type):
   if basis_type.lower() == "serendipity":
     num_nodes = num_nodesSerendipity[dim - 1, poly_order]
@@ -85,9 +80,6 @@ def _getnum_nodes(dim, poly_order, basis_type):
     )
   # end
   return num_nodes
-
-
-# end
 
 
 def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=False):
@@ -130,9 +122,6 @@ def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=Fals
   # end
 
 
-# end
-
-
 def _loadDerivativeMatrix(dim, poly_order, basis_type, interp, read, modal=True):
   if interp is not None and read is None:
     mat = createDerivativeMatrix(dim, poly_order, basis_type, interp, modal)
@@ -142,9 +131,6 @@ def _loadDerivativeMatrix(dim, poly_order, basis_type, interp, read, modal=True)
     mat = createDerivativeMatrix(dim, poly_order, basis_type, interp, modal)
     return mat
   # end
-
-
-# end
 
 
 def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
@@ -171,9 +157,6 @@ def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
   return meshOut
 
 
-# end
-
-
 def _make1Dgrids(nInterp, Xc, num_dims, gridType=None):
   # build a list of 1D arrays, each containing the grid in that dimension.
   gridOut = list()
@@ -190,11 +173,7 @@ def _make1Dgrids(nInterp, Xc, num_dims, gridType=None):
   return gridOut
 
 
-# end
-
-
 def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
-  shift = 0
   numCells = np.array(qIn.shape)
   # last entry is indexing nodes, get rid of it
   numCells = numCells[:-1]
@@ -246,9 +225,6 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
   return np.array(qOut)
 
 
-# end
-
-
 class GInterp(object):
   """Postgkyl base class for DG data manipulation.
 
@@ -270,8 +246,6 @@ class GInterp(object):
     self.Xc = data.get_grid()
     self.gridType = data.get_grid_type()
 
-  # end
-
   def _getRawNodal(self, component):
     q = self.data.get_values()
     numEqns = self.numEqns
@@ -283,11 +257,8 @@ class GInterp(object):
     # end
     return rawData
 
-  # end
-
   def _getRawModal(self, component):
     q = self.data.get_values()
-    numEqns = self.numEqns
     shp = [q.shape[i] for i in range(self.num_dims)]
     shp.append(self.num_nodes)
     rawData = np.zeros(shp, np.float64)
@@ -295,11 +266,6 @@ class GInterp(object):
     up = int(lo + self.num_nodes)
     rawData = q[..., lo:up]
     return rawData
-
-  # end
-
-
-# end
 
 
 class GInterpNodal(GInterp):
@@ -340,8 +306,6 @@ class GInterpNodal(GInterp):
     self.read = read
     num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type)
     GInterp.__init__(self, data, num_nodes)
-
-  # end
 
   def interpolate(self, comp=0, overwrite=False, stack=False):
     if stack:
@@ -393,8 +357,6 @@ class GInterpNodal(GInterp):
       return grid, values
     # end
 
-  # end
-
   def differentiate(self, direction, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
@@ -433,11 +395,6 @@ class GInterpNodal(GInterp):
     else:
       return grid, values
     # end
-
-  # end
-
-
-# end
 
 
 class GInterpModal(GInterp):
@@ -527,8 +484,6 @@ class GInterpModal(GInterp):
     num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type)
     GInterp.__init__(self, data, num_nodes)
 
-  # end
-
   def interpolate(self, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
@@ -537,7 +492,12 @@ class GInterpModal(GInterp):
       )
     # end
     cMat = _loadInterpMatrix(
-        self.num_dims, self.poly_order, self.basis_type, self.num_interp, self.read, True
+        self.num_dims,
+        self.poly_order,
+        self.basis_type,
+        self.num_interp,
+        self.read,
+        True,
     )
     if isinstance(comp, int):
       q = self._getRawModal(comp)
@@ -616,8 +576,6 @@ class GInterpModal(GInterp):
       return grid, values
     # end
 
-  # end
-
   def interpolateGrid(self, overwrite=False):
     if self.data.ctx["grid_type"] == "c2p":
       q = self.data.get_grid()
@@ -643,8 +601,6 @@ class GInterpModal(GInterp):
       return grid
     # end
 
-  # end
-
   def differentiate(self, direction=None, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
@@ -654,7 +610,12 @@ class GInterpModal(GInterp):
     # end
     q = self._getRawModal(comp)
     cMat = _loadDerivativeMatrix(
-        self.num_dims, self.poly_order, self.basis_type, self.num_interp, self.read, True
+        self.num_dims,
+        self.poly_order,
+        self.basis_type,
+        self.num_interp,
+        self.read,
+        True,
     )
     if direction is not None:
       values = (
@@ -687,75 +648,68 @@ class GInterpModal(GInterp):
       return grid, values
     # end
 
-  # end
+  # def recovery(self, comp=0, c1=False, overwrite=False, stack=False):
+  #   if stack:
+  #     overwrite = stack
+  #     print(
+  #         "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
+  #     )
+  #   # end
+  #   if isinstance(comp, int):
+  #     q = self._getRawModal(comp)
+  #   else:
+  #     raise ValueError("recovery: only 'int' comp implemented so far")
+  #   # end
+  #   if self.num_dims > 1:
+  #     raise ValueError("recovery: only 1D implemented so far")
+  #   # end
 
-  def recovery(self, comp=0, c1=False, overwrite=False, stack=False):
-    if stack:
-      overwrite = stack
-      print(
-          "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-      )
-    # end
-    if isinstance(comp, int):
-      q = self._getRawModal(comp)
-    else:
-      raise ValueError("recovery: only 'int' comp implemented so far")
-    # end
-    if self.num_dims > 1:
-      raise ValueError("recovery: only 1D implemented so far")
-    # end
+  #   if self.num_interp is not None:
+  #     N = self.num_interp
+  #   else:
+  #     N = 100
+  #   # end
 
-    if self.num_interp is not None:
-      N = self.num_interp
-    else:
-      N = 100
-    # end
+  #   numCells = self.data.get_num_cells()
+  #   grid = [
+  #       np.linspace(self.Xc[int(d)][0], self.Xc[int(d)][-1], int(numCells * N + 1))
+  #       for d in range(self.num_dims)
+  #   ]
 
-    numCells = self.data.get_num_cells()
-    grid = [
-        np.linspace(self.Xc[int(d)][0], self.Xc[int(d)][-1], int(numCells * N + 1))
-        for d in range(self.num_dims)
-    ]
+  #   values = np.zeros(numCells * N)
+  #   dx = self.Xc[0][1] - self.Xc[0][0]
 
-    values = np.zeros(numCells * N)
-    dx = self.Xc[0][1] - self.Xc[0][0]
+  #   xC = np.linspace(-1, 1, N, endpoint=False) * dx / 2
+  #   xL = np.linspace(-1, 0, N, endpoint=False) * dx
+  #   xR = np.linspace(0, 1, N, endpoint=False) * dx
 
-    xC = np.linspace(-1, 1, N, endpoint=False) * dx / 2
-    xL = np.linspace(-1, 0, N, endpoint=False) * dx
-    xR = np.linspace(0, 1, N, endpoint=False) * dx
+  #   if self.periodic:
+  #     if c1:
+  #       values[:N] = recovC1Fn[self.poly_order - 1](xC, q[0], q[-1], q[1], dx)
+  #       values[-N:] = recovC1Fn[self.poly_order - 1](xC, q[-1], q[-2], q[0], dx)
+  #     else:
+  #       values[:N] = recovC0Fn[self.poly_order - 1](xC, q[0], q[-1], q[1], dx)
+  #       values[-N:] = recovC0Fn[self.poly_order - 1](xC, q[-1], q[-2], q[0], dx)
+  #     # end
+  #   else:
+  #     values[:N] = recovEdFn[self.poly_order - 1](xL, q[0], q[1], dx)
+  #     values[-N:] = recovEdFn[self.poly_order - 1](xR, q[-2], q[-1], dx)
+  #   # end
+  #   for j in range(1, numCells[0] - 1):
+  #     if c1:
+  #       values[j * N : (j + 1) * N] = recovC1Fn[self.poly_order - 1](
+  #           xC, q[j], q[j - 1], q[j + 1], dx
+  #       )
+  #     else:
+  #       values[j * N : (j + 1) * N] = recovC0Fn[self.poly_order - 1](
+  #           xC, q[j], q[j - 1], q[j + 1], dx
+  #       )
+  #     # end
+  #   # end
 
-    if self.periodic:
-      if c1:
-        values[:N] = recovC1Fn[self.poly_order - 1](xC, q[0], q[-1], q[1], dx)
-        values[-N:] = recovC1Fn[self.poly_order - 1](xC, q[-1], q[-2], q[0], dx)
-      else:
-        values[:N] = recovC0Fn[self.poly_order - 1](xC, q[0], q[-1], q[1], dx)
-        values[-N:] = recovC0Fn[self.poly_order - 1](xC, q[-1], q[-2], q[0], dx)
-      # end
-    else:
-      values[:N] = recovEdFn[self.poly_order - 1](xL, q[0], q[1], dx)
-      values[-N:] = recovEdFn[self.poly_order - 1](xR, q[-2], q[-1], dx)
-    # end
-    for j in range(1, numCells[0] - 1):
-      if c1:
-        values[j * N : (j + 1) * N] = recovC1Fn[self.poly_order - 1](
-            xC, q[j], q[j - 1], q[j + 1], dx
-        )
-      else:
-        values[j * N : (j + 1) * N] = recovC0Fn[self.poly_order - 1](
-            xC, q[j], q[j - 1], q[j + 1], dx
-        )
-      # end
-    # end
-
-    values = values[..., np.newaxis]
-    if overwrite:
-      self.data.push(grid, values)
-    else:
-      return grid, values
-    # end
-
-  # end
-
-
-# end
+  #   values = values[..., np.newaxis]
+  #   if overwrite:
+  #     self.data.push(grid, values)
+  #   else:
+  #     return grid, values
+  #   # end

@@ -1,9 +1,5 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for computing constants and parameters
-"""
-
 import numpy as np
+
 import postgkyl.tools as diag
 
 
@@ -25,9 +21,6 @@ def get_magB(
   out_values = np.sqrt(mag_B_sq)
 
   return out_grid, out_values
-
-
-# end
 
 
 def get_vt(
@@ -69,9 +62,6 @@ def get_vt(
   return out_grid, out_values
 
 
-# end
-
-
 def get_vA(
     species_data=None,
     species_grid=None,
@@ -99,9 +89,6 @@ def get_vA(
   out_values = magB / np.sqrt(_mu * rho)
 
   return out_grid, out_values
-
-
-# end
 
 
 def get_omegaC(
@@ -133,9 +120,6 @@ def get_omegaC(
   out_values = abs(_q) / _m * magB
 
   return out_grid, out_values
-
-
-# end
 
 
 def get_omegaP(
@@ -174,9 +158,6 @@ def get_omegaP(
   out_values = np.sqrt(qbym2 * rho / _eps)
 
   return out_grid, out_values
-
-
-# end
 
 
 def get_d(
@@ -220,9 +201,6 @@ def get_d(
   out_values = light_speed / omegaP
 
   return out_grid, out_values
-
-
-# end
 
 
 def get_lambdaD(
@@ -274,9 +252,6 @@ def get_lambdaD(
   return out_grid, out_values
 
 
-# end
-
-
 def get_rho(
     species_data=None,
     species_grid=None,
@@ -325,9 +300,6 @@ def get_rho(
   return out_grid, out_values
 
 
-# end
-
-
 def get_beta(
     species_data=None,
     species_grid=None,
@@ -374,6 +346,3 @@ def get_beta(
     out_values = 2.0 * vt * vt / (vA * vA)
 
   return out_grid, out_values
-
-
-# end

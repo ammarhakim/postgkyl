@@ -1,5 +1,6 @@
-import os.path
+"""Module including custom Gkeyll plotting function"""
 
+import os.path
 import matplotlib as mpl
 from matplotlib import cm
 import matplotlib.figure
@@ -66,7 +67,6 @@ def plot(
     cont_label=False,
     diverging=False,
     lineouts=None,
-    group=None,
     xmin=None,
     xmax=None,
     xscale=1.0,
@@ -149,7 +149,7 @@ def plot(
   # end
 
   if not bool(color):
-    cl = data._color
+    cl = data.color
   # end
   if bool(color):
     mpl.rcParams["lines.color"] = color
@@ -164,7 +164,7 @@ def plot(
   # ---- Data Loading ----
   num_dims = data.get_num_dims(squeeze=True)
   if num_dims > 2:
-    raise Exception("Only 1D and 2D plots are currently supported")
+    raise ValueError("Only 1D and 2D plots are currently supported")
   # end
   # Get the handles on the grid and values
   grid = data.get_grid().copy()
@@ -217,28 +217,28 @@ def plot(
   if xlabel is None:
     xlabel = axes_labels[0] if lineouts != 1 else axes_labels[1]
     if xshift != 0.0 and xscale != 1.0:
-      xlabel = r"({:s} + {:.2e}) $\times$ {:.2e}".format(xlabel, xshift, xscale)
+      xlabel = rf"({xlabel:s} + {xshift:.2e}) $\times$ {xscale:.2e}"
     elif xshift != 0.0:
-      xlabel = r"{:s} + {:.2e}".format(xlabel, xshift)
+      xlabel = rf"{xlabel:s} + {xshift:.2e}"
     elif xscale != 1.0:
-      xlabel = r"{:s} $\times$ {:.2e}".format(xlabel, xscale)
+      xlabel = rf"{xlabel:s} $\times$ {xscale:.2e}"
     # end
   # end
   if ylabel is None and num_dims == 2 and lineouts is None:
     ylabel = axes_labels[1]
     if yshift != 0.0 and yscale != 1.0:
-      ylabel = r"({:s} + {:.2e}) $\times$ {:.2e}".format(ylabel, yshift, yscale)
+      ylabel = rf"({ylabel:s} + {yshift:.2e}) $\times$ {yscale:.2e}"
     elif xshift != 0.0:
-      ylabel = r"{:s} + {:.2e}".format(ylabel, yshift)
+      ylabel = rf"{ylabel:s} + {yshift:.2e}"
     elif xscale != 1.0:
-      ylabel = r"{:s} $\times$ {:.2e}".format(ylabel, yscale)
+      ylabel = rf"{ylabel:s} $\times$ {yscale:.2e}"
     # end
   # end
   if zscale != 1.0:
     if clabel:
-      clabel = clabel + r" $\times$ {:.3e}".format(zscale)
+      clabel = rf"{clabel:s} $\times$ {zscale:.3e}"
     else:
-      clabel = r"$\times$ {:.3e}".format(zscale)
+      clabel = rf"$\times$ {zscale:.3e}"
     # end
   # end
 
@@ -325,7 +325,7 @@ def plot(
   for comp in idx_comps:
     cax = ax[0] if squeeze else ax[comp + start_axes]
     label = (
-        ("{:s}_c{:d}".format(label_prefix, comp)).strip("_")
+        f"{label_prefix:s}_c{comp:d}".strip("_")
         if len(idx_comps) > 1
         else label_prefix
     )
@@ -353,7 +353,7 @@ def plot(
             levels = np.array(list(filter(None, levels)))
           # end
         # end
-        if type(levels) == np.ndarray and len(levels) == 1:
+        if isinstance(levels, np.ndarray) and len(levels) == 1:
           colorbar = False
         # end
         nodal_grid = _get_nodal_grid(grid, cells)
@@ -440,7 +440,7 @@ def plot(
         mappable = cm.ScalarMappable(
             norm=colors.Normalize(vmin=vmin, vmax=vmax, clip=False), cmap=cm.inferno
         )
-        cb = pg_colorbar(mappable, fig, cax, label=label)
+        pg_colorbar(mappable, fig, cax, label=label)
         colorbar = False
         legend = False
 
@@ -494,10 +494,10 @@ def plot(
         )
       # end
       if not bool(color) and colorbar and not streamline:
-        cb = pg_colorbar(im, fig, cax, extend=extend, label=clabel)
+        pg_colorbar(im, fig, cax, extend=extend, label=clabel)
       # end
     else:
-      raise ValueError("{:d}D data not supported".format(num_dims))
+      raise ValueError(f"{num_dims:d}D data not supported")
     # end
 
     # ---- Additional Formatting ----------------------------------------

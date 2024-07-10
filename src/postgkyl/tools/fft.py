@@ -104,6 +104,3 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
       return freq, ftValues
     # end
   # end
-
-
-# end

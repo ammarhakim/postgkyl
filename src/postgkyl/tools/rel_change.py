@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for computing relative change in a quantity
-"""
 import numpy as np
 
 
@@ -32,6 +28,3 @@ def rel_change(dataset0, dataset, comp=None, overwrite=False, stack=False):
     else:
       out[..., i] = (values[..., i] - values0[..., i]) / values0[..., i]
   return grid, out
-
-
-# end

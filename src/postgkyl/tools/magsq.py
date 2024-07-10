@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for computing the magnitude squared of an array
-"""
 import numpy as np
 
 
@@ -34,6 +30,3 @@ def mag_sq(in_data=None, in_grid=None, in_values=None, coords="0:3", overwrite=F
   else:
     return in_grid, out
   # end
-
-
-# end

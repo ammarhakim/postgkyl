@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl sub-module for custom field manipulation
-"""
 import numpy
 import math
 

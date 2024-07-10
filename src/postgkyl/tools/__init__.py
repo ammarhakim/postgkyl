@@ -1,4 +1,4 @@
-from .input_parser import _input_parser
+from .input_parser import input_parser
 
 from .calculus import integrate
 

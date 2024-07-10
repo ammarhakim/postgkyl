@@ -1,8 +1,9 @@
-from postgkyl.data import GData
 from typing import Union
 
+from postgkyl.data import GData
 
-def _input_parser(in_data: Union[GData, tuple]) -> tuple:
+
+def input_parser(in_data: Union[GData, tuple]) -> tuple:
   if type(in_data) == GData:
     return in_data.get_grid(), in_data.get_values()
   elif type(in_data) == tuple:
@@ -10,6 +11,3 @@ def _input_parser(in_data: Union[GData, tuple]) -> tuple:
   else:
     raise TypeError("Input must be either GData class or a tuple of numpy arrays.")
   # end
-
-
-# end

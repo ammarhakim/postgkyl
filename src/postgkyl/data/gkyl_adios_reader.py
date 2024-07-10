@@ -1,12 +1,22 @@
+"""Module including Gkeyll ADIOS reader class"""
+
 from typing import Tuple
 import click
 import numpy as np
 import re
 
+try:
+  import adios2
+
+  has_adios = True
+except ModuleNotFoundError:
+  has_adios = False
+# end
+
 from postgkyl.utils import idx_parser
 
 
-class Read_gkyl_adios(object):
+class GkylAdiosReader(object):
   """Provides a framework to read gkyl ADIOS output."""
 
   def __init__(
@@ -18,7 +28,7 @@ class Read_gkyl_adios(object):
       axes: tuple = (None, None, None, None, None, None),
       comp: int = None,
       click_mode: bool = False,
-      **kwargs
+      **kwargs,
   ):
     """Initialize the instance of ADIOS reader.
 
@@ -60,9 +70,10 @@ class Read_gkyl_adios(object):
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll ADIOS reader."""
+    if not has_adios:
+      return False
+    # end
     try:
-      import adios2  # ADIOS has been a problematic dependency;
-      # therefore it is only imported when actually needed
       fh = adios2.open(self._file_name, "rra")
       for vn in fh.available_variables():
         if "TimeMesh" in vn:
@@ -74,7 +85,7 @@ class Read_gkyl_adios(object):
 
       available_var_names = ""
       for vn in fh.available_variables():
-        available_var_names += "'{:s}', ".format(str(vn))
+        available_var_names += f"'{str(vn):s}', "
       # end
       if self.var_name not in fh.available_variables():
         self.ctx["var_names"] = available_var_names[:-2]
@@ -82,7 +93,9 @@ class Read_gkyl_adios(object):
       self.is_frame = True
       fh.close()
       return True
-    except:
+    except ModuleNotFoundError:
+      return False
+    except TypeError:
       return False
     # end
 
@@ -130,7 +143,6 @@ class Read_gkyl_adios(object):
     # end
 
   def _preload_frame(self) -> None:
-    import adios2
 
     fh = adios2.open(self._file_name, "rra")
 
@@ -169,7 +181,6 @@ class Read_gkyl_adios(object):
     fh.close()
 
   def _load_frame(self) -> tuple:
-    import adios2
 
     fh = adios2.open(self._file_name, "rra")
 
@@ -178,9 +189,7 @@ class Read_gkyl_adios(object):
         var_name = self.var_name
         while True:
           var_name = click.prompt(
-              "Variable name '{:s}' is not available, please select from the available ones: {:s}".format(
-                  var_name, self.ctx["var_names"]
-              )
+              f"Variable name '{var_name:s}' is not available, please select from the available ones: {self.ctx['var_names']:s}"
           )
           if var_name in fh.available_variables():
             self.var_name = var_name
@@ -190,9 +199,7 @@ class Read_gkyl_adios(object):
         # end
       else:
         raise ValueError(
-            "Could not find the variable '{:s}'; available variables are: {:s}".format(
-                var_name, self.ctx["var_names"]
-            )
+            f"Could not find the variable '{var_name:s}'; available variables are: {self.ctx['var_names']:s}"
         )
       # end
     # end
@@ -293,7 +300,6 @@ class Read_gkyl_adios(object):
     return grid, data
 
   def _load_diagnostic(self) -> tuple:
-    import adios2
 
     fh = adios2.open(self._file_name, "rra")
 

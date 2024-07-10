@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for rotating an array into the coordinate system perpendicular to another array
-"""
 import numpy as np
 from .. import tools as diag
 

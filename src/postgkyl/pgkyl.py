@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""Command line entry point for postgkyl.
+
+Uses click (https://click.palletsprojects.com/en) commands to wrap pgkyl functions.
+"""
 
 from glob import glob
 import click
@@ -16,8 +20,8 @@ def _print_version(ctx, param, value):
   if not value or ctx.resilient_parsing:
     return
   # end
-  click.echo("Postgkyl {:s} ({:s})".format(__version__, sys.platform))
-  click.echo("Python version: {:s}".format(sys.version))
+  click.echo(f"Postgkyl {__version__} ({sys.platform})")
+  click.echo(f"Python version: {sys.version}".format())
   click.echo("Copyright 2016-2024 Gkeyll Team")
   click.echo("Postgkyl can be used freely for research at universities,")
   click.echo("national laboratories, and other non-profit institutions.")
@@ -26,10 +30,13 @@ def _print_version(ctx, param, value):
   ctx.exit()
 
 
-# Custom click class that allows to
-#   a) use shortened versions of command names
-#   b) use a file name as a command
 class PgkylCommandGroup(click.Group):
+  """Custom pgkyl click command group class.
+
+  It allows to:
+    - use shortened versions of command names
+    - use a file name as a command
+  """
 
   def get_command(self, ctx, cmd_name):
     # cmd_name is a full name of a pgkyl command
@@ -43,11 +50,7 @@ class PgkylCommandGroup(click.Group):
     if matches and len(matches) == 1:
       return click.Group.get_command(self, ctx, matches[0])
     elif matches:
-      ctx.fail(
-          "Too many matches for '{:s}': {:s}".format(
-              cmd_name, ", ".join(sorted(matches))
-          )
-      )
+      ctx.fail(f"Too many matches for '{cmd_name}': {", ".join(sorted(matches))}")
     # end
 
     # cmd_name is a data set
@@ -56,9 +59,7 @@ class PgkylCommandGroup(click.Group):
       return click.Group.get_command(self, ctx, "load")
     # end
 
-    ctx.fail(
-        "'{:s}' does not match either command name nor a data file".format(cmd_name)
-    )
+    ctx.fail(f"'{cmd_name}' does not match either command name nor a data file")
 
 
 # The command line mode entry command
@@ -101,9 +102,10 @@ class PgkylCommandGroup(click.Group):
 @click.option("--style", help="Sets Maplotlib rcParams style file.")
 @click.pass_context
 def cli(ctx, **kwargs):
-  """Postprocessing and plotting tool for Gkeyll
-  data. Datasets can be loaded, processed and plotted using a command chaining
-  mechanism. For full documentation see the Gkeyll documentation webpages
+  """Postprocessing and plotting tool for Gkeyll data.
+
+  Datasets can be loaded, processed and plotted using a command chaining mechanism. For
+  full documentation see the Gkeyll documentation webpages
   (https://gkeyll.readthedocs.io). Help for individual commands can be obtained using
   the --help option for that command.
   """
@@ -145,9 +147,7 @@ def cli(ctx, **kwargs):
   fn = (
       kwargs["style"]
       if kwargs["style"]
-      else "{:s}/output/postgkyl.mplstyle".format(
-          os.path.dirname(os.path.realpath(__file__))
-      )
+      else f"{os.path.dirname(os.path.realpath(__file__))}/output/postgkyl.mplstyle"
   )
   load_style(ctx, fn)
 

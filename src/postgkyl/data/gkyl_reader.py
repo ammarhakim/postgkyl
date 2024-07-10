@@ -1,3 +1,5 @@
+"""Module including Gkeyll binary reader class"""
+
 from typing import Tuple
 import msgpack as mp
 import numpy as np
@@ -75,11 +77,11 @@ import os.path
 # is 1-indexed.
 
 
-class Read_gkyl(object):
+class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
   def __init__(
-      self, file_name: str, ctx: dict = {}, c2p: str = "", c2p_vel: str = "", **kwargs
+      self, file_name: str, ctx: dict = None, c2p: str = "", c2p_vel: str = "", **kwargs
   ):
     """Initialize the instance of Gkeyll reader.
 
@@ -115,26 +117,25 @@ class Read_gkyl(object):
     self.num_comps = None
     self.cells = None
 
-    self.ctx = ctx
+    if ctx is not None:
+      self.ctx = ctx
+    else:
+      self.ctx = {}
+    #end
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""
-    try:
-      magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
-      if np.array_equal(magic, [103, 107, 121, 108, 48]):
-        self.version = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=5)[0]
-        return True
-      # end
-    except:
+    magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
+    if np.array_equal(magic, [103, 107, 121, 108, 48]):
+      self.version = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=5)[0]
+      return True
+    else:
       return False
     # end
-    return False
 
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
   def _read_header(self) -> None:
-    # self.offset = 0
-
     if self.is_compatible():
       self.offset += 5  # Header contatins the gkyl magic sequence
 
@@ -247,7 +248,7 @@ class Read_gkyl(object):
     gshape[-1] = self.num_comps
 
     data = np.zeros(gshape, dtype=self.dtf)
-    for i in range(num_range):
+    for _ in range(num_range):
       loidx = np.fromfile(
           self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset
       )
@@ -369,7 +370,7 @@ class Read_gkyl(object):
         self.ctx["grid_type"] = "nodal"
       # end
     elif self.c2p:
-      grid_reader = Read_gkyl(self.c2p)
+      grid_reader = GkylReader(self.c2p)
       grid_reader.preload()
       _, tmp = grid_reader.load()
       num_comps = tmp.shape[-1]
@@ -382,7 +383,7 @@ class Read_gkyl(object):
         self.ctx["grid_type"] = "c2p"
       # end
     elif self.c2p_vel:
-      grid_reader = Read_gkyl(self.c2p_vel)
+      grid_reader = GkylReader(self.c2p_vel)
       grid_reader.preload()
       _, tmp = grid_reader.load()
 

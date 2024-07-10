@@ -1,41 +1,47 @@
-#!/usr/bin/env python
-# coding: utf-8
+"""Postgkyl module for calculating enstrophy."""
 
 import numpy as np
+
 import postgkyl
 
 
-def calc_enstrophy(info_file, initFrame, finalFrame):
-  # input from the info_matrix containing rho, px, py, pz, and energy
-  # calculates the enstrophy in 2D in the general form (integral of the magnitude squared of the curl of the velocity
-  # over the surface) and incompressible form (integral of the magnitude of the gradient of velocity squared over the
-  # surface)
-  # only for 3D
-  # compares the two results and determines if incompressibility is conserved
+def calc_enstrophy(info_file, init_frame, final_frame):
+  """Calculates the enstrophy in 2D in the general and incompressible forms.
+
+  Calculates the enstrophy in 2D in the general form (integral of the magnitude squared
+  of the curl of the velocity over the surface) and incompressible form (integral of the
+  magnitude of the gradient of velocity squared over the surface).
+
+  Only for 3D also compares the two results and determines if incompressibility is
+  conserved.
+
+  Args:
+    XXX will be filled up after refactoring
+  """
 
   # get the matrices: rho, px, py, pz
-  frame = postgkyl.GData(info_file + str(initFrame) + ".bp")
-  data = frame.get_values()
-  grid = frame.get_grid()
+  frame = postgkyl.GData(f"{info_file}{str(init_frame)}.bp")
+  data = frame.values
+  grid = frame.grid
   dx = grid[0][1] - grid[0][0]
   dy = grid[1][1] - grid[1][0]
   dz = grid[2][1] - grid[2][0]
 
   r = 0
-  enstrophy = np.zeros((1, (finalFrame - initFrame + 1)))
+  enstrophy = np.zeros((1, (final_frame - init_frame + 1)))
   incom_enstrophy = enstrophy
   incom_mag = np.zeros(
       (len(data[:, 0, 0, 0]), len(data[0, :, 0, 0]), len(data[0, 0, :, 0]))
   )
 
-  for i in range(initFrame, finalFrame + 1):
-    frame = postgkyl.GData(info_file + "%d.bp" % i)
-    data = frame.get_values()
+  for i in range(init_frame, final_frame + 1):
+    frame = postgkyl.GData(f"{info_file}{i:d}.bp")
+    data = frame.values
 
-    rho = data[:, :, :, 0]
-    px = data[:, :, :, 1]
-    py = data[:, :, :, 2]
-    pz = data[:, :, :, 3]
+    rho = data[..., 0]
+    px = data[..., 1]
+    py = data[..., 2]
+    pz = data[..., 3]
     # calculate ux, uy, uz
     u = px / rho
     v = py / rho

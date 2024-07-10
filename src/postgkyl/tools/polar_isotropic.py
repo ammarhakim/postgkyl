@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for binning isotropic data
-"""
 import numpy as np
 from .. import tools as diag
 

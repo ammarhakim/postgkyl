@@ -1,15 +1,25 @@
+"""Module including Gkeyll data class"""
+
 from typing import Union, Tuple
 import numpy as np
 import shutil
 
-from postgkyl.data.read_gkyl import Read_gkyl
-from postgkyl.data.read_gkyl_adios import Read_gkyl_adios
-from postgkyl.data.read_gkyl_h5 import Read_gkyl_h5
-from postgkyl.data.read_flash_h5 import Read_flash_h5
+try:
+  import adios2
+
+  has_adios = True
+except ModuleNotFoundError:
+  has_adios = False
+# end
+
+from postgkyl.data.gkyl_reader import GkylReader
+from postgkyl.data.gkyl_adios_reader import GkylAdiosReader
+from postgkyl.data.gkyl_h5_reader import GkylH5Reader
+from postgkyl.data.flash_h5_reader import FlashH5Reader
 
 
 class GData(object):
-  """Provides interface to Gkeyll output data.
+  """Provides interface to (not only) Gkeyll output data.
 
   GData serves as a baseline interface to Gkeyll data. It is used for
   loading Gkeyll data and serves is input to many Postgkyl
@@ -34,7 +44,7 @@ class GData(object):
       var_name: str = "CartGridField",
       tag: str = "default",
       label: str = "",
-      ctx: dict = {},
+      ctx: dict = None,
       comp_grid: bool = False,
       mapc2p_name: str = "",
       mapc2p_vel_name: str = "",
@@ -97,8 +107,10 @@ class GData(object):
     self.ctx["is_modal"] = None
     self.ctx["grid_type"] = "uniform"
     # Allow to copy input context variable
-    for key in ctx:
-      self.ctx[key] = ctx[key]
+    if ctx:
+      for key in ctx:
+        self.ctx[key] = ctx[key]
+      # end
     # end
 
     self._tag = tag
@@ -109,28 +121,28 @@ class GData(object):
     self._file_name = str(file_name)
     self._mapc2p_name = mapc2p_name
     self._mapc2p_vel_name = mapc2p_vel_name
-    self._color = None
+    self.color = None
 
     self._status = True
 
     zs = (z0, z1, z2, z3, z4, z5)
 
-    _readers = {
-        "gkyl": Read_gkyl,
-        "adios": Read_gkyl_adios,
-        "h5": Read_gkyl_h5,
-        "flash": Read_flash_h5,
+    readers = {
+        "gkyl": GkylReader,
+        "adios": GkylAdiosReader,
+        "h5": GkylH5Reader,
+        "flash": FlashH5Reader,
     }
     if self._file_name:
       reader_set = False
-      if reader_name in _readers:
+      if reader_name in readers:
         # Keep only the user-specified reader
-        reader = _readers[reader_name]
-        _readers.clear()
-        _readers[reader_name] = reader
+        reader = readers[reader_name]
+        readers.clear()
+        readers[reader_name] = reader
       # end
-      for key in _readers:
-        self._reader = _readers[key](
+      for key, rd in readers.items():
+        self._reader = rd(
             file_name=self._file_name,
             ctx=self.ctx,
             var_name=var_name,
@@ -147,9 +159,7 @@ class GData(object):
       # end
       if not reader_set:
         raise NameError(
-            '"file_name" was specified ({:s}) but cannot be read with {}'.format(
-                self._file_name, list(_readers)
-            )
+            f"'file_name' was specified ({self._file_name}) but cannot be read with {list(readers)}"
         )
       # end
 
@@ -200,12 +210,14 @@ class GData(object):
 
   # ---- Input file ----
   def get_input_file(self) -> str:
-    import adios2
+    if not has_adios:
+      raise ModuleNotFoundError("ADIOS2 is not installed")
+    #end
 
     fh = adios2.open(self._file_name, "rra")
-    inputFile = fh.read_attribute_string("inputfile")[0]
+    input_file = fh.read_attribute_string("inputfile")[0]
     fh.close()
-    return inputFile
+    return input_file
 
   # ---- Number of Cells ----
   def get_num_cells(self) -> np.ndarray:
@@ -337,57 +349,53 @@ class GData(object):
     output = ""
 
     if self.ctx["time"] is not None:
-      output += "├─ Time: {:e}\n".format(self.ctx["time"])
+      output += f"├─ Time: {self.ctx['time']:e}\n"
     # end
     if self.ctx["frame"] is not None:
-      output += "├─ Frame: {:d}\n".format(self.ctx["frame"])
+      output += f"├─ Frame: {self.ctx['frame']:d}\n"
     # end
-    output += "├─ Number of components: {:d}\n".format(num_comps)
-    output += "├─ Number of dimensions: {:d}\n".format(num_dims)
+    output += f"├─ Number of components: {num_comps:d}\n"
+    output += f"├─ Number of dimensions: {num_dims:d}\n"
     if lower is not None:
-      output += "├─ Grid: ({:s})\n".format(self.get_grid_type())
+      output += f"├─ Grid: ({self.get_grid_type():s})\n"
       for d in range(num_dims - 1):
-        output += "│  ├─ Dim {:d}: Num. cells: {:d}; ".format(d, num_cells[d])
-        output += "Lower: {:e}; Upper: {:e}\n".format(lower[d], upper[d])
+        output += f"│  ├─ Dim {d:d}: Num. cells: {num_cells[d]:d}; "
+        output += f"Lower: {lower[d]:e}; Upper: {upper[d]:e}\n"
       # end
-      output += "│  └─ Dim {:d}: Num. cells: {:d}; ".format(
-          num_dims - 1, num_cells[num_dims - 1]
-      )
-      output += "Lower: {:e}; Upper: {:e}".format(
-          lower[num_dims - 1], upper[num_dims - 1]
-      )
+      output += f"│  └─ Dim {num_dims - 1:d}: Num. cells: {num_cells[-1]:d}; "
+      output += f"Lower: {lower[-1]:e}; Upper: {upper[-1]:e}"
     # end
     if values is not None:
       maximum = np.nanmax(values)
-      maxIdx = np.unravel_index(np.nanargmax(values), values.shape)
+      max_idx = np.unravel_index(np.nanargmax(values), values.shape)
       minimum = np.nanmin(values)
-      minIdx = np.unravel_index(np.nanargmin(values), values.shape)
-      output += "\n├─ Maximum: {:e} at {:s}".format(maximum, str(maxIdx[:num_dims]))
+      min_idx = np.unravel_index(np.nanargmin(values), values.shape)
+      output += f"\n├─ Maximum: {maximum:e} at {str(max_idx[:num_dims]):s}"
       if num_comps > 1:
-        output += " component {:d}\n".format(maxIdx[-1])
+        output += f" component {max_idx[-1]:d}\n"
       else:
         output += "\n"
       # end
-      output += "├─ Minimum: {:e} at {:s}".format(minimum, str(minIdx[:num_dims]))
+      output += f"├─ Minimum: {minimum:e} at {str(min_idx[:num_dims]):s}"
       if num_comps > 1:
-        output += " component {:d}".format(minIdx[-1])
+        output += f" component {min_idx[-1]:d}"
       # end
     # end
     if self.ctx["poly_order"] and self.ctx["basis_type"]:
       output += "\n├─ DG info:\n"
-      output += "│  ├─ Polynomial Order: {:d}\n".format(self.ctx["poly_order"])
+      output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
       if self.ctx["is_modal"]:
-        output += "│  └─ Basis Type: {:s} (modal)".format(self.ctx["basis_type"])
+        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
       else:
-        output += "│  └─ Basis Type: {:s}".format(self.ctx["basis_type"])
+        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
       # end
     # end
     if self.ctx["changeset"] and self.ctx["builddate"]:
       output += "\n├─ Created with Gkeyll:\n"
-      output += "│  ├─ Changeset: {:s}\n".format(self.ctx["changeset"])
-      output += "│  └─ Build Date: {:s}".format(self.ctx["builddate"])
+      output += f"│  ├─ Changeset: {self.ctx['changeset']:s}\n"
+      output += f"│  └─ Build Date: {self.ctx['builddate']:s}"
     # end
-    for key in self.ctx:
+    for key, val in self.ctx.items():
       if key not in [
           "time",
           "frame",
@@ -404,7 +412,7 @@ class GData(object):
           "num_cdim",
           "num_vdim",
       ]:
-        output += "\n├─ {:s}: {}".format(key, self.ctx[key])
+        output += f"\n├─ {key:s}: {val}"
       # end
     # end
 
@@ -414,7 +422,7 @@ class GData(object):
   def write(
       self,
       out_name: str = None,
-      format: str = "gkyl",
+      extension: str = "gkyl",
       mode: str = "",
       var_name: str = None,
       append: bool = False,
@@ -428,8 +436,8 @@ class GData(object):
     Args:
       out_name: str
         Specify output file name.
-      format: str = "gkyl"
-        Specify file format (extension).
+      extension: str = "gkyl"
+        Specify file extension (extension).
       var_name: str
         Specify variable name for Adios.
       append: bool = False
@@ -442,25 +450,26 @@ class GData(object):
     """
 
     if mode:
-      format = mode
+      extension = mode
       print(
-          "Deprecation warning: mode of the write method is going to be renamed to format."
+          "Deprecation warning: mode of the write method",
+          "is going to be renamed to extension.",
       )
     # end
 
     if out_name is None:
       if self._file_name is not None:
         fn = self._file_name
-        out_name = fn.split(".")[0].strip("_") + "_mod." + format
+        out_name = f"{fn.split('.', maxsplit=1)[0].strip('_')}_mod.{extension}"
       else:
-        out_name = "gdata." + format
+        out_name = f"gdata.{extension}"
       # end
     else:
       if not isinstance(out_name, str):
         raise TypeError("'out_name' must be a string")
       # end
-      if out_name.split(".")[-1] != format:
-        out_name += "." + format
+      if out_name.split(".")[-1] != extension:
+        out_name += "." + extension
       # end
     # end
 
@@ -477,11 +486,10 @@ class GData(object):
       var_name = self._var_name
     # end
 
-    # values = np.empty_like(self.values)
-    # values[...] = self.values
-
-    if format == "bp":
-      import adios2
+    if extension == "bp":
+      if not has_adios:
+        raise ModuleNotFoundError("ADIOS2 is not installed")
+      #end
 
       if not append:
         fh = adios2.open(out_name, "w", engine_type="BP3")
@@ -507,11 +515,11 @@ class GData(object):
         shutil.move(out_name + ".dir/" + nm + ".0", out_name)
         shutil.rmtree(out_name + ".dir")
       # end
-    elif format == "gkyl":
+    elif extension == "gkyl":
       dti = np.dtype("i8")
       dtf = np.dtype("f8")
 
-      fh = open(out_name, "w")
+      fh = open(out_name, "w", encoding="utf-8")
 
       # sep='' results in a binary file
       np.array([103, 107, 121, 108, 48], dtype=np.dtype("b")).tofile(fh, sep="")
@@ -539,7 +547,7 @@ class GData(object):
       np.array(values, dtype=dtf).tofile(fh, sep="")
 
       fh.close()
-    elif format == "txt":
+    elif extension == "txt":
       num_rows = int(num_cells.prod())
       grid = self.get_grid()
       for d in range(num_dims):
@@ -551,7 +559,7 @@ class GData(object):
         basis[d] = num_cells[(d + 1) :].prod()
       # end
 
-      fh = open(out_name, "w")
+      fh = open(out_name, "w", encoding="utf-8")
       for i in range(num_rows):
         idx = i
         idxs = np.zeros(num_dims, np.int32)
@@ -561,15 +569,15 @@ class GData(object):
         # end
         line = ""
         for d in range(num_dims):
-          line += "{:.15e}, ".format(grid[d][idxs[d]])
+          line += "{:.15e}, ".extension(grid[d][idxs[d]])
         # end
         for c in range(num_comps - 1):
-          line += "{:.15e}, ".format(values[tuple(idxs)][c])
+          line += "{:.15e}, ".extension(values[tuple(idxs)][c])
         # end
-        line += "{:.15e}\n".format(values[tuple(idxs)][num_comps - 1])
+        line += "{:.15e}\n".extension(values[tuple(idxs)][num_comps - 1])
         fh.write(line)
       # end
       fh.close()
-    elif format == "npy":
+    elif extension == "npy":
       np.save(out_name, values.squeeze())
     # end

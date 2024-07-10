@@ -1,15 +1,15 @@
 import numpy as np
-from typing import Union
+from typing import Tuple, Union
 
-# ---- Postgkyl imports ------------------------------------------------
 from postgkyl.data import GData
-from postgkyl.tools import _input_parser
-# ----------------------------------------------------------------------
+from postgkyl.tools import input_parser
 
 
 def laguerre_compose(
-    in_f: Union[GData, tuple], in_T_m: Union[GData, tuple], out_f: GData = None
-) -> tuple:
+    in_f: Union[GData, np.ndarray],
+    in_T_m: Union[GData, np.ndarray],
+    out_f: GData = None,
+) -> Tuple[list, np.ndarray]:
   """Compose PKPM expansion coefficients into a single f.
 
   Compose the full distribution function f(x, v_par, v_perp) out of the
@@ -17,16 +17,19 @@ def laguerre_compose(
   PKPM moments to calculate the T(x) over m.
 
   Args:
-    in_f: 2-component Laguerre expansion coefficients.
-    in_T_m: PKPM T over m.
-    out_f: (Optional) GData to store output.
+    in_f: GData or np.ndarray
+      2-component Laguerre expansion coefficients.
+    in_T_m: GData or np.ndarray
+      PKPM T over m.
+    out_f: GData = None
+      (Optional) GData to store output.
 
   Returns:
     A tuple of grid (which is itself a tuple of nupy arrays for each
     dimension) and a numpy array with values.
   """
-  in_f_grid, in_f_values = _input_parser(in_f)
-  _, in_T_m_values = _input_parser(in_T_m)
+  in_f_grid, in_f_values = input_parser(in_f)
+  _, in_T_m_values = input_parser(in_T_m)
 
   x, vpar = in_f_grid[0], in_f_grid[1]
   vperp = np.copy(vpar)
@@ -64,6 +67,3 @@ def laguerre_compose(
     out_f.push([x, vpar, vperp], f)
   # end
   return [x, vpar, vperp], f
-
-
-# end

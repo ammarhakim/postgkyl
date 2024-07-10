@@ -1,8 +1,9 @@
+"""Module including FLASH reader class"""
+
 import math
 import numpy as np
 import tables
 
-# ----------------------------------------------------------------------
 # FLASH variable names
 # dens : the density in g/cc
 # tele : the electron temperature in K
@@ -25,7 +26,7 @@ import tables
 # A' = 1/sumy
 
 
-class Read_flash_h5(object):
+class FlashH5Reader(object):
   """Provides a framework to read FLASH h5 output"""
 
   def __init__(self, file_name: str, var_name: str, ctx: dict = None, **kwargs) -> None:

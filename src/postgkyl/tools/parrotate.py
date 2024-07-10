@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Postgkyl module for rotating an array into the coordinate system parallel to another array
-"""
 import numpy as np
 
 

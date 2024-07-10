@@ -1,15 +1,26 @@
+"""Postgkyl module for calculating integrals and derivatives."""
+
 import numpy as np
 
 
 def integrate(data, axis, overwrite=False, stack=False):
+  """Integrates Gkeyll data.
+
+  Currently simply uses the NumPy dot function. True, DG integration should be
+  implemented at some point.
+
+  Args:
+    XXX will be filled up after refactoring
+  """
   if stack:
     overwrite = stack
     print(
-        "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
+        "Deprecation warning: The 'stack' parameter",
+        "is going to be replaced with 'overwrite'",
     )
   # end
-  grid = list(data.get_grid())
-  values = np.copy(data.get_values())
+  grid = list(data.grid)
+  values = np.copy(data.values)
 
   # Convert Python input to an input Numpy understands
   if axis is not None:
@@ -71,16 +82,13 @@ def integrate(data, axis, overwrite=False, stack=False):
   # end
 
 
-# end
+def grad():
+  ...
 
 
-def grad(data):
-  pass
+def div():
+  ...
 
 
-def div(data):
-  pass
-
-
-def curl(data):
-  pass
+def curl():
+  ...

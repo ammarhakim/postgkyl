@@ -1,18 +1,12 @@
-"""
-Postgkyl module for computing primitive variables from conservative variables
-"""
-
 import numpy as np
 from typing import Union
 
-# ---- Postgkyl imports ------------------------------------------------
 from postgkyl.data import GData
-from postgkyl.tools import _input_parser
-# ----------------------------------------------------------------------
+from postgkyl.tools import input_parser
 
 
 def get_density(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = in_values[..., 0, np.newaxis]
 
   if out_mom:
@@ -21,11 +15,8 @@ def get_density(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_vx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   out_values = in_values[..., 1, np.newaxis] / rho
 
@@ -35,11 +26,8 @@ def get_vx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_vy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   out_values = in_values[..., 2, np.newaxis] / rho
 
@@ -49,11 +37,8 @@ def get_vy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_vz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   out_values = in_values[..., 3, np.newaxis] / rho
 
@@ -63,11 +48,8 @@ def get_vz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_vi(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   out_values = in_values[..., 1:4] / rho
 
@@ -77,11 +59,8 @@ def get_vi(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pxx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vx = get_vx(in_mom)
   out_values = in_values[..., 4, np.newaxis] - rho * vx * vx
@@ -92,11 +71,8 @@ def get_pxx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pxy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vx = get_vx(in_mom)
   _, vy = get_vy(in_mom)
@@ -108,11 +84,8 @@ def get_pxy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pxz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vx = get_vx(in_mom)
   _, vz = get_vz(in_mom)
@@ -124,11 +97,8 @@ def get_pxz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pyy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vy = get_vy(in_mom)
   out_values = in_values[..., 7, np.newaxis] - rho * vy * vy
@@ -139,11 +109,8 @@ def get_pyy(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pyz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vy = get_vy(in_mom)
   _, vz = get_vz(in_mom)
@@ -155,11 +122,8 @@ def get_pyz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pzz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vz = get_vz(in_mom)
   out_values = in_values[..., 9, np.newaxis] - rho * vz * vz
@@ -170,11 +134,8 @@ def get_pzz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_pij(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = np.zeros(in_values[..., 4:10].shape)
 
   _, pxx = get_pxx(in_mom)
@@ -197,16 +158,13 @@ def get_pij(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_p(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
     num_moms: int = None,
     out_mom: GData = None,
 ) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   num_comps = in_values.shape[-1]
   if num_moms is None:
     if num_comps == 5:
@@ -243,16 +201,13 @@ def get_p(
   return grid, out_values
 
 
-# end
-
-
 def get_ke(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
     num_moms: int = None,
     out_mom: GData = None,
 ) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   num_comps = in_values.shape[-1]
   if num_moms is None:
     if num_comps == 5:
@@ -285,9 +240,6 @@ def get_ke(
   return grid, out_values
 
 
-# end
-
-
 def get_temp(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
@@ -304,9 +256,6 @@ def get_temp(
   return grid, out_values
 
 
-# end
-
-
 def get_sound(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
@@ -321,10 +270,6 @@ def get_sound(
     out_mom.push(grid, out_values)
   # end
   return grid, out_values
-
-
-# end
-# end
 
 
 def get_mach(
@@ -345,12 +290,8 @@ def get_mach(
   return grid, out_values
 
 
-# end
-
-
-# ---- MHD -------------------------------------------------------------
 def get_mhd_Bx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = in_values[..., 5, np.newaxis]
 
   if out_mom:
@@ -359,11 +300,8 @@ def get_mhd_Bx(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_By(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = in_values[..., 6, np.newaxis]
 
   if out_mom:
@@ -372,11 +310,8 @@ def get_mhd_By(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_Bz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = in_values[..., 7, np.newaxis]
 
   if out_mom:
@@ -385,20 +320,14 @@ def get_mhd_Bz(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_Bi(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   out_values = in_values[..., 5:8]
 
   if out_mom:
     out_mom.push(grid, out_values)
   # end
   return grid, out_values
-
-
-# end
 
 
 def get_mhd_mag_p(
@@ -415,16 +344,13 @@ def get_mhd_mag_p(
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_p(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
     mu_0: float = 1.0,
     out_mom: GData = None,
 ) -> tuple:
-  grid, in_values = _input_parser(in_mom)
+  grid, in_values = input_parser(in_mom)
   _, rho = get_density(in_mom)
   _, vx = get_vx(in_mom)
   _, vy = get_vy(in_mom)
@@ -441,9 +367,6 @@ def get_mhd_p(
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_temp(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
@@ -458,9 +381,6 @@ def get_mhd_temp(
     out_mom.push(grid, out_values)
   # end
   return grid, out_values
-
-
-# end
 
 
 def get_mhd_sound(
@@ -480,9 +400,6 @@ def get_mhd_sound(
   return grid, out_values
 
 
-# end
-
-
 def get_mhd_mach(
     in_mom: Union[GData, tuple],
     gas_gamma: float = 5.0 / 3,
@@ -499,6 +416,3 @@ def get_mhd_mach(
     out_mom.push(grid, out_values)
   # end
   return grid, out_values
-
-
-# end

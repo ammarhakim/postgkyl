@@ -1,9 +1,11 @@
+"""Module including legacy Gkeyll reader class"""
+
 from typing import Tuple
 import numpy as np
 import tables
 
 
-class Read_gkyl_h5(object):
+class GkylH5Reader(object):
   """Provides a framework to read legacy Gkeyll HDF5 output"""
 
   def __init__(self, file_name: str, ctx: dict = None, **kwargs):
@@ -72,7 +74,7 @@ class Read_gkyl_h5(object):
 
   def preload(self) -> None:
     """Loads metadata."""
-    ...
+    pass
 
   def load(self) -> Tuple[list, np.ndarray]:
     """Loads data.
@@ -87,8 +89,7 @@ class Read_gkyl_h5(object):
 
     if self.is_frame:
       cells, lower, upper, data = self._read_frame()
-    # end
-    if self.is_diagnostic:
+    else:
       grid, lower, upper, data = self._read_diagnostic()
       cells = grid[0].shape
     # end
