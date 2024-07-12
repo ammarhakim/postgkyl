@@ -1,16 +1,25 @@
 """Postgkyl module for calculating integrals and derivatives."""
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Union
 import numpy as np
 
+if TYPE_CHECKING:
+  from postgkyl import GData
 
-def integrate(data, axis, overwrite=False, stack=False):
+
+def integrate(data: GData, axis: Union[int, tuple, str], overwrite=False, stack=False):
   """Integrates Gkeyll data.
 
   Currently simply uses the NumPy dot function. True, DG integration should be
   implemented at some point.
 
   Args:
-    XXX will be filled up after refactoring
+    data: GData
+    axis: int, tuple or str
+      Specify axis to integrate over
+
+    XXX overwrite and stack need refactoring; see laguerre_compose.py
   """
   if stack:
     overwrite = stack

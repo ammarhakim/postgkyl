@@ -2,6 +2,7 @@ import click
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
+
 import postgkyl.tools as diag
 
 

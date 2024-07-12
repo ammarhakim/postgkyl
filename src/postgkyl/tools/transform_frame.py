@@ -1,16 +1,19 @@
-import numpy as np
-from typing import Union
+from __future__ import annotations
 
-from postgkyl.data import GData
-from postgkyl.tools import input_parser
+import numpy as np
+from typing import Tuple, TYPE_CHECKING, Union
+
+from postgkyl.utils import input_parser
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 
 def transform_frame(
-    in_f: Union[GData, tuple],
-    in_u: Union[GData, tuple],
+    in_f: Union[GData, np.ndarray],
+    in_u: Union[GData, np.ndarray],
     c_dim: int,
     out_f: GData = None,
-) -> tuple:
+) -> Tuple[list, np.ndarray]:
   """Shift a distribution function to a different frame of reference.
 
   Shifsts the frame of reference for specified distribution function
@@ -18,10 +21,14 @@ def transform_frame(
   added in future update).
 
   Args:
-    in_f: Particle distribution function to be shifted.
-    in_u: Bulk velocity.
-    c_dim: Number of the configuration space dimensions.
-    out_f: (Optional) GData to store output.
+    in_f: GData or np.ndarray
+      Particle distribution function to be shifted.
+    in_u: GData or np.ndarray
+      Bulk velocity.
+    c_dim: int
+      Number of the configuration space dimensions.
+    out_f: GData
+      (Optional) GData to store output.
 
   Returns:
     A tuple of grid (which is itself a tuple of nupy arrays for each

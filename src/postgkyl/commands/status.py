@@ -3,6 +3,7 @@ import click
 from postgkyl.utils import verb_print
 
 
+
 @click.command()
 @click.option(
     "--tag", "-t", type=click.STRING, help="Tag(s) to apply to (comma-separated)"

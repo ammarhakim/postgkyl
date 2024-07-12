@@ -4,8 +4,9 @@ import numpy as np
 import os
 
 from postgkyl.data import GData
-from postgkyl.tools.growth import fitGrowth, exp2
+from postgkyl.tools.growth import fit_growth, exp2
 from postgkyl.utils import verb_print
+
 
 
 @click.command()
@@ -65,7 +66,7 @@ def growth(ctx, **kwargs):
         y = values[idx, :, 0].squeeze()
       # end
 
-      bestParams, bestR2, bestN = fitGrowth(x, y, minN=kwargs["minn"], p0=p0)
+      bestParams, bestR2, bestN = fit_growth(x, y, minN=kwargs["minn"], p0=p0)
 
       if kwargs["dataset"]:
         out = GData(

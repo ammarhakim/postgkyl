@@ -512,8 +512,8 @@ class GData(object):
         else:
           nm = out_name
         # end
-        shutil.move(out_name + ".dir/" + nm + ".0", out_name)
-        shutil.rmtree(out_name + ".dir")
+        shutil.move(f"{out_name}.dir/{nm}.0{out_name}")
+        shutil.rmtree(f"{out_name}.dir")
       # end
     elif extension == "gkyl":
       dti = np.dtype("i8")
@@ -569,12 +569,12 @@ class GData(object):
         # end
         line = ""
         for d in range(num_dims):
-          line += "{:.15e}, ".extension(grid[d][idxs[d]])
+          line += f"{grid[d][idxs[d]]:.15e}, "
         # end
         for c in range(num_comps - 1):
-          line += "{:.15e}, ".extension(values[tuple(idxs)][c])
+          line += f"{values[tuple(idxs)][c]:.15e}, "
         # end
-        line += "{:.15e}\n".extension(values[tuple(idxs)][num_comps - 1])
+        line += f"{values[tuple(idxs)][num_comps - 1]:.15e}\n"
         fh.write(line)
       # end
       fh.close()

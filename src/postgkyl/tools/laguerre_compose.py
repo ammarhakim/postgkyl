@@ -1,14 +1,21 @@
-import numpy as np
-from typing import Tuple, Union
+"""Postgkyl module for combining the two laguerre components F0 and F1.
 
-from postgkyl.data import GData
-from postgkyl.tools import input_parser
+Within Gkeyll, this is mostly use for working with the PKPM data.
+"""
+from __future__ import annotations
+
+import numpy as np
+from typing import Tuple, TYPE_CHECKING, Union
+
+from postgkyl.utils import input_parser
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 
 def laguerre_compose(
-    in_f: Union[GData, np.ndarray],
-    in_T_m: Union[GData, np.ndarray],
-    out_f: GData = None,
+    in_f: Union["GData", np.ndarray],
+    in_T_m: Union["GData", np.ndarray],
+    out_f: "GData" = None,
 ) -> Tuple[list, np.ndarray]:
   """Compose PKPM expansion coefficients into a single f.
 

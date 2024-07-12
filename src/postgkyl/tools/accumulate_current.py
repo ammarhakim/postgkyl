@@ -13,6 +13,8 @@ def accumulate_current(data, qbym: bool = False, overwrite=False, stack=False):
     qbym: bool = False
       optional input for multiplying by charge/mass ratio instead of just charge
       NOTE: Should be true for fluid data
+
+    XXX overwrite and stack need refactoring; see laguerre_compose.py
   """
   if stack:
     overwrite = stack

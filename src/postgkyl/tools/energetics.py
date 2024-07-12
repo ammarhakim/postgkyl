@@ -1,26 +1,31 @@
 """Postgkyl module for separating energy components."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple
 import numpy as np
 
-from postgkyl.data import GData
 from postgkyl.tools import get_p, get_ke, magsq
-
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 def energetics(
     data_elc: GData, data_ion: GData, data_field: GData, overwrite=False, stack=False
-):
+) -> Tuple[list, np.ndarray]:
   """Function to separate components of the energy.
 
   Works for both species and EM fields and separates into constituent parts (species
   energy -> thermal + kinetic, field energy -> electric + magnetic)
 
-  Args: XXX needs refactoring; see laguerre_compose.py
+  Args:
     data_elc: GData
       input GData object for electrons
     data_ion: GData
       input GData object for ions
     data_field: GData
       input GData object for EM fields
+
+    XXX overwrite and stack need refactoring; see laguerre_compose.py
 
   Notes:
     Assumes two-species plasma

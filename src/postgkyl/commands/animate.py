@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from postgkyl.utils import verb_print
+
 import postgkyl.output.plot as gplot
 
 

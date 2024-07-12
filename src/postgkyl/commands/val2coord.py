@@ -5,6 +5,7 @@ from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
 
+
 def _getRange(strIn, length):
   if len(strIn.split(",")) > 1:
     return np.array(strIn.split(","), np.int)

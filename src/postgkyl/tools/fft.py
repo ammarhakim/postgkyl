@@ -1,14 +1,35 @@
+"""Postgkyl module for wrapping FFT."""
+from __future__ import annotations
+
 import numpy as np
 import scipy.fft
-from .. import tools as diag
+from typing import Tuple, TYPE_CHECKING
 
+from postgkyl.tools.init_polar import init_polar
+from postgkyl.tools.polar_isotropic import polar_isotropic
+if TYPE_CHECKING:
+  from postgkyl import GData
 
-def fft(data, psd=False, iso=False, overwrite=False, stack=False):
+def fft(
+    data: GData,
+    psd: bool = False,
+    iso: bool = False,
+    overwrite: bool = False,
+    stack: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
+  """Postgkyl wrapper of scipy FFT.
+
+  Args:
+    data: GData
+    psd: bool
+      Flag to calculate the Power Spectral Density
+    iso: bool
+      Flag to return isotropic spectra
+
+    XXX overwrite and stack need refactoring; see laguerre_compose.py
+  """
   if stack:
     overwrite = stack
-    print(
-        "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-    )
   # end
   grid = data.get_grid()
   values = data.get_values()
@@ -32,20 +53,20 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
     N = len(grid[0])
     dx = grid[0][1] - grid[0][0]
     freq = [scipy.fft.fftfreq(N, dx)]
-    ftValues = np.zeros(values.shape, "complex")
+    ft_values = np.zeros(values.shape, "complex")
     for comp in np.arange(num_comps):
-      ftValues[..., comp] = scipy.fft.fft(values[..., comp])
+      ft_values[..., comp] = scipy.fft.fft(values[..., comp])
     # end
 
     if psd:
       freq[0] = freq[0][: N // 2]
-      ftValues = np.abs(ftValues[: N // 2, :]) ** 2
+      ft_values = np.abs(ft_values[: N // 2, :]) ** 2
     # end
 
     if overwrite:
-      data.push(freq, ftValues)
+      data.push(freq, ft_values)
     else:
-      return freq, ftValues
+      return freq, ft_values
     # end
   else:
     N = np.zeros(3, dtype=int)
@@ -56,19 +77,19 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
       dx[i] = grid[i][1] - grid[i][0]
       freq.append(scipy.fft.fftfreq(N[i], dx[i]))
     # end
-    ftValues = np.zeros(values.shape, "complex")
+    ft_values = np.zeros(values.shape, "complex")
     for comp in np.arange(num_comps):
-      ftValues[..., comp] = scipy.fft.fftn(values[..., comp])
+      ft_values[..., comp] = scipy.fft.fftn(values[..., comp])
     # end
     if psd:
       for i in range(0, num_dims):
         freq[i] = freq[i][: N[i] // 2]
       if num_dims == 2:
-        ftValues = np.abs(ftValues[: N[0] // 2, : N[1] // 2, :]) ** 2
+        ft_values = np.abs(ft_values[: N[0] // 2, : N[1] // 2, :]) ** 2
         # If only 2D, append third dummy index for ease of logic
         freq.append(0)
       elif num_dims == 3:
-        ftValues = np.abs(ftValues[: N[0] // 2, : N[1] // 2, : N[2] // 2, :]) ** 2
+        ft_values = np.abs(ft_values[: N[0] // 2, : N[1] // 2, : N[2] // 2, :]) ** 2
       else:
         raise ValueError("Only 1D, 2D, and 3D data are currently supported.")
       # end
@@ -80,13 +101,20 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
         kx = freq[0]
         ky = freq[1]
         kz = freq[2]
-        akp, nbin, polar_index, akplim = diag.initpolar(
-            nkx, nky, nkz, kx, ky, kz, nkpolar
-        )
+        akp, nbin, polar_index, _ = init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar)
         fft_iso = np.zeros((nkpolar, num_comps))
         for comp in np.arange(num_comps):
-          fft_iso[:, comp] = diag.polar_isotropic(
-              nkpolar, nkx, nky, nkz, polar_index, nbin, ftValues[..., comp], kx, ky, kz
+          fft_iso[:, comp] = polar_isotropic(
+              nkpolar,
+              nkx,
+              nky,
+              nkz,
+              polar_index,
+              nbin,
+              ft_values[..., comp],
+              kx,
+              ky,
+              kz,
           )
         # end
         # Return isotropic spectra and 1D isotropic ks
@@ -99,8 +127,8 @@ def fft(data, psd=False, iso=False, overwrite=False, stack=False):
     # end
 
     if overwrite and not iso:
-      data.push(freq, ftValues)
+      data.push(freq, ft_values)
     else:
-      return freq, ftValues
+      return freq, ft_values
     # end
   # end

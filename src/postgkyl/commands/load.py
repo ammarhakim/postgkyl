@@ -6,6 +6,7 @@ from postgkyl.data import GInterpModal
 from postgkyl.utils import verb_print
 
 
+
 def _pickCut(ctx, kwargs, zn):
   nm = "z{:d}".format(zn)
   if zn == 6:  # This little hack allows to apply the same function for

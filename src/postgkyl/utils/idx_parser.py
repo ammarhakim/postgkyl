@@ -1,31 +1,6 @@
-from time import time
 from cycler import cycler
+from time import time
 import numpy as np
-import click
-
-
-def verb_print(ctx, message):
-  if ctx.obj["verbose"]:
-    elapsedTime = time() - ctx.obj["start_time"]
-    click.echo(click.style("[{:f}] {:s}".format(elapsedTime, message), fg="green"))
-  # end
-
-
-def load_style(ctx, fn):
-  fh = open(fn, "r")
-  for line in fh.readlines():
-    key = line.split(":")[0]
-    key_len = int(len(key))
-    key = key.strip()
-    value = line[(key_len + 1) :].strip()
-    if value[:6] == "cycler":
-      arg = eval(value[16:-1])
-      value = cycler(color=arg)
-    # end
-    ctx.obj["rcParams"][key] = value
-  # end
-  fh.close()
-
 
 def _find_nearest_index(array, value):
   if array is None:
@@ -69,7 +44,7 @@ def _string_to_index(value, array=None, nodal=False):
   # end
 
 
-def idx_parser(value, array=None, nodal=False):
+def idx_parser(value: float, array: np.ndarray = None, nodal: bool = False) -> int:
   idx = None
   if isinstance(value, int):
     idx = value

@@ -1,8 +1,11 @@
-import numpy as np
-from typing import Union
+from __future__ import annotations
 
-from postgkyl.data import GData
-from postgkyl.tools import input_parser
+import numpy as np
+from typing import TYPE_CHECKING, Union
+
+from postgkyl.utils import input_parser
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 
 def get_density(in_mom: Union[GData, tuple], out_mom: GData = None) -> tuple:
