@@ -1,17 +1,22 @@
 """Module including custom Gkeyll plotting function"""
 
-import os.path
-import matplotlib as mpl
+from __future__ import annotations
+
 from matplotlib import cm
-import matplotlib.figure
-import matplotlib.pyplot as plt
 from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from typing import Tuple, TYPE_CHECKING, Union
+import matplotlib as mpl
+import matplotlib.figure
+import matplotlib.pyplot as plt
 import numpy as np
+import os.path
 
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 # Helper functions
-def pg_colorbar(obj, fig, cax, label="", extend=None):
+def colorbar(obj, fig, cax, label="", extend=None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
   return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
@@ -50,61 +55,61 @@ def _get_nodal_grid(grid, cells):
 
 
 def plot(
-    data,
-    args=(),
-    figure=None,
-    squeeze=False,
-    num_axes=None,
-    start_axes=0,
-    num_subplot_row=None,
-    num_subplot_col=None,
-    streamline=False,
-    sdensity=1,
-    quiver=False,
-    contour=False,
+    data: GData,
+    args: list = (),
+    figure: Union[int, matplotlib.figure.Figure, str] = None,
+    squeeze: bool = False,
+    num_axes: int = None,
+    start_axes: int = 0,
+    num_subplot_row: int = None,
+    num_subplot_col: int = None,
+    streamline: bool = False,
+    sdensity: int = 1,
+    quiver: bool = False,
+    contour: bool = False,
     clevels=None,
     cnlevels=None,
-    cont_label=False,
-    diverging=False,
+    cont_label: bool = False,
+    diverging: bool = False,
     lineouts=None,
-    xmin=None,
-    xmax=None,
-    xscale=1.0,
-    xshift=0.0,
-    ymin=None,
-    ymax=None,
-    yscale=1.0,
-    yshift=0.0,
-    zmin=None,
-    zmax=None,
-    zscale=1.0,
-    zshift=0.0,
-    relax=False,
-    style=None,
-    rcParams=None,
-    legend=True,
-    label_prefix="",
-    colorbar=True,
-    xlabel=None,
-    ylabel=None,
-    clabel=None,
-    title=None,
-    logx=False,
-    logy=False,
-    logz=False,
-    fixaspect=False,
-    aspect=None,
-    edgecolors=None,
-    showgrid=True,
-    hashtag=False,
-    xkcd=False,
-    color=None,
-    markersize=None,
-    linewidth=None,
-    linestyle=None,
-    figsize=None,
-    jet=False,
-    cmap=None,
+    xmin: float = None,
+    xmax: float = None,
+    xscale: float = 1.0,
+    xshift: float = 0.0,
+    ymin: float = None,
+    ymax: float = None,
+    yscale: float = 1.0,
+    yshift: float = 0.0,
+    zmin: float = None,
+    zmax: float = None,
+    zscale: float = 1.0,
+    zshift: float = 0.0,
+    relax: bool = False,
+    style: str = None,
+    rcParams: dict = None,
+    legend: bool = True,
+    label_prefix: str = "",
+    colorbar: bool = True,
+    xlabel: str = None,
+    ylabel: str = None,
+    clabel: str = None,
+    title: str = None,
+    logx: bool = False,
+    logy: bool = False,
+    logz: bool = False,
+    fixaspect: bool = False,
+    aspect: float = None,
+    edgecolors: str = None,
+    showgrid: bool = True,
+    hashtag: bool = False,
+    xkcd: bool = False,
+    color: str = None,
+    markersize: float = None,
+    linewidth: float = None,
+    linestyle: float = None,
+    figsize: tuple = None,
+    jet: bool = False,
+    cmap: str = None,
     **kwargs
 ):
   """Plots Gkeyll data
@@ -440,7 +445,7 @@ def plot(
         mappable = cm.ScalarMappable(
             norm=colors.Normalize(vmin=vmin, vmax=vmax, clip=False), cmap=cm.inferno
         )
-        pg_colorbar(mappable, fig, cax, label=label)
+        colorbar(mappable, fig, cax, label=label)
         colorbar = False
         legend = False
 
@@ -494,7 +499,7 @@ def plot(
         )
       # end
       if not bool(color) and colorbar and not streamline:
-        pg_colorbar(im, fig, cax, extend=extend, label=clabel)
+        colorbar(im, fig, cax, extend=extend, label=clabel)
       # end
     else:
       raise ValueError(f"{num_dims:d}D data not supported")

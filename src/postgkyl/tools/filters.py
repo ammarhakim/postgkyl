@@ -6,6 +6,7 @@ Contains FFT and butter filters.
 from scipy.signal import butter, lfilter
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Optional
 
 
 def _click_coords(event):
@@ -14,7 +15,7 @@ def _click_coords(event):
   plt.close()
 
 
-def fft_filtering(data: np.ndarray, dt: float = 1.0, cutoff: float = None) -> np.ndarray:
+def fft_filtering(data: np.ndarray, dt: Optional[float] = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
   """Filter data using numpy FFT.
 
   Args:
@@ -69,7 +70,7 @@ def _butter_lowpass_filter(data: np.ndarray, cutoff: float, fs: float, order: in
   return y
 
 
-def butter_filtering(data: np.ndarray, dt: float = 1.0, cutoff: float = None) -> np.ndarray:
+def butter_filtering(data: np.ndarray, dt: Optional[float] = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
   """Filter data using Butterworth filter
 
   Args:

@@ -2,7 +2,6 @@
 
 import numpy as np
 
-
 def accumulate_current(data, qbym: bool = False, overwrite=False, stack=False):
   """Computes the current from an arbitrary number of input species.
 

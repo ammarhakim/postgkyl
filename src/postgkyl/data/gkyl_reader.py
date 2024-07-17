@@ -1,6 +1,6 @@
 """Module including Gkeyll binary reader class"""
 
-from typing import Tuple
+from typing import Tuple, Optional
 import msgpack as mp
 import numpy as np
 import os.path
@@ -81,7 +81,12 @@ class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
   def __init__(
-      self, file_name: str, ctx: dict = None, c2p: str = "", c2p_vel: str = "", **kwargs
+      self,
+      file_name: str,
+      ctx: Optional[dict] = None,
+      c2p: str = "",
+      c2p_vel: str = "",
+      **kwargs
   ):
     """Initialize the instance of Gkeyll reader.
 
@@ -121,7 +126,7 @@ class GkylReader(object):
       self.ctx = ctx
     else:
       self.ctx = {}
-    #end
+    # end
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""

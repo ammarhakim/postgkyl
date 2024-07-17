@@ -24,11 +24,11 @@ def magsq(ctx, **kwargs):
           comp_grid=ctx.obj["compgrid"],
           ctx=dat.ctx,
       )
-      grid, values = diag.magsq(dat)
+      grid, values = diag.mag_sq(dat)
       out.push(grid, values)
       data.add(out)
     else:
-      diag.magsq(dat, overwrite=True)
+      diag.mag_sq(dat, overwrite=True)
     # end
   # end
 

@@ -1,27 +1,28 @@
-"""
-Postgkyl module for pressure tensor diagnostics
+"""Postgkyl module for pressure tensor diagnostics.
+
 Diagnostics include:
 	Pressure parallel to the magnetic field
 	Pressure perpendicular to the magnetic field
 	Agyrotropy (either Frobenius or Swisdak measure)
 	Firehose instability threshold
 """
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Union, Optional
 import numpy as np
-import postgkyl.tools as diag
 
+from postgkyl.tools.prim_vars import get_pij
+from postgkyl.tools.mag_sq import mag_sq
+from postgkyl.utils import input_parser
+
+if TYPE_CHECKING:
+  from postgkyl import GData
 
 def _get_pb(
-    p_data=None, p_grid=None, p_values=None, b_data=None, b_grid=None, b_values=None
-):
-  if p_data:
-    p_grid = p_data.get_grid()
-    p_values = p_data.get_values()
-  # end
-  if b_data:
-    b_grid = b_data.get_grid()
-    b_values = b_data.get_values()
-  # end
+    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
+) -> tuple:
+  _, p_values = input_parser(p_in)
+  _, b_values = input_parser(b_in)
 
   p_xx = p_values[..., 0, np.newaxis]
   p_xy = p_values[..., 1, np.newaxis]
@@ -33,43 +34,26 @@ def _get_pb(
   b_x = b_values[..., 0, np.newaxis]
   b_y = b_values[..., 1, np.newaxis]
   b_z = b_values[..., 2, np.newaxis]
+
   return p_xx, p_xy, p_xz, p_yy, p_yz, p_zz, b_x, b_y, b_z
 
 
 def _get_sf(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
+    species: Union[GData, tuple], field: Union[GData, tuple]
 ):
-  if species_data:
-    species_grid = species_data.get_grid()
-    species_values = species_data.get_values()
-  # end
-  if field_data:
-    field_grid = field_data.get_grid()
-    field_values = field_data.get_values()
-  # end
+  p_grid, p_values = get_pij(species)
+  _, field_values = input_parser(field)
 
-  p_grid, p_values = diag.get_pij(species_grid, species_values)
   b_grid = p_grid
   b_values = field_values[..., 3:6]
   return p_grid, p_values, b_grid, b_values
 
 
 def get_p_par(
-    p_data=None, p_grid=None, p_values=None, b_data=None, b_grid=None, b_values=None
-):
-  if p_data:
-    p_grid = p_data.get_grid()
-    p_values = p_data.get_values()
-  # end
-  if b_data:
-    b_grid = b_data.get_grid()
-    b_values = b_data.get_values()
-  # end
+    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
+) -> tuple:
+  _, p_values = input_parser(p_in)
+  _, b_values = input_parser(b_in)
 
   p_xx = p_values[..., 0, np.newaxis]
   p_xy = p_values[..., 1, np.newaxis]
@@ -82,7 +66,7 @@ def get_p_par(
   b_y = b_values[..., 1, np.newaxis]
   b_z = b_values[..., 2, np.newaxis]
 
-  grid, mag_b_sq = diag.mag_sq(in_grid=b_grid, in_values=b_values)
+  grid, mag_b_sq = mag_sq(b_in)
 
   out = (
       b_x * b_x * p_xx
@@ -94,94 +78,48 @@ def get_p_par(
 
 
 def get_gkyl_10m_p_par(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-):
-  if species_data:
-    species_grid = species_data.get_grid()
-    species_values = species_data.get_values()
-  # end
-  if field_data:
-    field_grid = field_data.get_grid()
-    field_values = field_data.get_values()
-  # end
-
-  p_grid, p_values = diag.get_pij(in_grid=species_grid, in_values=species_values)
-  b_grid = p_grid
+    species: Union[GData, tuple], field: Union[GData, tuple]
+) -> tuple:
+  p_grid, p_values = get_pij(species)
+  field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
 
-  return get_p_par(p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values)
+  return get_p_par((p_grid, p_values), (field_grid, b_values))
 
 
 def get_p_perp(
-    p_data=None, p_grid=None, p_values=None, b_data=None, b_grid=None, b_values=None
-):
-  if p_data:
-    p_grid = p_data.get_grid()
-    p_values = p_data.get_values()
-  # end
-  if b_data:
-    b_grid = b_data.get_grid()
-    b_values = b_data.get_values()
-  # end
+    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
+) -> tuple:
+  _, p_values = input_parser(p_in)
 
   p_xx = p_values[..., 0, np.newaxis]
   p_yy = p_values[..., 3, np.newaxis]
   p_zz = p_values[..., 5, np.newaxis]
 
-  grid, p_par = get_p_par(
-      p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values
-  )
+  grid, p_par = get_p_par(p_in, b_in)
 
   out = (p_xx + p_yy + p_zz - p_par) / 2.0
   return grid, out
 
 
 def get_gkyl_10m_p_perp(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-):
-  if species_data:
-    species_grid = species_data.get_grid()
-    species_values = species_data.get_values()
-  # end
-  if field_data:
-    field_grid = field_data.get_grid()
-    field_values = field_data.get_values()
-  # end
+    species: Union[GData, tuple], field: Union[GData, tuple]
+) -> tuple:
+  p_grid, p_values = get_pij(species)
+  field_grid, field_values = input_parser(field)
 
-  p_grid, p_values = diag.get_pij(in_grid=species_grid, in_values=species_values)
-  b_grid = p_grid
+  p_grid, p_values = get_pij(species)
   b_values = field_values[..., 3:6]
 
-  return get_p_perp(p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values)
+  return get_p_perp((p_grid, p_values), (field_grid, b_values))
 
 
 def get_agyro(
-    p_data=None,
-    p_grid=None,
-    p_values=None,
-    b_data=None,
-    b_grid=None,
-    b_values=None,
+    p_in: Union[GData, tuple], b_in: Union[GData, tuple],
     measure="swisdak",
-):
-  if p_data:
-    p_grid = p_data.get_grid()
-    p_values = p_data.get_values()
-  # end
-  if b_data:
-    b_grid = b_data.get_grid()
-    b_values = b_data.get_values()
-  # end
+) -> tuple:
+  _, p_values = input_parser(p_in)
+  _, b_values = input_parser(b_in)
 
   p_xx = p_values[..., 0, np.newaxis]
   p_xy = p_values[..., 1, np.newaxis]
@@ -194,13 +132,9 @@ def get_agyro(
   b_y = b_values[..., 1, np.newaxis]
   b_z = b_values[..., 2, np.newaxis]
 
-  grid, mag_b_sq = diag.mag_sq(in_grid=b_grid, in_values=b_values)
-  _, p_par = get_p_par(
-      p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values
-  )
-  _, p_perp = get_p_perp(
-      p_grid=p_grid, p_values=p_values, b_grid=b_grid, b_values=b_values
-  )
+  grid, mag_b_sq = mag_sq(b_in)
+  _, p_par = get_p_par(p_in, b_in)
+  _, p_perp = get_p_perp(p_in, b_in)
 
   if measure.lower() == "swisdak":
     I1 = p_xx + p_yy + p_zz
@@ -234,31 +168,14 @@ def get_agyro(
 
 
 def get_gkyl_10m_agyro(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
+    species: Union[GData, tuple], field: Union[GData, tuple],
     measure="swisdak",
-):
-  if species_data:
-    species_grid = species_data.get_grid()
-    species_values = species_data.get_values()
-  # end
-  if field_data:
-    field_grid = field_data.get_grid()
-    field_values = field_data.get_values()
-  # end
-
-  p_grid, p_values = diag.get_pij(in_grid=species_grid, in_values=species_values)
-  b_grid = p_grid
+) -> tuple:
+  p_grid, p_values = get_pij(species)
+  field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
 
   return get_agyro(
-      p_grid=p_grid,
-      p_values=p_values,
-      b_grid=b_grid,
-      b_values=b_values,
+      (p_grid, p_values), (field_grid, b_values),
       measure=measure,
   )

@@ -1,6 +1,6 @@
 """Module including Gkeyll data class"""
 
-from typing import Union, Tuple
+from typing import Optional, Union, Tuple, Literal
 import numpy as np
 import shutil
 
@@ -34,17 +34,17 @@ class GData(object):
   def __init__(
       self,
       file_name: str = "",
-      comp: Union[int, str] = None,
-      z0: Union[int, str] = None,
-      z1: Union[int, str] = None,
-      z2: Union[int, str] = None,
-      z3: Union[int, str] = None,
-      z4: Union[int, str] = None,
-      z5: Union[int, str] = None,
+      comp: Union[int, str, None] = None,
+      z0: Union[int, str, None] = None,
+      z1: Union[int, str, None] = None,
+      z2: Union[int, str, None] = None,
+      z3: Union[int, str, None] = None,
+      z4: Union[int, str, None] = None,
+      z5: Union[int, str, None] = None,
       var_name: str = "CartGridField",
       tag: str = "default",
       label: str = "",
-      ctx: dict = None,
+      ctx: Optional[dict] = None,
       comp_grid: bool = False,
       mapc2p_name: str = "",
       mapc2p_vel_name: str = "",
@@ -212,7 +212,7 @@ class GData(object):
   def get_input_file(self) -> str:
     if not has_adios:
       raise ModuleNotFoundError("ADIOS2 is not installed")
-    #end
+    # end
 
     fh = adios2.open(self._file_name, "rra")
     input_file = fh.read_attribute_string("inputfile")[0]
@@ -421,10 +421,10 @@ class GData(object):
   # ---- Write ----
   def write(
       self,
-      out_name: str = None,
-      extension: str = "gkyl",
+      out_name: str = "",
+      extension: Literal["gkyl", "bp", "txt", "npy"] = "gkyl",
       mode: str = "",
-      var_name: str = None,
+      var_name: str = "",
       append: bool = False,
       cleaning: bool = True,
   ) -> None:
@@ -457,7 +457,7 @@ class GData(object):
       )
     # end
 
-    if out_name is None:
+    if not out_name:
       if self._file_name is not None:
         fn = self._file_name
         out_name = f"{fn.split('.', maxsplit=1)[0].strip('_')}_mod.{extension}"
@@ -482,14 +482,14 @@ class GData(object):
     full_shape = list(num_cells) + [num_comps]
     offset = [0] * (num_dims + 1)
 
-    if var_name is None:
+    if not var_name:
       var_name = self._var_name
     # end
 
     if extension == "bp":
       if not has_adios:
         raise ModuleNotFoundError("ADIOS2 is not installed")
-      #end
+      # end
 
       if not append:
         fh = adios2.open(out_name, "w", engine_type="BP3")

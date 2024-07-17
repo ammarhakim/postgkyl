@@ -53,7 +53,7 @@ from .pressure_diagnostics import get_gkyl_10m_agyro
 
 from .accumulate_current import accumulate_current
 from .energetics import energetics
-from .magsq import mag_sq
+from .mag_sq import mag_sq
 from .parrotate import parrotate
 from .perprotate import perprotate
 from .rel_change import rel_change

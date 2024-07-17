@@ -76,5 +76,6 @@ def calc_enstrophy(info_file, init_frame, final_frame):
           )
     incom_enstrophy[0, r] = np.sum(incom_mag, axis=(0, 1, 2)) * dx * dy * dz
     r += 1
+  #end
 
   return enstrophy, incom_enstrophy

@@ -1,6 +1,6 @@
 """Module including Gkeyll ADIOS reader class"""
 
-from typing import Tuple
+from typing import Optional, Tuple, Union
 import click
 import numpy as np
 import re
@@ -22,11 +22,11 @@ class GkylAdiosReader(object):
   def __init__(
       self,
       file_name: str,
-      ctx: dict = None,
+      ctx: Optional[dict] = None,
       var_name: str = "CartGridField",
-      c2p: str = None,
-      axes: tuple = (None, None, None, None, None, None),
-      comp: int = None,
+      c2p: str = "",
+      axes: Optional[tuple] = (None, None, None, None, None, None),
+      comp: Union[int, slice, None] = None,
       click_mode: bool = False,
       **kwargs,
   ):
@@ -100,7 +100,7 @@ class GkylAdiosReader(object):
     # end
 
   def _create_offset_count(
-      self, num_elems: np.ndarray, zs: tuple, comp: int, grid: list = None
+      self, num_elems: np.ndarray, zs: tuple, comp: int, grid: Optional[list] = None
   ) -> Tuple[np.ndarray, np.ndarray]:
     num_dims = len(num_elems)
     count = np.copy(num_elems)

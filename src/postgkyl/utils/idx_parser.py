@@ -1,5 +1,4 @@
-from cycler import cycler
-from time import time
+from typing import Union, Optional
 import numpy as np
 
 def _find_nearest_index(array, value):
@@ -44,7 +43,7 @@ def _string_to_index(value, array=None, nodal=False):
   # end
 
 
-def idx_parser(value: float, array: np.ndarray = None, nodal: bool = False) -> int:
+def idx_parser(value: Union[int, float, str], array: Optional[np.ndarray] = None, nodal: bool = False) -> Union[int, slice]:
   idx = None
   if isinstance(value, int):
     idx = value

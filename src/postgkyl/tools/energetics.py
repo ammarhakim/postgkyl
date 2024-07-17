@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple
 import numpy as np
 
-from postgkyl.tools import get_p, get_ke, magsq
+from postgkyl.tools import get_p, get_ke, mag_sq
 if TYPE_CHECKING:
   from postgkyl import GData
 
@@ -55,8 +55,8 @@ def energetics(
   grid, pri = get_p(data_ion)
   grid, kei = get_ke(data_ion)
   # Can compute magnitude squared of electric and magnetic fields with magsq diagnostic
-  grid, esq = magsq(data_field, coords="0:3")
-  grid, bsq = magsq(data_field, coords="3:6")
+  grid, esq = mag_sq(data_field, coords="0:3")
+  grid, bsq = mag_sq(data_field, coords="3:6")
 
   out[..., 0] = np.squeeze(pre)
   out[..., 1] = np.squeeze(kee)

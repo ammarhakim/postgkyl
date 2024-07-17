@@ -1,5 +1,8 @@
 """
-This is the postgkyl package init.
+# Postgkyl
+
+Postgkyl is both Python library and command-line tool designed to provide unified access
+to Gkeyll data together with a broad variety of analytical and visualization tools.
 """
 
 from postgkyl.version import version as __version__
