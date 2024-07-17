@@ -6,9 +6,10 @@ Diagnostics include:
 	Agyrotropy (either Frobenius or Swisdak measure)
 	Firehose instability threshold
 """
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Optional
+from typing import TYPE_CHECKING, Union
 import numpy as np
 
 from postgkyl.tools.prim_vars import get_pij
@@ -18,9 +19,8 @@ from postgkyl.utils import input_parser
 if TYPE_CHECKING:
   from postgkyl import GData
 
-def _get_pb(
-    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
-) -> tuple:
+
+def _get_pb(p_in: Union[GData, tuple], b_in: Union[GData, tuple]) -> tuple:
   _, p_values = input_parser(p_in)
   _, b_values = input_parser(b_in)
 
@@ -38,9 +38,7 @@ def _get_pb(
   return p_xx, p_xy, p_xz, p_yy, p_yz, p_zz, b_x, b_y, b_z
 
 
-def _get_sf(
-    species: Union[GData, tuple], field: Union[GData, tuple]
-):
+def _get_sf(species: Union[GData, tuple], field: Union[GData, tuple]) -> tuple:
   p_grid, p_values = get_pij(species)
   _, field_values = input_parser(field)
 
@@ -49,9 +47,7 @@ def _get_sf(
   return p_grid, p_values, b_grid, b_values
 
 
-def get_p_par(
-    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
-) -> tuple:
+def get_p_par(p_in: Union[GData, tuple], b_in: Union[GData, tuple]) -> tuple:
   _, p_values = input_parser(p_in)
   _, b_values = input_parser(b_in)
 
@@ -87,9 +83,7 @@ def get_gkyl_10m_p_par(
   return get_p_par((p_grid, p_values), (field_grid, b_values))
 
 
-def get_p_perp(
-    p_in: Union[GData, tuple], b_in: Union[GData, tuple]
-) -> tuple:
+def get_p_perp(p_in: Union[GData, tuple], b_in: Union[GData, tuple]) -> tuple:
   _, p_values = input_parser(p_in)
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -115,7 +109,8 @@ def get_gkyl_10m_p_perp(
 
 
 def get_agyro(
-    p_in: Union[GData, tuple], b_in: Union[GData, tuple],
+    p_in: Union[GData, tuple],
+    b_in: Union[GData, tuple],
     measure="swisdak",
 ) -> tuple:
   _, p_values = input_parser(p_in)
@@ -160,15 +155,15 @@ def get_agyro(
     ) / np.sqrt(2 * p_perp**2 + 4 * p_par * p_perp)
   else:
     raise ValueError(
-        "Measure specified is {:s};"
-        "it needs to be either 'swisdak' or 'frobenius'".format(measure.lower())
+        f"Measure specified is {measure.lower():s}; it needs to be either 'swisdak' or 'frobenius'"
     )
   # end
   return grid, out
 
 
 def get_gkyl_10m_agyro(
-    species: Union[GData, tuple], field: Union[GData, tuple],
+    species: Union[GData, tuple],
+    field: Union[GData, tuple],
     measure="swisdak",
 ) -> tuple:
   p_grid, p_values = get_pij(species)
@@ -176,6 +171,7 @@ def get_gkyl_10m_agyro(
   b_values = field_values[..., 3:6]
 
   return get_agyro(
-      (p_grid, p_values), (field_grid, b_values),
+      (p_grid, p_values),
+      (field_grid, b_values),
       measure=measure,
   )
