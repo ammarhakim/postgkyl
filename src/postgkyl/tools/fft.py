@@ -1,4 +1,5 @@
 """Postgkyl module for wrapping FFT."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -9,14 +10,10 @@ from postgkyl.tools.init_polar import init_polar
 from postgkyl.tools.polar_isotropic import polar_isotropic
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
-def fft(
-    data: GData,
-    psd: bool = False,
-    iso: bool = False,
-    overwrite: bool = False,
-    stack: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+def fft(data: GData, psd: bool = False, iso: bool = False,
+    overwrite: bool = False, stack: bool = False) -> Tuple[np.ndarray, np.ndarray]:
   """Postgkyl wrapper of scipy FFT.
 
   Args:
@@ -60,7 +57,7 @@ def fft(
 
     if psd:
       freq[0] = freq[0][: N // 2]
-      ft_values = np.abs(ft_values[: N // 2, :]) ** 2
+      ft_values = np.abs(ft_values[:N//2, :])**2
     # end
 
     if overwrite:
@@ -83,52 +80,40 @@ def fft(
     # end
     if psd:
       for i in range(0, num_dims):
-        freq[i] = freq[i][: N[i] // 2]
+        freq[i] = freq[i][:N[i]//2]
       if num_dims == 2:
-        ft_values = np.abs(ft_values[: N[0] // 2, : N[1] // 2, :]) ** 2
+        ft_values = np.abs(ft_values[:N[0]//2, :N[1]//2, :])**2
         # If only 2D, append third dummy index for ease of logic
         freq.append(0)
       elif num_dims == 3:
-        ft_values = np.abs(ft_values[: N[0] // 2, : N[1] // 2, : N[2] // 2, :]) ** 2
+        ft_values = np.abs(ft_values[:N[0]//2, :N[1]//2, :N[2]//2, :])**2
       else:
         raise ValueError("Only 1D, 2D, and 3D data are currently supported.")
       # end
       if iso:
         nkpolar = int(np.sqrt(np.sum(N[:] ** 2)))
-        nkx = N[0] // 2
-        nky = N[1] // 2
-        nkz = N[2] // 2
+        nkx = N[0]//2
+        nky = N[1]//2
+        nkz = N[2]//2
         kx = freq[0]
         ky = freq[1]
         kz = freq[2]
         akp, nbin, polar_index, _ = init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar)
         fft_iso = np.zeros((nkpolar, num_comps))
         for comp in np.arange(num_comps):
-          fft_iso[:, comp] = polar_isotropic(
-              nkpolar,
-              nkx,
-              nky,
-              nkz,
-              polar_index,
-              nbin,
-              ft_values[..., comp],
-              kx,
-              ky,
-              kz,
-          )
+          fft_iso[:, comp] = polar_isotropic(nkpolar, nkx, nky, nkz, polar_index,
+              nbin, ft_values[..., comp], kx, ky, kz)
         # end
         # Return isotropic spectra and 1D isotropic ks
         if overwrite:
           data.push([akp], fft_iso)
-        else:
-          return [akp], fft_iso
+        return [akp], fft_iso
         # end
       # end
     # end
 
     if overwrite and not iso:
       data.push(freq, ft_values)
-    else:
-      return freq, ft_values
+    return freq, ft_values
     # end
   # end

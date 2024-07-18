@@ -1,14 +1,17 @@
 """Postgkyl module for calculating integrals and derivatives."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Tuple
 import numpy as np
 
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
 
-def integrate(data: GData, axis: Union[int, tuple, str], overwrite=False, stack=False):
+def integrate(data: GData, axis: Union[int, tuple, str],
+    overwrite=False, stack=False) -> Tuple[list, np.ndarray]:
   """Integrates Gkeyll data.
 
   Currently simply uses the NumPy dot function. True, DG integration should be
@@ -23,10 +26,7 @@ def integrate(data: GData, axis: Union[int, tuple, str], overwrite=False, stack=
   """
   if stack:
     overwrite = stack
-    print(
-        "Deprecation warning: The 'stack' parameter",
-        "is going to be replaced with 'overwrite'",
-    )
+    print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
   # end
   grid = list(data.grid)
   values = np.copy(data.values)
@@ -86,8 +86,8 @@ def integrate(data: GData, axis: Union[int, tuple, str], overwrite=False, stack=
 
   if overwrite:
     data.push(grid, values)
-  else:
-    return grid, values
+
+  return grid, values
   # end
 
 

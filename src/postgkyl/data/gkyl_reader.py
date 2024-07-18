@@ -1,4 +1,4 @@
-"""Module including Gkeyll binary reader class"""
+"""Module including Gkeyll binary reader class."""
 
 from typing import Tuple, Optional
 import msgpack as mp
@@ -80,14 +80,9 @@ import os.path
 class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
-  def __init__(
-      self,
-      file_name: str,
-      ctx: Optional[dict] = None,
-      c2p: str = "",
-      c2p_vel: str = "",
-      **kwargs
-  ):
+  def __init__(self, file_name: str, ctx: Optional[dict] = None,
+      c2p: str = "", c2p_vel: str = "",
+      **kwargs):
     """Initialize the instance of Gkeyll reader.
 
     Args:
@@ -145,18 +140,15 @@ class GkylReader(object):
       self.offset += 5  # Header contatins the gkyl magic sequence
 
       self.version = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset
-      )[0]
+          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
       self.file_type = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset
-      )[0]
+          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
       meta_size = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset
-      )[0]
+          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
       # read meta
@@ -183,8 +175,7 @@ class GkylReader(object):
 
     # read real-type
     real_type = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset
-    )[0]
+        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     if real_type == 1:
       self.dtf = np.dtype("f4")
       self.doffset = 4
@@ -226,8 +217,7 @@ class GkylReader(object):
 
     # read array size
     self.asize = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset
-    )[0]
+        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
   def _read_data_t1_v1(self) -> np.ndarray:
@@ -242,8 +232,7 @@ class GkylReader(object):
   def _read_data_t3_v1(self) -> np.ndarray:
     # get the number of stored ranges
     num_range = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset
-    )[0]
+        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
@@ -267,9 +256,7 @@ class GkylReader(object):
       # end
       slices = [slice(loidx[d] - 1, upidx[d]) for d in range(self.num_dims)]
 
-      asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[
-          0
-      ]
+      asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
       data_raw = np.fromfile(
           self.file_name,
@@ -283,7 +270,7 @@ class GkylReader(object):
     return data
 
   # ---- Read dynvector data (version 1) ----
-  def _read_t2_v1(self) -> tuple:
+  def _read_t2_v1(self) -> Tuple[list, np.ndarray]:
     cells = 0
     time = np.array([])
     data = np.array([[]])

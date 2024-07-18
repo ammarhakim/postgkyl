@@ -1,4 +1,3 @@
-from glob import glob
 import numpy as np
 import os.path
 import tables
@@ -10,36 +9,30 @@ from postgkyl.data.computeInterpolationMatrices import createInterpMatrix
 
 path = os.path.dirname(os.path.realpath(__file__))
 
-num_nodesSerendipity = np.array(
-    [
-        [1, 2, 3, 4, 5],
-        [1, 4, 8, 12, 17],
-        [1, 8, 20, 32, 50],
-        [1, 16, 48, 80, 136],
-        [1, 32, 112, 192, 352],
-        [1, 64, 256, 448, 880],
-    ]
-)
-num_nodesMaximal = np.array(
-    [
-        [2, 3, 4, 5],
-        [3, 6, 10, 15],
-        [4, 10, 20, 35],
-        [5, 15, 35, 70],
-        [6, 21, 56, 126],
-        [7, 28, 84, 210],
-    ]
-)
-num_nodesTensor = np.array(
-    [
-        [2, 3, 4, 5],
-        [4, 9, 16, 25],
-        [8, 27, 64, 125],
-        [16, 81, 256, 625],
-        [32, 343, 1024, 3125],
-        [64, 729, 4096, 15625],
-    ]
-)
+num_nodesSerendipity = np.array([
+    [1, 2, 3, 4, 5],
+    [1, 4, 8, 12, 17],
+    [1, 8, 20, 32, 50],
+    [1, 16, 48, 80, 136],
+    [1, 32, 112, 192, 352],
+    [1, 64, 256, 448, 880]])
+
+num_nodesMaximal = np.array([
+    [2, 3, 4, 5],
+    [3, 6, 10, 15],
+    [4, 10, 20, 35],
+    [5, 15, 35, 70],
+    [6, 21, 56, 126],
+    [7, 28, 84, 210]])
+
+num_nodesTensor = np.array([
+    [2, 3, 4, 5],
+    [4, 9, 16, 25],
+    [8, 27, 64, 125],
+    [16, 81, 256, 625],
+    [32, 343, 1024, 3125],
+    [64, 729, 4096, 15625]])
+
 num_nodesGkHybrid = np.array([1, 6, 12, 24, 48])
 num_nodeshybrid = np.array([1, 6, 12, 24, 48])
 
@@ -133,41 +126,41 @@ def _loadDerivativeMatrix(dim, poly_order, basis_type, interp, read, modal=True)
   # end
 
 
-def _makeMesh(nInterp, Xc, xlo=None, xup=None, gridType=None):
+def _makeMesh(num_interp, Xc, xlo=None, xup=None, gridType=None):
   nx = Xc.shape[0] - 1  # expecting nodal mesh
-  meshOut = np.zeros(nInterp * nx + 1)
+  meshOut = np.zeros(num_interp * nx + 1)
   if gridType is None or gridType == "uniform":
     if xlo is None or xup is None:
       xlo = Xc[0]
       xup = Xc[-1]
     # end
-    meshOut = np.linspace(xlo, xup, nInterp * nx + 1)
+    meshOut = np.linspace(xlo, xup, num_interp*nx + 1)
   elif gridType == "mapped":
-    # subdivide every cell in Xc into nInterp cells.
+    # subdivide every cell in Xc into num_interp cells.
     for i in range(nx):
-      dx = (Xc[i + 1] - Xc[i]) / nInterp
-      for j in range(nInterp):
-        meshOut[i * nInterp + j] = Xc[i] + j * dx
+      dx = (Xc[i + 1] - Xc[i]) / num_interp
+      for j in range(num_interp):
+        meshOut[i*num_interp + j] = Xc[i] + j*dx
       # end
     # end
     # add the last node.
-    dx = (Xc[-1] - Xc[-2]) / nInterp
-    meshOut[nx * nInterp] = Xc[nx - 1] + nInterp * dx
+    dx = (Xc[-1] - Xc[-2]) / num_interp
+    meshOut[nx*num_interp] = Xc[nx - 1] + num_interp*dx
   # end
   return meshOut
 
 
-def _make1Dgrids(nInterp, Xc, num_dims, gridType=None):
+def _make1Dgrids(num_interp, Xc, num_dims, gridType=None):
   # build a list of 1D arrays, each containing the grid in that dimension.
   gridOut = list()
   if gridType is None or gridType == "uniform":
-    gridOut = [_makeMesh(nInterp[d], Xc[d]) for d in range(num_dims)]
+    gridOut = [_makeMesh(num_interp[d], Xc[d]) for d in range(num_dims)]
   elif gridType == "mapped":
     # back out 1D arrays from Xc.
     for d in range(num_dims):
       currSlices = [0] * num_dims
       currSlices[-1 - d] = np.s_[:]
-      gridOut.append(_makeMesh(nInterp[d], Xc[d][tuple(currSlices)], gridType=gridType))
+      gridOut.append(_makeMesh(num_interp[d], Xc[d][tuple(currSlices)], gridType=gridType))
     # end
   # end
   return gridOut
@@ -181,20 +174,17 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
   num_interp = np.array([max(nInterpIn, 2)] * num_dims)
   if basis_type == "gkhybrid":
     # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
-    vpardir = (
-        1
-        if (num_dims == 2 or num_dims == 3)
-        else (2 if num_dims == 4 else (3 if num_dims == 5 else 99))
-    )
+    vpardir = (1 if (num_dims == 2 or num_dims == 3)
+        else (2 if num_dims == 4 else (3 if num_dims == 5 else 99)))
     num_interp[vpardir] = nInterpIn + 1
   # end
   if basis_type == "hybrid":
     num_interp[-1] = nInterpIn + 1
   # end
   if c2p:
-    qOut = np.zeros(numCells * (num_interp - 1) + 1, np.float64)
+    qOut = np.zeros(numCells*(num_interp - 1) + 1, np.float64)
   else:
-    qOut = np.zeros(numCells * num_interp, np.float64)
+    qOut = np.zeros(numCells*num_interp, np.float64)
   # end
   # move the node index from last to the first
   qIn = np.moveaxis(qIn, -1, 0)
@@ -206,19 +196,12 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
     startIdx = np.unravel_index(n, num_interp, order="F")
     # define multi-D qOut slices
     if c2p:
-      idxs = [
-          slice(
-              int(startIdx[i]),
-              int(numCells[i] * (num_interp[i] - 1) + startIdx[i]),
-              num_interp[i] - 1,
-          )
-          for i in range(num_dims)
-      ]
+      idxs = [slice(int(startIdx[i]), int(numCells[i]*(num_interp[i] - 1) + startIdx[i]),
+                  num_interp[i] - 1)
+         for i in range(num_dims)]
     else:
-      idxs = [
-          slice(int(startIdx[i]), int(numCells[i] * num_interp[i]), num_interp[i])
-          for i in range(num_dims)
-      ]
+      idxs = [slice(int(startIdx[i]), int(numCells[i]*num_interp[i]), num_interp[i])
+          for i in range(num_dims)]
     # end
     qOut[tuple(idxs)] = temp
   # end
@@ -310,18 +293,10 @@ class GInterpNodal(GInterp):
   def interpolate(self, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
-      print(
-          "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-      )
+      print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     # end
-    cMat = _loadInterpMatrix(
-        self.num_dims,
-        self.poly_order,
-        self.basis_type,
-        self.num_interp,
-        self.read,
-        False,
-    )
+    cMat = _loadInterpMatrix(self.num_dims, self.poly_order, self.basis_type,
+        self.num_interp, self.read, False)
     if isinstance(comp, int):
       q = self._getRawNodal(comp)
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
@@ -330,11 +305,9 @@ class GInterpNodal(GInterp):
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in comp[1:]:
         q = self._getRawNodal(c)
-        values = np.append(
-            values,
+        values = np.append(values,
             _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
-            axis=-1,
-        )
+            axis=-1)
       # end
     elif isinstance(comp, slice):
       q = self._getRawNodal(comp.start)
@@ -349,8 +322,8 @@ class GInterpNodal(GInterp):
       # end
     # end
 
-    nInterp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
-    grid = _make1Dgrids(nInterp, self.Xc, self.num_dims)
+    num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
+    grid = _make1Dgrids(num_interp, self.Xc, self.num_dims)
     if overwrite:
       self.data.push(grid, values)
     else:
@@ -360,25 +333,16 @@ class GInterpNodal(GInterp):
   def differentiate(self, direction, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
-      print(
-          "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-      )
+      print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     # end
     q = self._getRawNodal(comp)
-    cMat = _loadDerivativeMatrix(
-        self.num_dims,
-        self.poly_order,
-        self.basis_type,
-        self.num_interp,
-        self.read,
-        False,
-    )
+    cMat = _loadDerivativeMatrix(self.num_dims, self.poly_order, self.basis_type,
+        self.num_interp, self.read, False)
     if direction is not None:
       values = (
           _interpOnMesh(cMat[:, :, direction], q, self.num_interp, self.basis_type)
           * 2
-          / (self.Xc[direction][1] - self.Xc[direction][0])
-      )
+          / (self.Xc[direction][1] - self.Xc[direction][0]))
       values = values[..., np.newaxis]
     else:
       values = np.zeros(q.shape, self.num_dims)
@@ -388,8 +352,8 @@ class GInterpNodal(GInterp):
       # end
     # end
 
-    nInterp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
-    grid = _make1Dgrids(nInterp, self.Xc, self.num_dims)
+    num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
+    grid = _make1Dgrids(num_interp, self.Xc, self.num_dims)
     if overwrite:
       self.data.push(grid, values)
     else:
@@ -423,15 +387,8 @@ class GInterpModal(GInterp):
     grid, values = dg.interpolate()
   """
 
-  def __init__(
-      self,
-      data,
-      poly_order=None,
-      basis_type=None,
-      num_interp=None,
-      periodic=False,
-      read=None,
-  ):
+  def __init__(self, data, poly_order=None, basis_type=None, num_interp=None,
+      periodic=False, read=None):
     self.num_dims = data.get_num_dims()
     if poly_order is not None:
       self.poly_order = poly_order
@@ -439,8 +396,7 @@ class GInterpModal(GInterp):
       self.poly_order = data.ctx["poly_order"]
     else:
       raise ValueError(
-          "GInterpNodal: polynomial order is neither specified nor stored in the output file"
-      )
+        "GInterpNodal: polynomial order is neither specified nor stored in the output file")
     # end
     if basis_type:
       if basis_type == "ms":
@@ -458,8 +414,7 @@ class GInterpModal(GInterp):
       self.basis_type = data.ctx["basis_type"]
     else:
       raise ValueError(
-          "GInterpModal: basis type is neither specified nor stored in the output file"
-      )
+        "GInterpModal: basis type is neither specified nor stored in the output file")
     # end
 
     # PKPM hybrid base expects 2+ dimensions with the last one being
@@ -487,18 +442,10 @@ class GInterpModal(GInterp):
   def interpolate(self, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
-      print(
-          "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-      )
+      print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     # end
-    cMat = _loadInterpMatrix(
-        self.num_dims,
-        self.poly_order,
-        self.basis_type,
-        self.num_interp,
-        self.read,
-        True,
-    )
+    cMat = _loadInterpMatrix(self.num_dims, self.poly_order, self.basis_type,
+        self.num_interp, self.read, True)
     if isinstance(comp, int):
       q = self._getRawModal(comp)
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
@@ -507,31 +454,26 @@ class GInterpModal(GInterp):
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in comp[1:]:
         q = self._getRawModal(c)
-        values = np.append(
-            values,
+        values = np.append(values,
             _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
-            axis=-1,
-        )
+            axis=-1)
       # end
     elif isinstance(comp, slice):
       q = self._getRawModal(comp.start)
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
       for c in range(comp.start + 1, comp.stop):
         q = self._getRawModal(c)
-        values = np.append(
-            values,
+        values = np.append(values,
             _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis],
-            axis=-1,
-        )
+            axis=-1)
       # end
     # end
     if self.data.ctx["grid_type"] == "c2p":
       q = self.data.get_grid()
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
-      cMat = _loadInterpMatrix(
-          self.num_dims, poly_order, basis, self.num_interp, self.read, True, True
-      )
+      cMat = _loadInterpMatrix(self.num_dims, poly_order, basis, self.num_interp,
+          self.read, True, True)
       grid = []
       for d in range(self.num_dims):
         grid.append(_interpOnMesh(cMat, q[d], self.num_interp + 1, basis, True))
@@ -539,20 +481,17 @@ class GInterpModal(GInterp):
     else:
       if self.basis_type == "gkhybrid":
         # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
-        vpardir = (
-            1
-            if (self.num_dims == 2 or self.num_dims == 3)
-            else (2 if self.num_dims == 4 else (3 if self.num_dims == 5 else 99))
-        )
-        nInterp = [self.num_interp] * self.num_dims
-        nInterp[vpardir] = self.num_interp + 1
+        vpardir = (1 if (self.num_dims == 2 or self.num_dims == 3)
+            else (2 if self.num_dims == 4 else (3 if self.num_dims == 5 else 99)))
+        num_interp = [self.num_interp] * self.num_dims
+        num_interp[vpardir] = self.num_interp + 1
       elif self.basis_type == "hybrid":
-        nInterp = [self.num_interp] * self.num_dims
-        nInterp[-1] = self.num_interp + 1
+        num_interp = [self.num_interp] * self.num_dims
+        num_interp[-1] = self.num_interp + 1
       else:
-        nInterp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
+        num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
       # end
-      grid = _make1Dgrids(nInterp, self.Xc, self.num_dims, None)
+      grid = _make1Dgrids(num_interp, self.Xc, self.num_dims, None)
       if self.data.ctx["grid_type"] == "c2p_vel":
         num_cdim = self.data.ctx["num_cdim"]
         num_vdim = self.data.ctx["num_vdim"]
@@ -560,12 +499,10 @@ class GInterpModal(GInterp):
         num_comp = q[-1].shape[-1]
         basis, poly_order = _get_basis_p(1, num_comp)
         for d in range(num_vdim):
-          cMat = _loadInterpMatrix(
-              1, poly_order, basis, nInterp[num_cdim + d], self.read, True, True
-          )
-          grid[num_cdim + d] = _interpOnMesh(
-              cMat, q[num_cdim + d], nInterp[num_cdim + d] + 1, basis, True
-          )
+          cMat = _loadInterpMatrix(1, poly_order, basis, num_interp[num_cdim + d],
+              self.read, True, True)
+          grid[num_cdim + d] = _interpOnMesh(cMat, q[num_cdim + d],
+              num_interp[num_cdim + d] + 1, basis, True)
         # end
       # end
     # end
@@ -581,9 +518,8 @@ class GInterpModal(GInterp):
       q = self.data.get_grid()
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
-      cMat = _loadInterpMatrix(
-          self.num_dims, poly_order, basis, self.num_interp, self.read, True, True
-      )
+      cMat = _loadInterpMatrix(self.num_dims, poly_order, basis, self.num_interp,
+          self.read, True, True)
       grid = []
       for d in range(self.num_dims):
         grid.append(_interpOnMesh(cMat, q[d], self.num_interp, self.basis_type, True))
@@ -591,8 +527,8 @@ class GInterpModal(GInterp):
     elif self.data.ctx["grid_type"] == "c2p_vel":
       q = self.data.get_grid()
     else:
-      nInterp = [self.num_interp] * self.num_dims
-      grid = _make1Dgrids(nInterp, self.Xc, self.num_dims, self.gridType)
+      num_interp = [self.num_interp] * self.num_dims
+      grid = _make1Dgrids(num_interp, self.Xc, self.num_dims, self.gridType)
     # end
 
     if overwrite:
@@ -604,44 +540,29 @@ class GInterpModal(GInterp):
   def differentiate(self, direction=None, comp=0, overwrite=False, stack=False):
     if stack:
       overwrite = stack
-      print(
-          "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
-      )
+      print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     # end
     q = self._getRawModal(comp)
-    cMat = _loadDerivativeMatrix(
-        self.num_dims,
-        self.poly_order,
-        self.basis_type,
-        self.num_interp,
-        self.read,
-        True,
-    )
+    cMat = _loadDerivativeMatrix(self.num_dims, self.poly_order, self.basis_type,
+        self.num_interp, self.read, True)
     if direction is not None:
-      values = (
-          _interpOnMesh(cMat[:, :, direction], q, self.num_interp, self.basis_type)
-          * 2
-          / (self.Xc[direction][1] - self.Xc[direction][0])
-      )
+      values = (_interpOnMesh(cMat[:, :, direction], q, self.num_interp, self.basis_type)*2
+          / (self.Xc[direction][1] - self.Xc[direction][0]))
       values = values[..., np.newaxis]
     else:
       values = _interpOnMesh(cMat[..., 0], q, self.num_interp, self.basis_type)
       values /= self.Xc[0][1] - self.Xc[0][0]
       values = values[..., np.newaxis]
       for i in range(1, self.num_dims):
-        values = np.append(
-            values,
-            _interpOnMesh(cMat[..., i], q, self.num_interp, self.basis_type)[
-                ..., np.newaxis
-            ],
-            axis=self.num_dims,
-        )
+        values = np.append(values,
+            _interpOnMesh(cMat[..., i], q, self.num_interp, self.basis_type)[..., np.newaxis],
+            axis=self.num_dims)
         values[..., i] *= 2 / (self.Xc[i][1] - self.Xc[i][0])
       # end
     # end
 
-    nInterp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
-    grid = _make1Dgrids(nInterp, self.Xc, self.num_dims, self.gridType)
+    num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
+    grid = _make1Dgrids(num_interp, self.Xc, self.num_dims, self.gridType)
     if overwrite:
       self.data.push(grid, values)
     else:

@@ -6,7 +6,6 @@ import shutil
 
 try:
   import adios2
-
   has_adios = True
 except ModuleNotFoundError:
   has_adios = False
@@ -31,26 +30,16 @@ class GData(object):
 
   """
 
-  def __init__(
-      self,
-      file_name: str = "",
+  def __init__(self, file_name: str = "",
       comp: Union[int, str, None] = None,
-      z0: Union[int, str, None] = None,
-      z1: Union[int, str, None] = None,
-      z2: Union[int, str, None] = None,
-      z3: Union[int, str, None] = None,
-      z4: Union[int, str, None] = None,
-      z5: Union[int, str, None] = None,
+      z0: Union[int, str, None] = None, z1: Union[int, str, None] = None,
+      z2: Union[int, str, None] = None, z3: Union[int, str, None] = None,
+      z4: Union[int, str, None] = None, z5: Union[int, str, None] = None,
       var_name: str = "CartGridField",
-      tag: str = "default",
-      label: str = "",
+      tag: str = "default", label: str = "",
       ctx: Optional[dict] = None,
-      comp_grid: bool = False,
-      mapc2p_name: str = "",
-      mapc2p_vel_name: str = "",
-      reader_name: str = "",
-      load: bool = True,
-      click_mode: bool = False,
+      comp_grid: bool = False, mapc2p_name: str = "", mapc2p_vel_name: str = "",
+      reader_name: str = "", load: bool = True, click_mode: bool = False,
   ):
     """Initializes the Data class with a Gkeyll output file.
 
@@ -106,6 +95,10 @@ class GData(object):
     self.ctx["basis_type"] = None
     self.ctx["is_modal"] = None
     self.ctx["grid_type"] = "uniform"
+
+    self.ctx["mass"] = None
+    self.ctx["mu_0"] = None
+
     # Allow to copy input context variable
     if ctx:
       for key in ctx:
@@ -383,35 +376,22 @@ class GData(object):
     # end
     if self.ctx["poly_order"] and self.ctx["basis_type"]:
       output += "\n├─ DG info:\n"
-      output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
+      output += f"│  ├─ Polynomial Order: {self.ctx["poly_order"]:d}\n"
       if self.ctx["is_modal"]:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
+        output += f"│  └─ Basis Type: {self.ctx["basis_type"]:s} (modal)"
       else:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
+        output += f"│  └─ Basis Type: {self.ctx["basis_type"]:s}"
       # end
     # end
     if self.ctx["changeset"] and self.ctx["builddate"]:
       output += "\n├─ Created with Gkeyll:\n"
-      output += f"│  ├─ Changeset: {self.ctx['changeset']:s}\n"
-      output += f"│  └─ Build Date: {self.ctx['builddate']:s}"
+      output += f"│  ├─ Changeset: {self.ctx["changeset"]:s}\n"
+      output += f"│  └─ Build Date: {self.ctx["builddate"]:s}"
     # end
     for key, val in self.ctx.items():
-      if key not in [
-          "time",
-          "frame",
-          "changeset",
-          "builddate",
-          "basis_type",
-          "poly_order",
-          "is_modal",
-          "lower",
-          "upper",
-          "cells",
-          "num_comps",
-          "grid_type",
-          "num_cdim",
-          "num_vdim",
-      ]:
+      if key not in ["time", "frame", "changeset", "builddate", "basis_type",
+          "poly_order","is_modal", "lower", "upper", "cells", "num_comps",
+          "grid_type", "num_cdim", "num_vdim"]:
         output += f"\n├─ {key:s}: {val}"
       # end
     # end
@@ -419,15 +399,10 @@ class GData(object):
     return output
 
   # ---- Write ----
-  def write(
-      self,
-      out_name: str = "",
+  def write(self, out_name: str = "",
       extension: Literal["gkyl", "bp", "txt", "npy"] = "gkyl",
-      mode: str = "",
-      var_name: str = "",
-      append: bool = False,
-      cleaning: bool = True,
-  ) -> None:
+      mode: str = "", var_name: str = "", append: bool = False,
+      cleaning: bool = True) -> None:
     """Writes data in a file.
 
     The available formats are Gkeyll .gkyl (default), ADIOS .bp file, ASCII .txt file,
@@ -460,7 +435,7 @@ class GData(object):
     if not out_name:
       if self._file_name is not None:
         fn = self._file_name
-        out_name = f"{fn.split('.', maxsplit=1)[0].strip('_')}_mod.{extension}"
+        out_name = f"{fn.split(".", maxsplit=1)[0].strip("_")}_mod.{extension}"
       else:
         out_name = f"gdata.{extension}"
       # end
@@ -512,7 +487,7 @@ class GData(object):
         else:
           nm = out_name
         # end
-        shutil.move(f"{out_name}.dir/{nm}.0{out_name}")
+        shutil.move(f"{out_name}.dir/{nm}.0", f"{out_name}")
         shutil.rmtree(f"{out_name}.dir")
       # end
     elif extension == "gkyl":

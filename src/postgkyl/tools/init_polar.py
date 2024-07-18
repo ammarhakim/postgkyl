@@ -21,7 +21,7 @@ def init_polar(nkx, nky, nkz, kx, ky, kz, nkpolar):
     else:
       dkp = max(kx[1], ky[1])
     akp = (np.linspace(1, nkpolar, nkpolar)) * dkp  # Kperp grid
-    akplim = dkp / 2 + (np.linspace(0, nkpolar, nkpolar + 1)) * dkp  # Bin limits
+    akplim = dkp / 2 + (np.linspace(0, nkpolar, nkpolar + 1))*dkp  # Bin limits
     # Re-written to avoid loops. Necessary for large grids.
     [kxg, kyg] = np.meshgrid(
         ky, kx

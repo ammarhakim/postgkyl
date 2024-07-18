@@ -8,10 +8,10 @@ import numpy as np
 from postgkyl.tools import get_p, get_ke, mag_sq
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
-def energetics(
-    data_elc: GData, data_ion: GData, data_field: GData, overwrite=False, stack=False
-) -> Tuple[list, np.ndarray]:
+def energetics(data_elc: GData, data_ion: GData, data_field: GData,
+    overwrite=False, stack=False) -> Tuple[list, np.ndarray]:
   """Function to separate components of the energy.
 
   Works for both species and EM fields and separates into constituent parts (species
@@ -30,13 +30,6 @@ def energetics(
   Notes:
     Assumes two-species plasma
   """
-  if stack:
-    overwrite = stack
-    print(
-        "Deprecation warning: The 'stack' parameter",
-        "is going to be replaced with 'overwrite'",
-    )
-  # end
   # Grid is the same for each of the input objects
   grid = data_field.get_grid()
   values_field = data_field.get_values()

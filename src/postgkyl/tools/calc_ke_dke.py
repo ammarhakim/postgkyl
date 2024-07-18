@@ -6,15 +6,8 @@ import numpy as np
 import postgkyl
 
 
-def calc_ke_dke(
-    root_file_name: str,
-    init_frame: int,
-    final_frame: int,
-    dim: int,
-    vol: float,
-    init_time: float,
-    final_time: float,
-) -> Tuple[np.ndarray, np.ndarray]:
+def calc_ke_dke(root_file_name: str, init_frame: int, final_frame: int, dim: int,
+    vol: float, init_time: float, final_time: float) -> Tuple[np.ndarray, np.ndarray]:
   """CalculateS all the total kinetic energy and the rate of dissipation of KE
 
   Args:
@@ -61,7 +54,7 @@ def calc_ke_dke(
     w = pz / rho
 
     e = rho * (u**2 + v**2 + w**2)
-    ke[0, r] = np.sum(e, axis=(0, 1, 2)) * dx * dy * dz * vol
+    ke[0, r] = np.sum(e, axis=(0, 1, 2))*dx*dy*dz*vol
     r += 1
 
   r = 0

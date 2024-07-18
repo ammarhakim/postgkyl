@@ -63,42 +63,24 @@ class PgkylCommandGroup(click.Group):
 
 
 # The command line mode entry command
-@click.command(
-    cls=PgkylCommandGroup,
-    chain=True,
-    context_settings=dict(help_option_names=["-h", "--help"]),
-)
+@click.command(cls=PgkylCommandGroup, chain=True,
+    context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--verbose", "-v", is_flag=True, help="Turn on verbosity.")
-@click.option(
-    "--version",
-    is_flag=True,
-    callback=_print_version,
-    expose_value=False,
-    is_eager=True,
-    help="Print the version information.",
-)
+@click.option("--version", is_flag=True, callback=_print_version, expose_value=False,
+    is_eager=True, help="Print the version information.")
 @click.option("--z0", help="Partial file load: 0th coord (either int or slice)")
 @click.option("--z1", help="Partial file load: 1st coord (either int or slice)")
 @click.option("--z2", help="Partial file load: 2nd coord (either int or slice)")
 @click.option("--z3", help="Partial file load: 3rd coord (either int or slice)")
 @click.option("--z4", help="Partial file load: 4th coord (either int or slice)")
 @click.option("--z5", help="Partial file load: 5th coord (either int or slice)")
-@click.option(
-    "--component", "-c", help="Partial file load: comps (either int or slice)"
-)
+@click.option("--component", "-c", help="Partial file load: comps (either int or slice)")
 @click.option("--compgrid", is_flag=True, help="Disregard the mapped grid information")
-@click.option(
-    "--varname",
-    "-d",
-    multiple=True,
-    help="Specify the Adios variable name (default is 'CartGridField')",
-)
+@click.option("--varname", "-d", multiple=True,
+    help="Specify the Adios variable name (default is 'CartGridField')")
 @click.option("--c2p", help="Specify the file name containing c2p mapped coordinates")
-@click.option(
-    "--c2p-vel",
-    "c2p_vel",
-    help="Specify the file name containing c2p mapped velocity coordinates",
-)
+@click.option("--c2p-vel", "c2p_vel",
+    help="Specify the file name containing c2p mapped velocity coordinates")
 @click.option("--style", help="Sets Maplotlib rcParams style file.")
 @click.pass_context
 def cli(ctx, **kwargs):
@@ -120,7 +102,6 @@ def cli(ctx, **kwargs):
   else:
     ctx.obj["verbose"] = False
   # end
-
   ctx.obj["in_data_strings"] = []
   ctx.obj["in_data_strings_loaded"] = 0
 
@@ -131,24 +112,13 @@ def cli(ctx, **kwargs):
 
   ctx.obj["compgrid"] = kwargs["compgrid"]
   ctx.obj["global_var_names"] = kwargs["varname"]
-  ctx.obj["global_cuts"] = (
-      kwargs["z0"],
-      kwargs["z1"],
-      kwargs["z2"],
-      kwargs["z3"],
-      kwargs["z4"],
-      kwargs["z5"],
-      kwargs["component"],
-  )
+  ctx.obj["global_cuts"] = (kwargs["z0"], kwargs["z1"], kwargs["z2"],
+      kwargs["z3"], kwargs["z4"], kwargs["z5"], kwargs["component"])
   ctx.obj["global_c2p"] = kwargs["c2p"]
   ctx.obj["global_c2p_vel"] = kwargs["c2p_vel"]
 
   ctx.obj["rcParams"] = {}
-  fn = (
-      kwargs["style"]
-      if kwargs["style"]
-      else f"{os.path.dirname(os.path.realpath(__file__))}/output/postgkyl.mplstyle"
-  )
+  fn = kwargs["style"] if kwargs["style"] else f"{os.path.dirname(os.path.realpath(__file__))}/output/postgkyl.mplstyle"
   load_style(ctx, fn)
 
 

@@ -64,17 +64,17 @@ def calc_enstrophy(info_file, init_frame, final_frame):
     w_z = np.array(w_gradient[2])
 
     # find enstrophy in terms of curl magnitude squared integrand
-    curl_mag = (w_y - v_z) ** 2 + (u_z - w_x) ** 2 + (v_x - u_y) ** 2
-    enstrophy[0, r] = np.sum(curl_mag, axis=(0, 1, 2)) * dx * dy * dz
+    curl_mag = (w_y - v_z)**2 + (u_z - w_x)**2 + (v_x - u_y)**2
+    enstrophy[0, r] = np.sum(curl_mag, axis=(0, 1, 2))*dx*dy*dz
 
     # find incompressible enstrophy magnitude squared integrand
     for c in range(0, (len(u[:, 0, 0]) - 1)):
       for j in range(0, (len(u[0, :, 0]) - 1)):
         for k in range(0, (len(u[0, 0, :]) - 1)):
           incom_mag[c, j, k] = (
-              np.trace(np.transpose(A[:, :, c, j, k]) * A[:, :, c, j, k]) * rho[c, j, k]
+              np.trace(np.transpose(A[:, :, c, j, k])*A[:, :, c, j, k])*rho[c, j, k]
           )
-    incom_enstrophy[0, r] = np.sum(incom_mag, axis=(0, 1, 2)) * dx * dy * dz
+    incom_enstrophy[0, r] = np.sum(incom_mag, axis=(0, 1, 2))*dx*dy*dz
     r += 1
   #end
 

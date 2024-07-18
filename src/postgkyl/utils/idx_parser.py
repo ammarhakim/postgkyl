@@ -3,9 +3,7 @@ import numpy as np
 
 def _find_nearest_index(array, value):
   if array is None:
-    raise TypeError(
-        "The index value is float but the 'array' from which to select the neares value is not specified."
-    )
+    raise TypeError("The index value is float but the 'array' from which to select the neares value is not specified.")
   # end
   idx = np.searchsorted(array, value)
   if idx == len(array):
@@ -19,15 +17,13 @@ def _find_nearest_index(array, value):
 
 def _find_cell_index(array, value):
   if array is None:
-    raise TypeError(
-        "The index value is float but the 'array' from which to select the neares value is not specified."
-    )
+    raise TypeError("The index value is float but the 'array' from which to select the neares value is not specified.")
   # end
   idx = np.searchsorted(array, value)
   return int(idx)
 
 
-def _string_to_index(value, array=None, nodal=False):
+def _string_to_index(value: str, array: np.ndarray, nodal: bool = False) -> int:
   if isinstance(value, str):
     if value.isdigit():
       return int(value)
@@ -43,7 +39,8 @@ def _string_to_index(value, array=None, nodal=False):
   # end
 
 
-def idx_parser(value: Union[int, float, str], array: Optional[np.ndarray] = None, nodal: bool = False) -> Union[int, slice]:
+def idx_parser(value: Union[int, float, str], array: Optional[np.ndarray] = None,
+    nodal: bool = False) -> Union[int, slice]:
   idx = None
   if isinstance(value, int):
     idx = value

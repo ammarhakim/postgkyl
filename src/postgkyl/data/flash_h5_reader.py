@@ -3,6 +3,7 @@
 import math
 import numpy as np
 import tables
+from typing import Tuple
 
 # FLASH variable names
 # dens : the density in g/cc
@@ -82,7 +83,7 @@ class FlashH5Reader(object):
     return data.shape, lower[:2], upper[:2], data[..., np.newaxis]
 
   # ---- Exposed functions ----
-  def get_data(self) -> tuple:
+  def get_data(self) -> Tuple[np.ndarray, np.ndarray]:
     cells, lower, upper, data = self._read_frame()
     num_dims = len(cells)
     grid = [np.linspace(lower[d], upper[d], cells[d] + 1) for d in range(num_dims)]

@@ -1,8 +1,8 @@
 from time import time
 import click
 
-def verb_print(ctx, message):
+def verb_print(ctx: click.core.Context, message: str) -> None:
   if ctx.obj["verbose"]:
-    elapsedTime = time() - ctx.obj["start_time"]
-    click.echo(click.style("[{:f}] {:s}".format(elapsedTime, message), fg="green"))
+    elapsed_time = time() - ctx.obj["start_time"]
+    click.echo(click.style(f"[{elapsed_time:f}] {message:s}", fg="green"))
   # end

@@ -4,9 +4,9 @@ Contains FFT and butter filters.
 """
 
 from scipy.signal import butter, lfilter
+from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Optional
 
 
 def _click_coords(event):
@@ -15,7 +15,7 @@ def _click_coords(event):
   plt.close()
 
 
-def fft_filtering(data: np.ndarray, dt: Optional[float] = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
+def fft_filtering(data: np.ndarray, dt: float = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
   """Filter data using numpy FFT.
 
   Args:
@@ -37,7 +37,7 @@ def fft_filtering(data: np.ndarray, dt: Optional[float] = 1.0, cutoff: Optional[
   if cutoff is None:
     fig, ax = plt.subplots(1, 1)
     # plot just N/2 points
-    ax.semilogy(freq[1 : N / 2], 2.0 / N * np.abs(FT[1 : N / 2]))
+    ax.semilogy(freq[1:N//2], 2.0/N*np.abs(FT[1:N//2]))
     ax.grid()
     ax.set_xlabel("Freq")
     ax.set_ylabel("Normalized FFT")
@@ -70,7 +70,7 @@ def _butter_lowpass_filter(data: np.ndarray, cutoff: float, fs: float, order: in
   return y
 
 
-def butter_filtering(data: np.ndarray, dt: Optional[float] = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
+def butter_filtering(data: np.ndarray, dt: float = 1.0, cutoff: Optional[float] = None) -> np.ndarray:
   """Filter data using Butterworth filter
 
   Args:

@@ -1,8 +1,8 @@
 from cycler import cycler
+import click
 
-
-def load_style(ctx, fn):
-  fh = open(fn, "r")
+def load_style(ctx: click.core.Context, fn: str) -> None:
+  fh = open(fn, "r", encoding="utf-8")
   for line in fh.readlines():
     key = line.split(":")[0]
     key_len = int(len(key))

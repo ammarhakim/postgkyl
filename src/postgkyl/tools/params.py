@@ -1,348 +1,143 @@
+"""Postgkyl module for plasma related parameters."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Union, Tuple, Optional
 import numpy as np
 
-import postgkyl.tools as diag
+from postgkyl.tools.mag_sq import mag_sq
+from postgkyl.tools.prim_vars import get_density, get_temp, get_mhd_temp
+from postgkyl.utils import input_parser
+
+if TYPE_CHECKING:
+  from postgkyl import GData
+# end
 
 
-def get_magB(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-):
-  if field_data:
-    field_grid = field_data.get_grid()
-    field_values = field_data.get_values()
-  # end
-  b_grid = field_grid
+def get_magB(field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+  field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
-  out_grid, mag_B_sq = diag.mag_sq(in_grid=b_grid, in_values=b_values)
+  _, mag_B_sq = mag_sq((field_grid, b_values))
   out_values = np.sqrt(mag_B_sq)
 
-  return out_grid, out_values
+  return field_grid, out_values
 
 
-def get_vt(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    gasGamma=5.0 / 3.0,
-    numMom=None,
-    mass=1.0,
-    mu0=1.0,
-    sqrt2=True,
-    mhd=False,
-):
-  if species_data:
-    species_grid = species_data.get_grid()
-    species_values = species_data.get_values()
-  # end
+def get_vt(species: Union[GData, Tuple[list, np.ndarray]], gas_gamma: float = 5.0/3.0,
+    num_moms : Optional[int] = None, mass: float = 1.0, mu_0: float = 1.0,
+    sqrt2: bool = True, mhd: bool = False) -> Tuple[list, np.ndarray]:
+  m = species.ctx['mass'] if species.ctx['mass'] else mass
+
   if mhd:
-    out_grid, temp = diag.get_mhd_temp(species_data, gasGamma, mu0)
+    out_grid, temp = get_mhd_temp(species, gas_gamma=gas_gamma, mu_0=mu_0)
   else:
-    out_grid, temp = diag.get_temp(species_data, gasGamma, numMom)
+    out_grid, temp = get_temp(species, gas_gamma=gas_gamma, num_moms=num_moms)
   # end
-
-  if species_data.mass:
-    _m = species_data.mass
-  else:
-    _m = mass
-  # end
-
+  out_values = np.sqrt(temp/m)
   if sqrt2:
-    out_values = np.sqrt(2.0 * temp / _m)
-  else:
-    out_values = np.sqrt(temp / _m)
-  # end
+    out_values *= np.sqrt(2.0)
 
   return out_grid, out_values
 
 
-def get_vA(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    mass=1.0,
-    mu0=1.0,
-):
+def get_vA(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]], mu_0: float = 1.0) -> Tuple[list, np.ndarray]:
+  mu = field.ctx["mu_0"] if field.ctx["mu_0"] else mu_0
 
-  out_grid, magB = get_magB(
-      species_data, species_grid, species_values, field_data, field_grid, field_values
-  )
+  _, magB = get_magB(field)
+  # Fluid data already has mass factor in density
+  out_grid, rho = get_density(species)
+  out_values = magB/np.sqrt(mu*rho)
+
+  return out_grid, out_values
+
+
+def get_omegaC(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    mass: float = 1.0, charge: float = 1.0) -> Tuple[list, np.ndarray]:
+  m = species.ctx['mass'] if species.ctx['mass'] else mass
+  q = species.ctx['charge'] if species.ctx['charge'] else charge
+
+  out_grid, magB = get_magB(field)
+  out_values = abs(q)*magB/m
+
+  return out_grid, out_values
+
+
+def get_omegaP(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0) -> Tuple[list, np.ndarray]:
+  m = species.ctx['mass'] if species.ctx['mass'] else mass
+  q = species.ctx['charge'] if species.ctx['charge'] else charge
+  epsilon = field.ctx["epsilon_0"] if field.ctx["epsilon_0"] else epsilon_0
 
   # Fluid data already has mass factor in density
-  out_grid, rho = diag.get_density(species_data, species_grid, species_values)
-
-  if field_data.mu0:
-    _mu = mu0
-  else:
-    _mu = mu0
-  # end
-
-  out_values = magB / np.sqrt(_mu * rho)
+  out_grid, rho = get_density(species)
+  qbym2 = q**2/m**2
+  out_values = np.sqrt(qbym2*rho/epsilon)
 
   return out_grid, out_values
 
 
-def get_omegaC(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    mass=1.0,
-    charge=1.0,
-):
-  out_grid, magB = get_magB(
-      species_data, species_grid, species_values, field_data, field_grid, field_values
-  )
+def get_d(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
+    mu_0 : float = 1.0) -> Tuple[list, np.ndarray]:
+  epsilon = field.ctx["epsilon_0"] if field.ctx["epsilon_0"] else epsilon_0
+  mu = field.ctx["mu_0"] if field.ctx["mu_0"] else mu_0
 
-  if species_data.mass:
-    _m = species_data.mass
-  else:
-    _m = mass
-  # end
-
-  if species_data.charge:
-    _q = species_data.charge
-  else:
-    _q = charge
-  # end
-
-  out_values = abs(_q) / _m * magB
+  out_grid, omegaP = get_omegaP(species=species, field=field, mass=mass, charge=charge,
+    epsilon_0=epsilon_0)
+  light_speed = 1.0/np.sqrt(epsilon*mu)
+  out_values = light_speed/omegaP
 
   return out_grid, out_values
 
 
-def get_omegaP(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    mass=1.0,
-    charge=1.0,
-    epsilon0=1.0,
-):
-  # Fluid data already has mass factor in density
-  out_grid, rho = diag.get_density(species_data, species_grid, species_values)
-
-  if species_data.mass:
-    _m = species_data.mass
-  else:
-    _m = mass
-  # end
-
-  if species_data.charge:
-    _q = species_data.charge
-  else:
-    _q = charge
-  # end
-
-  if field_data.epsilon0:
-    _eps = epsilon0
-  else:
-    _eps = epsilon0
-  # end
-
-  qbym2 = _q * _q / (_m * _m)
-  out_values = np.sqrt(qbym2 * rho / _eps)
-
-  return out_grid, out_values
-
-
-def get_d(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    mass=1.0,
-    charge=1.0,
-    epsilon0=1.0,
-    mu0=1.0,
-):
-
-  out_grid, omegaP = get_omegaP(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      mass,
-      charge,
-      epsilon0,
-  )
-
-  if field_data.epsilon0:
-    _eps = epsilon0
-  else:
-    _eps = epsilon0
-  # end
-
-  if field_data.mu0:
-    _mu = mu0
-  else:
-    _mu = mu0
-  # end
-
-  light_speed = 1.0 / np.sqrt(_eps * _mu)
-  out_values = light_speed / omegaP
-
-  return out_grid, out_values
-
-
-def get_lambdaD(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    gasGamma=5.0 / 3.0,
-    numMom=None,
-    mass=1.0,
-    charge=1.0,
-    epsilon0=1.0,
-    mu0=1.0,
-    sqrt2=True,
-):
-
-  out_grid, omegaP = get_omegaP(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      mass,
-      charge,
-      epsilon0,
-  )
-  out_grid, vt = get_vt(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      gasGamma,
-      numMom,
-      mass,
-      mu0,
-      sqrt2,
-  )
-
+def get_lambdaD(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+    mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
+    mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
+  _, omegaP = get_omegaP(species=species, field=field, mass=mass, charge=charge,
+    epsilon_0=epsilon_0)
+  out_grid, vt = get_vt(species=species, gas_gamma=gas_gamma, num_moms=num_moms,
+      mass=mass, mu_0=mu_0, sqrt2=sqrt2)
+  out_values = vt / omegaP
   if sqrt2:
-    out_values = (vt / omegaP) / np.sqrt(2.0)
-  else:
-    out_values = vt / omegaP
+    out_values /= np.sqrt(2.0)
+  # end
 
   return out_grid, out_values
 
 
-def get_rho(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    gasGamma=5.0 / 3.0,
-    numMom=None,
-    mass=1.0,
-    charge=1.0,
-    epsilon0=1.0,
-    mu0=1.0,
-    sqrt2=True,
-):
+def get_rho(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+    mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
+    mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
 
-  out_grid, omegaC = get_omegaC(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      mass,
-      charge,
-  )
-  out_grid, vt = get_vt(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      gasGamma,
-      numMom,
-      mass,
-      mu0,
-      sqrt2,
-  )
+  _, omegaC = get_omegaC(species=species, field=field, mass=mass, charge=charge)
+  out_grid, vt = get_vt(species=species, gas_gamma=gas_gamma, num_moms=num_moms,
+      mass=mass, mu_0=mu_0, sqrt2=sqrt2)
 
-  if sqrt2:
-    out_values = vt / omegaC
-  else:
-    out_values = (vt / omegaC) * np.sqrt(2.0)
+  out_values = vt/omegaC
+  if not sqrt2:
+    out_values *= np.sqrt(2.0)
+  # end
 
   return out_grid, out_values
 
 
-def get_beta(
-    species_data=None,
-    species_grid=None,
-    species_values=None,
-    field_data=None,
-    field_grid=None,
-    field_values=None,
-    gasGamma=5.0 / 3.0,
-    numMom=None,
-    mass=1.0,
-    charge=1.0,
-    epsilon0=1.0,
-    mu0=1.0,
-    sqrt2=True,
-):
-
-  out_grid, vA = get_vA(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      mass,
-      mu0,
-  )
-  out_grid, vt = get_vt(
-      species_data,
-      species_grid,
-      species_values,
-      field_data,
-      field_grid,
-      field_values,
-      gasGamma,
-      numMom,
-      mass,
-      mu0,
-      sqrt2,
-  )
-
-  if sqrt2:
-    out_values = vt * vt / (vA * vA)
-  else:
-    out_values = 2.0 * vt * vt / (vA * vA)
+def get_beta(species: Union[GData, Tuple[list, np.ndarray]],
+    field: Union[GData, Tuple[list, np.ndarray]],
+    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+    mass: float = 1.0, mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
+  _, vA = get_vA(species=species, field=field, mu_0=mu_0)
+  out_grid, vt = get_vt(species=species, gas_gamma=gas_gamma, num_moms=num_moms,
+      mass=mass, mu_0=mu_0, sqrt2=sqrt2)
+  out_values = vt**2 / vA**2
+  if not sqrt2:
+    out_values *= 2.0
 
   return out_grid, out_values

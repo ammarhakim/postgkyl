@@ -3,17 +3,8 @@ import numpy as np
 from postgkyl.utils import idx_parser
 
 
-def select(
-    data,
-    comp=None,
-    overwrite=False,
-    z0=None,
-    z1=None,
-    z2=None,
-    z3=None,
-    z4=None,
-    z5=None,
-):
+def select(data, comp=None, overwrite=False,
+    z0=None, z1=None, z2=None, z3=None, z4=None, z5=None):
   """Selects parts of the GData.
 
   Allows to select only a part of GData (both coordinates and
@@ -90,6 +81,4 @@ def select(
   else:
     return grid, values_out
   # end
-
-
 # end

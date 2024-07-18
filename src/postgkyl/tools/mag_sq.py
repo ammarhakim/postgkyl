@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Optional
+from typing import Tuple, TYPE_CHECKING, Union, Optional
 import numpy as np
 
 from postgkyl.utils import input_parser
 
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
 
-def mag_sq(
-    input: Union[GData, tuple], coords: str = "0:3", output: Optional[GData] = None
-):
+def mag_sq(input: Union[GData, Tuple[list, np.ndarray]], coords: str = "0:3",
+    output: Optional[GData] = None) -> Tuple[list, np.ndarray]:
   """Function to compute the magnitude squared of an array
 
   Parameters:
@@ -28,12 +28,13 @@ def mag_sq(
   """
   in_grid, in_values = input_parser(input)
 
-  # Because coords is an input string, need to split and parse it to get the right coordinates
+  # Because coords is an input string, need to split and parse it to get the right
+  # coordinates.
   s = coords.split(":")
   values = in_values[..., slice(int(s[0]), int(s[1]))]
   # Output is a scalar, so dimensionality should not include number of components.
   out = np.zeros(values[..., 0].shape)
-  out = np.sum(values * values, axis=-1)
+  out = np.sum(values*values, axis=-1)
   out = out[..., np.newaxis]
 
   if output:

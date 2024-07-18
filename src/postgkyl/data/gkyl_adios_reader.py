@@ -1,4 +1,4 @@
-"""Module including Gkeyll ADIOS reader class"""
+"""Module including Gkeyll ADIOS reader class."""
 
 from typing import Optional, Tuple, Union
 import click
@@ -19,17 +19,11 @@ from postgkyl.utils import idx_parser
 class GkylAdiosReader(object):
   """Provides a framework to read gkyl ADIOS output."""
 
-  def __init__(
-      self,
-      file_name: str,
-      ctx: Optional[dict] = None,
-      var_name: str = "CartGridField",
-      c2p: str = "",
+  def __init__(self, file_name: str, ctx: Optional[dict] = None,
+      var_name: str = "CartGridField", c2p: str = "",
       axes: Optional[tuple] = (None, None, None, None, None, None),
-      comp: Union[int, slice, None] = None,
-      click_mode: bool = False,
-      **kwargs,
-  ):
+      comp: Union[int, slice, None] = None, click_mode: bool = False,
+      **kwargs):
     """Initialize the instance of ADIOS reader.
 
     Args:
@@ -99,9 +93,8 @@ class GkylAdiosReader(object):
       return False
     # end
 
-  def _create_offset_count(
-      self, num_elems: np.ndarray, zs: tuple, comp: int, grid: Optional[list] = None
-  ) -> Tuple[np.ndarray, np.ndarray]:
+  def _create_offset_count(self, num_elems: np.ndarray, zs: tuple, comp: Union[int, slice],
+      grid: Optional[list] = None) -> Tuple[np.ndarray, np.ndarray]:
     num_dims = len(num_elems)
     count = np.copy(num_elems)
     offset = np.zeros(num_dims, np.int32)
@@ -143,7 +136,6 @@ class GkylAdiosReader(object):
     # end
 
   def _preload_frame(self) -> None:
-
     fh = adios2.open(self._file_name, "rra")
 
     # Postgkyl conventions require the attributes to be
@@ -180,8 +172,7 @@ class GkylAdiosReader(object):
 
     fh.close()
 
-  def _load_frame(self) -> tuple:
-
+  def _load_frame(self) -> Tuple[list, np.ndarray]:
     fh = adios2.open(self._file_name, "rra")
 
     if self.var_name not in fh.available_variables():
@@ -245,9 +236,6 @@ class GkylAdiosReader(object):
     # end
 
     # Check for mapped grid ...
-    # if 'type' in fh.attrs.keys():# and self._comp_grid is False:
-    #  self.ctx['grid_type'] = adios.attr(fh, 'type').value.decode('UTF-8')
-    # end
     if self.c2p:
       grid_fh = adios2.open(self.c2p, "rra")
       grid_dims = grid_fh.available_variables()["CartGridField"]["Shape"]
@@ -263,17 +251,6 @@ class GkylAdiosReader(object):
       if self.ctx:
         self.ctx["grid_type"] = "c2p"
       # end
-    # elif 'grid' in fh.attrs.keys():
-    #   grid_name = adios.attr(fh, 'grid').value.decode('UTF-8')
-    #   grid_fh = adios.file(grid_name)
-    #   grid_var = adios.var(grid_fh, 'CartGridField')
-    #   offset, count = self._create_offset_count(grid_var, self.axes, None)
-    #   tmp = grid_var.read(offset=offset, count=count)
-    #   #grid = [tmp[..., d].transpose() for d in range(num_dims)]
-    #   grid = [tmp[..., d] for d in range(num_dims)]
-    #   if self.ctx:
-    #     self.ctx['grid_type'] = 'mapped'
-    #   #end
     else:
       # Create sparse unifrom grid
       # Adjust for ghost cells
@@ -299,7 +276,7 @@ class GkylAdiosReader(object):
     fh.close()
     return grid, data
 
-  def _load_diagnostic(self) -> tuple:
+  def _load_diagnostic(self) -> Tuple[list, np.ndarray]:
 
     fh = adios2.open(self._file_name, "rra")
 
