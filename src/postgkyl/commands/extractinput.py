@@ -13,9 +13,9 @@ def extractinput(ctx, **kwargs):
   data = ctx.obj["data"]
 
   for dat in data.iterator(kwargs["use"]):
-    encInp = dat.get_input_file()
-    if encInp:
-      inpfile = base64.decodebytes(encInp.encode("utf-8")).decode("utf-8")
+    enc_inp = dat.get_input_file()
+    if enc_inp:
+      inpfile = base64.decodebytes(enc_inp.encode("utf-8")).decode("utf-8")
       click.echo(inpfile)
     else:
       click.echo("No embedded input file!")

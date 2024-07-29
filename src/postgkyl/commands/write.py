@@ -33,13 +33,13 @@ def write(ctx, **kwargs):
 
   num_files = data.get_num_datasets(tag=kwargs["use"])
   for i, dat in data.iterator(tag=kwargs["use"], enum=True):
-    out_name = "{:s}.{:s}".format(fn, mode)
+    out_name = f"{fn:s}.{mode:s}"
     if kwargs["single"]:
-      var_name = "{:s}_{:d}".format(dat.get_tag(), i)
+      var_name = f"{dat.get_tag():s}_{i:d}"
       cleaning = False
     else:
       if num_files > 1:
-        out_name = "{:s}_{:d}.{:s}".format(fn, i, mode)
+        out_name = f"{fn:s}_{i:d}.{mode:s}"
       # end
     # end
 
@@ -52,11 +52,6 @@ def write(ctx, **kwargs):
 
   # Cleaning
   if not cleaning:
-    if len(fn.split("/")) > 1:
-      nm = fn.split("/")[-1]
-    else:
-      nm = fn
-    # end
     shutil.move(f"{fn:s}.{mode:s}.dir/{fn:s}.{mode:s}.0", f"{fn:s}.{mode:s}")
     shutil.rmtree(f"{fn:s}.{mode:s}.dir")
   # end

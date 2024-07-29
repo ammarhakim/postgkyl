@@ -1,18 +1,18 @@
 # Import data handler
-from postgkyl.data.gdata import GData
+from .gdata import GData
 
 # Import interpolators
-from postgkyl.data.dg import GInterpNodal
-from postgkyl.data.dg import GInterpModal
+from .dg import GInterpNodal
+from .dg import GInterpModal
 
 # Import interpolation matrices computation
-from postgkyl.data import computeInterpolationMatrices
-from postgkyl.data import computeDerivativeMatrices
+from . import computeInterpolationMatrices
+from . import computeDerivativeMatrices
 
 # Import select
-from postgkyl.data.select import select
+from .select import select
 
-from postgkyl.data.gkyl_reader import GkylReader
-from postgkyl.data.gkyl_adios_reader import GkylAdiosReader
-from postgkyl.data.gkyl_h5_reader import GkylH5Reader
-from postgkyl.data.flash_h5_reader import FlashH5Reader
+from .gkyl_reader import GkylReader
+from .gkyl_adios_reader import GkylAdiosReader
+from .gkyl_h5_reader import GkylH5Reader
+from .flash_h5_reader import FlashH5Reader

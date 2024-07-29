@@ -1,34 +1,33 @@
-
+"""Postgkyl submodule to provide iterators in hte command line mode."""
 from __future__ import annotations
 
 import click
 import numpy as np
-from typing import TYPE_CHECKING, Optional, Union, Iterator
+from typing import Iterator, TYPE_CHECKING
 
 if TYPE_CHECKING:
   from postgkyl import GData
 #end
 
 class DataSpace(object):
+  """Postgkyl class to store information about datasets and provide iterators in the command line mode."""
 
   def __init__(self):
     self._dataset_dict = {}
 
   # ---- Iterators ----
-  def iterator(self, tag: Optional[str] = None, enum: bool = False,
-      only_active: bool = True, select: Union[int, slice, str, None] = None) -> Iterator[GData]:
+  def iterator(self, tag: str | None = None, enum: bool = False,
+      only_active: bool = True, select: int | slice | str | None = None) -> Iterator[GData]:
     # Process 'select'
     if enum and select:
-      click.echo(
-          click.style("Error: 'select' and 'enum' cannot be selected simultaneously", fg="red")
-      )
+      click.echo(click.style("Error: 'select' and 'enum' cannot be selected simultaneously", fg="red"))
       quit()
     # end
-    idxSel = slice(None, None)
+    idx_sel = slice(None, None)
     if isinstance(select, int):
-      idxSel = [select]
+      idx_sel = [select]
     elif isinstance(select, slice):
-      idxSel = select
+      idx_sel = select
     elif isinstance(select, str):
       if ":" in select:
         lo = None
@@ -44,9 +43,9 @@ class DataSpace(object):
         if len(s) > 2:
           step = int(s[2])
         # end
-        idxSel = slice(lo, up, step)
+        idx_sel = slice(lo, up, step)
       else:
-        idxSel = list([int(s) for s in select.split(",")])
+        idx_sel = list([int(s) for s in select.split(",")])
       # end
     # end
 
@@ -57,8 +56,8 @@ class DataSpace(object):
     # end
     for t in tags:
       try:
-        if not select or isinstance(idxSel, slice):
-          for i, dat in enumerate(self._dataset_dict[t][idxSel]):
+        if not select or isinstance(idx_sel, slice):
+          for i, dat in enumerate(self._dataset_dict[t][idx_sel]):
             if (not only_active) or dat.get_status():  # implication
               if enum:
                 yield i, dat
@@ -67,8 +66,8 @@ class DataSpace(object):
               # end
             # end
           # end
-        else:  # isinstance(idxSel, list)
-          for i in idxSel:
+        else:  # isinstance(idx_sel, list)
+          for i in idx_sel:
             dat = self._dataset_dict[t][i]
             if (not only_active) or dat.get_status():  # implication
               yield dat
@@ -76,9 +75,7 @@ class DataSpace(object):
           # end
         # end
       except KeyError as err:
-        click.echo(
-            click.style(f"ERROR: Failed to load the specified/default tag {err}", fg="red")
-        )
+        click.echo(click.style(f"ERROR: Failed to load the specified/default tag {err}", fg="red"))
         quit()
       except IndexError:
         click.echo(click.style("ERROR: Index out of the dataset range", fg="red"))
@@ -86,7 +83,7 @@ class DataSpace(object):
       # end
     # end
 
-  def tag_iterator(self, tag: Optional[str] = None, only_active: bool = True) -> Iterator[str]:
+  def tag_iterator(self, tag: str | None = None, only_active: bool = True) -> Iterator[str]:
     if tag:
       out = tag.split(",")
     elif only_active:
@@ -108,8 +105,8 @@ class DataSpace(object):
     labels = []
     for dat in self.iterator():
       file_name = dat._file_name
-      extensionLen = len(file_name.split(".")[-1])
-      file_name = file_name[: -(extensionLen + 1)]
+      extension_len = len(file_name.split(".")[-1])
+      file_name = file_name[: -(extension_len + 1)]
       # only remove the file extension but take into account
       # that the file name might start with '../'
       sp = file_name.split("_")
@@ -117,11 +114,11 @@ class DataSpace(object):
       num_comps.append(int(len(sp)))
       labels.append("")
     # end
-    maxElem = np.max(num_comps)
-    idxMax = np.argmax(num_comps)
-    for i in range(maxElem):
+    max_elem = np.max(num_comps)
+    idx_max = np.argmax(num_comps)
+    for i in range(max_elem):
       include = False
-      reference = names[idxMax][i]
+      reference = names[idx_max][i]
       for nm in names:
         if i < len(nm) and nm[i] != reference:
           include = True
@@ -155,13 +152,13 @@ class DataSpace(object):
     # end
 
   # ---- Staus control ----
-  def activate_all(self, tag: Optional[str] = None) -> None:
+  def activate_all(self, tag: str | None = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     # end
 
   # end
-  def deactivate_all(self, tag: Optional[str] = None) -> None:
+  def deactivate_all(self, tag: str | None = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     # end
@@ -171,7 +168,7 @@ class DataSpace(object):
     return self._dataset_dict[tag][idx]
 
 
-  def get_num_datasets(self, tag: Optional[str] = None, only_active: bool = True):
+  def get_num_datasets(self, tag: str | None = None, only_active: bool = True):
     num_sets = 0
     for dat in self.iterator(tag=tag, only_active=only_active):
       num_sets += 1

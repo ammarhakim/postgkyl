@@ -19,15 +19,15 @@ def mask(ctx, **kwargs):
   data = ctx.obj("data")
 
   if kwargs["filename"]:
-    maskFld = GData(kwargs["filename"]).get_values()
+    mask_fld = GData(kwargs["filename"]).get_values()
   # end
 
   for dat in data.interator(kwargs["use"]):
     values = dat.get_values()
 
     if kwargs["filename"]:
-      maskFldRep = np.repeat(maskFld, dat.get_num_comps(), axis=-1)
-      data.set_values(np.ma.masked_where(maskFldRep < 0.0, values))
+      mask_fld_rep = np.repeat(mask_fld, dat.get_num_comps(), axis=-1)
+      data.set_values(np.ma.masked_where(mask_fld_rep < 0.0, values))
     elif kwargs["lower"] is not None and kwargs["upper"] is not None:
       dat.set_values(np.ma.masked_outside(values, kwargs["lower"], kwargs["upper"]))
     elif kwargs["lower"] is not None:

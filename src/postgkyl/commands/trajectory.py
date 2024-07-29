@@ -17,7 +17,7 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
   for dat in ctx.obj["data"].iterator(tag):
     time = dat.get_grid()[0]
     coords = dat.get_values()
-    tIdx = int(i * leap)
+    t_idx = int(i * leap)
 
     if xmin is not None:
       x = np.where(coords[:, 0] > xmin, coords[:, 0], np.nan)
@@ -45,22 +45,22 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
     # end
 
     ax.plot(x, y, z, color=colors[s % 10])
-    ax.scatter(x[tIdx], y[tIdx], z[tIdx], color=colors[s % 10])
+    ax.scatter(x[t_idx], y[t_idx], z[t_idx], color=colors[s % 10])
     if vel and dat.get_num_comps() == 6:
-      if tIdx + leap >= len(time):
-        dt = time[-1] - time[tIdx]
+      if t_idx + leap >= len(time):
+        dt = time[-1] - time[t_idx]
       else:
-        dt = time[int(tIdx + leap)] - time[tIdx]
+        dt = time[int(t_idx + leap)] - time[t_idx]
       # end
       dx = coords[i, 3] * dt
       dy = coords[i, 4] * dt
       dz = coords[i, 5] * dt
-      ax.plot([x[tIdx], x[tIdx] + dx], [y[tIdx], y[tIdx] + dy], [z[tIdx], z[tIdx] + dz],
+      ax.plot([x[t_idx], x[t_idx] + dx], [y[t_idx], y[t_idx] + dy], [z[t_idx], z[t_idx] + dz],
           color=colors[s % 10])
     # end
     s += 1
   # end
-  plt.title(f"T: {time[tIdx]:.4e}")
+  plt.title(f"T: {time[t_idx]:.4e}")
   ax.set_xlabel("$z_0$")
   ax.set_ylabel("$z_1$")
   ax.set_zlabel("$z_2$")
@@ -93,13 +93,10 @@ def trajectory(ctx, **kwargs):
   data = ctx.obj["data"]
 
   tags = list(data.tag_iterator(kwargs["use"]))
+  tag = tags[0]
   if len(tags) > 1:
-    ctx.fail(
-        click.echo(f"'trajectory' supports only one 'tag', was provided {len(tags):d}",
-            fg="red")
-    )
-  else:
-    tag = tags[0]
+    ctx.fail(click.echo(f"'trajectory' supports only one 'tag', was provided {len(tags):d}",
+        color="red"))
   # end
 
   fig = plt.figure()
@@ -108,15 +105,15 @@ def trajectory(ctx, **kwargs):
   kwargs["legend"] = False
 
   dat = ctx.obj["data"].get_dataset(tag, 0)
-  numPos = dat.get_num_cells()[0]
+  num_pos = dat.get_num_cells()[0]
 
   jump = 1
   if kwargs["numframes"] is not None:
-    jump = int(math.floor(numPos / kwargs["numframes"]))
-    numPos = int(kwargs["numframes"])
+    jump = int(math.floor(num_pos / kwargs["numframes"]))
+    num_pos = int(kwargs["numframes"])
   # end
 
-  anim = FuncAnimation(fig, _update, numPos,
+  anim = FuncAnimation(fig, _update, num_pos,
       fargs=(ax, ctx, jump, kwargs["velocity"], kwargs["xmin"], kwargs["xmax"], kwargs["ymin"],
           kwargs["ymax"], kwargs["zmin"], kwargs["zmax"], tag),
       interval=kwargs["interval"])
@@ -127,12 +124,12 @@ def trajectory(ctx, **kwargs):
     plt.setp(ax, aspect=1.0)
   # end
 
-  fName = "anim.mp4"
+  f_name = "anim.mp4"
   if kwargs["saveas"]:
-    fName = str(kwargs["saveas"])
+    f_name = str(kwargs["saveas"])
   # end
   if kwargs["save"] or kwargs["saveas"]:
-    anim.save(fName, writer="ffmpeg")
+    anim.save(f_name, writer="ffmpeg")
   # end
 
   if kwargs["show"]:

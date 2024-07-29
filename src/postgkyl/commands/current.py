@@ -3,7 +3,7 @@ import numpy as np
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
-from postgkyl.tools import accumulate_current
+import postgkyl.tools.accumulate_current
 
 
 @click.command()
@@ -22,7 +22,7 @@ def current(ctx, **kwargs):
   for dat in data.iterator(kwargs["use"]):
     grid = dat.get_grid()
     outcurrent = np.zeros(dat.get_values().shape)
-    grid, outcurrent = accumulate_current(dat, kwargs["qbym"])
+    grid, outcurrent = postgkyl.tools.accumulate_current(dat, kwargs["qbym"])
     dat.deactivate()
     out = GData(tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
         label=kwargs["label"], ctx=dat.ctx)

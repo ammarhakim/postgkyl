@@ -2,8 +2,7 @@ import click
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
-
-from postgkyl.tools.parrotate import parrotate
+import postgkyl.tools.parrotate
 
 
 @click.command()
@@ -29,7 +28,7 @@ def parrotate(ctx, **kwargs):
   data = ctx.obj["data"]
 
   for a, rot in zip(data.iterator(kwargs["array"]), data.iterator(kwargs["rotator"])):
-    grid, outrot = parrotate(a, rot)
+    grid, outrot = postgkyl.tools.parrotate(a, rot)
     # Create new GData structure with appropriate outtag and labels to store output.
     out = GData(tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
         label=kwargs["label"], ctx=a.ctx)

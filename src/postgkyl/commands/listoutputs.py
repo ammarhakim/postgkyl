@@ -10,12 +10,12 @@ from postgkyl.utils import verb_print
     show_default=True, help="Output file extension(s)")
 @click.pass_context
 def listoutputs(ctx, **kwargs):
-  """List Gkeyll filename stems in the current directory"""
+  """List Gkeyll filename stems in the current directory."""
   verb_print(ctx, "Starting listoutputs")
 
   extensions = kwargs["extensions"].split(",")
   for ext in extensions:
-    files = glob("*.{:s}".format(ext))
+    files = glob(f"*.{ext:s}")
     unique = []
     for fn in files:
       # remove extension

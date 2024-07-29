@@ -10,7 +10,7 @@ from postgkyl.utils import verb_print
 @click.argument("factor", nargs=1, type=click.FLOAT)
 @click.pass_context
 def mult(ctx, **kwargs):
-  verb_print(ctx, "Multiplying by {:f}".format(kwargs["factor"]))
+  verb_print(ctx, f"Multiplying by {kwargs["factor"]:f}")
   for s in ctx.obj["sets"]:
     values = ctx.obj["dataSets"][s].get_values()
     values = values * kwargs["factor"]
@@ -22,7 +22,7 @@ def mult(ctx, **kwargs):
 @click.argument("power", nargs=1, type=click.FLOAT)
 @click.pass_context
 def pow(ctx, **kwargs):
-  verb_print(ctx, "Calculating the power of {:f}".format(kwargs["power"]))
+  verb_print(ctx, f"Calculating the power of {kwargs["power"]:f}")
   for s in ctx.obj["sets"]:
     values = ctx.obj["dataSets"][s].get_values()
     values = values ** kwargs["power"]
@@ -62,15 +62,15 @@ def norm(ctx, **kwargs):
   for s in ctx.obj["sets"]:
     values = ctx.obj["dataSets"][s].get_values()
     num_comps = ctx.obj["dataSets"][s].get_num_comps()
-    valuesOut = values.copy()
+    values_out = values.copy()
     for comp in range(num_comps):
       if kwargs["shift"]:
-        valuesOut[..., comp] -= valuesOut[..., comp].min()
+        values_out[..., comp] -= values_out[..., comp].min()
       if kwargs["usefirst"]:
-        valuesOut[..., comp] /= valuesOut[..., comp].item(0)
+        values_out[..., comp] /= values_out[..., comp].item(0)
       else:
-        valuesOut[..., comp] /= np.abs(valuesOut[..., comp]).max()
+        values_out[..., comp] /= np.abs(values_out[..., comp]).max()
       # end
     # end
-    ctx.obj["dataSets"][s].push(valuesOut)
+    ctx.obj["dataSets"][s].push(values_out)
   # end

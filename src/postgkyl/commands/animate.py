@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from postgkyl.utils import verb_print
-import postgkyl.output.plot as gplot
+import postgkyl.output.plot
 
 
 def _update(i, data, fig, offsets, kwargs):
@@ -23,9 +23,9 @@ def _update(i, data, fig, offsets, kwargs):
       # end
     # end
     if kwargs["arg"] is not None:
-      im = gplot(dat, kwargs["arg"], **kwargs)
+      im = postgkyl.output.plot(dat, kwargs["arg"], **kwargs)
     else:
-      im = gplot(dat, **kwargs)
+      im = postgkyl.outputplot(dat, **kwargs)
     # end
   # end
   return im
@@ -222,9 +222,7 @@ def animate(ctx, **kwargs):
       else:
         for i in range(int(np.nanmin((min_size, len(data_lst))))):
           _update(i, data_lst, figs[-1], offsets, kwargs)
-          plt.savefig(
-              "{:s}_{:d}.png".format(kwargs["saveframes"], i), dpi=kwargs["dpi"]
-          )
+          plt.savefig(f"{kwargs["saveframes"]:s}_{i:d}.png", dpi=kwargs["dpi"])
         # end
         kwargs["show"] = False  # do not show in this case
       # end
@@ -238,14 +236,9 @@ def animate(ctx, **kwargs):
     # end
     if not kwargs["saveframes"]:
       anims.append(
-          FuncAnimation(
-              figs[-1],
-              _update,
-              int(np.nanmin((min_size, len(data_lst)))),
-              fargs=(data_lst, figs[-1], offsets, kwargs),
-              interval=kwargs["interval"],
-              blit=False,
-          )
+          FuncAnimation(figs[-1], _update, int(np.nanmin((min_size, len(data_lst)))),
+              fargs=(data_lst, figs[-1], offsets, kwargs), interval=kwargs["interval"],
+              blit=False)
       )
 
       file_name = "anim.mp4"
@@ -258,7 +251,7 @@ def animate(ctx, **kwargs):
     else:
       for i in range(int(np.nanmin((min_size, len(data_lst))))):
         _update(i, data_lst, figs[-1], offsets, kwargs)
-        plt.savefig("{:s}_{:d}.png".format(kwargs["saveframes"], i), dpi=kwargs["dpi"])
+        plt.savefig(f"{kwargs["saveframes"]:s}_{i:d}.png", dpi=kwargs["dpi"])
       # end
       kwargs["show"] = False  # do not show in this case
     # end

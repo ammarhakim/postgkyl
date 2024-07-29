@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 from postgkyl.data import GData
-from postgkyl.tools.growth import fit_growth, exp2
+import postgkyl.tools
 from postgkyl.utils import verb_print
 
 
@@ -63,13 +63,13 @@ def growth(ctx, **kwargs):
         y = values[idx, :, 0].squeeze()
       # end
 
-      bestParams, _, _ = fit_growth(x, y, minN=kwargs["minn"], p0=p0)
+      best_params, _, _ = postgkyl.tools.fit_growth(x, y, min_N=kwargs["minn"], p0=p0)
 
       if kwargs["dataset"]:
         out = GData(tag="growth", label="Fit",
             comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
         t = 0.5 * (time[0][:-1] + time[0][1:])
-        out_val = exp2(t, *bestParams)
+        out_val = postgkyl.tools.exp2(t, *best_params)
         out.push([time[0]], out_val[..., np.newaxis])
         data.add(out)
       # end
@@ -82,7 +82,7 @@ def growth(ctx, **kwargs):
           gammas.append(gamma)
 
           plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/../output/postgkyl.mplstyle")
-          fig, ax = plt.subplots()
+          _, ax = plt.subplots()
           ax.plot(time[0][1:-1], gammas)
           # ax.set_autoscale_on(False)
           ax.grid(True)
@@ -90,7 +90,7 @@ def growth(ctx, **kwargs):
         # end
       # end
 
-      growth_rates[idx] = bestParams[1]
+      growth_rates[idx] = best_params[1]
       ks[idx] = idx
     # end
 

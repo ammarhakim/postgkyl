@@ -28,7 +28,7 @@ def style(ctx, **kwargs):
 
   if kwargs["print"]:
     for key in ctx.obj["rcParams"]:
-      print("{:s} : {}".format(key, ctx.obj["rcParams"][key]))
+      print(f"{key:s} : {ctx.obj["rcParams"][key]}")
     # end
   # end
 

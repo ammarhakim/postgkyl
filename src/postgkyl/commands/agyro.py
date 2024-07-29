@@ -31,9 +31,9 @@ def agyro(ctx, **kwargs):
   # end
 
   for pressure, bfield in zip(data.iterator(kwargs["pressure"]), data.iterator(kwargs["bfield"])):
-    grid, agyro = get_agyro(p_data=pressure, b_data=bfield, measure=kwargs["measure"])
+    grid, agyro_vals = get_agyro(p_in=pressure, b_in=bfield, measure=kwargs["measure"])
     out = GData(tag=tag, label=kwargs["label"], comp_grid=ctx.obj["compgrid"], ctx=pressure.ctx)
-    out.push(grid, agyro)
+    out.push(grid, agyro_vals)
     data.add(out)
   # end
   verb_print(ctx, "Finishing agyro")
@@ -62,9 +62,9 @@ def mom_agyro(ctx, **kwargs):
   # end
 
   for species, field in zip(data.iterator(kwargs["species"]), data.iterator(kwargs["field"])):
-    grid, agyro = get_gkyl_10m_agyro(species=species, field=field, measure=kwargs["measure"])
+    grid, agyro_vals = get_gkyl_10m_agyro(species=species, field=field, measure=kwargs["measure"])
     out = GData(tag=tag, label=kwargs["label"], comp_grid=ctx.obj["compgrid"], ctx=species.ctx)
-    out.push(grid, agyro)
+    out.push(grid, agyro_vals)
     data.add(out)
   # end
   verb_print(ctx, "Finishing agyro")

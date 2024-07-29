@@ -3,7 +3,7 @@ import click
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
-import postgkyl.tools as diag
+import postgkyl.tools
 
 
 @click.command()
@@ -20,11 +20,10 @@ def magsq(ctx, **kwargs):
     if kwargs["tag"]:
       out = GData(tag=kwargs["tag"], label=kwargs["label"],
           comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
-      grid, values = diag.mag_sq(dat)
-      out.push(grid, values)
+      postgkyl.tools.mag_sq(dat, output=out)
       data.add(out)
     else:
-      diag.mag_sq(dat, overwrite=True)
+      postgkyl.tools.mag_sq(dat, output=dat)
     # end
   # end
 

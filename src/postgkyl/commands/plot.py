@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from postgkyl.utils import verb_print
-import postgkyl.output.plot as gplot
+import postgkyl.output.plot
 
 
 @click.command()
@@ -192,7 +192,7 @@ def plot(ctx, **kwargs):
     # end
 
     # ---- Plot ----
-    gplot(dat, args, label_prefix=label, **kwargs)
+    postgkyl.output.plot(dat, args, label_prefix=label, **kwargs)
 
     if kwargs["subplots"]:
       kwargs["start_axes"] = kwargs["start_axes"] + dat.get_num_comps()
@@ -219,7 +219,7 @@ def plot(ctx, **kwargs):
     # end
 
     if kwargs["saveframes"]:
-      file_name = "{:s}_{:d}.png".format(kwargs["saveframes"], i)
+      file_name = f"{kwargs["saveframes"]:s}_{i:d}.png"
       plt.savefig(file_name, dpi=kwargs["dpi"])
       kwargs["show"] = False
     # end

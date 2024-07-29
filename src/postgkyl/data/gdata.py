@@ -332,10 +332,10 @@ class GData(object):
     output = ""
 
     if self.ctx["time"] is not None:
-      output += f"├─ Time: {self.ctx['time']:e}\n"
+      output += f"├─ Time: {self.ctx["time"]:e}\n"
     # end
     if self.ctx["frame"] is not None:
-      output += f"├─ Frame: {self.ctx['frame']:d}\n"
+      output += f"├─ Frame: {self.ctx["frame"]:d}\n"
     # end
     output += f"├─ Number of components: {num_comps:d}\n"
     output += f"├─ Number of dimensions: {num_dims:d}\n"

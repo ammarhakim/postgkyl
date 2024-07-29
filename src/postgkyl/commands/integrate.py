@@ -3,7 +3,7 @@ import click
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
-import postgkyl.tools as diag
+import postgkyl.tools as tools
 
 
 @click.command()
@@ -19,13 +19,13 @@ def integrate(ctx, **kwargs):
 
   for dat in data.iterator(kwargs["use"]):
     if kwargs["tag"]:
-      grid, values = diag.integrate(dat, kwargs["axis"])
+      grid, values = tools.integrate(dat, kwargs["axis"])
       out = GData(tag=kwargs["tag"], label=kwargs["label"],
           comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
       out.push(grid, values)
       data.add(out)
     else:
-      diag.integrate(dat, kwargs["axis"], overwrite=True)
+      tools.integrate(dat, kwargs["axis"], overwrite=True)
     # end
   # end
 

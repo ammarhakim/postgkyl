@@ -2,7 +2,7 @@ import click
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
-from postgkyl.tools.rel_change import rel_change
+import postgkyl.tools.rel_change
 
 
 @click.command(help="Computes the relative change between two datasets")
@@ -23,12 +23,13 @@ def relchange(ctx, **kwargs):
     for dat in data.iterator(tag):
       if kwargs["tag"]:
         out = GData(tag=kwargs["tag"], compgrid=ctx.obj["compgrid"], ctx=dat.ctx)
-        grid, values = rel_change(reference, dat, kwargs["comp"])
+        grid, values = postgkyl.tools.rel_change(reference, dat, kwargs["comp"])
         dat.deactivate()
         out.push(grid, values)
         data.add(out)
       else:
-        rel_change(reference, dat, kwargs["comp"], overwrite=True)
+        grid, values = postgkyl.tools.rel_change(reference, dat, kwargs["comp"])
+        dat.push(grid, values)
       # end
     # end
   # end

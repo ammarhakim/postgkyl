@@ -197,7 +197,7 @@ def get_p(in_mom: GData | Tuple[list, np.ndarray], gas_gamma: float = 5.0/3,
     out_values = (gas_gamma - 1) * (
         in_values[..., 4, np.newaxis] - 0.5*rho*(vx**2 + vy**2 + vz**2)
     )
-  elif num_moms == 10:
+  else: # num_moms == 10:
     _, pxx = get_pxx(in_mom)
     _, pyy = get_pyy(in_mom)
     _, pzz = get_pzz(in_mom)
@@ -221,18 +221,14 @@ def get_ke(in_mom: GData | Tuple[list, np.ndarray], gas_gamma: float = 5.0/3,
     elif num_comps == 10:
       num_moms = 10
     else:
-      raise ValueError(
-          "Number of components appears to be {:d};"
-          "it needs to be specified using 'num_moms' "
-          "(5 or 10)".format(num_comps)
-      )
+      raise ValueError(f"Number of components appears to be {num_comps:d}; (5 or 10)")
     # end
   # end
 
   if num_moms == 5:
     _, pr = get_p(in_mom, gas_gamma=gas_gamma, num_moms=num_moms)
     out_values = in_values[..., 4, np.newaxis] - pr / (gas_gamma - 1)
-  elif num_moms == 10:
+  else: #  num_moms == 10:
     _, rho = get_density(in_mom)
     _, vx = get_vx(in_mom)
     _, vy = get_vy(in_mom)

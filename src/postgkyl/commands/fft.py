@@ -1,8 +1,8 @@
 import click
 
 from postgkyl.data import GData
-from postgkyl.tools import fft
 from postgkyl.utils import verb_print
+import postgkyl.tools.fft
 
 
 @click.command()
@@ -26,11 +26,11 @@ def fft(ctx, **kwargs):
     if kwargs["tag"]:
       out = GData(tag=kwargs["tag"], label=kwargs["label"],
           comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
-      grid, values = fft(dat, kwargs["psd"], kwargs["iso"])
+      grid, values = postgkyl.tools.fft(dat, psd=kwargs["psd"], iso=kwargs["iso"])
       out.push(grid, values)
       data.add(out)
     else:
-      fft(dat, kwargs["psd"], kwargs["iso"], overwrite=True)
+      postgkyl.tools.fft(dat, psd=kwargs["psd"], iso=kwargs["iso"], overwrite=True)
     # end
   # end
 

@@ -15,7 +15,6 @@ import numpy as np
 from postgkyl.tools.prim_vars import get_pij
 from postgkyl.tools.mag_sq import mag_sq
 from postgkyl.utils import input_parser
-
 if TYPE_CHECKING:
   from postgkyl import GData
 #end

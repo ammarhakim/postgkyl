@@ -6,17 +6,15 @@ from postgkyl.data import GInterpModal
 from postgkyl.utils import verb_print
 
 
-def _pickCut(ctx, kwargs, zn):
+def _pick_cut(ctx, kwargs, zn):
   nm = f"z{zn:d}"
   if zn == 6:  # This little hack allows to apply the same function for
     # components as well
     nm = "component"
   # end
   if kwargs[nm] and ctx.obj["global_cuts"][zn]:
-    click.echo(
-        click.style(f"WARNING: The local '{nm:s}' is overwriting the global '{nm:s}'",
-            fg="yellow")
-    )
+    click.echo(click.style(f"WARNING: The local '{nm:s}' is overwriting the global '{nm:s}'",
+        fg="yellow"))
     return kwargs[nm]
   elif kwargs[nm]:
     return kwargs[nm]
@@ -63,11 +61,11 @@ def load(ctx, **kwargs):
   data = ctx.obj["data"]
 
   idx = ctx.obj["in_data_strings_loaded"]
-  inDataString = ctx.obj["in_data_strings"][idx]
+  in_data_string = ctx.obj["in_data_strings"][idx]
 
   # Handling the wildcard characters
-  if "*" in inDataString or "?" in inDataString or "!" in inDataString:
-    files = glob.glob(str(inDataString))
+  if "*" in in_data_string or "?" in in_data_string or "!" in in_data_string:
+    files = glob.glob(str(in_data_string))
     files = [f for f in files if f.find("restart") < 0]
     try:
       files = sorted(files, key=_crush)
@@ -78,30 +76,30 @@ def load(ctx, **kwargs):
       )
     # end
   else:
-    files = [inDataString]
+    files = [in_data_string]
   # end
 
   # Resolve the local/global variable names and partial loading
   # The local settings take a precedents but a warning is going to appear
-  z0 = _pickCut(ctx, kwargs, 0)
-  z1 = _pickCut(ctx, kwargs, 1)
-  z2 = _pickCut(ctx, kwargs, 2)
-  z3 = _pickCut(ctx, kwargs, 3)
-  z4 = _pickCut(ctx, kwargs, 4)
-  z5 = _pickCut(ctx, kwargs, 5)
-  comp = _pickCut(ctx, kwargs, 6)
+  z0 = _pick_cut(ctx, kwargs, 0)
+  z1 = _pick_cut(ctx, kwargs, 1)
+  z2 = _pick_cut(ctx, kwargs, 2)
+  z3 = _pick_cut(ctx, kwargs, 3)
+  z4 = _pick_cut(ctx, kwargs, 4)
+  z5 = _pick_cut(ctx, kwargs, 5)
+  comp = _pick_cut(ctx, kwargs, 6)
 
-  varNames = ["CartGridField"]
+  var_names = ["CartGridField"]
   if kwargs["varname"] and ctx.obj["global_var_names"]:
-    varNames = kwargs["varname"]
+    var_names = kwargs["varname"]
     click.echo(
         click.style("WARNING: The local 'varname' is overwriting the global 'varname'",
             fg="yellow")
     )
   elif kwargs["varname"]:
-    varNames = kwargs["varname"]
+    var_names = kwargs["varname"]
   elif ctx.obj["global_var_names"]:
-    varNames = ctx.obj["global_var_names"]
+    var_names = ctx.obj["global_var_names"]
   # end
 
   mapc2p_name = None
@@ -129,11 +127,11 @@ def load(ctx, **kwargs):
     mapc2p_vel_name = ctx.obj["global_c2p_vel"]
   # end
 
-  if len(varNames) == 1:
-    varNames = varNames[0].split(",")
+  if len(var_names) == 1:
+    var_names = var_names[0].split(",")
   # end
 
-  for var in varNames:
+  for var in var_names:
     for fn in files:
       try:
         dat = GData(file_name=fn, tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],

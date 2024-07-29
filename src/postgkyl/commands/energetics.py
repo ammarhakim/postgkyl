@@ -4,7 +4,7 @@ import numpy as np
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
-import postgkyl.tools as diag
+import postgkyl.tools.energetics
 
 
 @click.command()
@@ -25,7 +25,7 @@ def energetics(ctx, **kwargs):
     out_energetics = np.zeros(em.get_values()[..., 0:7].shape)
     out = GData(tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
         label=kwargs["label"], ctx=em.ctx)
-    grid, out_energetics = diag.energetics(elc, ion, em)
+    grid, out_energetics = postgkyl.tools.energetics(elc, ion, em)
     out.push(grid, out_energetics)
     data.add(out)
   # end

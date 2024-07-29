@@ -10,8 +10,7 @@ if TYPE_CHECKING:
   from postgkyl import GData
 # end
 
-def energetics(data_elc: GData, data_ion: GData, data_field: GData,
-    overwrite=False, stack=False) -> Tuple[list, np.ndarray]:
+def energetics(data_elc: GData, data_ion: GData, data_field: GData) -> Tuple[list, np.ndarray]:
   """Function to separate components of the energy.
 
   Works for both species and EM fields and separates into constituent parts (species

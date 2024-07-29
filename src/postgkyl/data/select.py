@@ -1,10 +1,20 @@
+
+from __future__ import annotations
+
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.utils import idx_parser
+if TYPE_CHECKING:
+  from postgkyl import GData
+#end
 
 
-def select(data, comp=None, overwrite=False,
-    z0=None, z1=None, z2=None, z3=None, z4=None, z5=None):
+def select(data: GData, comp: int | str | None = None,
+      z0: int | str | None = None, z1: int | str | None = None,
+      z2: int | str | None = None, z3: int | str | None = None,
+      z4: int | str | None = None, z5: int | str | None = None,
+      overwrite: bool = False) -> Tuple[list, np.ndarray]:
   """Selects parts of the GData.
 
   Allows to select only a part of GData (both coordinates and
@@ -41,22 +51,20 @@ def select(data, comp=None, overwrite=False,
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
-        vIdx = slice(idx, idx + 1)
-        gIdx = slice(idx, idx + 2) if not is_matching else slice(idx, idx + 1)
+        v_idx = slice(idx, idx + 1)
+        g_idx = slice(idx, idx + 2) if not is_matching else slice(idx, idx + 1)
       elif isinstance(idx, slice):
-        vIdx = idx
-        gIdx = slice(idx.start, idx.stop + 1) if not is_matching else idx
+        v_idx = idx
+        g_idx = slice(idx.start, idx.stop + 1) if not is_matching else idx
       else:
-        raise TypeError(
-            "The coordinate select can be only single index (int) or a slice"
-        )
+        raise TypeError("The coordinate select can be only single index (int) or a slice.")
       # end
       if uniform_grid:
-        grid[d] = grid[d][gIdx]
+        grid[d] = grid[d][g_idx]
       else:
-        grid_idx[d] = gIdx
+        grid_idx[d] = g_idx
       # end
-      values_idx[d] = vIdx
+      values_idx[d] = v_idx
     # end
   # end
 
@@ -78,7 +86,5 @@ def select(data, comp=None, overwrite=False,
 
   if overwrite:
     data.push(grid, values_out)
-  else:
-    return grid, values_out
-  # end
-# end
+  #end
+  return grid, values_out

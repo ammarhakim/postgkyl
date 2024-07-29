@@ -1,8 +1,9 @@
 import click
 
 from postgkyl.data import GData, GInterpModal
-from postgkyl.tools import laguerre_compose, transform_frame
 from postgkyl.utils import verb_print
+import postgkyl.tools.laguerre_compose
+import postgkyl.tools.transform_frame
 
 
 @click.command()
@@ -31,8 +32,8 @@ def pkpm(ctx, **kwargs):
   grid_and_T_m = dg.interpolate(3)
   grid_and_us = dg.interpolate((0, 1, 2))
 
-  laguerre_compose(gf, grid_and_T_m, gf)
-  transform_frame(gf, grid_and_us, c_dim, gf)
+  postgkyl.tools.laguerre_compose(gf, grid_and_T_m, gf)
+  postgkyl.tools.transform_frame(gf, grid_and_us, c_dim, gf)
 
   gf.set_tag(kwargs["tag"])
   gf.set_label(kwargs["label"])

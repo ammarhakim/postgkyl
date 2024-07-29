@@ -2,8 +2,7 @@ import click
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
-
-from postgkyl.tools.perprotate import perprotate
+import postgkyl.tools.perprotate
 
 
 @click.command()
@@ -26,9 +25,9 @@ def perprotate(ctx, **kwargs):
   data = ctx.obj["data"]  # shortcut
 
   for a, rot in zip(data.iterator(kwargs["array"]), data.iterator(kwargs["rotator"])):
-    grid, outrot = perprotate(a, rot)
+    grid, outrot = postgkyl.tools.perprotate(a, rot)
     # Create new GData structure with appropriate outtag and labels to store output.
-    out = GData(tag=kwargs["tag"], compgrid=ctx.obj["compgrid"],
+    out = GData(tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
         label=kwargs["label"], ctx=a.ctx)
     out.push(outrot, grid)
     data.add(out)

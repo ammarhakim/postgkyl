@@ -1,8 +1,8 @@
 import click
 
 from postgkyl.data import GData
-from postgkyl.tools.parrotate import parrotate
 from postgkyl.utils import verb_print
+import postgkyl.tools.parrotate
 
 
 @click.command()
@@ -30,7 +30,7 @@ def bparrotate(ctx, **kwargs):
 
   for a, rot in zip(data.iterator(kwargs["array"]), data.iterator(kwargs["field"])):
     # Magnetic field is components 3, 4, & 5 in field array
-    grid, outrot = parrotate(a, rot, "3:6")
+    grid, outrot = postgkyl.tools.parrotate(a, rot, "3:6")
     # Create new GData structure with appropriate outtag and labels to store output.
     out = GData(tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
         label=kwargs["label"], ctx=a.ctx)

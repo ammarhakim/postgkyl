@@ -4,13 +4,12 @@ from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.utils import input_parser
-
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
 
 
-def mag_sq(input: GData | Tuple[list, np.ndarray], coords: str = "0:3",
+def mag_sq(dat: GData | Tuple[list, np.ndarray], coords: str = "0:3",
     output: GData | None = None) -> Tuple[list, np.ndarray]:
   """Function to compute the magnitude squared of an array
 
@@ -26,7 +25,7 @@ def mag_sq(input: GData | Tuple[list, np.ndarray], coords: str = "0:3",
     Assumes that the number of components is the last dimension.
 
   """
-  in_grid, in_values = input_parser(input)
+  in_grid, in_values = input_parser(dat)
 
   # Because coords is an input string, need to split and parse it to get the right
   # coordinates.

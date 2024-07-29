@@ -155,11 +155,11 @@ def exp(in_grid, in_values):
 
 def length(in_grid, in_values):
   ax = int(in_values[0])
-  length = in_grid[1][ax][-1] - in_grid[1][ax][0]
+  ln = in_grid[1][ax][-1] - in_grid[1][ax][0]
   if len(in_grid[1][ax]) == in_values[1].shape[ax]:
-    length = length + in_grid[1][ax][1] - in_grid[1][ax][0]
+    ln += in_grid[1][ax][1] - in_grid[1][ax][0]
   # end
-  return [[]], [length]
+  return [[]], [ln]
 
 
 def grad(in_grid, in_values):
@@ -194,10 +194,10 @@ def grad2(in_grid, in_values):
   # end
 
   num_dims = len(rng)
-  outShape = list(in_values[1].shape)
+  out_shape = list(in_values[1].shape)
   num_comps = in_values[1].shape[-1]
-  outShape[-1] = outShape[-1] * num_dims
-  out_values = np.zeros(outShape)
+  out_shape[-1] = out_shape[-1] * num_dims
+  out_values = np.zeros(out_shape)
 
   for cnt, d in enumerate(rng):
     zc = 0.5 * (in_grid[1][d][1:] + in_grid[1][d][:-1])  # get cell centered values
@@ -251,11 +251,11 @@ def integrate(in_grid, in_values, avg=False):
     grid[ax] = np.array([0])
     values = np.expand_dims(values, ax)
     if avg:
-      length = in_grid[1][ax][-1] - in_grid[1][ax][0]
+      ln = in_grid[1][ax][-1] - in_grid[1][ax][0]
       if len(in_grid[1][ax]) == in_values[1].shape[ax]:
-        length = length + in_grid[1][ax][1] - in_grid[1][ax][0]
+        ln += in_grid[1][ax][1] - in_grid[1][ax][0]
       # end
-      values = values / length
+      values = values/ln
     # end
   # end
   return [grid], [values]
@@ -275,9 +275,9 @@ def divergence(in_grid, in_values):
             fg="yellow")
     )
     # end
-  outShape = list(in_values[0].shape)
-  outShape[-1] = 1
-  out_values = np.zeros(outShape)
+  out_shape = list(in_values[0].shape)
+  out_shape[-1] = 1
+  out_values = np.zeros(out_shape)
   for d in range(num_dims):
     zc = 0.5 * (in_grid[0][d][1:] + in_grid[0][d][:-1])  # get cell centered values
     out_values[..., 0] = out_values[..., 0] + np.gradient(
@@ -292,14 +292,14 @@ def curl(in_grid, in_values):
   num_dims = len(in_grid[0])
   num_comps = in_values[0].shape[-1]
 
-  outShape = list(in_values[0].shape)
+  out_shape = list(in_values[0].shape)
 
   if num_dims == 1:
     if num_comps != 3:
       raise ValueError(f"ERROR in 'ev curl': Curl in 1D requires 3-component input and {num_comps:d}-component field was provided.")
     # end
     zc0 = 0.5*(in_grid[0][0][1:] + in_grid[0][0][:-1])
-    out_values = np.zeros(outShape)
+    out_values = np.zeros(out_shape)
     out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
     out_values[..., 2] = np.gradient(in_values[0][..., 1], zc0, edge_order=2, axis=0)
   elif num_dims == 2:
@@ -312,8 +312,8 @@ def curl(in_grid, in_values):
           click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). Only the third component of curl will be calculated.",
               fg="yellow")
       )
-      outShape[-1] = 1
-      out_values = np.zeros(outShape)
+      out_shape[-1] = 1
+      out_values = np.zeros(out_shape)
       out_values[..., 0] = np.gradient(
           in_values[0][..., 1], zc0, edge_order=2, axis=0
       ) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
@@ -325,7 +325,7 @@ def curl(in_grid, in_values):
                 fg="yellow")
         )
       # end
-      out_values = np.zeros(outShape)
+      out_values = np.zeros(out_shape)
       out_values[..., 0] = np.gradient(in_values[0][..., 2], zc1, edge_order=2, axis=1)
       out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
       out_values[..., 2] = np.gradient( in_values[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
@@ -351,31 +351,31 @@ def curl(in_grid, in_values):
 
 
 cmds = {
-    "+": {"numIn": 2, "numOut": 1, "func": add},
-    "-": {"numIn": 2, "numOut": 1, "func": subtract},
-    "*": {"numIn": 2, "numOut": 1, "func": mult},
-    "/": {"numIn": 2, "numOut": 1, "func": divide},
-    "dot": {"numIn": 2, "numOut": 1, "func": dot},
-    "sqrt": {"numIn": 1, "numOut": 1, "func": sqrt},
-    "sin": {"numIn": 1, "numOut": 1, "func": psin},
-    "cos": {"numIn": 1, "numOut": 1, "func": pcos},
-    "tan": {"numIn": 1, "numOut": 1, "func": ptan},
-    "abs": {"numIn": 1, "numOut": 1, "func": absolute},
-    "avg": {"numIn": 2, "numOut": 1, "func": average},
-    "log": {"numIn": 1, "numOut": 1, "func": log},
-    "log10": {"numIn": 1, "numOut": 1, "func": log10},
-    "max": {"numIn": 1, "numOut": 1, "func": maximum},
-    "min": {"numIn": 1, "numOut": 1, "func": minimum},
-    "max2": {"numIn": 2, "numOut": 1, "func": maximum2},
-    "min2": {"numIn": 2, "numOut": 1, "func": minimum2},
-    "mean": {"numIn": 1, "numOut": 1, "func": mean},
-    "len": {"numIn": 2, "numOut": 1, "func": length},
-    "pow": {"numIn": 2, "numOut": 1, "func": power},
-    "sq": {"numIn": 1, "numOut": 1, "func": sq},
-    "exp": {"numIn": 1, "numOut": 1, "func": exp},
-    "grad": {"numIn": 1, "numOut": 1, "func": grad},
-    "grad2": {"numIn": 2, "numOut": 1, "func": grad2},
-    "int": {"numIn": 2, "numOut": 1, "func": integrate},
-    "div": {"numIn": 1, "numOut": 1, "func": divergence},
-    "curl": {"numIn": 1, "numOut": 1, "func": curl},
+    "+": {"num_in": 2, "num_out": 1, "func": add},
+    "-": {"num_in": 2, "num_out": 1, "func": subtract},
+    "*": {"num_in": 2, "num_out": 1, "func": mult},
+    "/": {"num_in": 2, "num_out": 1, "func": divide},
+    "dot": {"num_in": 2, "num_out": 1, "func": dot},
+    "sqrt": {"num_in": 1, "num_out": 1, "func": sqrt},
+    "sin": {"num_in": 1, "num_out": 1, "func": psin},
+    "cos": {"num_in": 1, "num_out": 1, "func": pcos},
+    "tan": {"num_in": 1, "num_out": 1, "func": ptan},
+    "abs": {"num_in": 1, "num_out": 1, "func": absolute},
+    "avg": {"num_in": 2, "num_out": 1, "func": average},
+    "log": {"num_in": 1, "num_out": 1, "func": log},
+    "log10": {"num_in": 1, "num_out": 1, "func": log10},
+    "max": {"num_in": 1, "num_out": 1, "func": maximum},
+    "min": {"num_in": 1, "num_out": 1, "func": minimum},
+    "max2": {"num_in": 2, "num_out": 1, "func": maximum2},
+    "min2": {"num_in": 2, "num_out": 1, "func": minimum2},
+    "mean": {"num_in": 1, "num_out": 1, "func": mean},
+    "len": {"num_in": 2, "num_out": 1, "func": length},
+    "pow": {"num_in": 2, "num_out": 1, "func": power},
+    "sq": {"num_in": 1, "num_out": 1, "func": sq},
+    "exp": {"num_in": 1, "num_out": 1, "func": exp},
+    "grad": {"num_in": 1, "num_out": 1, "func": grad},
+    "grad2": {"num_in": 2, "num_out": 1, "func": grad2},
+    "int": {"num_in": 2, "num_out": 1, "func": integrate},
+    "div": {"num_in": 1, "num_out": 1, "func": divergence},
+    "curl": {"num_in": 1, "num_out": 1, "func": curl},
 }

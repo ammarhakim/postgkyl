@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from matplotlib import cm
 from matplotlib import colors
-import matplotlib.axes
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import Tuple, TYPE_CHECKING
 import matplotlib as mpl
+import matplotlib.axes
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 
 from postgkyl.utils import input_parser
-
 if TYPE_CHECKING:
   from postgkyl import GData
 # end

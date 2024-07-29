@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 
-def perprotate(data: GData, rotator: GData, rotateCoords="0:3",
+def perprotate(data: GData, rotator: GData, rotate_coords: str = "0:3",
       overwrite=False, stack=False) -> Tuple[list, np.ndarray]:
   """Function to rotate input array into coordinate system perpendicular to rotator array
   For two arrays u and v, where v is the rotator, operation is u - (u dot v_hat) v_hat.
@@ -20,8 +20,8 @@ def perprotate(data: GData, rotator: GData, rotateCoords="0:3",
   Parameters:
   data -- input GData object being rotated
   rotator -- GData object used for the rotation
-  rotateCoords -- optional input to specify a different set of coordinates in the rotator array used
-  for the rotation (e.g., if rotating to the local magnetic field of a finite volume simulation, rotateCoords='3:6')
+  rotate_coords -- optional input to specify a different set of coordinates in the rotator array used
+  for the rotation (e.g., if rotating to the local magnetic field of a finite volume simulation, rotate_coords='3:6')
 
   Notes:
   Assumes three component fields, and that the number of components is the last dimension.
@@ -36,8 +36,9 @@ def perprotate(data: GData, rotator: GData, rotateCoords="0:3",
   values = data.get_values()
 
   outrot = np.zeros_like(values)
-  outrot = values - parrotate(data, rotator, rotateCoords)
+  outrot = values - parrotate(data, rotator, rotate_coords)
   if overwrite:
     data.push(grid, outrot)
+  #end
 
   return grid, outrot
