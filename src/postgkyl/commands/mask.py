@@ -5,26 +5,16 @@ from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
 
-
-@click.command(help="Mask data with specified Gkeyll mask file.")
+@click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
-@click.option(
-    "--filename", "-f", type=click.STRING, help="Specify the file with a mask"
-)
-@click.option(
-    "--lower",
-    "-l",
-    type=click.FLOAT,
-    help="Specify the lower theshold to be masked out.",
-)
-@click.option(
-    "--upper",
-    "-u",
-    type=click.FLOAT,
-    help="Specify the upper theshold to be masked out.",
-)
+@click.option("--filename", "-f", type=click.STRING, help="Specify the file with a mask.")
+@click.option("--lower", "-l", type=click.FLOAT,
+    help="Specify the lower theshold to be masked out.")
+@click.option("--upper", "-u", type=click.FLOAT,
+    help="Specify the upper theshold to be masked out.")
 @click.pass_context
 def mask(ctx, **kwargs):
+  """Mask data with specified Gkeyll mask file."""
   verb_print(ctx, "Starting mask")
   data = ctx.obj("data")
 
@@ -47,9 +37,7 @@ def mask(ctx, **kwargs):
     else:
       data.set_values(values)
       click.echo(
-          click.style(
-              "WARNING in 'mask': No masking information specified.", fg="yellow"
-          )
+          click.style("WARNING in 'mask': No masking information specified.", fg="yellow")
       )
     # end
   # end

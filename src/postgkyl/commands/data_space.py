@@ -1,6 +1,13 @@
+
+from __future__ import annotations
+
 import click
 import numpy as np
+from typing import TYPE_CHECKING, Optional, Union, Iterator
 
+if TYPE_CHECKING:
+  from postgkyl import GData
+#end
 
 class DataSpace(object):
 
@@ -8,13 +15,12 @@ class DataSpace(object):
     self._dataset_dict = {}
 
   # ---- Iterators ----
-  def iterator(self, tag=None, enum=False, only_active=True, select=None):
+  def iterator(self, tag: Optional[str] = None, enum: bool = False,
+      only_active: bool = True, select: Union[int, slice, str, None] = None) -> Iterator[GData]:
     # Process 'select'
     if enum and select:
       click.echo(
-          click.style(
-              "Error: 'select' and 'enum' cannot be selected simultaneously", fg="red"
-          )
+          click.style("Error: 'select' and 'enum' cannot be selected simultaneously", fg="red")
       )
       quit()
     # end
@@ -71,10 +77,7 @@ class DataSpace(object):
         # end
       except KeyError as err:
         click.echo(
-            click.style(
-                "ERROR: Failed to load the specified/default tag {0}".format(err),
-                fg="red",
-            )
+            click.style(f"ERROR: Failed to load the specified/default tag {err}", fg="red")
         )
         quit()
       except IndexError:
@@ -83,7 +86,7 @@ class DataSpace(object):
       # end
     # end
 
-  def tag_iterator(self, tag=None, only_active=True):
+  def tag_iterator(self, tag: Optional[str] = None, only_active: bool = True) -> Iterator[str]:
     if tag:
       out = tag.split(",")
     elif only_active:
@@ -99,7 +102,7 @@ class DataSpace(object):
     return iter(out)
 
   # ---- Labels ----
-  def set_unique_labels(self):
+  def set_unique_labels(self) -> None:
     num_comps = []
     names = []
     labels = []
@@ -130,7 +133,7 @@ class DataSpace(object):
             if labels[idx] == "":
               labels[idx] += nm[i]
             else:
-              labels[idx] += "_{:s}".format(nm[i])
+              labels[idx] += f"_{nm[i]:s}"
             # end
           # end
         # end
@@ -143,7 +146,7 @@ class DataSpace(object):
     # end
 
   # ---- Adding datasets ----
-  def add(self, data):
+  def add(self, data: GData) -> None:
     tag_nm = data.get_tag()
     if tag_nm in self._dataset_dict:
       self._dataset_dict[tag_nm].append(data)
@@ -152,24 +155,23 @@ class DataSpace(object):
     # end
 
   # ---- Staus control ----
-  def activate_all(self, tag=None):
+  def activate_all(self, tag: Optional[str] = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     # end
 
   # end
-  def deactivate_all(self, tag=None):
+  def deactivate_all(self, tag: Optional[str] = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
     # end
 
   # ---- Utilities ----
-  def get_dataset(self, tag, idx):
+  def get_dataset(self, tag: str, idx: int) -> GData:
     return self._dataset_dict[tag][idx]
 
-  # end
 
-  def get_num_datasets(self, tag=None, only_active=True):
+  def get_num_datasets(self, tag: Optional[str] = None, only_active: bool = True):
     num_sets = 0
     for dat in self.iterator(tag=tag, only_active=only_active):
       num_sets += 1

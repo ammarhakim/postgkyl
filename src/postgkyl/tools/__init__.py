@@ -1,10 +1,5 @@
 from .calculus import integrate
 
-# import correlation functions
-# from .fieldParticleCorrelation import Ce
-# import growth functions
-from .growth import fit_growth
-
 # import parameter computation functions
 from .params import get_magB
 from .params import get_vt
@@ -52,18 +47,17 @@ from .pressure_diagnostics import get_agyro
 from .pressure_diagnostics import get_gkyl_10m_agyro
 
 from .accumulate_current import accumulate_current
+from .calc_enstrophy import calc_enstrophy
+from .calc_ke_dke import calc_ke_dke
 from .energetics import energetics
+from .fft import fft
+from .growth import fit_growth
+from .init_polar import init_polar
 from .mag_sq import mag_sq
 from .parrotate import parrotate
 from .perprotate import perprotate
-from .rel_change import rel_change
-
-from .init_polar import init_polar
-from .calc_enstrophy import calc_enstrophy
-from .calc_ke_dke import calc_ke_dke
 from .polar_isotropic import polar_isotropic
-
-from .fft import fft
+from .rel_change import rel_change
 
 # import filters.py functions
 from . import filters

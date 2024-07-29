@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING, Union, Optional
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.utils import input_parser
@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 # end
 
 
-def mag_sq(input: Union[GData, Tuple[list, np.ndarray]], coords: str = "0:3",
-    output: Optional[GData] = None) -> Tuple[list, np.ndarray]:
+def mag_sq(input: GData | Tuple[list, np.ndarray], coords: str = "0:3",
+    output: GData | None = None) -> Tuple[list, np.ndarray]:
   """Function to compute the magnitude squared of an array
 
   Parameters:

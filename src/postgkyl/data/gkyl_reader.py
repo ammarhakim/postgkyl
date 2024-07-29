@@ -1,6 +1,6 @@
 """Module including Gkeyll binary reader class."""
 
-from typing import Tuple, Optional
+from typing import Tuple
 import msgpack as mp
 import numpy as np
 import os.path
@@ -80,9 +80,8 @@ import os.path
 class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
-  def __init__(self, file_name: str, ctx: Optional[dict] = None,
-      c2p: str = "", c2p_vel: str = "",
-      **kwargs):
+  def __init__(self, file_name: str, ctx: dict | None = None,
+      c2p: str = "", c2p_vel: str = "", **kwargs):
     """Initialize the instance of Gkeyll reader.
 
     Args:
@@ -139,16 +138,13 @@ class GkylReader(object):
     if self.is_compatible():
       self.offset += 5  # Header contatins the gkyl magic sequence
 
-      self.version = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+      self.version = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
-      self.file_type = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+      self.file_type = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
-      meta_size = np.fromfile(
-          self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+      meta_size = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
 
       # read meta
@@ -185,39 +181,28 @@ class GkylReader(object):
   # ---- Read field data (version 1) ----
   def _read_domain_t1a3_v1(self) -> None:
     # read grid dimensions
-    self.num_dims = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset
-    )[0]
+    self.num_dims = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
     # read grid shape
-    self.cells = np.fromfile(
-        self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset
-    )
+    self.cells = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
     self.offset += self.num_dims * 8
 
     # read lower/upper
-    self.lower = np.fromfile(
-        self.file_name, dtype=self.dtf, count=self.num_dims, offset=self.offset
-    )
+    self.lower = np.fromfile(self.file_name, dtype=self.dtf, count=self.num_dims, offset=self.offset)
     self.offset += self.num_dims * self.doffset
-    self.upper = np.fromfile(
-        self.file_name, dtype=self.dtf, count=self.num_dims, offset=self.offset
-    )
+    self.upper = np.fromfile(self.file_name, dtype=self.dtf, count=self.num_dims, offset=self.offset)
     self.offset += self.num_dims * self.doffset
 
     # read array elem_ez (the div by doffset is as elem_sz includes
     # sizeof(real_type) = doffset)
-    elem_sz_raw = int(
-        np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
-    )
+    elem_sz_raw = int(np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0])
     elem_sz = elem_sz_raw / self.doffset
     self.num_comps = int(elem_sz)
     self.offset += 8
 
     # read array size
-    self.asize = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+    self.asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
   def _read_data_t1_v1(self) -> np.ndarray:
@@ -231,8 +216,7 @@ class GkylReader(object):
 
   def _read_data_t3_v1(self) -> np.ndarray:
     # get the number of stored ranges
-    num_range = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+    num_range = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
@@ -243,13 +227,9 @@ class GkylReader(object):
 
     data = np.zeros(gshape, dtype=self.dtf)
     for _ in range(num_range):
-      loidx = np.fromfile(
-          self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset
-      )
+      loidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
-      upidx = np.fromfile(
-          self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset
-      )
+      upidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
       for d in range(self.num_dims):
         gshape[d] = upidx[d] - loidx[d] + 1
@@ -258,12 +238,8 @@ class GkylReader(object):
 
       asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
-      data_raw = np.fromfile(
-          self.file_name,
-          dtype=self.dtf,
-          count=asize * self.num_comps,
-          offset=self.offset,
-      )
+      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize * self.num_comps,
+          offset=self.offset)
       self.offset += asize * self.num_comps * self.doffset
       data[tuple(slices)] = data_raw.reshape(gshape)
     # end
@@ -275,28 +251,18 @@ class GkylReader(object):
     time = np.array([])
     data = np.array([[]])
     while True:  # Python does not have DO .. WHILE loop
-      elem_sz_raw = int(
-          np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
-      )
+      elem_sz_raw = int(np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0])
       num_comps = int(elem_sz_raw / self.doffset)
       self.offset += 8
 
-      loop_cells = int(
-          np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
-      )
+      loop_cells = int(np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0])
       self.offset += 8
 
-      loop_time = np.fromfile(
-          self.file_name, dtype=self.dtf, count=loop_cells, offset=self.offset
-      )
+      loop_time = np.fromfile(self.file_name, dtype=self.dtf, count=loop_cells, offset=self.offset)
       self.offset += loop_cells * 8
 
-      data_raw = np.fromfile(
-          self.file_name,
-          dtype=self.dtf,
-          count=num_comps * loop_cells,
-          offset=self.offset,
-      )
+      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=num_comps * loop_cells,
+          offset=self.offset)
       self.offset += loop_cells * elem_sz_raw
       gshape = np.array((loop_cells, num_comps), dtype=self.dti)
 
@@ -367,10 +333,7 @@ class GkylReader(object):
       _, tmp = grid_reader.load()
       num_comps = tmp.shape[-1]
       num_coeff = num_comps / num_dims
-      grid = [
-          tmp[..., int(d * num_coeff) : int((d + 1) * num_coeff)]
-          for d in range(num_dims)
-      ]
+      grid = [tmp[..., int(d * num_coeff) : int((d + 1)*num_coeff)] for d in range(num_dims)]
       if self.ctx:
         self.ctx["grid_type"] = "c2p"
       # end
@@ -387,10 +350,7 @@ class GkylReader(object):
       # end
 
       # Create uniform configuration space grid
-      grid = [
-          np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1)
-          for d in range(num_cdim)
-      ]
+      grid = [np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1) for d in range(num_cdim)]
 
       # Create non-uniform velocity grid
       num_comps = tmp.shape[-1]
@@ -417,10 +377,7 @@ class GkylReader(object):
           self.upper[d] = self.upper[d] + ngu * dz[d]
         # end
       # end
-      grid = [
-          np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1)
-          for d in range(num_dims)
-      ]
+      grid = [np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1) for d in range(num_dims)]
       if self.ctx:
         self.ctx["grid_type"] = "uniform"
       # end

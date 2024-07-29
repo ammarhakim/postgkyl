@@ -4,27 +4,19 @@ import shutil
 from postgkyl.utils import verb_print
 
 
-
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
-@click.option(
-    "-f", "--filename", type=click.STRING, prompt=True, help="Output file name"
-)
-@click.option(
-    "-m",
-    "--mode",
-    type=click.Choice(["gkyl", "bp", "txt", "npy"]),
-    default="gkyl",
-    help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file)",
-)
+@click.option("-f", "--filename", type=click.STRING, prompt=True, help="Output file name.")
+@click.option("-m", "--mode", type=click.Choice(["gkyl", "bp", "txt", "npy"]), default="gkyl",
+    help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file).")
 @click.option("-s", "--single", is_flag=True, help="Write all dataset into one file")
 @click.pass_context
 def write(ctx, **kwargs):
-  """Write active dataset to a file. The output file format can be set
-  with ``--format``, and is Gkeyll's .gkyl by default. Files
-  saved as .gkyl or .bp can be later loaded back into pgkyl to further
-  manipulate or plot.
+  """Write active dataset to a file.
 
+  The output file format can be set with ``--format``, and is Gkeyll's .gkyl by default.
+  Files saved as .gkyl or .bp can be later loaded back into pgkyl to further manipulate
+  or plot.
   """
   verb_print(ctx, "Starting write")
   data = ctx.obj["data"]
@@ -51,13 +43,7 @@ def write(ctx, **kwargs):
       # end
     # end
 
-    dat.write(
-        out_name=out_name,
-        mode=mode,
-        append=append,
-        var_name=var_name,
-        cleaning=cleaning,
-    )
+    dat.write(out_name=out_name, mode=mode, append=append, var_name=var_name, cleaning=cleaning)
 
     if kwargs["single"]:
       append = True
@@ -71,10 +57,7 @@ def write(ctx, **kwargs):
     else:
       nm = fn
     # end
-    shutil.move(
-        "{:s}.{:s}.dir/{:s}.{:s}.0".format(fn, mode, fn, mode),
-        "{:s}.{:s}".format(fn, mode),
-    )
-    shutil.rmtree("{:s}.{:s}.dir".format(fn, mode))
+    shutil.move(f"{fn:s}.{mode:s}.dir/{fn:s}.{mode:s}.0", f"{fn:s}.{mode:s}")
+    shutil.rmtree(f"{fn:s}.{mode:s}.dir")
   # end
   verb_print(ctx, "Finishing write")

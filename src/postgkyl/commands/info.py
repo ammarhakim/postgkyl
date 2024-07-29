@@ -3,10 +3,9 @@ import click
 from postgkyl.utils import verb_print
 
 
-
 @click.command(help="Print info of active datasets.")
 @click.option("-u", "--use", help="Specify a 'tag' to apply to (default all tags).")
-@click.option("-c", "--compact", is_flag=True, help="Show in compact mode")
+@click.option("-c", "--compact", is_flag=True, help="Show in compact mode.")
 @click.option("-a", "--allsets", is_flag=True, help="All data sets.")
 @click.pass_context
 def info(ctx, **kwargs):
@@ -27,13 +26,8 @@ def info(ctx, **kwargs):
       bold = False
     # end
     click.echo(
-        click.style(
-            "{:s}{:s}({:s}#{:d})".format(
-                dat.get_label(), " " if dat.get_label() else "", dat.get_tag(), i
-            ),
-            fg=color,
-            bold=bold,
-        )
+        click.style(f"{dat.get_label():s}{" " if dat.get_label() else "":s}({dat.get_tag():s}#{i:d})",
+            fg=color, bold=bold)
     )
     if not kwargs["compact"]:
       click.echo(dat.info() + "\n")

@@ -11,22 +11,19 @@ from postgkyl.utils import verb_print
 
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
-@click.option("-g", "--guess", help="Specify comma-separated initial guess")
-@click.option("--minn", type=click.INT, help="Set minimal number of points to fit")
-@click.option(
-    "-d", "--dataset", is_flag=True, help="Create a new dataset with fitted exponential"
-)
-@click.option(
-    "-i", "--instantaneous", is_flag=True, help="Plot instantaneous growth rate vs time"
-)
+@click.option("-g", "--guess", help="Specify comma-separated initial guess.")
+@click.option("--minn", type=click.INT, help="Set minimal number of points to fit.")
+@click.option("-d", "--dataset", is_flag=True, help="Create a new dataset with fitted exponential.")
+@click.option("-i", "--instantaneous", is_flag=True, help="Plot instantaneous growth rate vs time.")
 @click.option("--dir", type=click.INT, help="Choose direction for multi-D data.")
-@click.option("--tag", "-t", help="Optional tag for the resulting array")
-@click.option("--label", "-l", help="Custom label for the result")
+@click.option("--tag", "-t", help="Optional tag for the resulting array.")
+@click.option("--label", "-l", help="Custom label for the result.")
 @click.pass_context
 def growth(ctx, **kwargs):
-  """Attempts to compute growth rate (i.e. fit e^(2x)) from DynVector
-  data, typically an integrated quantity like electric or magnetic
-  field energy.
+  """Attempts to compute growth rate (i.e. fit e^(2x)) from DynVector data.
+
+  the DynVector is typically an integrated quantity like electric or magnetic field
+  energy.
   """
   verb_print(ctx, "Starting growth")
   data = ctx.obj["data"]
@@ -66,12 +63,11 @@ def growth(ctx, **kwargs):
         y = values[idx, :, 0].squeeze()
       # end
 
-      bestParams, bestR2, bestN = fit_growth(x, y, minN=kwargs["minn"], p0=p0)
+      bestParams, _, _ = fit_growth(x, y, minN=kwargs["minn"], p0=p0)
 
       if kwargs["dataset"]:
-        out = GData(
-            tag="growth", label="Fit", comp_grid=ctx.obj["compgrid"], ctx=dat.ctx
-        )
+        out = GData(tag="growth", label="Fit",
+            comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
         t = 0.5 * (time[0][:-1] + time[0][1:])
         out_val = exp2(t, *bestParams)
         out.push([time[0]], out_val[..., np.newaxis])
@@ -82,15 +78,10 @@ def growth(ctx, **kwargs):
         verb_print(ctx, "growth: Plotting instantaneous growth rate")
         gammas = []
         for i in range(1, len(time[0]) - 1):
-          gamma = (values[i + 1, 0] - values[i - 1, 0]) / (
-              2 * values[i, 0] * (time[0][i + 1] - time[0][i - 1])
-          )
+          gamma = (values[i + 1, 0] - values[i - 1, 0]) / (2*values[i, 0]*(time[0][i + 1] - time[0][i - 1]))
           gammas.append(gamma)
 
-          plt.style.use(
-              os.path.dirname(os.path.realpath(__file__))
-              + "/../output/postgkyl.mplstyle"
-          )
+          plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/../output/postgkyl.mplstyle")
           fig, ax = plt.subplots()
           ax.plot(time[0][1:-1], gammas)
           # ax.set_autoscale_on(False)
@@ -104,12 +95,8 @@ def growth(ctx, **kwargs):
     # end
 
     if kwargs["tag"]:
-      out = GData(
-          tag=kwargs["tag"],
-          label=kwargs["label"],
-          comp_grid=ctx.obj["compgrid"],
-          ctx=dat.ctx,
-      )
+      out = GData(tag=kwargs["tag"], label=kwargs["label"],
+          comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
       out.push([ks], growth_rates[..., np.newaxis])
       data.add(out)
     # end

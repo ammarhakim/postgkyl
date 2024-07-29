@@ -58,10 +58,10 @@ def divide(in_grid, in_values):
   out_grid = _get_grid(in_grid[0], in_grid[1])
   a, b = in_values[1], in_values[0]
   if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
-    out_values = a / b
+    out_values = a/b
   else:
     # See the 'mult' comment above
-    out_values = (a.transpose() / b.transpose()).transpose()
+    out_values = (a.transpose()/b.transpose()).transpose()
   # end
   return [out_grid], [out_values]
 
@@ -143,7 +143,7 @@ def power(in_grid, in_values):
 
 def sq(in_grid, in_values):
   out_grid = in_grid[0]
-  out_values = in_values[0] ** 2
+  out_values = in_values[0]**2
   return [out_grid], [out_values]
 
 
@@ -172,7 +172,7 @@ def grad(in_grid, in_values):
 
   for d in range(nd):
     zc = 0.5 * (in_grid[0][d][1:] + in_grid[0][d][:-1])  # get cell centered values
-    out_values[..., d * nc : (d + 1) * nc] = np.gradient(
+    out_values[..., d*nc:(d + 1)*nc] = np.gradient(
         in_values[0], zc, edge_order=2, axis=d
     )
   # end
@@ -201,7 +201,7 @@ def grad2(in_grid, in_values):
 
   for cnt, d in enumerate(rng):
     zc = 0.5 * (in_grid[1][d][1:] + in_grid[1][d][:-1])  # get cell centered values
-    out_values[..., cnt * num_comps : (cnt + 1) * num_comps] = np.gradient(
+    out_values[..., cnt*num_comps:(cnt + 1)*num_comps] = np.gradient(
         in_values[1], zc, edge_order=2, axis=d
     )
   # end
@@ -231,9 +231,7 @@ def integrate(in_grid, in_values, avg=False):
       axis = tuple(range(num_dims))
     # end
   else:
-    raise TypeError(
-        "'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')"
-    )
+    raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
   # end
 
   dz = []
@@ -273,12 +271,8 @@ def divergence(in_grid, in_values):
   num_comps = in_values[0].shape[-1]
   if num_comps > num_dims:
     click.echo(
-        click.style(
-            "WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(
-                num_comps, num_dims, num_comps - num_dims
-            ),
-            fg="yellow",
-        )
+        click.style(f"WARNING in 'ev div': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} component(s) of the vector will be disregarded.",
+            fg="yellow")
     )
     # end
   outShape = list(in_values[0].shape)
@@ -302,13 +296,9 @@ def curl(in_grid, in_values):
 
   if num_dims == 1:
     if num_comps != 3:
-      raise ValueError(
-          "ERROR in 'ev curl': Curl in 1D requires 3-component input and {:d}-component field was provided.".format(
-              num_comps
-          )
-      )
+      raise ValueError(f"ERROR in 'ev curl': Curl in 1D requires 3-component input and {num_comps:d}-component field was provided.")
     # end
-    zc0 = 0.5 * (in_grid[0][0][1:] + in_grid[0][0][:-1])
+    zc0 = 0.5*(in_grid[0][0][1:] + in_grid[0][0][:-1])
     out_values = np.zeros(outShape)
     out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
     out_values[..., 2] = np.gradient(in_values[0][..., 1], zc0, edge_order=2, axis=0)
@@ -316,19 +306,11 @@ def curl(in_grid, in_values):
     zc0 = 0.5 * (in_grid[0][0][1:] + in_grid[0][0][:-1])
     zc1 = 0.5 * (in_grid[0][1][1:] + in_grid[0][1][:-1])
     if num_comps < 2:
-      raise ValueError(
-          "ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated.".format(
-              num_comps, num_dims
-          )
-      )
+      raise ValueError(f"ERROR in 'ev curl': Length of the provided vector ({num_comps:d}) is smaller than number of dimensions ({num_dims:d}). Curl can't be calculated." )
     elif num_comps == 2:
       click.echo(
-          click.style(
-              "WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). Only the third component of curl will be calculated.".format(
-                  num_comps, num_dims
-              ),
-              fg="yellow",
-          )
+          click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). Only the third component of curl will be calculated.",
+              fg="yellow")
       )
       outShape[-1] = 1
       out_values = np.zeros(outShape)
@@ -339,49 +321,31 @@ def curl(in_grid, in_values):
       if num_comps > 3:
         print("here")
         click.echo(
-            click.style(
-                "WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(
-                    num_comps, num_dims, num_comps - num_dims
-                ),
-                fg="yellow",
-            )
+            click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} components of the vector will be disregarded.",
+                fg="yellow")
         )
       # end
       out_values = np.zeros(outShape)
       out_values[..., 0] = np.gradient(in_values[0][..., 2], zc1, edge_order=2, axis=1)
       out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
-      out_values[..., 2] = np.gradient(
-          in_values[0][..., 1], zc0, edge_order=2, axis=0
-      ) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
+      out_values[..., 2] = np.gradient( in_values[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
   else:  # 3D
     if num_comps > 3:
       click.echo(
-          click.style(
-              "WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(
-                  num_comps, num_dims, num_comps - num_dims
-              ),
-              fg="yellow",
-          )
+          click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} component(s) of the vector will be disregarded.",
+              fg="yellow")
       )
     elif num_comps < 3:
       raise ValueError(
-          "ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(
-              num_comps, num_dims
-          )
+          f"ERROR in 'ev curl': Length of the provided vector ({num_comps:d}) is smaller than number of dimensions ({num_dims:d}). Curl can't be calculated."
       )
     # end
     zc0 = 0.5 * (in_grid[0][0][1:] + in_grid[0][0][:-1])
     zc1 = 0.5 * (in_grid[0][1][1:] + in_grid[0][1][:-1])
     zc2 = 0.5 * (in_grid[0][2][1:] + in_grid[0][2][:-1])
-    out_values[..., 0] = np.gradient(
-        in_values[0][..., 2], zc1, edge_order=2, axis=1
-    ) - np.gradient(in_values[0][..., 1], zc2, edge_order=2, axis=2)
-    out_values[..., 1] = np.gradient(
-        in_values[0][..., 0], zc2, edge_order=2, axis=2
-    ) - np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
-    out_values[..., 2] = np.gradient(
-        in_values[0][..., 1], zc0, edge_order=2, axis=0
-    ) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
+    out_values[..., 0] = np.gradient(in_values[0][..., 2], zc1, edge_order=2, axis=1) - np.gradient(in_values[0][..., 1], zc2, edge_order=2, axis=2)
+    out_values[..., 1] = np.gradient(in_values[0][..., 0], zc2, edge_order=2, axis=2) - np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
+    out_values[..., 2] = np.gradient(in_values[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
   # end
   return [out_grid], [out_values]
 

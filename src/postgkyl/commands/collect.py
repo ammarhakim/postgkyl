@@ -5,47 +5,25 @@ from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
 
-
 @click.command()
-@click.option(
-    "-s",
-    "--sumdata",
-    is_flag=True,
-    help="Sum data in the collected datasets (retain components)",
-)
-@click.option(
-    "-p",
-    "--period",
-    type=click.FLOAT,
-    help="Specify a period to create epoch data instead of time data",
-)
-@click.option(
-    "--offset",
-    default=0.0,
-    type=click.FLOAT,
-    show_default=True,
-    help="Specify an offset to create epoch data instead of time data",
-)
-@click.option(
-    "-c",
-    "--chunk",
-    type=click.INT,
-    help="Collect into chunks with specified length rather than into a single dataset",
-)
-@click.option(
-    "--use", "-u", default=None, help="Specify a 'tag' to apply to (default all tags)."
-)
+@click.option("-s", "--sumdata", is_flag=True,
+   help="Sum data in the collected datasets (retain components).")
+@click.option("-p", "--period", type=click.FLOAT,
+   help="Specify a period to create epoch data instead of time data.")
+@click.option("--offset", default=0.0, type=click.FLOAT, show_default=True,
+    help="Specify an offset to create epoch data instead of time data.")
+@click.option("-c", "--chunk", type=click.INT,
+    help="Collect into chunks with specified length rather than into a single dataset.")
+@click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to (default all tags).")
 @click.option("--tag", "-t", default=None, help="Specify a 'tag' for the result.")
-@click.option(
-    "--label", "-l", default=None, help="Specify the custom label for the result."
-)
+@click.option("--label", "-l", default=None, help="Specify the custom label for the result.")
 @click.pass_context
 def collect(ctx, **kwargs):
-  """Collect data from the active datasets and create a new combined
-  dataset. The time-stamp in each of the active datasets is
-  collected and used as the new X-axis. Data can be collected in
-  chunks, in which case several datasets are created, each with the
-  chunk-sized pieces collected into each new dataset.
+  """Collect data from the active datasets and create a new combined dataset.
+
+  The time-stamp in each of the active datasets is collected and used as the new X-axis.
+  Data can be collected in chunks, in which case several datasets are created, each with
+  the chunk-sized pieces collected into each new dataset.
   """
   verb_print(ctx, "Starting collect")
   data = ctx.obj["data"]

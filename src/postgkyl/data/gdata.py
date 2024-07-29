@@ -1,6 +1,6 @@
 """Module including Gkeyll data class"""
 
-from typing import Optional, Union, Tuple, Literal
+from typing import Literal, Tuple
 import numpy as np
 import shutil
 
@@ -31,16 +31,15 @@ class GData(object):
   """
 
   def __init__(self, file_name: str = "",
-      comp: Union[int, str, None] = None,
-      z0: Union[int, str, None] = None, z1: Union[int, str, None] = None,
-      z2: Union[int, str, None] = None, z3: Union[int, str, None] = None,
-      z4: Union[int, str, None] = None, z5: Union[int, str, None] = None,
+      comp: int | str | None = None,
+      z0: int | str | None = None, z1: int | str | None = None,
+      z2: int | str | None = None, z3: int | str | None = None,
+      z4: int | str | None = None, z5: int | str | None = None,
       var_name: str = "CartGridField",
       tag: str = "default", label: str = "",
-      ctx: Optional[dict] = None,
+      ctx: dict | None = None,
       comp_grid: bool = False, mapc2p_name: str = "", mapc2p_vel_name: str = "",
-      reader_name: str = "", load: bool = True, click_mode: bool = False,
-  ):
+      reader_name: str = "", load: bool = True, click_mode: bool = False):
     """Initializes the Data class with a Gkeyll output file.
 
     Args:
@@ -97,6 +96,8 @@ class GData(object):
     self.ctx["grid_type"] = "uniform"
 
     self.ctx["mass"] = None
+    self.ctx["charge"] = None
+    self.ctx["epsilon_0"] = None
     self.ctx["mu_0"] = None
 
     # Allow to copy input context variable
@@ -120,12 +121,10 @@ class GData(object):
 
     zs = (z0, z1, z2, z3, z4, z5)
 
-    readers = {
-        "gkyl": GkylReader,
+    readers = {"gkyl": GkylReader,
         "adios": GkylAdiosReader,
         "h5": GkylH5Reader,
-        "flash": FlashH5Reader,
-    }
+        "flash": FlashH5Reader}
     if self._file_name:
       reader_set = False
       if reader_name in readers:
@@ -135,25 +134,16 @@ class GData(object):
         readers[reader_name] = reader
       # end
       for key, rd in readers.items():
-        self._reader = rd(
-            file_name=self._file_name,
-            ctx=self.ctx,
-            var_name=var_name,
-            c2p=mapc2p_name,
-            c2p_vel=mapc2p_vel_name,
-            axes=zs,
-            comp=comp,
-            click_mode=click_mode,
-        )
+        self._reader = rd(file_name=self._file_name, ctx=self.ctx, var_name=var_name,
+            c2p=mapc2p_name, c2p_vel=mapc2p_vel_name, axes=zs, comp=comp,
+            click_mode=click_mode)
         if self._reader.is_compatible():
           reader_set = True
           break
         # end
       # end
       if not reader_set:
-        raise NameError(
-            f"'file_name' was specified ({self._file_name}) but cannot be read with {list(readers)}"
-        )
+        raise NameError(f"'file_name' was specified ({self._file_name}) but cannot be read with {list(readers)}")
       # end
 
       self._reader.preload()
@@ -426,10 +416,7 @@ class GData(object):
 
     if mode:
       extension = mode
-      print(
-          "Deprecation warning: mode of the write method",
-          "is going to be renamed to extension.",
-      )
+      print("Deprecation warning: mode of the write method is going to be renamed to extension.")
     # end
 
     if not out_name:

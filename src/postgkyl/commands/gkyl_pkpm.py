@@ -5,33 +5,21 @@ from postgkyl.tools import laguerre_compose, transform_frame
 from postgkyl.utils import verb_print
 
 
-
-@click.command(help="Shortcut to load Gkeyll PKPM data, interpolate, and transform")
-@click.option(
-    "--name", "-n", type=click.STRING, prompt=True, help="Set the root name for files"
-)
-@click.option(
-    "--species", "-s", type=click.STRING, prompt=True, help="Set species name"
-)
-@click.option("--idx", "-i", type=click.STRING, prompt=True, help="Set the file number")
-@click.option(
-    "--poly_order", "-p", type=click.INT, prompt=True, help="Set the polynomial order"
-)
-@click.option("--tag", "-t", help="Optional tag for the resulting array")
-@click.option("--label", "-l", help="Custom label for the result")
+@click.command()
+@click.option("--name", "-n", type=click.STRING, prompt=True, help="Set the root name for files.")
+@click.option("--species", "-s", type=click.STRING, prompt=True, help="Set species name.")
+@click.option("--idx", "-i", type=click.STRING, prompt=True, help="Set the file number.")
+@click.option("--poly_order", "-p", type=click.INT, prompt=True, help="Set the polynomial order.")
+@click.option("--tag", "-t", help="Optional tag for the resulting array.")
+@click.option("--label", "-l", help="Custom label for the result.")
 @click.pass_context
 def pkpm(ctx, **kwargs):
+  """Shortcut to load Gkeyll PKPM data, interpolate, and transform."""
   verb_print(ctx, "Starting Gkyl PKPM")
   data = ctx.obj["data"]
 
-  gf = GData(
-      "{:s}-{:s}_{:s}.gkyl".format(kwargs["name"], kwargs["species"], kwargs["idx"])
-  )
-  gvars = GData(
-      "{:s}-{:s}_pkpm_vars_{:s}.gkyl".format(
-          kwargs["name"], kwargs["species"], kwargs["idx"]
-      )
-  )
+  gf = GData(f"{kwargs["name"],:s}-{kwargs["species"]:s}_{kwargs["idx"]:s}.gkyl")
+  gvars = GData(f"{kwargs["name"]:s}-{kwargs["species"]:s}_pkpm_vars_{kwargs["idx"]:s}.gkyl")
 
   num_dims = gf.get_num_dims()
   c_dim = num_dims - 1

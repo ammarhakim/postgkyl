@@ -55,16 +55,12 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
       dx = coords[i, 3] * dt
       dy = coords[i, 4] * dt
       dz = coords[i, 5] * dt
-      ax.plot(
-          [x[tIdx], x[tIdx] + dx],
-          [y[tIdx], y[tIdx] + dy],
-          [z[tIdx], z[tIdx] + dz],
-          color=colors[s % 10],
-      )
+      ax.plot([x[tIdx], x[tIdx] + dx], [y[tIdx], y[tIdx] + dy], [z[tIdx], z[tIdx] + dz],
+          color=colors[s % 10])
     # end
     s += 1
   # end
-  plt.title("T: {:.4e}".format(time[tIdx]))
+  plt.title(f"T: {time[tIdx]:.4e}")
   ax.set_xlabel("$z_0$")
   ax.set_ylabel("$z_1$")
   ax.set_zlabel("$z_2$")
@@ -73,29 +69,16 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
   ax.set_zlim3d(zmin, zmax)
 
 
-@click.command(help="Animate a particle trajectory.")
-@click.option(
-    "--fix-aspect",
-    "fixaspect",
-    is_flag=True,
-    help="Enforce the same scaling on both axes.",
-)
-@click.option(
-    "--show/--no-show",
-    default=True,
-    help="Turn showing of the plot ON and OFF (default: ON).",
-)
+@click.command()
+@click.option("--fix-aspect", "fixaspect",is_flag=True, help="Enforce the same scaling on both axes.")
+@click.option("--show/--no-show", default=True, help="Turn showing of the plot ON and OFF (default: ON).")
 @click.option("-i", "--interval", default=100, help="Specify the animation interval.")
 @click.option("--save", is_flag=True, help="Save figure as PNG.")
 @click.option("--velocity/--no-velocity", default=True, help="Plot velocity vectors.")
-@click.option(
-    "--saveas", type=click.STRING, default=None, help="Name to save the plot as."
-)
-@click.option("-e", "--elevation", type=click.FLOAT, help="Set elevation")
-@click.option("-a", "--azimuth", type=click.FLOAT, help="Set azimuth")
-@click.option(
-    "-n", "--numframes", type=click.INT, help="Set number of frames for the animation"
-)
+@click.option("--saveas", type=click.STRING, default=None, help="Name to save the plot as.")
+@click.option("-e", "--elevation", type=click.FLOAT, help="Set elevation.")
+@click.option("-a", "--azimuth", type=click.FLOAT, help="Set azimuth.")
+@click.option("-n", "--numframes", type=click.INT, help="Set number of frames for the animation.")
 @click.option("--xmin", type=click.FLOAT, help="Minimum value of the x-coordinate")
 @click.option("--xmax", type=click.FLOAT, help="Maximum value of the x-coordinate")
 @click.option("--ymin", type=click.FLOAT, help="Minimum value of the y-coordinate")
@@ -105,16 +88,15 @@ def _update(i, ax, ctx, leap, vel, xmin, xmax, ymin, ymax, zmin, zmax, tag):
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
 @click.pass_context
 def trajectory(ctx, **kwargs):
+  """Animate a particle trajectory."""
   verb_print(ctx, "Starting trajectory")
   data = ctx.obj["data"]
 
   tags = list(data.tag_iterator(kwargs["use"]))
   if len(tags) > 1:
     ctx.fail(
-        click.echo(
-            "'trajectory' supports only one 'tag', was provided {:d}".format(len(tags)),
-            fg="red",
-        )
+        click.echo(f"'trajectory' supports only one 'tag', was provided {len(tags):d}",
+            fg="red")
     )
   else:
     tag = tags[0]
@@ -134,25 +116,10 @@ def trajectory(ctx, **kwargs):
     numPos = int(kwargs["numframes"])
   # end
 
-  anim = FuncAnimation(
-      fig,
-      _update,
-      numPos,
-      fargs=(
-          ax,
-          ctx,
-          jump,
-          kwargs["velocity"],
-          kwargs["xmin"],
-          kwargs["xmax"],
-          kwargs["ymin"],
-          kwargs["ymax"],
-          kwargs["zmin"],
-          kwargs["zmax"],
-          tag,
-      ),
-      interval=kwargs["interval"],
-  )
+  anim = FuncAnimation(fig, _update, numPos,
+      fargs=(ax, ctx, jump, kwargs["velocity"], kwargs["xmin"], kwargs["xmax"], kwargs["ymin"],
+          kwargs["ymax"], kwargs["zmin"], kwargs["zmax"], tag),
+      interval=kwargs["interval"])
 
   ax.view_init(elev=kwargs["elevation"], azim=kwargs["azimuth"])
 

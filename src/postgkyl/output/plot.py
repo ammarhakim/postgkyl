@@ -4,25 +4,30 @@ from __future__ import annotations
 
 from matplotlib import cm
 from matplotlib import colors
+import matplotlib.axes
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from typing import Tuple, TYPE_CHECKING, Union
+from typing import Tuple, TYPE_CHECKING
 import matplotlib as mpl
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 
+from postgkyl.utils import input_parser
+
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
 # Helper functions
-def colorbar(obj, fig, cax, label="", extend=None):
+def colorbar(obj, fig : matplotlib.figure.Figure, cax : matplotlib.axes.Axes,
+    label: str = "", extend: bool | None = None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
   return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
 
 
-def _get_nodal_grid(grid, cells):
+def _get_nodal_grid(grid : list, cells: np.ndarray):
   num_dims = len(grid)
   grid_out = []
   if num_dims != len(cells):  # sanity check
@@ -54,65 +59,30 @@ def _get_nodal_grid(grid, cells):
   return grid_out
 
 
-def plot(
-    data: GData,
-    args: list = (),
-    figure: Union[int, matplotlib.figure.Figure, str] = None,
-    squeeze: bool = False,
-    num_axes: int = None,
-    start_axes: int = 0,
-    num_subplot_row: int = None,
-    num_subplot_col: int = None,
-    streamline: bool = False,
-    sdensity: int = 1,
+def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
+    figure: int | matplotlib.figure.Figure | str | None = None,
+    squeeze: bool = False, num_axes: int = None, start_axes: int = 0,
+    num_subplot_row: int | None = None, num_subplot_col: int | None = None,
+    streamline: bool = False, sdensity: int = 1,
     quiver: bool = False,
-    contour: bool = False,
-    clevels=None,
-    cnlevels=None,
-    cont_label: bool = False,
+    contour: bool = False, clevels: list | None = None, cnlevels: int | None = None, cont_label: bool = False,
     diverging: bool = False,
-    lineouts=None,
-    xmin: float = None,
-    xmax: float = None,
-    xscale: float = 1.0,
-    xshift: float = 0.0,
-    ymin: float = None,
-    ymax: float = None,
-    yscale: float = 1.0,
-    yshift: float = 0.0,
-    zmin: float = None,
-    zmax: float = None,
-    zscale: float = 1.0,
-    zshift: float = 0.0,
-    relax: bool = False,
-    style: str = None,
-    rcParams: dict = None,
-    legend: bool = True,
-    label_prefix: str = "",
-    colorbar: bool = True,
-    xlabel: str = None,
-    ylabel: str = None,
-    clabel: str = None,
-    title: str = None,
-    logx: bool = False,
-    logy: bool = False,
-    logz: bool = False,
-    fixaspect: bool = False,
-    aspect: float = None,
-    edgecolors: str = None,
-    showgrid: bool = True,
-    hashtag: bool = False,
-    xkcd: bool = False,
-    color: str = None,
-    markersize: float = None,
-    linewidth: float = None,
-    linestyle: float = None,
-    figsize: tuple = None,
-    jet: bool = False,
-    cmap: str = None,
-    **kwargs
-):
-  """Plots Gkeyll data
+    lineouts: int | None = None,
+    xmin: float | None = None, xmax: float | None = None, xscale: float = 1.0, xshift: float = 0.0,
+    ymin: float | None = None, ymax: float | None = None, yscale: float = 1.0, yshift: float = 0.0,
+    zmin: float | None = None, zmax: float | None = None, zscale: float = 1.0, zshift: float = 0.0,
+    relax: bool = False, style: str | None = None, rcParams: dict | None = None,
+    legend: bool = True, label_prefix: str = "", colorbar: bool = True,
+    xlabel: str | None = None, ylabel: str | None = None, clabel: str | None = None, title: str | None = None,
+    logx: bool = False, logy: bool = False, logz: bool = False,
+    fixaspect: bool = False, aspect: float | None = None,
+    edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
+    color: str | None = None, markersize: float | None = None,
+    linewidth: float | None = None, linestyle: float | None = None,
+    figsize: tuple | None = None,
+    jet: bool = False, cmap: str | None = None,
+    **kwargs):
+  """Plots Gkeyll data.
 
   Unifies the plotting across a wide range of Gkyl applications. Can
   be used for both 1D an 2D data. Uses a proper colormap by default.
@@ -128,7 +98,7 @@ def plot(
       mpl.rcParams[key] = rcParams[key]
     # end
   else:
-    plt.style.use(os.path.dirname(os.path.realpath(__file__)) + "/postgkyl.mplstyle")
+    plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/postgkyl.mplstyle")
   # end
 
   # Process input parameters
@@ -167,15 +137,35 @@ def plot(
   # end
 
   # ---- Data Loading ----
-  num_dims = data.get_num_dims(squeeze=True)
+  # Get the handles on the grid and values
+  grid_in, values = input_parser(data)
+  grid = grid_in.copy()
+
+  if isinstance(data, GData):
+    num_dims = data.get_num_dims(squeeze=True)
+    lower, upper = data.get_bounds()
+    cells = data.get_num_cells()
+  else:
+    if len(grid) == len(values.shape):
+      num_dims = len(values.squeeze().shape)
+    else:
+      num_dims = len(values[..., 0].squeeze().shape)
+    # end
+    lg = len(grid)
+    lower, upper, cells = np.zeros(lg), np.zeros(lg), np.zeros(lg)
+    for d in range(lg):
+      lower[d] = np.min(grid[d])
+      upper[d] = np.max(grid[d])
+      if len(grid[d].shape) == 1:
+        cells[d] = len(grid[d])
+      else:
+        cells[d] = len(grid[d][d])
+      # end
+    # end
+  # end
   if num_dims > 2:
     raise ValueError("Only 1D and 2D plots are currently supported")
   # end
-  # Get the handles on the grid and values
-  grid = data.get_grid().copy()
-  values = data.get_values()
-  lower, upper = data.get_bounds()
-  cells = data.get_num_cells()
 
   # Squeeze the data (get rid of "collapsed" dimensions)
   axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
@@ -283,10 +273,10 @@ def plot(
     else:  # Plotting each components into its own subplot
       if num_subplot_row is not None:
         num_rows = num_subplot_row
-        num_cols = int(np.ceil(num_comps / num_rows))
+        num_cols = int(np.ceil(num_comps/num_rows))
       elif num_subplot_col is not None:
         num_cols = num_subplot_col
-        num_rows = int(np.ceil(num_comps / num_cols))
+        num_rows = int(np.ceil(num_comps/num_cols))
       else:
         sr = np.sqrt(num_comps)
         if sr == np.ceil(sr):
@@ -329,16 +319,12 @@ def plot(
   # ---- Main Plotting Loop ---------------------------------------------
   for comp in idx_comps:
     cax = ax[0] if squeeze else ax[comp + start_axes]
-    label = (
-        f"{label_prefix:s}_c{comp:d}".strip("_")
-        if len(idx_comps) > 1
-        else label_prefix
-    )
+    label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
 
     if num_dims == 1:
       nodal_grid = _get_nodal_grid(grid, cells)
-      x = (nodal_grid[0] + xshift) * xscale
-      y = (values[..., comp] + yshift) * yscale
+      x = (nodal_grid[0] + xshift)*xscale
+      y = (values[..., comp] + yshift)*yscale
       im = cax.plot(x, y, *args, color=color, label=label, markersize=markersize)
 
     elif num_dims == 2:
@@ -365,28 +351,24 @@ def plot(
         x = (nodal_grid[0] + xshift) * xscale
         y = (nodal_grid[1] + yshift) * yscale
         z = (values[..., comp].transpose() + zshift) * zscale
-        im = cax.contour(
-            x, y, z, levels, *args, origin="lower", colors=color, linewidths=linewidth
-        )
+        im = cax.contour(x, y, z, levels, *args, origin="lower", colors=color, linewidths=linewidth)
         if cont_label:
           cax.clabel(im, inline=1)
         # end
 
       elif quiver:  # ----------------------------------------------------
-        skip = int(np.max((len(grid[0]), len(grid[1]))) // 15)
-        skip2 = int(skip // 2)
+        skip = int(np.max((len(grid[0]), len(grid[1])))//15)
+        skip2 = int(skip//2)
         nodal_grid = _get_nodal_grid(grid, cells)
         if len(nodal_grid[0].shape) == 1:
-          x = (nodal_grid[0][skip2::skip] + xshift) * xscale
-          y = (nodal_grid[1][skip2::skip] + yshift) * yscale
+          x = (nodal_grid[0][skip2::skip] + xshift)*xscale
+          y = (nodal_grid[1][skip2::skip] + yshift)*yscale
         else:
-          x = (nodal_grid[0][skip2::skip, skip2::skip] + xshift) * xscale
-          y = (nodal_grid[1][skip2::skip, skip2::skip] + yshift) * yscale
+          x = (nodal_grid[0][skip2::skip, skip2::skip] + xshift)*xscale
+          y = (nodal_grid[1][skip2::skip, skip2::skip] + yshift)*yscale
         # end
-        z1 = (values[skip2::skip, skip2::skip, 2 * comp].transpose() + zshift) * zscale
-        z2 = (
-            values[skip2::skip, skip2::skip, 2 * comp + 1].transpose() + zshift
-        ) * zscale
+        z1 = (values[skip2::skip, skip2::skip, 2 * comp].transpose() + zshift)*zscale
+        z2 = (values[skip2::skip, skip2::skip, 2 * comp + 1].transpose() + zshift)*zscale
         im = cax.quiver(x, y, z1, z2)
 
       elif streamline:  # ------------------------------------------------
@@ -395,39 +377,30 @@ def plot(
         else:
           # magnitude
           cl = np.sqrt(
-              values[..., 2 * comp] ** 2 + values[..., 2 * comp + 1] ** 2
+              values[..., 2 * comp]**2 + values[..., 2 * comp + 1]**2
           ).transpose()
         # end
         nodal_grid = _get_nodal_grid(grid, cells)
-        x = (nodal_grid[0] + xshift) * xscale
-        y = (nodal_grid[1] + yshift) * yscale
-        z1 = (values[..., 2 * comp].transpose() + zshift) * zscale
-        z2 = (values[..., 2 * comp + 1].transpose() + zshift) * zscale
-        im = cax.streamplot(
-            x,
-            y,
-            z1,
-            z2,
-            *args,
-            density=sdensity,
-            broken_streamlines=False,
-            color=cl,
-            linewidth=linewidth
-        )
+        x = (nodal_grid[0] + xshift)*xscale
+        y = (nodal_grid[1] + yshift)*yscale
+        z1 = (values[..., 2 * comp].transpose() + zshift)*zscale
+        z2 = (values[..., 2 * comp + 1].transpose() + zshift)*zscale
+        im = cax.streamplot(x, y, z1, z2, *args,
+            density=sdensity, broken_streamlines=False, color=cl, linewidth=linewidth)
 
       elif lineouts is not None:  # -------------------------------------
         num_lines = values.shape[1] if lineouts == 0 else values.shape[0]
         nodal_grid = _get_nodal_grid(grid, cells)
 
         if lineouts == 0:
-          x = (nodal_grid[0] + xshift) * xscale
-          vmin = (nodal_grid[1][0] + yshift) * yscale
-          vmax = (nodal_grid[1][-1] + yshift) * yscale
+          x = (nodal_grid[0] + xshift)*xscale
+          vmin = (nodal_grid[1][0] + yshift)*yscale
+          vmax = (nodal_grid[1][-1] + yshift)*yscale
           label = clabel or axes_labels[1]
         else:
-          x = (nodal_grid[1] + xshift) * xscale
-          vmin = (nodal_grid[0][0] + yshift) * yscale
-          vmax = (nodal_grid[0][-1] + yshift) * yscale
+          x = (nodal_grid[1] + xshift)*xscale
+          vmin = (nodal_grid[0][0] + yshift)*yscale
+          vmax = (nodal_grid[0][-1] + yshift)*yscale
           label = clabel or axes_labels[0]
         # end
         idx = [slice(0, u) for u in values.shape]
@@ -439,7 +412,7 @@ def plot(
           else:
             idx[0] = line
           # end
-          y = (values[tuple(idx)] + yshift) * yscale
+          y = (values[tuple(idx)] + yshift)*yscale
           im = cax.plot(x, y, *args, color=color)
         # end
         mappable = cm.ScalarMappable(
@@ -457,13 +430,13 @@ def plot(
         elif zmin is not None:
           extend = "min"
         # end
-        x = (grid[0] + xshift) * xscale
-        y = (grid[1] + yshift) * yscale
-        z = (values[..., comp].transpose() + zshift) * zscale
+        x = (grid[0] + xshift)*xscale
+        y = (grid[1] + yshift)*yscale
+        z = (values[..., comp].transpose() + zshift)*zscale
         if len(x) == z.shape[1] or len(y) == z.shape[0]:
           nodal_grid = _get_nodal_grid(grid, cells)
-          x = (nodal_grid[0] + xshift) * xscale
-          y = (nodal_grid[1] + yshift) * yscale
+          x = (nodal_grid[0] + xshift)*xscale
+          y = (nodal_grid[1] + yshift)*yscale
         # end
         if len(x.shape) > 1:
           x, y = x.transpose(), y.transpose()
@@ -476,7 +449,7 @@ def plot(
         norm = None
         if logz:
           if diverging:
-            tmp = vmax / 1000
+            tmp = vmax/1000
             norm = colors.SymLogNorm(
                 linthresh=tmp, linscale=tmp, vmin=vmin, vmax=vmax, base=10
             )
@@ -485,18 +458,9 @@ def plot(
           # end
           vmin, vmax = None, None
         # end
-        im = cax.pcolormesh(
-            x,
-            y,
-            z,
-            norm=norm,
-            vmin=vmin,
-            vmax=vmax,
-            edgecolors=edgecolors,
-            linewidth=0.1,
-            shading="auto",
-            *args
-        )
+        im = cax.pcolormesh(x, y, z,
+            norm=norm, vmin=vmin, vmax=vmax, edgecolors=edgecolors,
+            linewidth=0.1, shading="auto", *args)
       # end
       if not bool(color) and colorbar and not streamline:
         colorbar(im, fig, cax, extend=extend, label=clabel)
@@ -512,32 +476,15 @@ def plot(
       if num_dims == 1 and label != "":
         cax.legend(loc=0)
       else:
-        cax.text(
-            0.03,
-            0.96,
-            label,
-            bbox={
-                "facecolor": "w",
-                "edgecolor": "w",
-                "alpha": 0.8,
-                "boxstyle": "round",
-            },
-            verticalalignment="top",
-            horizontalalignment="left",
-            transform=cax.transAxes,
-        )
+        cax.text(0.03, 0.96, label,
+            bbox={"facecolor": "w", "edgecolor": "w", "alpha": 0.8, "boxstyle": "round"},
+            verticalalignment="top", horizontalalignment="left", transform=cax.transAxes)
       # end
     # end
     if hashtag:
-      cax.text(
-          0.97,
-          0.03,
-          "#pgkyl",
+      cax.text(0.97, 0.03, "#pgkyl",
           bbox={"facecolor": "w", "edgecolor": "w", "alpha": 0.8, "boxstyle": "round"},
-          verticalalignment="bottom",
-          horizontalalignment="right",
-          transform=cax.transAxes,
-      )
+          verticalalignment="bottom", horizontalalignment="right", transform=cax.transAxes)
     # end
     if logx:
       cax.set_xscale("log")

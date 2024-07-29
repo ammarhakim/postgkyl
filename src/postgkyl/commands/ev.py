@@ -9,7 +9,7 @@ from postgkyl.utils import verb_print
 
 helpStr = ""
 for s in cmdBase.cmds.keys():
-  helpStr += " '{:s}',".format(s)
+  helpStr += f" '{s:s}',"
 # end
 
 
@@ -38,18 +38,14 @@ def _data(ctx, grid_stack, value_stack, ctx_stack, strIn, tags, only_active):
     value_stack.append([])
     ctx_stack.append([])
 
-    for dat in ctx.obj["data"].iterator(
-        tag=tag_nm, select=setIdx, only_active=only_active
-    ):
+    for dat in ctx.obj["data"].iterator(tag=tag_nm, select=setIdx, only_active=only_active):
       tag_nm = dat.get_tag()
       if ctx_key:
         grid = None
         if ctx_key in dat.ctx:
           values = np.array(dat.ctx[ctx_key])
         else:
-          ctx.fail(
-              click.style("Wrong ctx key '{:s}' specified".format(ctx_key), fg="red")
-          )
+          ctx.fail(click.style(f"Wrong ctx key '{ctx_key:s}' specified", fg="red"))
         # end
       else:
         grid, values = pselect(dat, comp=compIdx)
@@ -160,9 +156,7 @@ def _command(ctx, grid_stack, value_stack, ctx_stack, strIn):
 
 
 @click.command(
-    help="Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are:"
-    + helpStr[:-1]
-    + ". User-specifed commands can also be used."
+    help=f"Manipulate datasets using math expressions. Expressions are specified using Reverse Polish Notation (RPN).\n Supported operators are: {helpStr[:-1]}"
 )
 @click.argument("chain", nargs=1, type=click.STRING)
 @click.option("--tag", "-t", help="Tag for the result")
@@ -203,10 +197,8 @@ def ev(ctx, **kwargs):
     # end
     if not isData and not isCommand:
       ctx.fail(
-          click.style(
-              "Evaluate input '{:s}' represents neither data nor commad".format(s),
-              fg="red",
-          )
+          click.style(f"Evaluate input '{s:s}' represents neither data nor commad",
+              fg="red")
       )
     # end
   # end

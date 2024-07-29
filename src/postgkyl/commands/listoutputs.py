@@ -5,16 +5,9 @@ import re
 from postgkyl.utils import verb_print
 
 
-
 @click.command()
-@click.option(
-    "--extensions",
-    "-e",
-    type=click.STRING,
-    default="bp,gkyl",
-    show_default=True,
-    help="Output file extension(s)",
-)
+@click.option("--extensions", "-e", type=click.STRING,  default="bp,gkyl",
+    show_default=True, help="Output file extension(s)")
 @click.pass_context
 def listoutputs(ctx, **kwargs):
   """List Gkeyll filename stems in the current directory"""
@@ -38,10 +31,10 @@ def listoutputs(ctx, **kwargs):
       # end
     # end
     if len(unique) > 0:
-      click.echo("{:s}:".format(ext))
+      click.echo(f"{ext:s}:")
     # end
     for s in sorted(unique):
-      click.echo("- {:s}".format(s))
+      click.echo(f"- {s:s}")
     # end
   # end
   verb_print(ctx, "Finishing listoutputs")

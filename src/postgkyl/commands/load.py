@@ -6,19 +6,16 @@ from postgkyl.data import GInterpModal
 from postgkyl.utils import verb_print
 
 
-
 def _pickCut(ctx, kwargs, zn):
-  nm = "z{:d}".format(zn)
+  nm = f"z{zn:d}"
   if zn == 6:  # This little hack allows to apply the same function for
     # components as well
     nm = "component"
   # end
   if kwargs[nm] and ctx.obj["global_cuts"][zn]:
     click.echo(
-        click.style(
-            "WARNING: The local '{:s}' is overwriting the global '{:s}'".format(nm, nm),
-            fg="yellow",
-        )
+        click.style(f"WARNING: The local '{nm:s}' is overwriting the global '{nm:s}'",
+            fg="yellow")
     )
     return kwargs[nm]
   elif kwargs[nm]:
@@ -39,51 +36,27 @@ def _crush(s):  # Temp function used as a sorting key
 
 
 @click.command(hidden=True)
-@click.option("--z0", help="Partial file load: 0th coord (either int or slice)")
-@click.option("--z1", help="Partial file load: 1st coord (either int or slice)")
-@click.option("--z2", help="Partial file load: 2nd coord (either int or slice)")
-@click.option("--z3", help="Partial file load: 3rd coord (either int or slice)")
-@click.option("--z4", help="Partial file load: 4th coord (either int or slice)")
-@click.option("--z5", help="Partial file load: 5th coord (either int or slice)")
-@click.option(
-    "--component", "-c", help="Partial file load: comps (either int or slice)"
-)
-@click.option(
-    "--tag", "-t", default="default", help="Specily tag for data (default: 'default')"
-)
+@click.option("--z0", help="Partial file load: 0th coord (either int or slice).")
+@click.option("--z1", help="Partial file load: 1st coord (either int or slice).")
+@click.option("--z2", help="Partial file load: 2nd coord (either int or slice).")
+@click.option("--z3", help="Partial file load: 3rd coord (either int or slice).")
+@click.option("--z4", help="Partial file load: 4th coord (either int or slice).")
+@click.option("--z5", help="Partial file load: 5th coord (either int or slice).")
+@click.option("--component", "-c", help="Partial file load: comps (either int or slice).")
+@click.option("--tag", "-t", default="default", help="Specily tag for data.")
 @click.option("--compgrid", is_flag=True, help="Disregard the mapped grid information")
-@click.option(
-    "--varname",
-    "-d",
-    multiple=True,
-    help="Allows to specify the Adios variable name (default is 'CartGridField')",
-)
+@click.option("--varname", "-d", multiple=True,
+    help="Allows to specify the Adios variable name. [default: 'CartGridField']")
 @click.option("--label", "-l", help="Allows to specify the custom label")
-@click.option(
-    "--c2p",
-    type=click.STRING,
-    help="Specify the file name containing c2p mapped coordinates",
-)
-@click.option(
-    "--c2p-vel",
-    "c2p_vel",
-    type=click.STRING,
-    help="Specify the file name containing c2p mapped coordinates",
-)
-@click.option(
-    "--fv",
-    is_flag=True,
-    help="Tag finite volume data when using c2p mapped coordinates",
-)
-@click.option(
-    "--reader",
-    "-r",
-    type=click.STRING,
-    help="Allows to specify the Adios variable name (default is 'CartGridField')",
-)
-@click.option(
-    "--load/--no-load", default=True, help="Specify if data should be loaded."
-)
+@click.option("--c2p", type=click.STRING,
+    help="Specify the file name containing c2p mapped coordinates")
+@click.option("--c2p-vel", "c2p_vel",type=click.STRING,
+    help="Specify the file name containing c2p mapped coordinates")
+@click.option("--fv", is_flag=True,
+    help="Tag finite volume data when using c2p mapped coordinates")
+@click.option("--reader", "-r", type=click.STRING,
+    help="Allows to specify the Adios variable name (default is 'CartGridField')")
+@click.option("--load/--no-load", default=True, help="Specify if data should be loaded.")
 @click.pass_context
 def load(ctx, **kwargs):
   verb_print(ctx, "Starting load")
@@ -100,10 +73,8 @@ def load(ctx, **kwargs):
       files = sorted(files, key=_crush)
     except Exception:
       click.echo(
-          click.style(
-              "WARNING: The loaded files appear to be of different types. Sorting is turned off.",
-              fg="yellow",
-          )
+          click.style("WARNING: The loaded files appear to be of different types. Sorting is turned off.",
+              fg="yellow")
       )
     # end
   else:
@@ -124,10 +95,8 @@ def load(ctx, **kwargs):
   if kwargs["varname"] and ctx.obj["global_var_names"]:
     varNames = kwargs["varname"]
     click.echo(
-        click.style(
-            "WARNING: The local 'varname' is overwriting the global 'varname'",
-            fg="yellow",
-        )
+        click.style("WARNING: The local 'varname' is overwriting the global 'varname'",
+            fg="yellow")
     )
   elif kwargs["varname"]:
     varNames = kwargs["varname"]
@@ -139,9 +108,7 @@ def load(ctx, **kwargs):
   if kwargs["c2p"] and ctx.obj["global_c2p"]:
     mapc2p_name = kwargs["c2p"]
     click.echo(
-        click.style(
-            "WARNING: The local 'c2p' is overwriting the global 'c2p'", fg="yellow"
-        )
+        click.style("WARNING: The local 'c2p' is overwriting the global 'c2p'", fg="yellow")
     )
   elif kwargs["c2p"]:
     mapc2p_name = kwargs["c2p"]
@@ -153,10 +120,8 @@ def load(ctx, **kwargs):
   if kwargs["c2p_vel"] and ctx.obj["global_c2p_vel"]:
     mapc2p_name = kwargs["c2p_vel"]
     click.echo(
-        click.style(
-            "WARNING: The local 'c2p_vel' is overwriting the global 'c2p_vel'",
-            fg="yellow",
-        )
+        click.style("WARNING: The local 'c2p_vel' is overwriting the global 'c2p_vel'",
+            fg="yellow")
     )
   elif kwargs["c2p_vel"]:
     mapc2p_vel_name = kwargs["c2p_vel"]
@@ -171,32 +136,17 @@ def load(ctx, **kwargs):
   for var in varNames:
     for fn in files:
       try:
-        dat = GData(
-            file_name=fn,
-            tag=kwargs["tag"],
-            comp_grid=ctx.obj["compgrid"],
-            z0=z0,
-            z1=z1,
-            z2=z2,
-            z3=z3,
-            z4=z4,
-            z5=z5,
-            comp=comp,
-            var_name=var,
-            label=kwargs["label"],
-            mapc2p_name=mapc2p_name,
-            mapc2p_vel_name=mapc2p_vel_name,
-            reader_name=kwargs["reader"],
-            load=kwargs["load"],
-            click_mode=True,
-        )
+        dat = GData(file_name=fn, tag=kwargs["tag"], comp_grid=ctx.obj["compgrid"],
+            z0=z0, z1=z1, z2=z2, z3=z3, z4=z4, z5=z5, comp=comp, var_name=var,
+            label=kwargs["label"], mapc2p_name=mapc2p_name, mapc2p_vel_name=mapc2p_vel_name,
+            reader_name=kwargs["reader"], load=kwargs["load"], click_mode=True)
         if kwargs["fv"]:
           dg = GInterpModal(dat, 0, "ms")
           dg.interpolateGrid(overwrite=True)
         # end
         data.add(dat)
       except NameError as e:
-        ctx.fail(click.style(r"{:s}".format(repr(e)), fg="red"))
+        ctx.fail(click.style(rf"{repr(e):s}", fg="red"))
       # end
     # end
   # end

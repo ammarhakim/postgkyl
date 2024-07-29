@@ -3,7 +3,7 @@
 import numpy as np
 import scipy.optimize as opt
 import sys
-from typing import Tuple, Callable, Optional
+from typing import Callable, Tuple
 
 
 def exp2(x: float, a: float, b: float) -> float:
@@ -25,7 +25,7 @@ def exp2(x: float, a: float, b: float) -> float:
 
 
 def fit_growth(x: np.ndarray, y: np.ndarray, function: Callable = exp2,
-  min_N: Optional[int] = None, p0: tuple = (1, 1)) -> Tuple[tuple, float, int]:
+  min_N: int | None = None, p0: tuple = (1, 1)) -> Tuple[tuple, float, int]:
   """Fit function to continuously increasing region of data
 
   Parameters:

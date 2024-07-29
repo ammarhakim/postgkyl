@@ -5,7 +5,7 @@ Within Gkeyll, this is mostly use for working with the PKPM data.
 from __future__ import annotations
 
 import numpy as np
-from typing import Tuple, TYPE_CHECKING, Union, Optional
+from typing import Tuple, TYPE_CHECKING
 
 from postgkyl.utils import input_parser
 if TYPE_CHECKING:
@@ -13,9 +13,9 @@ if TYPE_CHECKING:
 # end
 
 
-def laguerre_compose(in_f: Union[GData, Tuple[list, np.ndarray]],
-    in_T_m: Union[GData, Tuple[list, np.ndarray]],
-    out_f: Optional[GData] = None) -> Tuple[list, np.ndarray]:
+def laguerre_compose(in_f: GData | Tuple[list, np.ndarray],
+    in_T_m: GData | Tuple[list, np.ndarray],
+    out_f: GData | None = None) -> Tuple[list, np.ndarray]:
   """Compose PKPM expansion coefficients into a single f.
 
   Compose the full distribution function f(x, v_par, v_perp) out of the

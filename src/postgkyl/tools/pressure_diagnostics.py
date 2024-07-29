@@ -9,7 +9,7 @@ Diagnostics include:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Tuple
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.tools.prim_vars import get_pij
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 #end
 
 
-def _get_pb(p_in: Union[GData, Tuple[list, np.ndarray]],
-    b_in: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def _get_pb(p_in: GData | Tuple[list, np.ndarray],
+    b_in: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   _, p_values = input_parser(p_in)
   _, b_values = input_parser(b_in)
 
@@ -40,8 +40,8 @@ def _get_pb(p_in: Union[GData, Tuple[list, np.ndarray]],
   return p_xx, p_xy, p_xz, p_yy, p_yz, p_zz, b_x, b_y, b_z
 
 
-def _get_sf(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def _get_sf(species: GData | Tuple[list, np.ndarray],
+    field: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   p_grid, p_values = get_pij(species)
   _, field_values = input_parser(field)
 
@@ -50,8 +50,8 @@ def _get_sf(species: Union[GData, Tuple[list, np.ndarray]],
   return p_grid, p_values, b_grid, b_values
 
 
-def get_p_par(p_in: Union[GData, Tuple[list, np.ndarray]],
-    b_in: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def get_p_par(p_in: GData | Tuple[list, np.ndarray],
+    b_in: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   _, p_values = input_parser(p_in)
   _, b_values = input_parser(b_in)
 
@@ -73,8 +73,8 @@ def get_p_par(p_in: Union[GData, Tuple[list, np.ndarray]],
   return grid, out
 
 
-def get_gkyl_10m_p_par(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def get_gkyl_10m_p_par(species: GData | Tuple[list, np.ndarray],
+    field: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   p_grid, p_values = get_pij(species)
   field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
@@ -82,8 +82,8 @@ def get_gkyl_10m_p_par(species: Union[GData, Tuple[list, np.ndarray]],
   return get_p_par((p_grid, p_values), (field_grid, b_values))
 
 
-def get_p_perp(p_in: Union[GData, Tuple[list, np.ndarray]],
-    b_in: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def get_p_perp(p_in: GData | Tuple[list, np.ndarray],
+    b_in: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   _, p_values = input_parser(p_in)
 
   p_xx = p_values[..., 0, np.newaxis]
@@ -96,8 +96,8 @@ def get_p_perp(p_in: Union[GData, Tuple[list, np.ndarray]],
   return grid, out
 
 
-def get_gkyl_10m_p_perp(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def get_gkyl_10m_p_perp(species: GData | Tuple[list, np.ndarray],
+    field: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   p_grid, p_values = get_pij(species)
   field_grid, field_values = input_parser(field)
 
@@ -107,9 +107,8 @@ def get_gkyl_10m_p_perp(species: Union[GData, Tuple[list, np.ndarray]],
   return get_p_perp((p_grid, p_values), (field_grid, b_values))
 
 
-def get_agyro(p_in: Union[GData, Tuple[list, np.ndarray]],
-    b_in: Union[GData, Tuple[list, np.ndarray]],
-    measure="swisdak") -> Tuple[list, np.ndarray]:
+def get_agyro(p_in: GData | Tuple[list, np.ndarray], b_in: GData | Tuple[list, np.ndarray],
+    measure: str = "swisdak") -> Tuple[list, np.ndarray]:
   _, p_values = input_parser(p_in)
   _, b_values = input_parser(b_in)
 
@@ -150,12 +149,10 @@ def get_agyro(p_in: Union[GData, Tuple[list, np.ndarray]],
   return grid, out
 
 
-def get_gkyl_10m_agyro(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
-    measure="swisdak") -> Tuple[list, np.ndarray]:
+def get_gkyl_10m_agyro(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
+    measure: str = "swisdak") -> Tuple[list, np.ndarray]:
   p_grid, p_values = get_pij(species)
   field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
 
-  return get_agyro((p_grid, p_values), (field_grid, b_values),
-      measure=measure)
+  return get_agyro((p_grid, p_values), (field_grid, b_values), measure=measure)

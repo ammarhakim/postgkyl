@@ -53,14 +53,9 @@ def abs(ctx):
 
 
 @click.command(help="Normalize data")
-@click.option(
-    "--shift/--no-shift",
-    default=False,
-    help="Shift minimal value to zero (default: False).",
-)
-@click.option(
-    "--usefirst", is_flag=True, default=False, help="Normalize to first value in field"
-)
+@click.option("--shift/--no-shift", default=False, show_default=True,
+    help="Shift minimal value to zero.")
+@click.option("--usefirst", is_flag=True, default=False, help="Normalize to first value in field.")
 @click.pass_context
 def norm(ctx, **kwargs):
   verb_print(ctx, "Normalizing data")

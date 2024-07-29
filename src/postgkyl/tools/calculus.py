@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Tuple
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 # end
 
 
-def integrate(data: GData, axis: Union[int, tuple, str],
+def integrate(data: GData, axis: int | tuple | str,
     overwrite=False, stack=False) -> Tuple[list, np.ndarray]:
   """Integrates Gkeyll data.
 

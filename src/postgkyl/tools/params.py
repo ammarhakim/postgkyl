@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, Tuple, Optional
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.tools.mag_sq import mag_sq
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 # end
 
 
-def get_magB(field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def get_magB(field: GData | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   field_grid, field_values = input_parser(field)
   b_values = field_values[..., 3:6]
   _, mag_B_sq = mag_sq((field_grid, b_values))
@@ -23,8 +23,8 @@ def get_magB(field: Union[GData, Tuple[list, np.ndarray]]) -> Tuple[list, np.nda
   return field_grid, out_values
 
 
-def get_vt(species: Union[GData, Tuple[list, np.ndarray]], gas_gamma: float = 5.0/3.0,
-    num_moms : Optional[int] = None, mass: float = 1.0, mu_0: float = 1.0,
+def get_vt(species: GData | Tuple[list, np.ndarray], gas_gamma: float = 5.0/3.0,
+    num_moms : int | None = None, mass: float = 1.0, mu_0: float = 1.0,
     sqrt2: bool = True, mhd: bool = False) -> Tuple[list, np.ndarray]:
   m = species.ctx['mass'] if species.ctx['mass'] else mass
 
@@ -40,8 +40,8 @@ def get_vt(species: Union[GData, Tuple[list, np.ndarray]], gas_gamma: float = 5.
   return out_grid, out_values
 
 
-def get_vA(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]], mu_0: float = 1.0) -> Tuple[list, np.ndarray]:
+def get_vA(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
+    mu_0: float = 1.0) -> Tuple[list, np.ndarray]:
   mu = field.ctx["mu_0"] if field.ctx["mu_0"] else mu_0
 
   _, magB = get_magB(field)
@@ -52,8 +52,7 @@ def get_vA(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_omegaC(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
+def get_omegaC(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
     mass: float = 1.0, charge: float = 1.0) -> Tuple[list, np.ndarray]:
   m = species.ctx['mass'] if species.ctx['mass'] else mass
   q = species.ctx['charge'] if species.ctx['charge'] else charge
@@ -64,8 +63,7 @@ def get_omegaC(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_omegaP(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
+def get_omegaP(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
     mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0) -> Tuple[list, np.ndarray]:
   m = species.ctx['mass'] if species.ctx['mass'] else mass
   q = species.ctx['charge'] if species.ctx['charge'] else charge
@@ -79,8 +77,7 @@ def get_omegaP(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_d(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
+def get_d(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
     mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
     mu_0 : float = 1.0) -> Tuple[list, np.ndarray]:
   epsilon = field.ctx["epsilon_0"] if field.ctx["epsilon_0"] else epsilon_0
@@ -94,9 +91,8 @@ def get_d(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_lambdaD(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
-    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+def get_lambdaD(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
+    gas_gamma: float = 5.0/3.0, num_moms: int | None = None,
     mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
     mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
   _, omegaP = get_omegaP(species=species, field=field, mass=mass, charge=charge,
@@ -111,9 +107,8 @@ def get_lambdaD(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_rho(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
-    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+def get_rho(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
+    gas_gamma: float = 5.0/3.0, num_moms: int | None = None,
     mass: float = 1.0, charge: float = 1.0, epsilon_0: float = 1.0,
     mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
 
@@ -129,9 +124,8 @@ def get_rho(species: Union[GData, Tuple[list, np.ndarray]],
   return out_grid, out_values
 
 
-def get_beta(species: Union[GData, Tuple[list, np.ndarray]],
-    field: Union[GData, Tuple[list, np.ndarray]],
-    gas_gamma: float = 5.0/3.0, num_moms: Optional[int] = None,
+def get_beta(species: GData | Tuple[list, np.ndarray], field: GData | Tuple[list, np.ndarray],
+    gas_gamma: float = 5.0/3.0, num_moms: int | None = None,
     mass: float = 1.0, mu_0 : float = 1.0, sqrt2: float = True) -> Tuple[list, np.ndarray]:
   _, vA = get_vA(species=species, field=field, mu_0=mu_0)
   out_grid, vt = get_vt(species=species, gas_gamma=gas_gamma, num_moms=num_moms,

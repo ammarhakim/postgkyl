@@ -1,6 +1,6 @@
 """Module including legacy Gkeyll reader class"""
 
-from typing import Tuple, Optional
+from typing import Tuple
 import numpy as np
 import tables
 
@@ -8,7 +8,7 @@ import tables
 class GkylH5Reader(object):
   """Provides a framework to read legacy Gkeyll HDF5 output"""
 
-  def __init__(self, file_name: str, ctx: Optional[dict] = None, **kwargs):
+  def __init__(self, file_name: str, ctx: dict | None = None, **kwargs):
     """Initialize the instance of Gkeyll reader.
 
     Args:

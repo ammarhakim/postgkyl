@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import numpy as np
-from typing import Tuple, TYPE_CHECKING, Union
+from typing import Tuple, TYPE_CHECKING
 
 from postgkyl.utils import input_parser
 if TYPE_CHECKING:
   from postgkyl import GData
+# end
 
 
-def transform_frame(
-    in_f: Union[GData, np.ndarray],
-    in_u: Union[GData, np.ndarray],
-    c_dim: int,
-    out_f: GData = None,
-) -> Tuple[list, np.ndarray]:
+def transform_frame(in_f: GData | Tuple[list, np.ndarray],
+    in_u: GData | Tuple[list, np.ndarray],
+    c_dim: int, out_f: GData | None = None) -> Tuple[list, np.ndarray]:
   """Shift a distribution function to a different frame of reference.
 
   Shifsts the frame of reference for specified distribution function
@@ -48,7 +46,7 @@ def transform_frame(
       ext_u = np.zeros(nx)
       ext_u[:-1] += u[..., v_idx]
       ext_u[1:] += u[..., v_idx]
-      ext_u[1:-1] = ext_u[1:-1] / 2
+      ext_u[1:-1] = ext_u[1:-1]/2
 
       for i in range(nx):
         out_grid[c_dim + v_idx][i, ...] += ext_u[i]
@@ -79,7 +77,7 @@ def transform_frame(
       ext_u = np.zeros((nx, ny, nz))
       ext_u[:-1, :-1, :-1] += u[..., v_idx]
       ext_u[1:, 1:, 1:] += u[..., v_idx]
-      ext_u[1:-1, 1:-1, 1:-1] = ext_u[1:-1, 1:-1, 1:-1] / 2
+      ext_u[1:-1, 1:-1, 1:-1] = ext_u[1:-1, 1:-1, 1:-1]/2
 
       for i in range(nx):
         for j in range(ny):
@@ -95,6 +93,3 @@ def transform_frame(
     out_f.push(out_grid, in_f_values)
   # end
   return out_grid, in_f_values
-
-
-# end

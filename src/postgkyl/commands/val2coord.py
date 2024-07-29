@@ -5,7 +5,6 @@ from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
 
-
 def _getRange(strIn, length):
   if len(strIn.split(",")) > 1:
     return np.array(strIn.split(","), np.int)
@@ -42,32 +41,20 @@ def _getRange(strIn, length):
 
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
-@click.option("--tag", "-t", help="Tag for the result")
-@click.option("--label", "-l", help="Custom label for the result")
-@click.option(
-    "-x",
-    type=click.STRING,
-    help="Select components that will became the grid of the new dataset.",
-)
-@click.option(
-    "-y",
-    type=click.STRING,
-    help="Select components that will became the values of the new dataset.",
-)
-@click.option(
-    "--periodic",
-    "-p",
-    is_flag=True,
-    help="Set the last component to match the first one",
-)
+@click.option("--tag", "-t", help="Tag for the result.")
+@click.option("--label", "-l", help="Custom label for the result.")
+@click.option("-x", type=click.STRING,
+    help="Select components that will became the grid of the new dataset.")
+@click.option("-y", type=click.STRING,
+    help="Select components that will became the values of the new dataset.")
+@click.option("--periodic", "-p", is_flag=True, help="Set the last component to match the first one.")
 @click.pass_context
 def val2coord(ctx, **kwargs):
-  """Given a dataset (typically a DynVector) selects columns from it to
-  create new datasets. For example, you can choose say column 1 to
-  be the X-axis of the new dataset and column 2 to be the
-  Y-axis. Multiple columns can be choosen using range specifiers and
-  as many datasets are then created.
+  """Given a dataset (typically a DynVector) selects columns from it to create new datasets.
 
+  For example, you can choose say column 1 to be the X-axis of the new dataset and
+  column 2 to be the Y-axis. Multiple columns can be choosen using range specifiers and
+  as many datasets are then created.
   """
   verb_print(ctx, "Starting val2coord")
   data = ctx.obj["data"]
@@ -89,12 +76,8 @@ def val2coord(ctx, **kwargs):
 
     if len(xComps) > 1 and len(xComps) != len(yComps):
       click.echo(
-          click.style(
-              "ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(
-                  len(xComps), len(yComps)
-              ),
-              fg="red",
-          )
+          click.style(f"ERROR 'val2coord': Length of the x-components ({len(xComps):d}) is greater than 1 and not equal to the y-components ({len(yComps):d}).",
+              fg="red")
       )
       ctx.exit()
     # end
@@ -116,9 +99,8 @@ def val2coord(ctx, **kwargs):
 
       y = y[..., np.newaxis]  # Adding the required component index
 
-      out = GData(
-          tag=outTag, label=kwargs["label"], comp_grid=ctx.obj["compgrid"], ctx=dat.ctx
-      )
+      out = GData(tag=outTag, label=kwargs["label"],
+          comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
       out.push([x], y)
       out.color = "C0"
       data.add(out)

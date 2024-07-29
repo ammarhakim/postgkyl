@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
 from postgkyl.tools import get_p, get_ke, mag_sq
@@ -55,7 +55,7 @@ def energetics(data_elc: GData, data_ion: GData, data_field: GData,
   out[..., 1] = np.squeeze(kee)
   out[..., 2] = np.squeeze(pri)
   out[..., 3] = np.squeeze(kei)
-  out[..., 4] = np.squeeze(esq / 2.0)
-  out[..., 5] = np.squeeze(bsq / 2.0)
-  out[..., 6] = np.squeeze(pre + kee + pri + kei + esq / 2.0 + bsq / 2.0)
+  out[..., 4] = np.squeeze(esq/2.0)
+  out[..., 5] = np.squeeze(bsq/2.0)
+  out[..., 6] = np.squeeze(pre + kee + pri + kei + esq/2.0 + bsq/2.0)
   return grid, out

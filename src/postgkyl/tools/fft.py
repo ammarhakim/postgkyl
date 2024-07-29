@@ -56,7 +56,7 @@ def fft(data: GData, psd: bool = False, iso: bool = False,
     # end
 
     if psd:
-      freq[0] = freq[0][: N // 2]
+      freq[0] = freq[0][:N//2]
       ft_values = np.abs(ft_values[:N//2, :])**2
     # end
 
