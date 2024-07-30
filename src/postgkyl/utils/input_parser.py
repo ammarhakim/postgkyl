@@ -32,13 +32,13 @@ def input_parser(data: GData | np.ndarray | Tuple[list, np.ndarray]) -> Tuple[li
     return data.get_grid(), data.get_values()
   elif isinstance(data, np.ndarray):
     return (), data
-  elif isinstance(data, tuple):
+  elif isinstance(data, tuple) or isinstance(data, list): # A little leeway
     if len(data) == 2:
       if not isinstance(data[0], list):
         raise TypeError("Input grid needs to be a list of NumPy arrays.")
       if not isinstance(data[1], np.ndarray):
         raise TypeError("Input values needs to be a NumPy array.")
-      if len(data[0]) != len(data[1].shape) and len(data[0]) != len(data[1].shape-1):
+      if len(data[0]) != len(data[1].shape) and len(data[0]) != len(data[1].shape)-1:
         raise ValueError("Input grid and valeus don't have the same number of dimesnions.")
       return data[0], data[1]
     else:

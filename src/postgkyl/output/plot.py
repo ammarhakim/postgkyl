@@ -121,7 +121,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
     plt.xkcd()
   # end
 
-  if not bool(color):
+  if not bool(color) and not isinstance(data, tuple):
     cl = data.color
   # end
   if bool(color):
