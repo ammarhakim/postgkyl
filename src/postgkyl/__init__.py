@@ -9,9 +9,9 @@ from postgkyl.version import version as __version__
 
 # import submodules
 from postgkyl import data
+from postgkyl import utils
 from postgkyl import tools
 from postgkyl import output
-from postgkyl import utils
 
 # import selected classes to the root
 from postgkyl.data.gdata import GData

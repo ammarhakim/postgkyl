@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import numpy as np
-from typing import Tuple,TYPE_CHECKING, Union
+from typing import Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
+import postgkyl.data.gdata
 
-def input_parser(data: Union[GData, np.ndarray, Tuple[list, np.ndarray]]) -> Tuple[list, np.ndarray]:
+def input_parser(data: GData | np.ndarray | Tuple[list, np.ndarray]) -> Tuple[list, np.ndarray]:
   """Utility function to parse input and return grid and values.
 
   Motivation for this funtion is to unify what input is used by Postgkyl tools and
@@ -27,7 +28,7 @@ def input_parser(data: Union[GData, np.ndarray, Tuple[list, np.ndarray]]) -> Tup
     TypeError when wrong data type is provided
     ValueError dimensions of grid and values don't match
   """
-  if isinstance(data, GData):
+  if isinstance(data, postgkyl.data.gdata.GData):
     return data.get_grid(), data.get_values()
   elif isinstance(data, np.ndarray):
     return (), data

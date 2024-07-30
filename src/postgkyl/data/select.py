@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Tuple, TYPE_CHECKING
 import numpy as np
 
-from postgkyl.utils import idx_parser
+import postgkyl.data.idx_parser as idx_parser
 if TYPE_CHECKING:
   from postgkyl import GData
 #end
@@ -46,7 +46,7 @@ def select(data: GData, comp: int | str | None = None,
         len_grid = grid[d].shape[d]
       # end
       is_matching = values.shape[d] == len_grid
-      idx = idx_parser(z, grid[d], is_matching)
+      idx = idx_parser.idx_parser(z, grid[d], is_matching)
       if isinstance(idx, int):
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
@@ -70,7 +70,7 @@ def select(data: GData, comp: int | str | None = None,
 
   # Select components
   if comp is not None:
-    values_idx[-1] = idx_parser(comp)
+    values_idx[-1] = idx_parser.idx_parser(comp)
   # end
   values_out = values[tuple(values_idx)]
   if not uniform_grid:

@@ -12,7 +12,7 @@ except ModuleNotFoundError:
   has_adios = False
 # end
 
-from postgkyl.utils import idx_parser
+import postgkyl.data.idx_parser as idx_parser
 
 
 class GkylAdiosReader(object):
@@ -100,7 +100,7 @@ class GkylAdiosReader(object):
     cnt = 0
     for d, z in enumerate(zs):
       if d < num_dims - 1 and z is not None:  # Last dim stores comp
-        z = idx_parser(z, grid[d])
+        z = idx_parser.idx_parser(z, grid[d])
         if isinstance(z, int):
           offset[d] = z
           count[d] = 1
@@ -115,7 +115,7 @@ class GkylAdiosReader(object):
     # end
 
     if comp is not None:
-      comp = idx_parser(comp)
+      comp = idx_parser.idx_parser(comp)
       if isinstance(comp, int):
         offset[-1] = comp
         count[-1] = 1

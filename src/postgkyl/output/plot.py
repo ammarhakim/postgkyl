@@ -1,5 +1,4 @@
 """Module including custom Gkeyll plotting function"""
-
 from __future__ import annotations
 
 from matplotlib import cm
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
 # end
 
 # Helper functions
-def colorbar(obj, fig : matplotlib.figure.Figure, cax : matplotlib.axes.Axes,
+def pgkyl_colorbar(obj, fig : matplotlib.figure.Figure, cax : matplotlib.axes.Axes,
     label: str = "", extend: bool | None = None):
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
@@ -140,11 +139,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
   grid_in, values = input_parser(data)
   grid = grid_in.copy()
 
-  if isinstance(data, GData):
-    num_dims = data.get_num_dims(squeeze=True)
-    lower, upper = data.get_bounds()
-    cells = data.get_num_cells()
-  else:
+  if isinstance(data, tuple):
     if len(grid) == len(values.shape):
       num_dims = len(values.squeeze().shape)
     else:
@@ -161,6 +156,10 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         cells[d] = len(grid[d][d])
       # end
     # end
+  else: # GData
+    num_dims = data.get_num_dims(squeeze=True)
+    lower, upper = data.get_bounds()
+    cells = data.get_num_cells()
   # end
   if num_dims > 2:
     raise ValueError("Only 1D and 2D plots are currently supported")
@@ -417,7 +416,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         mappable = cm.ScalarMappable(
             norm=colors.Normalize(vmin=vmin, vmax=vmax, clip=False), cmap=cm.inferno
         )
-        colorbar(mappable, fig, cax, label=label)
+        pgkyl_colorbar(mappable, fig, cax, label=label)
         colorbar = False
         legend = False
 
@@ -461,8 +460,8 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
             norm=norm, vmin=vmin, vmax=vmax, edgecolors=edgecolors,
             linewidth=0.1, shading="auto", *args)
       # end
-      if not bool(color) and colorbar and not streamline:
-        colorbar(im, fig, cax, extend=extend, label=clabel)
+      if not bool(color) and pgkyl_colorbar and not streamline:
+        pgkyl_colorbar(im, fig, cax, extend=extend, label=clabel)
       # end
     else:
       raise ValueError(f"{num_dims:d}D data not supported")

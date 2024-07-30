@@ -1,4 +1,3 @@
-from typing import Union, Optional
 import numpy as np
 
 def _find_nearest_index(array, value):
@@ -39,8 +38,8 @@ def _string_to_index(value: str, array: np.ndarray, nodal: bool = False) -> int:
   # end
 
 
-def idx_parser(value: Union[int, float, str], array: Optional[np.ndarray] = None,
-    nodal: bool = False) -> Union[int, slice]:
+def idx_parser(value: int | float | str, array: np.ndarray | None = None,
+    nodal: bool = False) -> int | slice:
   idx = None
   if isinstance(value, int):
     idx = value
@@ -69,10 +68,7 @@ def idx_parser(value: Union[int, float, str], array: Optional[np.ndarray] = None
           # end
         except ValueError:
           pass
-        idx = slice(
-            _string_to_index(idxs[0], array, nodal),
-            _string_to_index(idxs[1], array, nodal),
-        )
+        idx = slice(_string_to_index(idxs[0], array, nodal), _string_to_index(idxs[1], array, nodal))
       else:
         idx = _string_to_index(value, array, nodal)
       # end
