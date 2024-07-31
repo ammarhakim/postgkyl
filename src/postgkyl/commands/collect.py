@@ -2,43 +2,38 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.commands.util import verb_print
+from postgkyl.utils import verb_print
+
 
 @click.command()
-@click.option('-s', '--sumdata',
-              is_flag=True,
-              help="Sum data in the collected datasets (retain components)")
-@click.option('-p', '--period',
-              type=click.FLOAT,
-              help="Specify a period to create epoch data instead of time data")
-@click.option('--offset',
-              default=0.0, type=click.FLOAT, show_default=True,
-              help="Specify an offset to create epoch data instead of time data")
-@click.option('-c', '--chunk', type=click.INT,
-              help="Collect into chunks with specified length rather than into a single dataset")
-@click.option('--use', '-u', default=None,
-              help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--tag', '-t', default=None,
-              help='Specify a \'tag\' for the result.')
-@click.option('--label', '-l', default=None,
-              help="Specify the custom label for the result.")
+@click.option("-s", "--sumdata", is_flag=True,
+   help="Sum data in the collected datasets (retain components).")
+@click.option("-p", "--period", type=click.FLOAT,
+   help="Specify a period to create epoch data instead of time data.")
+@click.option("--offset", default=0.0, type=click.FLOAT, show_default=True,
+    help="Specify an offset to create epoch data instead of time data.")
+@click.option("-c", "--chunk", type=click.INT,
+    help="Collect into chunks with specified length rather than into a single dataset.")
+@click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to (default all tags).")
+@click.option("--tag", "-t", default=None, help="Specify a 'tag' for the result.")
+@click.option("--label", "-l", default=None, help="Specify the custom label for the result.")
 @click.pass_context
 def collect(ctx, **kwargs):
-  """Collect data from the active datasets and create a new combined
-  dataset. The time-stamp in each of the active datasets is
-  collected and used as the new X-axis. Data can be collected in
-  chunks, in which case several datasets are created, each with the
-  chunk-sized pieces collected into each new dataset.
+  """Collect data from the active datasets and create a new combined dataset.
+
+  The time-stamp in each of the active datasets is collected and used as the new X-axis.
+  Data can be collected in chunks, in which case several datasets are created, each with
+  the chunk-sized pieces collected into each new dataset.
   """
-  verb_print(ctx, 'Starting collect')
-  data = ctx.obj['data']
+  verb_print(ctx, "Starting collect")
+  data = ctx.obj["data"]
 
-  if kwargs['tag']:
-    outTags = kwargs['tag'].split(',')
-  #end
+  if kwargs["tag"]:
+    out_tags = kwargs["tag"].split(",")
+  # end
 
-  tagCnt = 0
-  for tag in data.tagIterator(kwargs['use']):
+  tag_cnt = 0
+  for tag in data.tag_iterator(kwargs["use"]):
     time = [[]]
     values = [[]]
     grid = [[]]
@@ -47,77 +42,74 @@ def collect(ctx, **kwargs):
 
     for i, dat in data.iterator(tag, enum=True):
       cnt += 1
-      if kwargs['chunk'] and cnt > kwargs['chunk']:
+      if kwargs["chunk"] and cnt > kwargs["chunk"]:
         cnt = 1
         time.append([])
         values.append([])
         grid.append([])
-      #end
-      if dat.ctx['time']:
-        time[-1].append(dat.ctx['time'])
-      elif dat.ctx['frame']:
-        time[-1].append(dat.ctx['frame'])
+      # end
+      if dat.ctx["time"]:
+        time[-1].append(dat.ctx["time"])
+      elif dat.ctx["frame"]:
+        time[-1].append(dat.ctx["frame"])
       else:
         time[-1].append(i)
-      #end
+      # end
       val = dat.get_values()
-      if kwargs['sumdata']:
-        numDims = dat.get_num_dims()
-        axis = tuple(range(numDims))
+      if kwargs["sumdata"]:
+        num_dims = dat.get_num_dims()
+        axis = tuple(range(num_dims))
         values[-1].append(np.nansum(val, axis=axis))
       else:
         values[-1].append(val)
-      #end
+      # end
       if not grid[-1]:
         grid[-1] = dat.get_grid().copy()
-      #end
+      # end
       label = dat.get_custom_label()
-    #end
+    # end
 
-    data.deactivateAll(tag)
+    data.deactivate_all(tag)
 
-    outTag = tag
-    if kwargs['tag']:
-      if len(outTags) > 1:
-        outTag = outTags[tagCnt]
+    out_tag = tag
+    if kwargs["tag"]:
+      if len(out_tags) > 1:
+        out_tag = out_tags[tag_cnt]
       else:
-        outTag = outTags[0]
-      #end
-    #end
-    tagCnt += 1
+        out_tag = out_tags[0]
+      # end
+    # end
+    tag_cnt += 1
 
     if label is None:
-      label = 'collect'
-    #end
-    if kwargs['label']:
-      label = kwargs['label']
-    #end
+      label = "collect"
+    # end
+    if kwargs["label"]:
+      label = kwargs["label"]
+    # end
 
     for i in range(len(time)):
       time[i] = np.array(time[i])
       values[i] = np.array(values[i])
 
-      if kwargs['period'] is not None:
-        time[i] = (time[i] - kwargs['offset']) % kwargs['period']
-      #end
+      if kwargs["period"] is not None:
+        time[i] = (time[i] - kwargs["offset"]) % kwargs["period"]
+      # end
 
-      sortIdx = np.argsort(time[i])
-      time[i] = time[i][sortIdx]
-      values[i] = values[i][sortIdx]
+      sort_idx = np.argsort(time[i])
+      time[i] = time[i][sort_idx]
+      values[i] = values[i][sort_idx]
 
-      if kwargs['sumdata']:
+      if kwargs["sumdata"]:
         grid[i] = [time[i]]
       else:
         grid[i].insert(0, np.array(time[i]))
-      #end
+      # end
 
-      out = GData(tag=outTag,
-                  label=label,
-                  comp_grid=ctx.obj['compgrid'])
+      out = GData(tag=out_tag, label=label, comp_grid=ctx.obj["compgrid"])
       out.push(grid[i], values[i])
       data.add(out)
-    #end
-  #end
+    # end
+  # end
 
-  verb_print(ctx, 'Finishing collect')
-#end
+  verb_print(ctx, "Finishing collect")

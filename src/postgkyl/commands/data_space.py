@@ -1,217 +1,176 @@
+"""Postgkyl submodule to provide iterators in hte command line mode."""
+from __future__ import annotations
+
 import click
 import numpy as np
+from typing import Iterator, TYPE_CHECKING
+
+if TYPE_CHECKING:
+  from postgkyl import GData
+#end
 
 class DataSpace(object):
+  """Postgkyl class to store information about datasets and provide iterators in the command line mode."""
+
   def __init__(self):
-    self._datasetDict = {}
-  #end
+    self._dataset_dict = {}
 
-  #---------------------------------------------------------------------
-  #---- Iterators ------------------------------------------------------
-
-  def _getIterableIdx(idx, length):
-    def _int(i, length):
-      i = int(i)
-      if i >= 0:
-        return i
-      else:
-        return int(length + i)
-      #end
-    #end
-
-    if idx is None:
-      return range(length)
-    elif ',' in idx:
-      s = idx.split(',')
-      return [_int(i, length) for i in s]
-    elif ':' in idx:
-      s = idx.split(':')
-      si = [0, length, 1]
-      if s[0]:
-        si[0] = _int(s[0], length)
-      #end
-      if s[1]:
-        si[1] = _int(s[1], length)
-      #end
-      if len(s) > 2:
-        si[2] = int(s[2])
-      #end
-      return range(si[0], si[1], si[2])
-    else:
-      return [_int(idx, length)]
-    #end
-  #end
-
-  def iterator(self, tag=None, enum=False, only_active=True, select=None):
+  # ---- Iterators ----
+  def iterator(self, tag: str | None = None, enum: bool = False,
+      only_active: bool = True, select: int | slice | str | None = None) -> Iterator[GData]:
     # Process 'select'
     if enum and select:
-      click.echo(click.style(
-        "Error: 'select' and 'enum' cannot be selected simultaneously",
-        fg='red'))
+      click.echo(click.style("Error: 'select' and 'enum' cannot be selected simultaneously", fg="red"))
       quit()
-    #end
-    idxSel = slice(None, None)
+    # end
+    idx_sel = slice(None, None)
     if isinstance(select, int):
-      idxSel = [select]
+      idx_sel = [select]
     elif isinstance(select, slice):
-      idxSel = select
+      idx_sel = select
     elif isinstance(select, str):
-      if ':' in select:
+      if ":" in select:
         lo = None
         up = None
         step = None
-        s = select.split(':')
+        s = select.split(":")
         if s[0]:
           lo = int(s[0])
-        #end
+        # end
         if s[1]:
           up = int(s[1])
-        #end
+        # end
         if len(s) > 2:
           step = int(s[2])
-        #end
-        idxSel = slice(lo, up, step)
+        # end
+        idx_sel = slice(lo, up, step)
       else:
-        idxSel = list([int(s) for s in select.split(',')])
-      #end
-    #end
+        idx_sel = list([int(s) for s in select.split(",")])
+      # end
+    # end
 
     if tag:
       tags = tag.split(",")
     else:
-      tags = list(self._datasetDict)
-    #end
+      tags = list(self._dataset_dict)
+    # end
     for t in tags:
       try:
-        if not select or isinstance(idxSel, slice):
-          for i, dat in enumerate(self._datasetDict[t][idxSel]):
-            if (not only_active) or dat.getStatus(): # implication
+        if not select or isinstance(idx_sel, slice):
+          for i, dat in enumerate(self._dataset_dict[t][idx_sel]):
+            if (not only_active) or dat.get_status():  # implication
               if enum:
                 yield i, dat
               else:
                 yield dat
-              #end
-            #end
-          #end
-        else: #isinstance(idxSel, list)
-          for i in idxSel:
-            dat = self._datasetDict[t][i]
-            if (not only_active) or dat.getStatus(): # implication
+              # end
+            # end
+          # end
+        else:  # isinstance(idx_sel, list)
+          for i in idx_sel:
+            dat = self._dataset_dict[t][i]
+            if (not only_active) or dat.get_status():  # implication
               yield dat
-            #end
-          #end
-        #end
+            # end
+          # end
+        # end
       except KeyError as err:
-        click.echo(click.style(
-          "ERROR: Failed to load the specified/default tag {0}".format(err),
-          fg='red'))
+        click.echo(click.style(f"ERROR: Failed to load the specified/default tag {err}", fg="red"))
         quit()
       except IndexError:
-        click.echo(click.style(
-          "ERROR: Index out of the dataset range",
-          fg='red'))
+        click.echo(click.style("ERROR: Index out of the dataset range", fg="red"))
         quit()
-      #end
-    #end
-  #end
+      # end
+    # end
 
-  def tagIterator(self, tag=None, only_active=True):
+  def tag_iterator(self, tag: str | None = None, only_active: bool = True) -> Iterator[str]:
     if tag:
-      out = tag.split(',')
+      out = tag.split(",")
     elif only_active:
       out = []
-      for t in self._datasetDict:
-        if True in (dat.getStatus() for dat in self.iterator(t)):
+      for t in self._dataset_dict:
+        if True in (dat.get_status() for dat in self.iterator(t)):
           out.append(t)
-        #end
-      #end
+        # end
+      # end
     else:
-      out = list(self._datasetDict)
-    #end
+      out = list(self._dataset_dict)
+    # end
     return iter(out)
-  #end
 
-  #-----------------------------------------------------------------
-  #-- Labels -------------------------------------------------------
-  def setUniqueLabels(self):
-    numComps = []
+  # ---- Labels ----
+  def set_unique_labels(self) -> None:
+    num_comps = []
     names = []
     labels = []
     for dat in self.iterator():
       file_name = dat._file_name
-      extensionLen = len(file_name.split('.')[-1])
-      file_name = file_name[:-(extensionLen+1)]
+      extension_len = len(file_name.split(".")[-1])
+      file_name = file_name[: -(extension_len + 1)]
       # only remove the file extension but take into account
       # that the file name might start with '../'
-      sp = file_name.split('_')
+      sp = file_name.split("_")
       names.append(sp)
-      numComps.append(int(len(sp)))
+      num_comps.append(int(len(sp)))
       labels.append("")
-    #end
-    maxElem = np.max(numComps)
-    idxMax = np.argmax(numComps)
-    for i in range(maxElem):
+    # end
+    max_elem = np.max(num_comps)
+    idx_max = np.argmax(num_comps)
+    for i in range(max_elem):
       include = False
-      reference = names[idxMax][i]
+      reference = names[idx_max][i]
       for nm in names:
         if i < len(nm) and nm[i] != reference:
           include = True
-        #end
-      #end
+        # end
+      # end
       if include:
         for idx, nm in enumerate(names):
           if i < len(nm):
             if labels[idx] == "":
               labels[idx] += nm[i]
             else:
-              labels[idx] += '_{:s}'.format(nm[i])
-            #end
-          #end
-        #end
-      #end
-    #end
+              labels[idx] += f"_{nm[i]:s}"
+            # end
+          # end
+        # end
+      # end
+    # end
     cnt = 0
     for dat in self.iterator():
       dat.set_label(labels[cnt])
       cnt += 1
-    #end
-  #end
+    # end
 
-  #-----------------------------------------------------------------
-  #-- Adding datasets ----------------------------------------------
-  def add(self, data):
+  # ---- Adding datasets ----
+  def add(self, data: GData) -> None:
     tag_nm = data.get_tag()
-    if tag_nm in self._datasetDict:
-      self._datasetDict[tag_nm].append(data)
+    if tag_nm in self._dataset_dict:
+      self._dataset_dict[tag_nm].append(data)
     else:
-      self._datasetDict[tag_nm] = [data]
-    #end
-  #end
+      self._dataset_dict[tag_nm] = [data]
+    # end
 
-  #-----------------------------------------------------------------
-  #-- Staus control ------------------------------------------------
-  def activateAll(self, tag=None):
+  # ---- Staus control ----
+  def activate_all(self, tag: str | None = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
-    #end
-  #end
-  def deactivateAll(self, tag=None):
+    # end
+
+  # end
+  def deactivate_all(self, tag: str | None = None) -> None:
     for dat in self.iterator(tag=tag, only_active=False):
       dat.deactivate()
-    #end
-  #end
+    # end
 
-  #-----------------------------------------------------------------
-  #-- Stuff :-P ----------------------------------------------------
-  def getDataset(self, tag, idx):
-    return self._datasetDict[tag][idx]
-  #end
+  # ---- Utilities ----
+  def get_dataset(self, tag: str, idx: int) -> GData:
+    return self._dataset_dict[tag][idx]
 
-  def getNumDatasets(self, tag=None, only_active=True):
-    numSets = 0
+
+  def get_num_datasets(self, tag: str | None = None, only_active: bool = True):
+    num_sets = 0
     for dat in self.iterator(tag=tag, only_active=only_active):
-      numSets += 1
-    #end
-    return numSets
-  #end
-#end
+      num_sets += 1
+    # end
+    return num_sets

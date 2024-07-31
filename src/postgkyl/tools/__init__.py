@@ -1,13 +1,4 @@
-from .input_parser import _input_parser
-
 from .calculus import integrate
-
-from .fft import fft
-
-# import correlation functions
-#from .fieldParticleCorrelation import Ce
-# import growth functions
-from .growth import fitGrowth
 
 # import parameter computation functions
 from .params import get_magB
@@ -56,26 +47,22 @@ from .pressure_diagnostics import get_agyro
 from .pressure_diagnostics import get_gkyl_10m_agyro
 
 from .accumulate_current import accumulate_current
-from .energetics import energetics
-from .magsq import mag_sq
-from .parrotate import parrotate
-from .perprotate import perprotate
-from .rel_change import rel_change
-
-from .initpolar import initpolar
 from .calc_enstrophy import calc_enstrophy
 from .calc_ke_dke import calc_ke_dke
+from .energetics import energetics
+from .fft import fft
+from .growth import exp2
+from .growth import fit_growth
+from .init_polar import init_polar
+from .mag_sq import mag_sq
+from .parrotate import parrotate
+from .perprotate import perprotate
 from .polar_isotropic import polar_isotropic
+from .rel_change import rel_change
 
-# import fields.py functions
-from .fields import findNearest
-from .fields import findNearestIdx
-from .fields import fixGridSlice
 # import filters.py functions
-from . import filters
-from .filters import fftData
-from .filters import fftFiltering
-from .filters import butterFiltering
+from .filters import fft_filtering
+from .filters import butter_filtering
 
 from .laguerre_compose import laguerre_compose
 from .transform_frame import transform_frame

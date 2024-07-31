@@ -1,22 +1,22 @@
 """
-This is the postgkyl package init.
+# Postgkyl
 
-isort:skip_file
+Postgkyl is both Python library and command-line tool designed to provide unified access
+to Gkeyll data together with a broad variety of analytical and visualization tools.
 """
 
-from .version import version as __version__
+from postgkyl.version import version as __version__
 
 # import submodules
-from . import data
-from . import tools
-from . import output
-from . import utils
-#from . import modalDG
+from postgkyl import data
+from postgkyl import utils
+from postgkyl import tools
+from postgkyl import output
 
 # import selected classes to the root
-from .data.gdata import GData
-from .data.dg import GInterpNodal
-from .data.dg import GInterpModal
+from postgkyl.data.gdata import GData
+from postgkyl.data.dg import GInterpNodal
+from postgkyl.data.dg import GInterpModal
 
 # link the command line executable to the system
-from . import pgkyl
+from postgkyl import pgkyl

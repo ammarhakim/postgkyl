@@ -8,212 +8,211 @@ def _get_grid(grid0, grid1):
       return grid0
     else:
       return grid1
-    #end
+    # end
   elif grid0 is not None:
     return grid0
   elif grid1 is not None:
     return grid1
   else:
     return None
-  #end
-#end
+  # end
 
-def add(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  outValues = inValues[0] + inValues[1]
-  return [outGrid], [outValues]
-#end
 
-def subtract(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  outValues = inValues[1] - inValues[0]
-  return [outGrid], [outValues]
-#end
+def add(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  out_values = in_values[0] + in_values[1]
+  return [out_grid], [out_values]
 
-def mult(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  a, b = inValues[1], inValues[0]
+
+def subtract(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  out_values = in_values[1] - in_values[0]
+  return [out_grid], [out_values]
+
+
+def mult(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  a, b = in_values[1], in_values[0]
   if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
-    outValues = a*b
+    out_values = a * b
   else:
     # When multiplying phase-space and conf-space field, the
     # dimensions do not match. NumPy can do a lot of things with
     # broadcasting
     # (https://numpy.org/doc/stable/user/basics.broadcasting.html) but
-    # it requires the trainling indices to match, which is opposite to
+    # it requires the trailing indices to match, which is opposite to
     # what we have (the first indices are matching). Therefore, one can
-    # transpose, multiply, and transpose back; I think. -- Petr Cagas
-    outValues = (a.transpose()*b.transpose()).transpose()
-  #end
-  return [outGrid], [outValues]
-#end
+    # transpose, multiply, and transpose back... I think -- Petr Cagas
+    out_values = (a.transpose() * b.transpose()).transpose()
+  # end
+  return [out_grid], [out_values]
 
-def dot(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  outValues = np.sum(inValues[1]*inValues[0], axis=-1)[..., np.newaxis]
-  return [outGrid], [outValues]
-#end
 
-def divide(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  a, b = inValues[1], inValues[0]
+def dot(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  out_values = np.sum(in_values[1] * in_values[0], axis=-1)[..., np.newaxis]
+  return [out_grid], [out_values]
+
+
+def divide(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  a, b = in_values[1], in_values[0]
   if np.array_equal(a.shape, b.shape) or len(a.shape) == 0 or len(b.shape) == 0:
-    outValues = a/b
+    out_values = a/b
   else:
     # See the 'mult' comment above
-    outValues = (a.transpose()/b.transpose()).transpose()
-  #end
-  return [outGrid], [outValues]
-#end
+    out_values = (a.transpose()/b.transpose()).transpose()
+  # end
+  return [out_grid], [out_values]
 
-def sqrt(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.sqrt(inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def psin(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.sin(inValues[0])
-  return [outGrid], [outValues]
-#end
+def sqrt(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.sqrt(in_values[0])
+  return [out_grid], [out_values]
 
-def pcos(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.cos(inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def ptan(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.tan(inValues[0])
-  return [outGrid], [outValues]
-#end
+def psin(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.sin(in_values[0])
+  return [out_grid], [out_values]
 
-def absolute(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.abs(inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def log(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.log(inValues[0])
-  return [outGrid], [outValues]
-#end
+def pcos(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.cos(in_values[0])
+  return [out_grid], [out_values]
 
-def log10(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.log10(inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def minimum(inGrid, inValues):
-  outValues = np.atleast_1d(np.nanmin(inValues[0]))
-  return [[]], [outValues]
-#end
+def ptan(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.tan(in_values[0])
+  return [out_grid], [out_values]
 
-def minimum2(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  outValues = np.fmin(inValues[0], inValues[1])
-  return [outGrid], [outValues]
-#end
 
-def maximum(inGrid, inValues):
-  outValues = np.atleast_1d(np.nanmax(inValues[0]))
-  return [[]], [outValues]
-#end
+def absolute(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.abs(in_values[0])
+  return [out_grid], [out_values]
 
-def maximum2(inGrid, inValues):
-  outGrid = _get_grid(inGrid[0], inGrid[1])
-  outValues = np.fmax(inValues[0], inValues[1])
-  return [outGrid], [outValues]
-#end
 
-def mean(inGrid, inValues):
-  outValues = np.atleast_1d(np.mean(inValues[0]))
-  return [[]], [outValues]
-#end
+def log(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.log(in_values[0])
+  return [out_grid], [out_values]
 
-def power(inGrid, inValues):
-  outGrid = inGrid[1]
-  outValues = np.power(inValues[1], inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def sq(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = inValues[0]**2
-  return [outGrid], [outValues]
-#end
+def log10(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.log10(in_values[0])
+  return [out_grid], [out_values]
 
-def exp(inGrid, inValues):
-  outGrid = inGrid[0]
-  outValues = np.exp(inValues[0])
-  return [outGrid], [outValues]
-#end
 
-def length(inGrid, inValues):
-  ax = int(inValues[0])
-  length = inGrid[1][ax][-1] - inGrid[1][ax][0]
-  if len(inGrid[1][ax]) == inValues[1].shape[ax]:
-    length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
-  #end
-  return [[]], [length]
+def minimum(in_grid, in_values):
+  out_values = np.atleast_1d(np.nanmin(in_values[0]))
+  return [[]], [out_values]
 
-def grad(inGrid, inValues):
-  out_grid = inGrid[0]
-  nd = len(inValues[0].shape)-1
-  out_shape = list(inValues[0].shape)
-  nc = inValues[0].shape[-1]
-  out_shape[-1] = nc*nd
+
+def minimum2(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  out_values = np.fmin(in_values[0], in_values[1])
+  return [out_grid], [out_values]
+
+
+def maximum(in_grid, in_values):
+  out_values = np.atleast_1d(np.nanmax(in_values[0]))
+  return [[]], [out_values]
+
+
+def maximum2(in_grid, in_values):
+  out_grid = _get_grid(in_grid[0], in_grid[1])
+  out_values = np.fmax(in_values[0], in_values[1])
+  return [out_grid], [out_values]
+
+
+def mean(in_grid, in_values):
+  out_values = np.atleast_1d(np.mean(in_values[0]))
+  return [[]], [out_values]
+
+
+def power(in_grid, in_values):
+  out_grid = in_grid[1]
+  out_values = np.power(in_values[1], in_values[0])
+  return [out_grid], [out_values]
+
+
+def sq(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = in_values[0]**2
+  return [out_grid], [out_values]
+
+
+def exp(in_grid, in_values):
+  out_grid = in_grid[0]
+  out_values = np.exp(in_values[0])
+  return [out_grid], [out_values]
+
+
+def length(in_grid, in_values):
+  ax = int(in_values[0])
+  ln = in_grid[1][ax][-1] - in_grid[1][ax][0]
+  if len(in_grid[1][ax]) == in_values[1].shape[ax]:
+    ln += in_grid[1][ax][1] - in_grid[1][ax][0]
+  # end
+  return [[]], [ln]
+
+
+def grad(in_grid, in_values):
+  out_grid = in_grid[0]
+  nd = len(in_values[0].shape) - 1
+  out_shape = list(in_values[0].shape)
+  nc = in_values[0].shape[-1]
+  out_shape[-1] = nc * nd
   out_values = np.zeros(out_shape)
 
   for d in range(nd):
-    zc = 0.5*(inGrid[0][d][1:] + inGrid[0][d][:-1]) # get cell centered values
-    out_values[..., d*nc:(d+1)*nc] = np.gradient(inValues[0],
-                                                 zc,
-                                                 edge_order=2,
-                                                 axis=d)
-  #end
+    zc = 0.5 * (in_grid[0][d][1:] + in_grid[0][d][:-1])  # get cell centered values
+    out_values[..., d*nc:(d + 1)*nc] = np.gradient(
+        in_values[0], zc, edge_order=2, axis=d
+    )
+  # end
   return [out_grid], [out_values]
-#end
 
-def grad2(inGrid, inValues):
-  outGrid = inGrid[1]
-  ax = inValues[0]
-  if isinstance(ax, str) and ':' in ax:
-    tmp = ax.split(':')
+
+def grad2(in_grid, in_values):
+  out_grid = in_grid[1]
+  ax = in_values[0]
+  if isinstance(ax, str) and ":" in ax:
+    tmp = ax.split(":")
     lo = int(tmp[0])
     up = int(tmp[1])
     rng = range(lo, up)
   elif isinstance(ax, str):
-    rng = tuple((int(i) for i in ax.split(',')))
+    rng = tuple((int(i) for i in ax.split(",")))
   else:
-    rng = range(int(ax), int(ax+1))
-  #end
+    rng = range(int(ax), int(ax + 1))
+  # end
 
-  numDims = len(rng)
-  outShape = list(inValues[1].shape)
-  numComps = inValues[1].shape[-1]
-  outShape[-1] = outShape[-1]*numDims
-  outValues = np.zeros(outShape)
+  num_dims = len(rng)
+  out_shape = list(in_values[1].shape)
+  num_comps = in_values[1].shape[-1]
+  out_shape[-1] = out_shape[-1] * num_dims
+  out_values = np.zeros(out_shape)
 
   for cnt, d in enumerate(rng):
-    zc = 0.5*(inGrid[1][d][1:] + inGrid[1][d][:-1]) # get cell centered values
-    outValues[..., cnt*numComps:(cnt+1)*numComps] = np.gradient(inValues[1],
-                                                                zc,
-                                                                edge_order=2,
-                                                                axis=d)
-  #end
-  return [outGrid], [outValues]
-#end
+    zc = 0.5 * (in_grid[1][d][1:] + in_grid[1][d][:-1])  # get cell centered values
+    out_values[..., cnt*num_comps:(cnt + 1)*num_comps] = np.gradient(
+        in_values[1], zc, edge_order=2, axis=d
+    )
+  # end
+  return [out_grid], [out_values]
 
-def integrate(inGrid, inValues, avg=False):
-  grid = inGrid[1].copy()
-  values = np.array(inValues[1])
 
-  axis = inValues[0]
+def integrate(in_grid, in_values, avg=False):
+  grid = in_grid[1].copy()
+  values = np.array(in_values[1])
+
+  axis = in_values[0]
   if isinstance(axis, float):
     axis = tuple([int(axis)])
   elif isinstance(axis, tuple):
@@ -221,142 +220,162 @@ def integrate(inGrid, inValues, avg=False):
   elif isinstance(axis, np.ndarray):
     axis = tuple([int(axis)])
   elif isinstance(axis, str):
-    if len(axis.split(',')) > 1:
-      axes = axis.split(',')
+    if len(axis.split(",")) > 1:
+      axes = axis.split(",")
       axis = tuple([int(a) for a in axes])
-    elif len(axis.split(':')) == 2:
-      bounds = axis.split(':')
+    elif len(axis.split(":")) == 2:
+      bounds = axis.split(":")
       axis = tuple(range(bounds[0], bounds[1]))
-    elif axis == 'all':
-      numDims = len(grid)
-      axis = tuple(range(numDims))
-    #end
+    elif axis == "all":
+      num_dims = len(grid)
+      axis = tuple(range(num_dims))
+    # end
   else:
     raise TypeError("'axis' needs to be integer, tuple, string of comma separated integers, or a slice ('int:int')")
-  #end
+  # end
 
   dz = []
   for d, coord in enumerate(grid):
     dz.append(coord[1:] - coord[:-1])
     if len(coord) == values.shape[d]:
       dz[-1] = np.append(dz[-1], dz[-1][-1])
-    #end
+    # end
 
   # Integration assuming values are cell centered averages
   # Should work for nonuniform meshes
   for ax in sorted(axis, reverse=True):
     values = np.moveaxis(values, ax, -1)
     values = np.dot(values, dz[ax])
-  #end
+  # end
   for ax in sorted(axis):
     grid[ax] = np.array([0])
     values = np.expand_dims(values, ax)
     if avg:
-      length = inGrid[1][ax][-1] - inGrid[1][ax][0]
-      if len(inGrid[1][ax]) == inValues[1].shape[ax]:
-        length = length + inGrid[1][ax][1] - inGrid[1][ax][0]
-      #end
-      values = values / length
-    #end
-  #end
+      ln = in_grid[1][ax][-1] - in_grid[1][ax][0]
+      if len(in_grid[1][ax]) == in_values[1].shape[ax]:
+        ln += in_grid[1][ax][1] - in_grid[1][ax][0]
+      # end
+      values = values/ln
+    # end
+  # end
   return [grid], [values]
-#end
 
-def average(inGrid, inValues):
-  return integrate(inGrid, inValues, True)
 
-def divergence(inGrid, inValues):
-  outGrid = inGrid[0]
-  numDims = len(inGrid[0])
-  numComps = inValues[0].shape[-1]
-  if numComps > numDims:
-    click.echo(click.style("WARNING in 'ev div': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
-    #end
-  outShape = list(inValues[0].shape)
-  outShape[-1] = 1
-  outValues = np.zeros(outShape)
-  for d in range(numDims):
-    zc = 0.5*(inGrid[0][d][1:] + inGrid[0][d][:-1]) # get cell centered values
-    outValues[..., 0] = outValues[..., 0] + np.gradient(inValues[0][..., d], zc, edge_order=2, axis=d)
-  #end
-  return [outGrid], [outValues]
-#end
+def average(in_grid, in_values):
+  return integrate(in_grid, in_values, True)
 
-def curl(inGrid, inValues):
-  outGrid = inGrid[0]
-  numDims = len(inGrid[0])
-  numComps = inValues[0].shape[-1]
 
-  outShape = list(inValues[0].shape)
+def divergence(in_grid, in_values):
+  out_grid = in_grid[0]
+  num_dims = len(in_grid[0])
+  num_comps = in_values[0].shape[-1]
+  if num_comps > num_dims:
+    click.echo(
+        click.style(f"WARNING in 'ev div': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} component(s) of the vector will be disregarded.",
+            fg="yellow")
+    )
+    # end
+  out_shape = list(in_values[0].shape)
+  out_shape[-1] = 1
+  out_values = np.zeros(out_shape)
+  for d in range(num_dims):
+    zc = 0.5 * (in_grid[0][d][1:] + in_grid[0][d][:-1])  # get cell centered values
+    out_values[..., 0] = out_values[..., 0] + np.gradient(
+        in_values[0][..., d], zc, edge_order=2, axis=d
+    )
+  # end
+  return [out_grid], [out_values]
 
-  if numDims == 1:
-    if numComps != 3:
-      raise ValueError("ERROR in 'ev curl': Curl in 1D requires 3-component input and {:d}-component field was provided.".format(numComps))
-    #end
-    zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
-    outValues = np.zeros(outShape)
-    outValues[..., 1] = - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
-    outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0)
-  elif numDims == 2:
-    zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
-    zc1 = 0.5*(inGrid[0][1][1:] + inGrid[0][1][:-1])
-    if numComps < 2:
-      raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated.".format(numComps, numDims))
-    elif numComps == 2:
-      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). Only the third component of curl will be calculated.".format(numComps, numDims), fg='yellow'))
-      outShape[-1] = 1
-      outValues = np.zeros(outShape)
-      outValues[..., 0] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
+
+def curl(in_grid, in_values):
+  out_grid = in_grid[0]
+  num_dims = len(in_grid[0])
+  num_comps = in_values[0].shape[-1]
+
+  out_shape = list(in_values[0].shape)
+
+  if num_dims == 1:
+    if num_comps != 3:
+      raise ValueError(f"ERROR in 'ev curl': Curl in 1D requires 3-component input and {num_comps:d}-component field was provided.")
+    # end
+    zc0 = 0.5*(in_grid[0][0][1:] + in_grid[0][0][:-1])
+    out_values = np.zeros(out_shape)
+    out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
+    out_values[..., 2] = np.gradient(in_values[0][..., 1], zc0, edge_order=2, axis=0)
+  elif num_dims == 2:
+    zc0 = 0.5 * (in_grid[0][0][1:] + in_grid[0][0][:-1])
+    zc1 = 0.5 * (in_grid[0][1][1:] + in_grid[0][1][:-1])
+    if num_comps < 2:
+      raise ValueError(f"ERROR in 'ev curl': Length of the provided vector ({num_comps:d}) is smaller than number of dimensions ({num_dims:d}). Curl can't be calculated." )
+    elif num_comps == 2:
+      click.echo(
+          click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). Only the third component of curl will be calculated.",
+              fg="yellow")
+      )
+      out_shape[-1] = 1
+      out_values = np.zeros(out_shape)
+      out_values[..., 0] = np.gradient(
+          in_values[0][..., 1], zc0, edge_order=2, axis=0
+      ) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
     else:
-      if numComps > 3:
+      if num_comps > 3:
         print("here")
-        click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} components of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
-      #end
-      outValues = np.zeros(outShape)
-      outValues[..., 0] = np.gradient(inValues[0][..., 2], zc1, edge_order=2, axis=1)
-      outValues[..., 1] = - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
-      outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
-  else: # 3D
-    if numComps > 3:
-      click.echo(click.style("WARNING in 'ev curl': Length of the provided vector ({:d}) is longer than number of dimensions ({:d}). The last {:d} component(s) of the vector will be disregarded.".format(numComps, numDims, numComps-numDims), fg='yellow'))
-    elif numComps < 3:
-      raise ValueError("ERROR in 'ev curl': Length of the provided vector ({:d}) is smaller than number of dimensions ({:d}). Curl can't be calculated".format(numComps, numDims))
-    #end
-    zc0 = 0.5*(inGrid[0][0][1:] + inGrid[0][0][:-1])
-    zc1 = 0.5*(inGrid[0][1][1:] + inGrid[0][1][:-1])
-    zc2 = 0.5*(inGrid[0][2][1:] + inGrid[0][2][:-1])
-    outValues[..., 0] = np.gradient(inValues[0][..., 2], zc1, edge_order=2, axis=1) - np.gradient(inValues[0][..., 1], zc2, edge_order=2, axis=2)
-    outValues[..., 1] = np.gradient(inValues[0][..., 0], zc2, edge_order=2, axis=2) - np.gradient(inValues[0][..., 2], zc0, edge_order=2, axis=0)
-    outValues[..., 2] = np.gradient(inValues[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(inValues[0][..., 0], zc1, edge_order=2, axis=1)
-  #end
-  return [outGrid], [outValues]
-#end
+        click.echo(
+            click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} components of the vector will be disregarded.",
+                fg="yellow")
+        )
+      # end
+      out_values = np.zeros(out_shape)
+      out_values[..., 0] = np.gradient(in_values[0][..., 2], zc1, edge_order=2, axis=1)
+      out_values[..., 1] = -np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
+      out_values[..., 2] = np.gradient( in_values[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
+  else:  # 3D
+    if num_comps > 3:
+      click.echo(
+          click.style(f"WARNING in 'ev curl': Length of the provided vector ({num_comps:d}) is longer than number of dimensions ({num_dims:d}). The last {num_comps - num_dims:d} component(s) of the vector will be disregarded.",
+              fg="yellow")
+      )
+    elif num_comps < 3:
+      raise ValueError(
+          f"ERROR in 'ev curl': Length of the provided vector ({num_comps:d}) is smaller than number of dimensions ({num_dims:d}). Curl can't be calculated."
+      )
+    # end
+    zc0 = 0.5 * (in_grid[0][0][1:] + in_grid[0][0][:-1])
+    zc1 = 0.5 * (in_grid[0][1][1:] + in_grid[0][1][:-1])
+    zc2 = 0.5 * (in_grid[0][2][1:] + in_grid[0][2][:-1])
+    out_values[..., 0] = np.gradient(in_values[0][..., 2], zc1, edge_order=2, axis=1) - np.gradient(in_values[0][..., 1], zc2, edge_order=2, axis=2)
+    out_values[..., 1] = np.gradient(in_values[0][..., 0], zc2, edge_order=2, axis=2) - np.gradient(in_values[0][..., 2], zc0, edge_order=2, axis=0)
+    out_values[..., 2] = np.gradient(in_values[0][..., 1], zc0, edge_order=2, axis=0) - np.gradient(in_values[0][..., 0], zc1, edge_order=2, axis=1)
+  # end
+  return [out_grid], [out_values]
 
-cmds = { '+' : { 'numIn' : 2, 'numOut' : 1, 'func' : add },
-         '-' : { 'numIn' : 2, 'numOut' : 1, 'func' : subtract },
-         '*' : { 'numIn' : 2, 'numOut' : 1, 'func' : mult },
-         '/' : { 'numIn' : 2, 'numOut' : 1, 'func' : divide },
-         'dot' : { 'numIn' : 2, 'numOut' : 1, 'func' : dot },
-         'sqrt' : { 'numIn' : 1, 'numOut' : 1, 'func' : sqrt },
-         'sin' : { 'numIn' : 1, 'numOut' : 1, 'func' : psin },
-         'cos' : { 'numIn' : 1, 'numOut' : 1, 'func' : pcos },
-         'tan' : { 'numIn' : 1, 'numOut' : 1, 'func' : ptan },
-         'abs' : { 'numIn' : 1, 'numOut' : 1, 'func' : absolute },
-         'avg' : { 'numIn' : 2, 'numOut' : 1, 'func' : average },
-         'log' : { 'numIn' : 1, 'numOut' : 1, 'func' : log },
-         'log10' : { 'numIn' : 1, 'numOut' : 1, 'func' : log10 },
-         'max' : { 'numIn' : 1, 'numOut' : 1, 'func' : maximum },
-         'min' : { 'numIn' : 1, 'numOut' : 1, 'func' : minimum },
-         'max2' : { 'numIn' : 2, 'numOut' : 1, 'func' : maximum2 },
-         'min2' : { 'numIn' : 2, 'numOut' : 1, 'func' : minimum2 },
-         'mean' : { 'numIn' : 1, 'numOut' : 1, 'func' : mean },
-         'len' : { 'numIn' : 2, 'numOut' : 1, 'func' : length },
-         'pow' : { 'numIn' : 2, 'numOut' : 1, 'func' : power },
-         'sq' : { 'numIn' : 1, 'numOut' : 1, 'func' : sq },
-         'exp' : { 'numIn' : 1, 'numOut' : 1, 'func' : exp },
-         'grad' : { 'numIn' : 1, 'numOut' : 1, 'func' : grad },
-         'grad2' : { 'numIn' : 2, 'numOut' : 1, 'func' : grad2 },
-         'int' : { 'numIn' : 2, 'numOut' : 1, 'func' : integrate },
-         'div' : { 'numIn' : 1, 'numOut' : 1, 'func' : divergence },
-         'curl' : { 'numIn' : 1, 'numOut' : 1, 'func' : curl },
+
+cmds = {
+    "+": {"num_in": 2, "num_out": 1, "func": add},
+    "-": {"num_in": 2, "num_out": 1, "func": subtract},
+    "*": {"num_in": 2, "num_out": 1, "func": mult},
+    "/": {"num_in": 2, "num_out": 1, "func": divide},
+    "dot": {"num_in": 2, "num_out": 1, "func": dot},
+    "sqrt": {"num_in": 1, "num_out": 1, "func": sqrt},
+    "sin": {"num_in": 1, "num_out": 1, "func": psin},
+    "cos": {"num_in": 1, "num_out": 1, "func": pcos},
+    "tan": {"num_in": 1, "num_out": 1, "func": ptan},
+    "abs": {"num_in": 1, "num_out": 1, "func": absolute},
+    "avg": {"num_in": 2, "num_out": 1, "func": average},
+    "log": {"num_in": 1, "num_out": 1, "func": log},
+    "log10": {"num_in": 1, "num_out": 1, "func": log10},
+    "max": {"num_in": 1, "num_out": 1, "func": maximum},
+    "min": {"num_in": 1, "num_out": 1, "func": minimum},
+    "max2": {"num_in": 2, "num_out": 1, "func": maximum2},
+    "min2": {"num_in": 2, "num_out": 1, "func": minimum2},
+    "mean": {"num_in": 1, "num_out": 1, "func": mean},
+    "len": {"num_in": 2, "num_out": 1, "func": length},
+    "pow": {"num_in": 2, "num_out": 1, "func": power},
+    "sq": {"num_in": 1, "num_out": 1, "func": sq},
+    "exp": {"num_in": 1, "num_out": 1, "func": exp},
+    "grad": {"num_in": 1, "num_out": 1, "func": grad},
+    "grad2": {"num_in": 2, "num_out": 1, "func": grad2},
+    "int": {"num_in": 2, "num_out": 1, "func": integrate},
+    "div": {"num_in": 1, "num_out": 1, "func": divergence},
+    "curl": {"num_in": 1, "num_out": 1, "func": curl},
 }

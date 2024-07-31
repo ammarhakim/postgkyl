@@ -2,116 +2,109 @@ import click
 import numpy as np
 
 from postgkyl.data import GData
-from postgkyl.commands.util import verb_print
+from postgkyl.utils import verb_print
 
-def _getRange(strIn, length):
-  if len(strIn.split(',')) > 1:
-    return np.array(strIn.split(','), np.int)
-  elif strIn.find(':') >= 0:
-    strSplit = strIn.split(':')
 
-    if strSplit[0] == '':
-      sIdx = 0
+def _get_range(str_in, length):
+  if len(str_in.split(",")) > 1:
+    return np.array(str_in.split(","), np.int)
+  elif str_in.find(":") >= 0:
+    str_split = str_in.split(":")
+
+    if str_split[0] == "":
+      s_idx = 0
     else:
-      sIdx = int(strSplit[0])
-      if sIdx < 0:
-        sIdx = length+sIdx
-      #end
-    #end
+      s_idx = int(str_split[0])
+      if s_idx < 0:
+        s_idx = length + s_idx
+      # end
+    # end
 
-    if strSplit[1] == '':
-      eIdx = length
+    if str_split[1] == "":
+      e_idx = length
     else:
-      eIdx = int(strSplit[1])
-      if eIdx < 0:
-        eIdx = length+eIdx
-      #end
-    #end
+      e_idx = int(str_split[1])
+      if e_idx < 0:
+        e_idx = length + e_idx
+      # end
+    # end
 
     inc = 1
-    if len(strSplit) > 2 and strSplit[2] != '':
-      inc = int(strSplit[2])
-    #end
-    return np.arange(sIdx, eIdx, inc)
+    if len(str_split) > 2 and str_split[2] != "":
+      inc = int(str_split[2])
+    # end
+    return np.arange(s_idx, e_idx, inc)
   else:
-    return np.array([int(strIn)])
-  #end
-#end
+    return np.array([int(str_in)])
+  # end
+
 
 @click.command()
-@click.option('--use', '-u',
-              help='Specify a \'tag\' to apply to (default all tags).')
-@click.option('--tag', '-t',
-              help='Tag for the result')
-@click.option('--label', '-l',
-              help="Custom label for the result")
-@click.option('-x', type=click.STRING,
-              help="Select components that will became the grid of the new dataset.")
-@click.option('-y', type=click.STRING,
-              help="Select components that will became the values of the new dataset.")
-@click.option('--periodic', '-p', is_flag=True,
-              help="Set the last component to match the first one")
+@click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
+@click.option("--tag", "-t", help="Tag for the result.")
+@click.option("--label", "-l", help="Custom label for the result.")
+@click.option("-x", type=click.STRING,
+    help="Select components that will became the grid of the new dataset.")
+@click.option("-y", type=click.STRING,
+    help="Select components that will became the values of the new dataset.")
+@click.option("--periodic", "-p", is_flag=True, help="Set the last component to match the first one.")
 @click.pass_context
 def val2coord(ctx, **kwargs):
-  """Given a dataset (typically a DynVector) selects columns from it to
-  create new datasets. For example, you can choose say column 1 to
-  be the X-axis of the new dataset and column 2 to be the
-  Y-axis. Multiple columns can be choosen using range specifiers and
+  """Given a dataset (typically a DynVector) selects columns from it to create new datasets.
+
+  For example, you can choose say column 1 to be the X-axis of the new dataset and
+  column 2 to be the Y-axis. Multiple columns can be choosen using range specifiers and
   as many datasets are then created.
-
   """
-  verb_print(ctx, 'Starting val2coord')
-  data = ctx.obj['data']
+  verb_print(ctx, "Starting val2coord")
+  data = ctx.obj["data"]
 
-  activeSets = []
-  colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
-
-  tags = list(data.tagIterator())
-  outTag = kwargs['tag']
-  if outTag is None:
+  tags = list(data.tag_iterator())
+  out_tag = kwargs["tag"]
+  if out_tag is None:
     if len(tags) == 1:
-      outTag = tags[0]
+      out_tag = tags[0]
     else:
-      outTag = 'val2coord'
-    #end
-  #end
+      out_tag = "val2coord"
+    # end
+  # end
 
-  for setIdx, dat in data.iterator(kwargs['use'], enum=True):
+  for _, dat in data.iterator(kwargs["use"], enum=True):
     values = dat.get_values()
-    xComps = _getRange(kwargs['x'], len(values[0, :]))
-    yComps = _getRange(kwargs['y'], len(values[0, :]))
+    x_comps = _get_range(kwargs["x"], len(values[0, :]))
+    y_comps = _get_range(kwargs["y"], len(values[0, :]))
 
-    if len(xComps) > 1 and len(xComps) != len(yComps):
-      click.echo(click.style("ERROR 'val2coord': Length of the x-components ({:d}) is greater than 1 and not equal to the y-components ({:d}).".format(len(xComps), len(yComps)), fg='red'))
+    if len(x_comps) > 1 and len(x_comps) != len(y_comps):
+      click.echo(
+          click.style(f"ERROR 'val2coord': Length of the x-components ({len(x_comps):d}) is greater than 1 and not equal to the y-components ({len(y_comps):d}).",
+              fg="red")
+      )
       ctx.exit()
-    #end
+    # end
 
-    for i, yc in enumerate(yComps):
-      if len(xComps) > 1:
-        xc = xComps[i]
+    for i, yc in enumerate(y_comps):
+      if len(x_comps) > 1:
+        xc = x_comps[i]
       else:
-        xc = xComps[0]
-      #end
+        xc = x_comps[0]
+      # end
 
       x = values[..., xc]
       y = values[..., yc]
 
-      if kwargs['periodic']:
+      if kwargs["periodic"]:
         x = np.append(x, np.atleast_1d(x[0]), axis=0)
         y = np.append(y, np.atleast_1d(y[0]), axis=0)
-      #end
+      # end
 
-      y = y[..., np.newaxis] # Adding the required component index
+      y = y[..., np.newaxis]  # Adding the required component index
 
-      out = GData(tag=outTag,
-                  label=kwargs['label'],
-                  comp_grid=ctx.obj['compgrid'],
-                  ctx=dat.ctx)
+      out = GData(tag=out_tag, label=kwargs["label"],
+          comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
       out.push([x], y)
-      out._color = 'C0'
+      out.color = "C0"
       data.add(out)
-    #end
+    # end
     dat.deactivate()
-  #end
-  verb_print(ctx, 'Finishing val2coord')
-#end
+  # end
+  verb_print(ctx, "Finishing val2coord")
