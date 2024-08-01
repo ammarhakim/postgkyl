@@ -26,7 +26,7 @@ def info(ctx, **kwargs):
       bold = False
     # end
     click.echo(
-        click.style(f"{dat.get_label():s}{" " if dat.get_label() else "":s}({dat.get_tag():s}#{i:d})",
+        click.style(f"{dat.get_label():s}{' ' if dat.get_label() else '':s}({dat.get_tag():s}#{i:d})",
             fg=color, bold=bold)
     )
     if not kwargs["compact"]:

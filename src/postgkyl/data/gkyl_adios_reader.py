@@ -178,7 +178,7 @@ class GkylAdiosReader(object):
       if self.click_mode:
         var_name = self.var_name
         while True:
-          var_name = click.prompt(f"Variable name '{var_name:s}' is not available, please select from the available ones: {self.ctx["var_names"]:s}")
+          var_name = click.prompt(f"Variable name '{var_name:s}' is not available, please select from the available ones: {self.ctx['var_names']:s}")
           if var_name in fh.available_variables():
             self.var_name = var_name
             self.ctx.pop("var_names", None)
@@ -187,7 +187,7 @@ class GkylAdiosReader(object):
         # end
       else:
         raise ValueError(
-            f"Could not find the variable '{var_name:s}'; available variables are: {self.ctx["var_names"]:s}"
+            f"Could not find the variable '{var_name:s}'; available variables are: {self.ctx['var_names']:s}"
         )
       # end
     # end

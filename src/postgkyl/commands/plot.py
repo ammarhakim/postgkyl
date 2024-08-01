@@ -219,7 +219,7 @@ def plot(ctx, **kwargs):
     # end
 
     if kwargs["saveframes"]:
-      file_name = f"{kwargs["saveframes"]:s}_{i:d}.png"
+      file_name = f"{kwargs['saveframes']:s}_{i:d}.png"
       plt.savefig(file_name, dpi=kwargs["dpi"])
       kwargs["show"] = False
     # end
