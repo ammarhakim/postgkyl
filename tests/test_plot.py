@@ -34,7 +34,11 @@ class TestPlot:
     data = pg.GData(f"{self.dir_path:s}/twostream-field-energy.gkyl")
     img = pg.output.plot(data)
     assert isinstance(img[0], mpl.lines.Line2D)
+    mpl.pyplot.close("all")
+
+    pg.data.select(data, comp=0, overwrite=True)
+    img = pg.output.plot(data)
     x_plot, y_plot = img[0].get_xydata().T
     np.testing.assert_array_almost_equal(data.get_grid()[0], x_plot)
-    #np.testing.assert_array_almost_equal(data.get_values()[...,0], y_plot)
+    np.testing.assert_array_almost_equal(data.get_values()[...,0], y_plot)
     mpl.pyplot.close("all")

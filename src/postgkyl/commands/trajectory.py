@@ -104,7 +104,7 @@ def trajectory(ctx, **kwargs):
   kwargs["figure"] = fig
   kwargs["legend"] = False
 
-  dat = ctx.obj["data"].get_dataset(tag, 0)
+  dat = ctx.obj["data"].get_dataset(0, tag)
   num_pos = dat.get_num_cells()[0]
 
   jump = 1
