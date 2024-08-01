@@ -174,3 +174,6 @@ class DataSpace(object):
       num_sets += 1
     # end
     return num_sets
+
+  def clean(self):
+    self._dataset_dict = {}

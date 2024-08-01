@@ -3,7 +3,6 @@ import matplotlib as mpl
 import numpy as np
 import click
 
-import postgkyl as pg
 import postgkyl.commands as cmd
 from postgkyl.pgkyl import cli
 
@@ -12,7 +11,7 @@ class TestCommands:
 
   ctx = click.core.Context(cli)
   ctx.obj = {}
-  ctx.obj["in_data_strings"] = [f"{dir_path:s}shock-f-ser-p1.gkyl"]
+  ctx.obj["in_data_strings"] = [f"{dir_path:s}twostream-f-p2.gkyl"]
   ctx.obj["in_data_strings_loaded"] = 0
   ctx.obj["verbose"] = False
   ctx.obj["data"] = cmd.DataSpace()
@@ -31,4 +30,15 @@ class TestCommands:
   def test_load(self):
     self.ctx.invoke(cmd.load)
     data = self.ctx.obj['data'].get_dataset(0)
-    np.testing.assert_array_equal(data.num_cells, (8, 8))
+    np.testing.assert_array_equal(data.num_cells, (64, 32))
+    self.ctx.obj['data'].clean()
+    self.ctx.obj["in_data_strings_loaded"] = 0
+
+  def test_ev(self):
+    self.ctx.invoke(cmd.load)
+    self.ctx.invoke(cmd.ev, chain='f[0] f[0] +')
+    data = self.ctx.obj['data'].get_dataset(0)
+    values = data.get_values()
+    np.testing.assert_approx_equal(np.max(values), 3.352029)
+    self.ctx.obj['data'].clean()
+    self.ctx.obj["in_data_strings_loaded"] = 0
