@@ -19,8 +19,8 @@ def pkpm(ctx, **kwargs):
   verb_print(ctx, "Starting Gkyl PKPM")
   data = ctx.obj["data"]
 
-  gf = GData(f"{kwargs["name"],:s}-{kwargs["species"]:s}_{kwargs["idx"]:s}.gkyl")
-  gvars = GData(f"{kwargs["name"]:s}-{kwargs["species"]:s}_pkpm_vars_{kwargs["idx"]:s}.gkyl")
+  gf = GData(f"{kwargs['name'],:s}-{kwargs['species']:s}_{kwargs['idx']:s}.gkyl")
+  gvars = GData(f"{kwargs['name']:s}-{kwargs['species']:s}_pkpm_vars_{kwargs['idx']:s}.gkyl")
 
   num_dims = gf.get_num_dims()
   c_dim = num_dims - 1

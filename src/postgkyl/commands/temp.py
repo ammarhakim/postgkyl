@@ -10,7 +10,7 @@ from postgkyl.utils import verb_print
 @click.argument("factor", nargs=1, type=click.FLOAT)
 @click.pass_context
 def mult(ctx, **kwargs):
-  verb_print(ctx, f"Multiplying by {kwargs["factor"]:f}")
+  verb_print(ctx, f"Multiplying by {kwargs['factor']:f}")
   for s in ctx.obj["sets"]:
     values = ctx.obj["dataSets"][s].get_values()
     values = values * kwargs["factor"]
@@ -22,7 +22,7 @@ def mult(ctx, **kwargs):
 @click.argument("power", nargs=1, type=click.FLOAT)
 @click.pass_context
 def pow(ctx, **kwargs):
-  verb_print(ctx, f"Calculating the power of {kwargs["power"]:f}")
+  verb_print(ctx, f"Calculating the power of {kwargs['power']:f}")
   for s in ctx.obj["sets"]:
     values = ctx.obj["dataSets"][s].get_values()
     values = values ** kwargs["power"]

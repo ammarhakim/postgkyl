@@ -16,10 +16,10 @@ def _update(i, data, fig, offsets, kwargs):
     kwargs["title"] = ""
     if not kwargs["notitle"]:
       if dat.ctx["frame"] is not None:
-        kwargs["title"] = f"{kwargs["title"]:s} frame: {dat.ctx["frame"]:d} "
+        kwargs["title"] = f"{kwargs['title']:s} frame: {dat.ctx['frame']:d} "
       # end
       if dat.ctx["time"] is not None:
-        kwargs["title"] = f"{kwargs["title"]:s} time: {dat.ctx["time"]:.4e}"
+        kwargs["title"] = f"{kwargs['title']:s} time: {dat.ctx['time']:.4e}"
       # end
     # end
     if kwargs["arg"] is not None:
@@ -222,7 +222,7 @@ def animate(ctx, **kwargs):
       else:
         for i in range(int(np.nanmin((min_size, len(data_lst))))):
           _update(i, data_lst, figs[-1], offsets, kwargs)
-          plt.savefig(f"{kwargs["saveframes"]:s}_{i:d}.png", dpi=kwargs["dpi"])
+          plt.savefig(f"{kwargs['saveframes']:s}_{i:d}.png", dpi=kwargs["dpi"])
         # end
         kwargs["show"] = False  # do not show in this case
       # end
@@ -251,7 +251,7 @@ def animate(ctx, **kwargs):
     else:
       for i in range(int(np.nanmin((min_size, len(data_lst))))):
         _update(i, data_lst, figs[-1], offsets, kwargs)
-        plt.savefig(f"{kwargs["saveframes"]:s}_{i:d}.png", dpi=kwargs["dpi"])
+        plt.savefig(f"{kwargs['saveframes']:s}_{i:d}.png", dpi=kwargs["dpi"])
       # end
       kwargs["show"] = False  # do not show in this case
     # end
