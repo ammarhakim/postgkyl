@@ -332,10 +332,10 @@ class GData(object):
     output = ""
 
     if self.ctx["time"] is not None:
-      output += f"├─ Time: {self.ctx["time"]:e}\n"
+      output += f"├─ Time: {self.ctx['time']:e}\n"
     # end
     if self.ctx["frame"] is not None:
-      output += f"├─ Frame: {self.ctx["frame"]:d}\n"
+      output += f"├─ Frame: {self.ctx['frame']:d}\n"
     # end
     output += f"├─ Number of components: {num_comps:d}\n"
     output += f"├─ Number of dimensions: {num_dims:d}\n"
@@ -366,17 +366,17 @@ class GData(object):
     # end
     if self.ctx["poly_order"] and self.ctx["basis_type"]:
       output += "\n├─ DG info:\n"
-      output += f"│  ├─ Polynomial Order: {self.ctx["poly_order"]:d}\n"
+      output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
       if self.ctx["is_modal"]:
-        output += f"│  └─ Basis Type: {self.ctx["basis_type"]:s} (modal)"
+        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
       else:
-        output += f"│  └─ Basis Type: {self.ctx["basis_type"]:s}"
+        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
       # end
     # end
     if self.ctx["changeset"] and self.ctx["builddate"]:
       output += "\n├─ Created with Gkeyll:\n"
-      output += f"│  ├─ Changeset: {self.ctx["changeset"]:s}\n"
-      output += f"│  └─ Build Date: {self.ctx["builddate"]:s}"
+      output += f"│  ├─ Changeset: {self.ctx['changeset']:s}\n"
+      output += f"│  └─ Build Date: {self.ctx['builddate']:s}"
     # end
     for key, val in self.ctx.items():
       if key not in ["time", "frame", "changeset", "builddate", "basis_type",
@@ -422,7 +422,7 @@ class GData(object):
     if not out_name:
       if self._file_name is not None:
         fn = self._file_name
-        out_name = f"{fn.split(".", maxsplit=1)[0].strip("_")}_mod.{extension}"
+        out_name = f"{fn.split('.', maxsplit=1)[0].strip('_')}_mod.{extension}"
       else:
         out_name = f"gdata.{extension}"
       # end

@@ -50,7 +50,7 @@ class PgkylCommandGroup(click.Group):
     if matches and len(matches) == 1:
       return click.Group.get_command(self, ctx, matches[0])
     elif matches:
-      ctx.fail(f"Too many matches for '{cmd_name}': {", ".join(sorted(matches))}")
+      ctx.fail(f"Too many matches for '{cmd_name}': {', '.join(sorted(matches))}")
     # end
 
     # cmd_name is a data set
