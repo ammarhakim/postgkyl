@@ -1,3 +1,4 @@
+"""Postgkyl module for testing data loading."""
 import os
 import numpy as np
 
@@ -5,9 +6,10 @@ import postgkyl as pg
 
 
 class TestGkyl:
+  """Test Gkeyll's internal binary output format."""
   dir_path = f"{os.path.dirname(__file__)}/test_data"
 
-  def test_gkyl_type1(self):  # Frame without distributed memore
+  def test_gkyl_type1(self):  # Frame without distributed memory
     data = pg.GData(f"{self.dir_path:s}/shock-f-ser-p1.gkyl")
     np.testing.assert_array_equal(data.num_cells, (8, 8))
 
@@ -37,11 +39,16 @@ class TestGkyl:
     np.testing.assert_approx_equal(data.bounds[1][2], 1.206345e-16)
 
 class TestAdios:
+  """Test Gkeyll's ADIOS2 output format."""
   dir_path =  f"{os.path.dirname(__file__)}/test_data"
 
   def test_adios_frame(self):
-    data = pg.GData(f"{self.dir_path:s}/twostream-f-p2.bp")
+    data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp")
     np.testing.assert_array_equal(data.num_cells, (64, 32))
+
+  def test_adios_frame_partial(self):
+    data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp", z0=32, comp=0)
+    np.testing.assert_array_equal(data.values.shape, (1, 32, 1))
 
   def test_adios_dynvector(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-field-energy.bp")

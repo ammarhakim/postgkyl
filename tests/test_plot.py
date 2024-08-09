@@ -1,3 +1,4 @@
+"""Postgkyl module for testing the plotting function"""
 import os
 import matplotlib as mpl
 import numpy as np
@@ -7,8 +8,9 @@ import postgkyl as pg
 class TestPlot:
   """Test Postgkyl plot function.
 
-  Currently, it doesn't properly test if the plots look correct, only if they are
-  created at all (which is useful as well).
+  Currently, this tests if plots look OK only to some extend (by checking plotted
+  values) and mostly tests if plots are created at all. Testing images themselves is
+  complicated and differs based on system and/or backend used.
   """
   dir_path = f"{os.path.dirname(__file__)}/test_data"
 

@@ -1,3 +1,4 @@
+"""Postgkyl module for testing DG interpolation"""
 import os
 import numpy as np
 
@@ -5,6 +6,7 @@ import postgkyl as pg
 
 
 class TestGkylInterpolate:
+  """Test Postgkyl interpolate functions."""
   dir_path =  f"{os.path.dirname(__file__)}/test_data"
 
   def test_ser_p1(self):
