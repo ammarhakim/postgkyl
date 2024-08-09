@@ -26,8 +26,7 @@ jobs:
         conda-channels: anaconda, conda-forge
     - name: Install dependencies
       run: |
-        conda update conda
-        conda env update --file environment.yml --name base
+        conda env update --file environment.yml --name __setup_conda
     - name: Install postgkyl
       run: |
         pip install -e .
