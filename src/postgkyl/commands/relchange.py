@@ -19,7 +19,7 @@ def relchange(ctx, **kwargs):
 
   data = ctx.obj["data"]
   for tag in data.tag_iterator(kwargs["use"]):
-    reference = data.get_dataset(tag, kwargs["index"])
+    reference = data.get_dataset(kwargs["index"], tag)
     for dat in data.iterator(tag):
       if kwargs["tag"]:
         out = GData(tag=kwargs["tag"], compgrid=ctx.obj["compgrid"], ctx=dat.ctx)

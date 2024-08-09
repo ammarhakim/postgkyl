@@ -25,7 +25,7 @@ def _update(i, data, fig, offsets, kwargs):
     if kwargs["arg"] is not None:
       im = postgkyl.output.plot(dat, kwargs["arg"], **kwargs)
     else:
-      im = postgkyl.outputplot(dat, **kwargs)
+      im = postgkyl.output.plot(dat, **kwargs)
     # end
   # end
   return im
