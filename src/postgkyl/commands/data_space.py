@@ -164,7 +164,7 @@ class DataSpace(object):
     # end
 
   # ---- Utilities ----
-  def get_dataset(self, tag: str, idx: int) -> GData:
+  def get_dataset(self, idx: int, tag: str = "default") -> GData:
     return self._dataset_dict[tag][idx]
 
 
@@ -174,3 +174,6 @@ class DataSpace(object):
       num_sets += 1
     # end
     return num_sets
+
+  def clean(self):
+    self._dataset_dict = {}
