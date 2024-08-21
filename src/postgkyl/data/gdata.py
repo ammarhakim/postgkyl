@@ -117,6 +117,11 @@ class GData(object):
     self._mapc2p_vel_name = mapc2p_vel_name
     self.color = None
 
+    self._neighbors = {}
+    for dim in [0,1]:
+      self._neighbors[(dim, True)] = None
+      self._neighbors[(dim, False)] = None
+
     self._status = True
 
     zs = (z0, z1, z2, z3, z4, z5)
@@ -308,6 +313,17 @@ class GData(object):
     self.set_values(values)
     self.set_grid(grid)
     return self
+
+  # ---- Neighboring Blocks ----
+  def set_neighbors(self, dataspace):
+    num_dims = self.get_num_dims()
+    for data in dataspace:
+      for dim in range(num_dims):
+        if self.get_grid()[dim][0] == data.get_grid()[dim][-1] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
+          self._neighbors[(dim, False)] = data
+        elif self.get_grid()[dim][-1] == data.get_grid()[dim][0] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
+          self._neighbors[(dim, True)] = data
+  
 
   # ---- Info -----
   def info(self) -> str:
