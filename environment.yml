@@ -11,5 +11,5 @@ dependencies:
   - pytables>=3.9.2
   - pytest>=7.4.0
   - python>=3.11
-  - scipy>=1.11.4
+  - scipy>=1.10.1
   - sympy>=1.12
