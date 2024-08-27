@@ -24,7 +24,7 @@ license = {file = "LICENSE"}
 maintainers = [
   {name = "Petr Cagas", email = "p.cagas@hzdr.de"}
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["plasma", "Gkeyll"]
 classifiers = [
   # 3 - Alpha
