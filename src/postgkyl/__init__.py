@@ -5,7 +5,7 @@ Postgkyl is both Python library and command-line tool designed to provide unifie
 to Gkeyll data together with a broad variety of analytical and visualization tools.
 """
 
-__version__ = "1.7.4.dev1"
+__version__ = "1.7.5"
 
 # import submodules
 from postgkyl import data
