@@ -124,13 +124,17 @@ class GkylReader(object):
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""
-    magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
-    if np.array_equal(magic, [103, 107, 121, 108, 48]):
-      self.version = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=5)[0]
-      return True
-    else:
+    try:
+      magic = np.fromfile(self.file_name, dtype=np.dtype("b"), count=5, offset=0)
+      if np.array_equal(magic, [103, 107, 121, 108, 48]):
+        self.version = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=5)[0]
+        return True
+      else:
+        return False
+      # end
+    except:
       return False
-    # end
+    #end
 
   # Starting with version 1, .gkyl files contatin a header; version 0
   # files only include the real-type info
