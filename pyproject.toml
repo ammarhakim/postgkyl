@@ -1,9 +1,62 @@
 [build-system]
-requires = ["wheel", "setuptools>=42", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "src/postgkyl/version.py"
+[project]
+name = "postgkyl"
+dynamic = ["version"]
+authors = [
+  {name = "Ammar Hakim", email = "a.hakim@pppl.gov"},
+  {name = "Petr Cagas", email = "p.cagas@hzdr.de"}
+]
+description = "Python library and command-line tool for postprocessing (not only) Gkeyll data"
+dependencies = [
+  "click>=8.1.7",
+  "matplotlib>=3.7.0",
+  "msgpack>=1.0.3",
+  "numpy>=1.24.4,<2",
+  "scipy>=1.10.1",
+  "sympy>=1.12",
+  "tables>=3.8.0",
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+maintainers = [
+  {name = "Petr Cagas", email = "p.cagas@hzdr.de"}
+]
+requires-python = ">=3.10"
+keywords = ["plasma", "Gkeyll"]
+classifiers = [
+  # 3 - Alpha
+  # 4 - Beta
+  # 5 - Production/Stable
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
 
-[tool.pyink]
-pyink-indentation = 2
+[project.optional-dependencies]
+adios = ["adios2>=2.9.0,<2.10.0"]
+test = ["pytest>=7.4.0"]
+
+[project.urls]
+Documentation = "https://gkeyll.readthedocs.io/"
+Repository = "https://github.com/ammarhakim/postgkyl"
+"Bug Tracker" = "https://github.com/ammarhakim/postgkyl/issues"
+
+[project.scripts]
+pgkyl = "postgkyl.pgkyl:cli"
+
+[tool.setuptools.dynamic]
+version = {attr = "postgkyl.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src/"]

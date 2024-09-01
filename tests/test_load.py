@@ -46,6 +46,10 @@ class TestAdios:
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp")
     np.testing.assert_array_equal(data.num_cells, (64, 32))
 
+  def test_adios_frame(self):
+    data = pg.GData(f"{self.dir_path:s}/twostream-f-p1.bp")
+    np.testing.assert_array_equal(data.num_cells, (64, 32))
+
   def test_adios_frame_partial(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp", z0=32, comp=0)
     np.testing.assert_array_equal(data.values.shape, (1, 32, 1))
