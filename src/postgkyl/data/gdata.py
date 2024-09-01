@@ -118,9 +118,6 @@ class GData(object):
     self.color = None
 
     self._neighbors = {}
-    for dim in [0,1]:
-      self._neighbors[(dim, True)] = None
-      self._neighbors[(dim, False)] = None
 
     self._status = True
 
@@ -316,13 +313,18 @@ class GData(object):
 
   # ---- Neighboring Blocks ----
   def set_neighbors(self, dataspace):
+    data_list = list(dataspace)
     num_dims = self.get_num_dims()
-    for data in dataspace:
-      for dim in range(num_dims):
+    for dim in range(num_dims):
+      self._neighbors[dim] = [None, None]
+      for data in data_list:
         if self.get_grid()[dim][0] == data.get_grid()[dim][-1] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
-          self._neighbors[(dim, False)] = data
+          self._neighbors[dim] = [data, self._neighbors[dim][1]]
         elif self.get_grid()[dim][-1] == data.get_grid()[dim][0] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
-          self._neighbors[(dim, True)] = data
+          self._neighbors[dim] = [self._neighbors[dim][0], data]
+        # end
+      # end
+    # end
   
 
   # ---- Info -----

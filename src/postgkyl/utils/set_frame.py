@@ -1,9 +1,26 @@
 import numpy as np
+import click
 
 #sets frame in block ctx attribute using block file name
-def set_frame(ctx):
+def set_frame(ctx: click.core.Context) -> list:
+  """Utility function which sets data ctx frames in multiblock data situations
+
+  This function uses gkyl's default file name output in multiblock cases to
+  identify the respective frame for each loaded in data object. It assigns the correct
+  frame to each data object's ctx frame attribute. It then returns a list with all the
+  identified frames in ascending order.
+
+  The motivation for this function is to allow for easy organization of multiblock data
+  objects in plotting and animation.
+
+  Args:
+    ctx: click.core.context | Object
+      Context from loaded data / previous commands
+  Returns:
+    sorted_frame_list: list
+  """
       
-  data = ctx.obj['data']
+  data = ctx.obj["data"]
 
   #load in file names
   files = [dat._file_name for dat in data.iterator()]
@@ -24,15 +41,15 @@ def set_frame(ctx):
   #isolate frame number in file name and append it to big frame_list
   frame_list = []
   for f in files:
-    f = f.split('.gkyl')[0]
-    frame = f[num_frame_idx:].split('_')[0]
+    f = f.split(".gkyl")[0]
+    frame = f[num_frame_idx:].split("_")[0]
     frame_list.append(int(frame))
   #end
     
   #data objects in iterator have same index as corresponding frame in frame_list
   #this loop sets frame ctx attribute
   for i, dat in data.iterator(enum=True):
-    dat.ctx['frame'] = frame_list[i]
+    dat.ctx["frame"] = frame_list[i]
   #end
 
   #return sorted frame list for use in animate function

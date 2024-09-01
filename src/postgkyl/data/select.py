@@ -44,7 +44,9 @@ def select(data: GData, comp: int | str | None = None,
       dat_range = bounds[1][d] - bounds[0][d]
       if '.' in z:
         if bounds[1][d] + 0.25 * dat_range < float(z) or bounds[0][d] - 0.25 * dat_range > float(z):
-          raise TypeError('The coordinate select is outside of the data boundaries')
+          raise TypeError("The coordinate select is outside of the data boundaries")
+        #end
+      #end
       if uniform_grid:
         len_grid = grid[d].shape[0]
       else:

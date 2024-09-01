@@ -19,9 +19,9 @@ import postgkyl.data.select
 @click.option("--use", "-u", help="Specify a 'tag' to apply to.")
 @click.option("--tag", "-t", help="Optional tag for the resulting array.")
 @click.option("--label", "-l", help="Custom label for the result")
-@click.option("--multiblock", "-mb", is_flag=True,
+@click.option("--multiblock", "-m", is_flag=True,
               help="Necessary parameter for multiblock lineouts in z0 or z1 dims")
-@click.option("--multiframe", "-mf", is_flag=True,
+@click.option("--multiframe", "-f", is_flag=True,
               help="Specify if performing select on multiple multiblock frames")
 @click.pass_context
 def select(ctx, **kwargs):
@@ -35,81 +35,94 @@ def select(ctx, **kwargs):
   data = ctx.obj["data"]
 
   #multiblock case
-  if kwargs['multiblock']:
+  if kwargs["multiblock"]:
     
     #set ctx frames
     frame_list = set_frame(ctx)
     #creates list of lists with blocks per frame if multiframe parameter
     #if not, then only one frame with all blocks
-    if kwargs['multiframe']:
-      dataList = []
+    if kwargs["multiframe"]:
+      data_list = []
       for frame in frame_list:
-        frameDataList = [dat for dat in data.iterator(kwargs['use']) if dat.ctx['frame'] == frame]
-        dataList.append(frameDataList)
+        frame_data_list = [dat for dat in data.iterator(kwargs["use"]) if dat.ctx["frame"] == frame]
+        data_list.append(frame_data_list)
       # end
     else:
-      dataList = [list(data.iterator(kwargs['use']))]
+      data_list = [list(data.iterator(kwargs["use"]))]
     # end
 
 
-    for i, frame in enumerate(dataList):
+    for i, frame in enumerate(data_list):
     
       #establish lower bounds for x and y axis
       botlef_point = []
       for dim in [0,1]:
         botlef_point.append(min([dat.get_bounds()[0][dim] for dat in frame]))
+      # end
       #find starting block for lineout coordinate
-      if kwargs['z0'] is not None:
+      if kwargs["z0"] is not None:
         for dat in frame:
-          if dat.get_bounds()[0][0] <= float(kwargs['z0']) <= dat.get_bounds()[1][0] and dat.get_bounds()[0][1] == botlef_point[1]:
+          if dat.get_bounds()[0][0] <= float(kwargs["z0"]) <= dat.get_bounds()[1][0] and dat.get_bounds()[0][1] == botlef_point[1]:
             block = dat
-      if kwargs['z1'] is not None:
+          # end
+        # end
+      # end
+      if kwargs["z1"] is not None:
         for dat in frame:
-          if dat.get_bounds()[0][1] <= float(kwargs['z1']) <= dat.get_bounds()[1][1] and dat.get_bounds()[0][0] == botlef_point[0]:
+          if dat.get_bounds()[0][1] <= float(kwargs["z1"]) <= dat.get_bounds()[1][1] and dat.get_bounds()[0][0] == botlef_point[0]:
             block = dat
+          # end
+        # end
+      # end
       #find neighboring blocks of starting block
       block.set_neighbors(frame)
 
       value_list = []
 
       #creates new grid and value list containing data from blocks which contain specified z0 coordinate
-      if kwargs['z0'] is not None:
+      if kwargs["z0"] is not None:
         grid, values = postgkyl.data.select(block,
-                                            z0=kwargs['z0'],
-                                            comp=kwargs['comp'])
+                                            z0=kwargs["z0"],
+                                            comp=kwargs["comp"])
         grid_list = grid
         for val in values[0]:
           value_list.append(val)
-        while block._neighbors[(1, True)] is not None:
-          block = block._neighbors[(1,True)]
-          block.set_neighbors(data.iterator(kwargs['use']))
+        # end
+        while block._neighbors[1][1] is not None:
+          block = block._neighbors[1][1]
+          block.set_neighbors(data.iterator(kwargs["use"]))
           grid, values = postgkyl.data.select(block,
-                                              z0=kwargs['z0'],
-                                              comp=kwargs['comp'])
+                                              z0=kwargs["z0"],
+                                              comp=kwargs["comp"])
           grid_list[1] = np.append(grid_list[1], grid[1])
           for val in values[0]:
             value_list.append(val)
+          # end
+        # end
         grid_list[1] = np.unique(grid_list[1])
         value_list = np.array([value_list])
+      # end
 
 
       #same but for z1 coordinate
-      if kwargs['z1'] is not None:
+      if kwargs["z1"] is not None:
         grid, values = postgkyl.data.select(block,
-                                              z1=kwargs['z1'],
-                                              comp=kwargs['comp'])
+                                              z1=kwargs["z1"],
+                                              comp=kwargs["comp"])
         grid_list = grid
         for val in values:
           value_list.append(val)
-        while block._neighbors[(0, True)] is not None:
-          block = block._neighbors[(0,True)]
-          block.set_neighbors(data.iterator(kwargs['use']))
+        # end
+        while block._neighbors[0][1] is not None:
+          block = block._neighbors[0][1]
+          block.set_neighbors(data.iterator(kwargs["use"]))
           grid, values = postgkyl.data.select(block,
-                                              z1=kwargs['z1'],
-                                              comp=kwargs['comp'])
+                                              z1=kwargs["z1"],
+                                              comp=kwargs["comp"])
           grid_list[0] = np.append(grid_list[0], grid[0])
           for val in values:
             value_list.append(val)
+          # end
         grid_list[0] = np.unique(grid_list[0])
         value_list = np.array(value_list)
       # end
@@ -117,14 +130,16 @@ def select(ctx, **kwargs):
       #loop through frame list and deactivate each
       for dat in frame:
         dat.deactivate()
+      # end
 
       #create new gdata instance and push new stitched grid and values
-      out = GData(tag=kwargs['tag'],
-                  label=kwargs['label'],
-                  comp_grid=ctx.obj['compgrid'])
-      out.ctx['frame'] = i
+      out = GData(tag=kwargs["tag"],
+                  label=kwargs["label"],
+                  comp_grid=ctx.obj["compgrid"])
+      out.ctx["frame"] = i
       out.push(grid_list, value_list)
       data.add(out)
+    # end
 
 
 

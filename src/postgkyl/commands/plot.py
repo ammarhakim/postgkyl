@@ -94,7 +94,7 @@ import postgkyl.output.plot
 @click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
 @click.option("--cmap", type=click.STRING, default=None,
     help="Override default colormap with a valid matplotlib cmap.")
-@click.option("--multiblock", "-mb", is_flag=True, default=False)
+@click.option("-m", "--multiblock", is_flag=True, default=False)
 @click.pass_context
 def plot(ctx, **kwargs):
   """Plot active datasets, optionally displaying the plot and/or saving it to PNG files.
@@ -161,11 +161,12 @@ def plot(ctx, **kwargs):
   # end
 
   #automatically sets correct scale for multiblock cases
-  if kwargs['multiblock'] and kwargs['cutoffglobalrange'] is None:
-    kwargs['globalrange'] = True
+  if kwargs["multiblock"] and kwargs["cutoffglobalrange"] is None:
+    kwargs["globalrange"] = True
+  # end
   
 
-  if kwargs["globalrange"] or kwargs['cutoffglobalrange']:
+  if kwargs["globalrange"] or kwargs["cutoffglobalrange"]:
     vmin = float("inf")
     vmax = float("-inf")
     v_extrema = np.array([])
@@ -182,8 +183,8 @@ def plot(ctx, **kwargs):
     # end
 
     v_extrema = np.sort(v_extrema)
-    if kwargs['cutoffglobalrange']:
-      boundary = 100 * (1 - kwargs['cutoffglobalrange']) / 2
+    if kwargs["cutoffglobalrange"]:
+      boundary = 100 * (1 - kwargs["cutoffglobalrange"]) / 2
       vmax = np.percentile(v_extrema, 100 - boundary)
       vmin = np.percentile(v_extrema, boundary)
     # end
@@ -197,8 +198,8 @@ def plot(ctx, **kwargs):
   # end
 
   #Prevents scale errors for multiblock contour plots
-  if kwargs['multiblock'] and kwargs['contour'] and kwargs['clevels'] is None:
-    kwargs['clevels'] = f"{kwargs['zmin']}:{kwargs['zmax']}:10"
+  if kwargs["multiblock"] and kwargs["contour"] and kwargs["clevels"] is None:
+    kwargs["clevels"] = f"{kwargs['zmin']}:{kwargs['zmax']}:10"
   # end
 
   file_name = ""
@@ -209,8 +210,9 @@ def plot(ctx, **kwargs):
       kwargs["figure"] = int(i)
     # end
     #puts all blocks on the same figure
-    if kwargs['multiblock']:
-      kwargs['figure'] = 0
+    if kwargs["multiblock"]:
+      kwargs["figure"] = 0
+    # end
     if ctx.obj["data"].get_num_datasets() > 1 or kwargs["forcelegend"]:
       label = dat.get_label()
     else:
