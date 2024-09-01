@@ -2,4 +2,4 @@
 build/
 dist/
 postgkyl.egg-info/
-src/postgkyl/version.py
+src/postgkyl/version.py.DS_Store
