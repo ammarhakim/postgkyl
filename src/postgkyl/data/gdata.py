@@ -117,7 +117,7 @@ class GData(object):
     self._mapc2p_vel_name = mapc2p_vel_name
     self.color = None
 
-    self._neighbors = {}
+    self._neighbors = []
 
     self._status = True
 
@@ -316,12 +316,12 @@ class GData(object):
     data_list = list(dataspace)
     num_dims = self.get_num_dims()
     for dim in range(num_dims):
-      self._neighbors[dim] = [None, None]
+      self._neighbors.append([None, None])
       for data in data_list:
-        if self.get_grid()[dim][0] == data.get_grid()[dim][-1] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
-          self._neighbors[dim] = [data, self._neighbors[dim][1]]
-        elif self.get_grid()[dim][-1] == data.get_grid()[dim][0] and self.get_grid()[not dim][0] == data.get_grid()[not dim][0]:
-          self._neighbors[dim] = [self._neighbors[dim][0], data]
+        if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+          self._neighbors[dim][0] = data
+        elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+          self._neighbors[dim][1] = data
         # end
       # end
     # end
