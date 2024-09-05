@@ -318,10 +318,22 @@ class GData(object):
     for dim in range(num_dims):
       self._neighbors.append([None, None])
       for data in data_list:
-        if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
-          self._neighbors[dim][0] = data
-        elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
-          self._neighbors[dim][1] = data
+        if num_dims == 1:
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]):
+            self._neighbors[dim][1] = data
+        elif num_dims == 2:
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+            self._neighbors[dim][1] = data
+        elif num_dims == 3:
+          rem_dims = list(range(num_dims)).remove(dim)
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[rem_dims[0]][0], data.get_grid()[rem_dims[0]][0]) and np.isclose(self.get_grid()[rem_dims[1]][0], data.get_grid()[rem_dims[1]][0]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[rem_dims[0]][0], data.get_grid()[rem_dims[0]][0]) and np.isclose(self.get_grid()[rem_dims[1]][0], data.get_grid()[rem_dims[1]][0]):
+            self._neighbors[dim][1] = data
         # end
       # end
     # end

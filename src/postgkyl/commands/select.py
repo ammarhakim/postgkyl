@@ -142,9 +142,6 @@ def select(ctx, **kwargs):
     # end
 
 
-
-
-
   else:
     for dat in data.iterator(kwargs["use"]):
       if kwargs["tag"]:
