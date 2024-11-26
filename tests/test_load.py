@@ -1,6 +1,8 @@
 """Postgkyl module for testing data loading."""
-import os
+import importlib
 import numpy as np
+import os
+import pytest
 
 import postgkyl as pg
 
@@ -42,18 +44,25 @@ class TestAdios:
   """Test Gkeyll's ADIOS2 output format."""
   dir_path =  f"{os.path.dirname(__file__)}/test_data"
 
+  adios_loader = importlib.util.find_spec('adios2')
+  adios_missing = adios_loader is None
+
+  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
   def test_adios_frame(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp")
     np.testing.assert_array_equal(data.num_cells, (64, 32))
 
+  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
   def test_adios_frame(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p1.bp")
     np.testing.assert_array_equal(data.num_cells, (64, 32))
 
+  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
   def test_adios_frame_partial(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp", z0=32, comp=0)
     np.testing.assert_array_equal(data.values.shape, (1, 32, 1))
 
+  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
   def test_adios_dynvector(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-field-energy.bp")
     np.testing.assert_array_equal(data.num_cells, (15714,))
