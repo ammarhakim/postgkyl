@@ -8,6 +8,8 @@
 ## Contributors (ultra alphabetically)
 
 - Manaure Francisquez (PPPL)
+- Luca Georgescu
+- Jonathan Gorard (PPPL)
 - James Juno (PPPL)
 - Noah Mandel (PPPL)
 - Maxwell Rosen (PPPL)
