@@ -1,8 +1,11 @@
 """Postgkyl module for testing click commands."""
-import os
+import click
+import importlib
 import matplotlib.pyplot as plt
 import numpy as np
-import click
+import os
+import pytest
+import subprocess
 
 import postgkyl.commands as cmd
 from postgkyl.pgkyl import cli
@@ -18,7 +21,7 @@ class TestCommands:
 
   ctx = click.core.Context(cli)
   ctx.obj = {}
-  ctx.obj["in_data_strings"] = [f"{dir_path:s}/twostream-f-p2_0.bp", f"{dir_path:s}/twostream-f-p2_1.bp", f"{dir_path:s}/shock-f-ser-p1.gkyl"]
+  ctx.obj["in_data_strings"] = [f"{dir_path:s}/twostream-f-p2.gkyl", f"{dir_path:s}/twostream-f-p2.gkyl", f"{dir_path:s}/twostream-f-p2_0.bp"]
   ctx.obj["in_data_strings_loaded"] = 0
   ctx.obj["verbose"] = False
   ctx.obj["data"] = cmd.DataSpace()
@@ -34,6 +37,19 @@ class TestCommands:
 
   ctx.obj["rcParams"] = {}
 
+  # Check if ADIOS is isntalled
+  adios_loader = importlib.util.find_spec('adios2')
+  adios_missing = adios_loader is None
+
+  # Check if ffmpeg is installed
+  ffmpeg_missing = True
+  try:
+    subprocess.run("ffmpeg")
+    ffmpeg_missing = False
+  except FileNotFoundError:
+    ffmpeg_missing = True
+  # end
+
   def test_load(self):
     self.ctx.invoke(cmd.load)
     data = self.ctx.obj['data'].get_dataset(0)
@@ -42,7 +58,7 @@ class TestCommands:
     self.ctx.obj["in_data_strings_loaded"] = 0
 
 
-  def test_ev(self):
+  def test_ev_gkyl(self):
     # Check baseline addition
     self.ctx.invoke(cmd.load)
     self.ctx.invoke(cmd.ev, chain='f[0] f[0] +')
@@ -62,11 +78,10 @@ class TestCommands:
     self.ctx.obj["in_data_strings_loaded"] = 0
 
     # Check tags
-    self.ctx.invoke(cmd.load, tag='ts')
-    self.ctx.invoke(cmd.load, tag='ts')
-    self.ctx.invoke(cmd.load, tag='shock')
-    self.ctx.invoke(cmd.ev, chain='ts ts +')
-    data = self.ctx.obj['data'].get_dataset(0, tag='ts')
+    self.ctx.invoke(cmd.load, tag='ts0')
+    self.ctx.invoke(cmd.load, tag='ts1')
+    self.ctx.invoke(cmd.ev, chain='ts0 ts0 +')
+    data = self.ctx.obj['data'].get_dataset(0, tag='ts0')
     values = data.get_values()
     np.testing.assert_approx_equal(np.max(values), 3.3520293)
     self.ctx.obj['data'].clean()
@@ -75,20 +90,23 @@ class TestCommands:
     # Check ev functionality on multiple dataset together
     self.ctx.invoke(cmd.load)
     self.ctx.invoke(cmd.load)
-    self.ctx.invoke(cmd.load)
     self.ctx.invoke(cmd.ev, chain='f[:] 2 *')
     data0 = self.ctx.obj['data'].get_dataset(0)
     values0 = data0.get_values()
-    data1 = self.ctx.obj['data'].get_dataset(2)
-    values1 = data1.get_values()
     np.testing.assert_approx_equal(np.max(values0), 3.3520293)
-    np.testing.assert_approx_equal(np.max(values1), 4.0)
+    data1 = self.ctx.obj['data'].get_dataset(1)
+    values1 = data1.get_values()
+    np.testing.assert_approx_equal(np.max(values1), 3.3520293)
     self.ctx.obj['data'].clean()
     self.ctx.obj["in_data_strings_loaded"] = 0
 
+
+  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
+  def test_ev_adios(self):
     # Check metadata
     self.ctx.invoke(cmd.load)
-    self.ctx.invoke(cmd.ev, chain='f f.charge *')
+    self.ctx.invoke(cmd.load)
+    self.ctx.invoke(cmd.ev, chain='f[1] f[1].charge *')
     data = self.ctx.obj['data'].get_dataset(0)
     values = data.get_values()
     np.testing.assert_approx_equal(np.min(values), -1.676014)
@@ -126,6 +144,7 @@ class TestCommands:
     plt.close("all")
 
 
+  @pytest.mark.skipif(ffmpeg_missing, reason="ffmpeg is not installed")
   def test_animate_save(self, tmp_path):
     self.ctx.invoke(cmd.load)
     self.ctx.invoke(cmd.load)
