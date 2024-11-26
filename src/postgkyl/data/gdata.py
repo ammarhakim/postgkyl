@@ -117,6 +117,8 @@ class GData(object):
     self._mapc2p_vel_name = mapc2p_vel_name
     self.color = None
 
+    self._neighbors = []
+
     self._status = True
 
     zs = (z0, z1, z2, z3, z4, z5)
@@ -308,6 +310,34 @@ class GData(object):
     self.set_values(values)
     self.set_grid(grid)
     return self
+
+  # ---- Neighboring Blocks ----
+  def set_neighbors(self, dataspace):
+    data_list = list(dataspace)
+    num_dims = self.get_num_dims()
+    for dim in range(num_dims):
+      self._neighbors.append([None, None])
+      for data in data_list:
+        if num_dims == 1:
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]):
+            self._neighbors[dim][1] = data
+        elif num_dims == 2:
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][-1], data.get_grid()[dim][0]) and np.isclose(self.get_grid()[not dim][0], data.get_grid()[not dim][0]):
+            self._neighbors[dim][1] = data
+        elif num_dims == 3:
+          rem_dims = list(range(num_dims)).remove(dim)
+          if np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[rem_dims[0]][0], data.get_grid()[rem_dims[0]][0]) and np.isclose(self.get_grid()[rem_dims[1]][0], data.get_grid()[rem_dims[1]][0]):
+            self._neighbors[dim][0] = data
+          elif np.isclose(self.get_grid()[dim][0], data.get_grid()[dim][-1]) and np.isclose(self.get_grid()[rem_dims[0]][0], data.get_grid()[rem_dims[0]][0]) and np.isclose(self.get_grid()[rem_dims[1]][0], data.get_grid()[rem_dims[1]][0]):
+            self._neighbors[dim][1] = data
+        # end
+      # end
+    # end
+  
 
   # ---- Info -----
   def info(self) -> str:

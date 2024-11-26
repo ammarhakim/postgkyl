@@ -68,6 +68,8 @@ import postgkyl.output.plot
     help="Set limits for the z-coordinate (lower,upper).")
 @click.option("--relax", is_flag=True, help="Relax the stringent x axis limits for 1D plots.")
 @click.option("--globalrange", "-r", is_flag=True, help="Make uniform extends across datasets.")
+@click.option("--cutoffglobalrange", "-cogr", default=None, type=click.FLOAT,
+              help="Set custom limit for uniform across datasets")
 @click.option("--legend/--no-legend", default=True, help="Show legend.")
 @click.option("--force-legend", "forcelegend", is_flag=True,
     help="Force legend even when plotting a single dataset.")
@@ -92,6 +94,7 @@ import postgkyl.output.plot
 @click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
 @click.option("--cmap", type=click.STRING, default=None,
     help="Override default colormap with a valid matplotlib cmap.")
+@click.option("-m", "--multiblock", is_flag=True, default=False)
 @click.pass_context
 def plot(ctx, **kwargs):
   """Plot active datasets, optionally displaying the plot and/or saving it to PNG files.
@@ -157,9 +160,16 @@ def plot(ctx, **kwargs):
     dataset_fignum = True
   # end
 
-  if kwargs["globalrange"]:
+  #automatically sets correct scale for multiblock cases
+  if kwargs["multiblock"] and kwargs["cutoffglobalrange"] is None:
+    kwargs["globalrange"] = True
+  # end
+  
+
+  if kwargs["globalrange"] or kwargs["cutoffglobalrange"]:
     vmin = float("inf")
     vmax = float("-inf")
+    v_extrema = np.array([])
     for dat in ctx.obj["data"].iterator(kwargs["use"]):
       val = dat.get_values() * kwargs["zscale"]
       if vmin > np.nanmin(val):
@@ -168,6 +178,15 @@ def plot(ctx, **kwargs):
       if vmax < np.nanmax(val):
         vmax = np.nanmax(val)
       # end
+      v_extrema = np.append(v_extrema, np.nanmin(val))
+      v_extrema = np.append(v_extrema, np.nanmax(val))
+    # end
+
+    v_extrema = np.sort(v_extrema)
+    if kwargs["cutoffglobalrange"]:
+      boundary = 100 * (1 - kwargs["cutoffglobalrange"]) / 2
+      vmax = np.percentile(v_extrema, 100 - boundary)
+      vmin = np.percentile(v_extrema, boundary)
     # end
 
     if kwargs["zmin"] is None:
@@ -178,12 +197,21 @@ def plot(ctx, **kwargs):
     # end
   # end
 
+  #Prevents scale errors for multiblock contour plots
+  if kwargs["multiblock"] and kwargs["contour"] and kwargs["clevels"] is None:
+    kwargs["clevels"] = f"{kwargs['zmin']}:{kwargs['zmax']}:10"
+  # end
+
   file_name = ""
 
   # ---- Loop over all the datasets ----
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     if dataset_fignum:
       kwargs["figure"] = int(i)
+    # end
+    #puts all blocks on the same figure
+    if kwargs["multiblock"]:
+      kwargs["figure"] = 0
     # end
     if ctx.obj["data"].get_num_datasets() > 1 or kwargs["forcelegend"]:
       label = dat.get_label()

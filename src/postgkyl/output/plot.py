@@ -460,7 +460,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
             norm=norm, vmin=vmin, vmax=vmax, edgecolors=edgecolors,
             linewidth=0.1, shading="auto", *args)
       # end
-      if not bool(color) and pgkyl_colorbar and not streamline:
+      if not bool(color) and colorbar and not streamline:
         pgkyl_colorbar(im, fig, cax, extend=extend, label=clabel)
       # end
     else:
