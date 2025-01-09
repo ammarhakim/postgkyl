@@ -1,5 +1,6 @@
 """Module including Gkeyll binary reader class."""
 
+from collections.abc import Iterable
 from typing import Tuple
 import msgpack as mp
 import numpy as np
@@ -160,15 +161,17 @@ class GkylReader(object):
         fh = open(self.file_name, "rb")
         fh.seek(self.offset)
         unp = mp.unpackb(fh.read(meta_size))
-        for key in unp:
-          if self.ctx:
-            if key == "polyOrder":
-              self.ctx["poly_order"] = unp[key]
-            elif key == "basisType":
-              self.ctx["basis_type"] = unp[key]
-              self.ctx["is_modal"] = True
-            else:
-              self.ctx[key] = unp[key]
+        if isinstance(unp, Iterable):
+          for key in unp:
+            if self.ctx:
+              if key == "polyOrder":
+                self.ctx["poly_order"] = unp[key]
+              elif key == "basisType":
+                self.ctx["basis_type"] = unp[key]
+                self.ctx["is_modal"] = True
+              else:
+                self.ctx[key] = unp[key]
+              # end
             # end
           # end
         # end
