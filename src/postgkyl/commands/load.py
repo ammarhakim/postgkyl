@@ -6,7 +6,7 @@ from postgkyl.data import GInterpModal
 from postgkyl.utils import verb_print
 
 
-def _pick_cut(ctx, kwargs, zn):
+def _pick_cut(ctx : click.Context, kwargs : dict, zn : int):
   nm = f"z{zn:d}"
   if zn == 6:  # This little hack allows to apply the same function for
     # components as well
@@ -25,7 +25,7 @@ def _pick_cut(ctx, kwargs, zn):
   # end
 
 
-def _crush(s):  # Temp function used as a sorting key
+def _crush(s : str) -> tuple:  # Temp function used as a sorting key
   splitted = s.split("_")
   tmp = splitted[-1].split(".")
   splitted[-1] = int(tmp[0])

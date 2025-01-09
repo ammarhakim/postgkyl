@@ -81,7 +81,10 @@ class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
   def __init__(self, file_name: str, ctx: dict | None = None,
-      c2p: str = "", c2p_vel: str = "", **kwargs):
+      c2p: str = "", c2p_vel: str = "",
+      axes: tuple | None = (None, None, None, None, None, None),
+      comp: int | slice | None = None,
+      **kwargs):
     """Initialize the instance of Gkeyll reader.
 
     Args:
@@ -136,9 +139,10 @@ class GkylReader(object):
       return False
     #end
 
-  # Starting with version 1, .gkyl files contatin a header; version 0
+  # Starting with version 1, .gkyl files contain a header; version 0
   # files only include the real-type info
   def _read_header(self) -> None:
+    """Reads header information for version 1 files and above."""
     if self.is_compatible():
       self.offset += 5  # Header contatins the gkyl magic sequence
 
@@ -182,8 +186,8 @@ class GkylReader(object):
     # end
     self.offset += 8
 
-  # ---- Read field data (version 1) ----
-  def _read_domain_t1a3_v1(self) -> None:
+  def _read_t1t3_v1_domain(self) -> None:
+    """Read domain information for file type 1 and 3."""
     # read grid dimensions
     self.num_dims = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
@@ -209,7 +213,13 @@ class GkylReader(object):
     self.asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
-  def _read_data_t1_v1(self) -> np.ndarray:
+  def _get_raw(self) -> np.ndarray:
+    """Read raw data and account for partial load."""
+    return np.fromfile(self.file_name, dtype=self.dtf, count=self.asize * self.num_comps,
+        offset=self.offset)
+
+  def _read_t1_v1_data(self) -> np.ndarray:
+    """Reat field data for file type 1."""
     data_raw = np.fromfile(self.file_name, dtype=self.dtf, offset=self.offset)
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
     for d in range(self.num_dims):
@@ -218,7 +228,8 @@ class GkylReader(object):
     gshape[-1] = self.num_comps
     return data_raw.reshape(gshape)
 
-  def _read_data_t3_v1(self) -> np.ndarray:
+  def _read_t3_v1_data(self) -> np.ndarray:
+    """Read field data for file type 3."""
     # get the number of stored ranges
     num_range = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
@@ -249,8 +260,8 @@ class GkylReader(object):
     # end
     return data
 
-  # ---- Read dynvector data (version 1) ----
   def _read_t2_v1(self) -> Tuple[list, np.ndarray]:
+    """Read dynvector data for file type 2."""
     cells = 0
     time = np.array([])
     data = np.array([[]])
@@ -295,7 +306,7 @@ class GkylReader(object):
     """Loads metadata."""
     self._read_header()
     if self.file_type == 1 or self.file_type == 3 or self.version == 0:
-      self._read_domain_t1a3_v1()
+      self._read_t1t3_v1_domain()
       if self.ctx:
         self.ctx["cells"] = self.cells
         self.ctx["lower"] = self.lower
@@ -315,11 +326,11 @@ class GkylReader(object):
     """
     time = None
     if self.file_type == 1 or self.version == 0:
-      data = self._read_data_t1_v1()
+      data = self._read_t1_v1_data()
     elif self.file_type == 2:
       time, data = self._read_t2_v1()
     elif self.file_type == 3:
-      data = self._read_data_t3_v1()
+      data = self._read_t3_v1_data()
     else:
       raise TypeError("This g0 format is not presently supported")
     # end
