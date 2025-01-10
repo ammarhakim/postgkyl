@@ -6,7 +6,7 @@ from postgkyl.data import GInterpModal
 from postgkyl.utils import verb_print
 
 
-def _pick_cut(ctx : click.Context, kwargs : dict, zn : int):
+def _pick_cut(ctx : click.Context, kwargs : dict, zn : int) -> str | None:
   nm = f"z{zn:d}"
   if zn == 6:  # This little hack allows to apply the same function for
     # components as well

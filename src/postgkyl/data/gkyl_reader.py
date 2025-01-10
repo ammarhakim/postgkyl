@@ -161,17 +161,15 @@ class GkylReader(object):
         fh = open(self.file_name, "rb")
         fh.seek(self.offset)
         unp = mp.unpackb(fh.read(meta_size))
-        if isinstance(unp, Iterable):
+        if isinstance(unp, Iterable) and self.ctx is not None:
           for key in unp:
-            if self.ctx:
-              if key == "polyOrder":
-                self.ctx["poly_order"] = unp[key]
-              elif key == "basisType":
-                self.ctx["basis_type"] = unp[key]
-                self.ctx["is_modal"] = True
-              else:
-                self.ctx[key] = unp[key]
-              # end
+            if key == "polyOrder":
+              self.ctx["poly_order"] = unp[key]
+            elif key == "basisType":
+              self.ctx["basis_type"] = unp[key]
+              self.ctx["is_modal"] = True
+            else:
+              self.ctx[key] = unp[key]
             # end
           # end
         # end
@@ -181,8 +179,7 @@ class GkylReader(object):
     # end
 
     # read real-type
-    real_type = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+    real_type = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     if real_type == 1:
       self.dtf = np.dtype("f4")
       self.doffset = 4
