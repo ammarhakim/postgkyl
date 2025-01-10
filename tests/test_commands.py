@@ -163,3 +163,15 @@ class TestCommands:
     plt.close("all")
     assert label == "$z_1$"
     assert fn.exists()
+
+
+  def test_grid(self):
+    self.ctx.invoke(cmd.load)
+    self.ctx.invoke(cmd.grid)
+    data = self.ctx.obj['data'].get_dataset(0)
+    values_shape = data.values.shape
+    self.ctx.obj['data'].clean()
+    self.ctx.obj["in_data_strings_loaded"] = 0
+    np.testing.assert_array_equal(values_shape, (65, 33, 2))
+    np.testing.assert_approx_equal(np.max(data.values[...,0]), 6.283185)
+    np.testing.assert_approx_equal(np.max(data.values[...,1]), 6)

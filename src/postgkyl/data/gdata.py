@@ -337,7 +337,7 @@ class GData(object):
         # end
       # end
     # end
-  
+
 
   # ---- Info -----
   def info(self) -> str:
@@ -411,7 +411,7 @@ class GData(object):
     for key, val in self.ctx.items():
       if key not in ["time", "frame", "changeset", "builddate", "basis_type",
           "poly_order","is_modal", "lower", "upper", "cells", "num_comps",
-          "grid_type", "num_cdim", "num_vdim"]:
+          "grid_type", "num_cdim", "num_vdim"] and val is not None:
         output += f"\n├─ {key:s}: {val}"
       # end
     # end
