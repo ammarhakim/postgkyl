@@ -22,7 +22,7 @@ def grid(ctx, **kwargs):
     num_cells = dat.get_num_cells()
     grid_out = []
     for nc in num_cells:
-      grid_out.append(np.arange(nc+1))
+      grid_out.append(np.arange(nc+2))
     # end
 
     shape = np.copy(num_cells) + 1
