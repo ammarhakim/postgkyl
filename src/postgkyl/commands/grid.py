@@ -31,7 +31,7 @@ def grid(ctx, **kwargs):
 
     if num_dims == 1:
       values[..., 0] = grid_in[0]
-    elif len(grid_in[-1].shape) == 1: # uniform mesh
+    elif len(grid_in[0].shape) == 1: # uniform mesh or vel c2p mapping
       temp = np.meshgrid(*grid_in, indexing="ij")
       for d, t in enumerate(temp):
         values[..., d] = t
