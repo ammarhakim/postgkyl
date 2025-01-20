@@ -84,7 +84,7 @@ class GkylReader(object):
   def __init__(self, file_name: str, ctx: dict | None = None,
       c2p: str = "", c2p_vel: str = "",
       axes: tuple | None = (None, None, None, None, None, None),
-      comp: int | slice | None = None,
+      comp: str | None = None,
       **kwargs):
     """Initialize the instance of Gkeyll reader.
 
@@ -98,6 +98,10 @@ class GkylReader(object):
       c2p_vel: str
         Allows to specify a name of the file containing c2p mapping for only the
         velocity dimension.
+      axes: tuple
+        Allows to specify the axes to be loaded.
+      comp: int or slice
+        Allows to specify the components to be loaded.
       **kwargs
         This is not directly used but allowes for unified interface to all the readers
         we use.
@@ -124,7 +128,21 @@ class GkylReader(object):
       self.ctx = ctx
     else:
       self.ctx = {}
-    # end
+    #end
+
+    # Prepare for partial load
+    self.partial_load = False
+    self.partial_slices_str = [""] * 7
+    for i, ax in enumerate(axes):
+      if ax:
+        self.partial_load = True
+        self.partial_slices_str[i] = ax
+      #end
+    #end
+    if comp:
+      self.partial_load = True
+      self.partial_slices_str[6] = comp
+    #end
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""
@@ -213,20 +231,82 @@ class GkylReader(object):
     self.asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
-  def _get_raw(self) -> np.ndarray:
+    # prep for partial loading
+    self.partial_slices = [(0, 0)] * (self.num_dims+1)
+    if self.partial_load:
+      for i in range(self.num_dims):
+        sl = self.partial_slices_str[i]
+        if sl.isdigit():
+          self.partial_slices[i] = (int(sl), self.cells[i] - int(sl) - 1)
+        elif ":" in sl:
+          start, stop = sl.split(":")
+          if start:
+            self.partial_slices[i][0] = int(start)
+          if stop and int(stop) > 0:
+            self.partial_slices[i][1] = self.cells[i] - int(stop)
+          elif stop:
+            self.partial_slices[i][1] = -int(stop)
+          # end
+        # end
+        self.cells[i] = self.cells[i] - self.partial_slices[i][1] - self.partial_slices[i][0]
+      # end
+
+      sl = self.partial_slices_str[6]
+      if sl.isdigit():
+        self.partial_slices[-1] = (int(sl), self.num_comps - int(sl) - 1)
+      elif ":" in sl:
+        start, stop = sl.split(":")
+        if start:
+          self.partial_slices[-1][0] = int(start)
+        if stop and int(stop) > 0:
+          self.partial_slices[-1][1] = self.num_comps - int(stop)
+        elif stop:
+          self.partial_slices[-1][1] = -int(stop)
+        # end
+      # end
+      self.num_comps = self.num_comps - self.partial_slices[-1][1] - self.partial_slices[-1][0]
+    # end
+
+  def _get_raw_data(self, count : int) -> np.ndarray:
     """Read raw data and account for partial load."""
-    return np.fromfile(self.file_name, dtype=self.dtf, count=self.asize * self.num_comps,
-        offset=self.offset)
+    if not self.partial_load:
+      return np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
+    else:
+      size = np.prod(self.cells) * self.num_comps
+      out = np.zeros(size, dtype=self.dtf)
+
+      print(self.partial_slices, size, self.num_comps, self.cells)
+
+      if self.num_dims == 1:
+        for i in range(self.cells[0]):
+          self.offset += self.partial_slices[-1][0] * self.doffset
+          out[i*self.num_comps : (i+1)*self.num_comps] = np.fromfile(self.file_name,
+              dtype=self.dtf, count=self.num_comps, offset=self.offset)
+          self.offset += (self.num_comps + self.partial_slices[-1][0]) * self.doffset
+        #end
+      elif self.num_dims == 2:
+        for i in range(self.cells[0]):
+          for j in range(self.cells[1]):
+            self.offset += self.partial_slices[-1][0] * self.doffset
+            out[(i*self.cells[1] + j)*self.num_comps : ((i*self.cells[1] + j)+1)*self.num_comps] = np.fromfile(self.file_name,
+                dtype=self.dtf, count=self.num_comps, offset=self.offset)
+            self.offset += (self.num_comps + self.partial_slices[-1][0]) * self.doffset
+          #end
+        #end
+      #end
+      return out
+    # end
 
   def _read_t1_v1_data(self) -> np.ndarray:
     """Reat field data for file type 1."""
-    data_raw = np.fromfile(self.file_name, dtype=self.dtf, offset=self.offset)
+    #data_raw = np.fromfile(self.file_name, dtype=self.dtf, offset=self.offset)
+    data_raw = self._get_raw_data(self.asize*self.num_comps)
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
     for d in range(self.num_dims):
       gshape[d] = self.cells[d]
     # end
     gshape[-1] = self.num_comps
-    return data_raw.reshape(gshape)
+    return data_raw.reshape(gshape, order="C")
 
   def _read_t3_v1_data(self) -> np.ndarray:
     """Read field data for file type 3."""
@@ -253,10 +333,10 @@ class GkylReader(object):
 
       asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
-      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize * self.num_comps,
+      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
           offset=self.offset)
       self.offset += asize * self.num_comps * self.doffset
-      data[tuple(slices)] = data_raw.reshape(gshape)
+      data[tuple(slices)] = data_raw.reshape(gshape, order="C")
     # end
     return data
 
@@ -283,9 +363,9 @@ class GkylReader(object):
 
       time = np.append(time, loop_time)
       if cells == 0:
-        data = data_raw.reshape(gshape)
+        data = data_raw.reshape(gshape, order="C")
       else:
-        data = np.append(data, data_raw.reshape(gshape), axis=0)
+        data = np.append(data, data_raw.reshape(gshape, order="C"), axis=0)
       # end
       cells += loop_cells
       if self.offset >= os.path.getsize(self.file_name):
