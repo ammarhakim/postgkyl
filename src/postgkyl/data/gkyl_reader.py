@@ -290,7 +290,7 @@ class GkylReader(object):
             self.offset += self.partial_slices[-1][0] * self.doffset
             out[(i*self.cells[1] + j)*self.num_comps : ((i*self.cells[1] + j)+1)*self.num_comps] = np.fromfile(self.file_name,
                 dtype=self.dtf, count=self.num_comps, offset=self.offset)
-            self.offset += (self.num_comps + self.partial_slices[-1][0]) * self.doffset
+            self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
           #end
         #end
       #end
