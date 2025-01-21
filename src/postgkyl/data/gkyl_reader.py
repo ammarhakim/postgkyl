@@ -132,16 +132,16 @@ class GkylReader(object):
 
     # Prepare for partial load
     self.partial_load = False
-    self.partial_slices_str = [""] * 7
+    self.partial_idxs = [""] * 7
     for i, ax in enumerate(axes):
       if ax:
         self.partial_load = True
-        self.partial_slices_str[i] = ax
+        self.partial_idxs[i] = ax
       #end
     #end
     if comp:
       self.partial_load = True
-      self.partial_slices_str[6] = comp
+      self.partial_idxs[6] = comp
     #end
 
   def is_compatible(self) -> bool:
@@ -232,40 +232,62 @@ class GkylReader(object):
     self.offset += 8
 
     # prep for partial loading
-    self.partial_slices = [[0, 0]] * (self.num_dims+1)
+    self.dim_offsets = [[0, 0] for i in range(self.num_dims+1)]
+    self.num_elems = np.zeros(self.num_dims+1, dtype=self.dti)
+    self.num_elems[:-1] = self.cells
+    self.num_elems[-1] = self.num_comps
+
     if self.partial_load:
       for i in range(self.num_dims):
-        sl = self.partial_slices_str[i]
+        sl = self.partial_idxs[i]
         if sl.isdigit():
-          self.partial_slices[i] = [int(sl), self.cells[i] - int(sl) - 1]
+          self.dim_offsets[i] = [int(sl), self.cells[i] - int(sl) - 1]
         elif ":" in sl:
           start, stop = sl.split(":")
           if start:
-            self.partial_slices[i][0] = int(start)
+            self.dim_offsets[i][0] = int(start)
           if stop and int(stop) > 0:
-            self.partial_slices[i][1] = self.cells[i] - int(stop)
+            self.dim_offsets[i][1] = self.cells[i] - int(stop)
           elif stop:
-            self.partial_slices[i][1] = -int(stop)
+            self.dim_offsets[i][1] = -int(stop)
           # end
         # end
-        self.cells[i] = self.cells[i] - self.partial_slices[i][1] - self.partial_slices[i][0]
+        self.cells[i] = self.cells[i] - self.dim_offsets[i][1] - self.dim_offsets[i][0]
       # end
 
-      sl = self.partial_slices_str[6]
+      sl = self.partial_idxs[6]
       if sl.isdigit():
-        self.partial_slices[-1] = [int(sl), self.num_comps - int(sl) - 1]
+        self.dim_offsets[-1] = [int(sl), self.num_comps - int(sl) - 1]
       elif ":" in sl:
         start, stop = sl.split(":")
         if start:
-          self.partial_slices[-1][0] = int(start)
+          self.dim_offsets[-1][0] = int(start)
         if stop and int(stop) > 0:
-          self.partial_slices[-1][1] = self.num_comps - int(stop)
+          self.dim_offsets[-1][1] = self.num_comps - int(stop)
         elif stop:
-          self.partial_slices[-1][1] = -int(stop)
+          self.dim_offsets[-1][1] = -int(stop)
         # end
       # end
-      self.num_comps = self.num_comps - self.partial_slices[-1][1] - self.partial_slices[-1][0]
+      self.num_comps = self.num_comps - self.dim_offsets[-1][1] - self.dim_offsets[-1][0]
     # end
+
+  def _get_block(self, dim : int, out : np.ndarray, idx : int) -> int:
+    """Reads a block of data."""
+    #print(self.num_comps)
+    if dim == self.num_dims:
+      self.offset += self.dim_offsets[-1][0] * self.doffset
+      out[idx : idx+self.num_comps] = np.fromfile(self.file_name,
+          dtype=self.dtf, count=self.num_comps, offset=self.offset)
+      self.offset += (self.num_comps + self.dim_offsets[-1][1]) * self.doffset
+      idx += self.num_comps
+    else:
+      self.offset += self.dim_offsets[dim][0] * np.prod(self.num_elems[dim+1:]) * self.doffset
+      for i in range(self.cells[dim]):
+        idx = self._get_block(dim+1, out, idx)
+      # end
+      self.offset += self.dim_offsets[dim][1] * np.prod(self.num_elems[dim+1:]) * self.doffset
+    # end
+    return idx
 
   def _get_raw_data(self, count : int) -> np.ndarray:
     """Read raw data and account for partial load."""
@@ -275,25 +297,25 @@ class GkylReader(object):
       size = np.prod(self.cells) * self.num_comps
       out = np.zeros(size, dtype=self.dtf)
 
-      print(self.partial_slices, size, self.num_comps, self.cells)
+      self._get_block(0, out, 0)
 
-      if self.num_dims == 1:
-        for i in range(self.cells[0]):
-          self.offset += self.partial_slices[-1][0] * self.doffset
-          out[i*self.num_comps : (i+1)*self.num_comps] = np.fromfile(self.file_name,
-              dtype=self.dtf, count=self.num_comps, offset=self.offset)
-          self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
-        #end
-      elif self.num_dims == 2:
-        for i in range(self.cells[0]):
-          for j in range(self.cells[1]):
-            self.offset += self.partial_slices[-1][0] * self.doffset
-            out[(i*self.cells[1] + j)*self.num_comps : ((i*self.cells[1] + j)+1)*self.num_comps] = np.fromfile(self.file_name,
-                dtype=self.dtf, count=self.num_comps, offset=self.offset)
-            self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
-          #end
-        #end
-      #end
+      # if self.num_dims == 1:
+      #   for i in range(self.cells[0]):
+      #     self.offset += self.partial_slices[-1][0] * self.doffset
+      #     out[i*self.num_comps : (i+1)*self.num_comps] = np.fromfile(self.file_name,
+      #         dtype=self.dtf, count=self.num_comps, offset=self.offset)
+      #     self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
+      #   #end
+      # elif self.num_dims == 2:
+      #   for i in range(self.cells[0]):
+      #     for j in range(self.cells[1]):
+      #       self.offset += self.partial_slices[-1][0] * self.doffset
+      #       out[(i*self.cells[1] + j)*self.num_comps : ((i*self.cells[1] + j)+1)*self.num_comps] = np.fromfile(self.file_name,
+      #           dtype=self.dtf, count=self.num_comps, offset=self.offset)
+      #       self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
+      #     #end
+      #   #end
+      # #end
       return out
     # end
 
