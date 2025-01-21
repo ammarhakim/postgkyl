@@ -253,6 +253,9 @@ class GkylReader(object):
           # end
         # end
         self.cells[i] = self.cells[i] - self.dim_offsets[i][1] - self.dim_offsets[i][0]
+
+        self.lower[i] = self.lower[i] + self.dim_offsets[i][0]*(self.upper[i]-self.lower[i])/self.num_elems[i]
+        self.upper[i] = self.upper[i] - self.dim_offsets[i][1]*(self.upper[i]-self.lower[i])/self.num_elems[i]
       # end
 
       sl = self.partial_idxs[6]
@@ -296,26 +299,7 @@ class GkylReader(object):
     else:
       size = np.prod(self.cells) * self.num_comps
       out = np.zeros(size, dtype=self.dtf)
-
       self._get_block(0, out, 0)
-
-      # if self.num_dims == 1:
-      #   for i in range(self.cells[0]):
-      #     self.offset += self.partial_slices[-1][0] * self.doffset
-      #     out[i*self.num_comps : (i+1)*self.num_comps] = np.fromfile(self.file_name,
-      #         dtype=self.dtf, count=self.num_comps, offset=self.offset)
-      #     self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
-      #   #end
-      # elif self.num_dims == 2:
-      #   for i in range(self.cells[0]):
-      #     for j in range(self.cells[1]):
-      #       self.offset += self.partial_slices[-1][0] * self.doffset
-      #       out[(i*self.cells[1] + j)*self.num_comps : ((i*self.cells[1] + j)+1)*self.num_comps] = np.fromfile(self.file_name,
-      #           dtype=self.dtf, count=self.num_comps, offset=self.offset)
-      #       self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
-      #     #end
-      #   #end
-      # #end
       return out
     # end
 
