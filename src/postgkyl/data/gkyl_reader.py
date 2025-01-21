@@ -253,9 +253,9 @@ class GkylReader(object):
           # end
         # end
         self.cells[i] = self.cells[i] - self.dim_offsets[i][1] - self.dim_offsets[i][0]
-
-        self.lower[i] = self.lower[i] + self.dim_offsets[i][0]*(self.upper[i]-self.lower[i])/self.num_elems[i]
-        self.upper[i] = self.upper[i] - self.dim_offsets[i][1]*(self.upper[i]-self.lower[i])/self.num_elems[i]
+        cell_size = (self.upper[i] - self.lower[i]) / self.num_elems[i]
+        self.lower[i] = self.lower[i] + self.dim_offsets[i][0] * cell_size
+        self.upper[i] = self.upper[i] - self.dim_offsets[i][1] * cell_size
       # end
 
       sl = self.partial_idxs[6]
