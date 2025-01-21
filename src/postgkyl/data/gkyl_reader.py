@@ -237,6 +237,37 @@ class GkylReader(object):
     self.num_elems[:-1] = self.cells
     self.num_elems[-1] = self.num_comps
 
+  def _get_block(self, dim : int, out : np.ndarray, idx : int) -> int:
+    """Reads a block of data."""
+    #print(self.num_comps)
+    if dim == self.num_dims:
+      self.offset += self.dim_offsets[-1][0] * self.doffset
+      out[idx : idx+self.num_comps] = np.fromfile(self.file_name,
+          dtype=self.dtf, count=self.num_comps, offset=self.offset)
+      self.offset += (self.num_comps + self.dim_offsets[-1][1]) * self.doffset
+      idx += self.num_comps
+    else:
+      self.offset += self.dim_offsets[dim][0] * np.prod(self.num_elems[dim+1:]) * self.doffset
+      for i in range(self.cells[dim]):
+        idx = self._get_block(dim+1, out, idx)
+      # end
+      self.offset += self.dim_offsets[dim][1] * np.prod(self.num_elems[dim+1:]) * self.doffset
+    # end
+    return idx
+
+  def _get_raw_data(self, count : int) -> np.ndarray:
+    """Read raw data and account for partial load."""
+    if not self.partial_load:
+      return np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
+    else:
+      size = np.prod(self.cells) * self.num_comps
+      out = np.zeros(size, dtype=self.dtf)
+      self._get_block(0, out, 0)
+      return out
+    # end
+
+  def _read_t1_v1_data(self) -> np.ndarray:
+    """Reat field data for file type 1."""
     if self.partial_load:
       for i in range(self.num_dims):
         sl = self.partial_idxs[i]
@@ -274,38 +305,6 @@ class GkylReader(object):
       self.num_comps = self.num_comps - self.dim_offsets[-1][1] - self.dim_offsets[-1][0]
     # end
 
-  def _get_block(self, dim : int, out : np.ndarray, idx : int) -> int:
-    """Reads a block of data."""
-    #print(self.num_comps)
-    if dim == self.num_dims:
-      self.offset += self.dim_offsets[-1][0] * self.doffset
-      out[idx : idx+self.num_comps] = np.fromfile(self.file_name,
-          dtype=self.dtf, count=self.num_comps, offset=self.offset)
-      self.offset += (self.num_comps + self.dim_offsets[-1][1]) * self.doffset
-      idx += self.num_comps
-    else:
-      self.offset += self.dim_offsets[dim][0] * np.prod(self.num_elems[dim+1:]) * self.doffset
-      for i in range(self.cells[dim]):
-        idx = self._get_block(dim+1, out, idx)
-      # end
-      self.offset += self.dim_offsets[dim][1] * np.prod(self.num_elems[dim+1:]) * self.doffset
-    # end
-    return idx
-
-  def _get_raw_data(self, count : int) -> np.ndarray:
-    """Read raw data and account for partial load."""
-    if not self.partial_load:
-      return np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
-    else:
-      size = np.prod(self.cells) * self.num_comps
-      out = np.zeros(size, dtype=self.dtf)
-      self._get_block(0, out, 0)
-      return out
-    # end
-
-  def _read_t1_v1_data(self) -> np.ndarray:
-    """Reat field data for file type 1."""
-    #data_raw = np.fromfile(self.file_name, dtype=self.dtf, offset=self.offset)
     data_raw = self._get_raw_data(self.asize*self.num_comps)
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
     for d in range(self.num_dims):
