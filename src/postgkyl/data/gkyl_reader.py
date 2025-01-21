@@ -232,12 +232,12 @@ class GkylReader(object):
     self.offset += 8
 
     # prep for partial loading
-    self.partial_slices = [(0, 0)] * (self.num_dims+1)
+    self.partial_slices = [[0, 0]] * (self.num_dims+1)
     if self.partial_load:
       for i in range(self.num_dims):
         sl = self.partial_slices_str[i]
         if sl.isdigit():
-          self.partial_slices[i] = (int(sl), self.cells[i] - int(sl) - 1)
+          self.partial_slices[i] = [int(sl), self.cells[i] - int(sl) - 1]
         elif ":" in sl:
           start, stop = sl.split(":")
           if start:
@@ -253,7 +253,7 @@ class GkylReader(object):
 
       sl = self.partial_slices_str[6]
       if sl.isdigit():
-        self.partial_slices[-1] = (int(sl), self.num_comps - int(sl) - 1)
+        self.partial_slices[-1] = [int(sl), self.num_comps - int(sl) - 1]
       elif ":" in sl:
         start, stop = sl.split(":")
         if start:
@@ -282,7 +282,7 @@ class GkylReader(object):
           self.offset += self.partial_slices[-1][0] * self.doffset
           out[i*self.num_comps : (i+1)*self.num_comps] = np.fromfile(self.file_name,
               dtype=self.dtf, count=self.num_comps, offset=self.offset)
-          self.offset += (self.num_comps + self.partial_slices[-1][0]) * self.doffset
+          self.offset += (self.num_comps + self.partial_slices[-1][1]) * self.doffset
         #end
       elif self.num_dims == 2:
         for i in range(self.cells[0]):
