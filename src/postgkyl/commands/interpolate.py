@@ -7,11 +7,13 @@ from postgkyl.utils import verb_print
 
 @click.command()
 @click.option("--basis_type","-b",
-    type=click.Choice(["ms", "ns", "mo", "mt", "gkhyb", "pkpmhyb"]),
+    type=click.Choice(["ms", "ns", "mo", "mt", "gkhyb", "pkpmhyb", "hyb"]),
     help="Specify DG basis.")
 @click.option("--poly_order", "-p", type=click.INT, help="Specify polynomial order.")
+@click.option("--vdim", "-v", type=click.INT, 
+    help="Specify number of velocity space dimensions (hybrid basis only).")
 @click.option("--interp", "-i", type=click.INT,
-     help="Interpolation onto a general mesh of specified amount.")
+    help="Interpolation onto a general mesh of specified amount.")
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
 @click.option("--tag", "-t", help="Optional tag for the resulting array")
 @click.option("--label", "-l", help="Custom label for the result")
@@ -43,6 +45,9 @@ def interpolate(ctx, **kwargs):
     elif kwargs["basis_type"] == "pkpmhyb":
       basis_type = "hybrid"
       is_modal = True
+    elif kwargs["basis_type"] == "hyb":
+      basis_type = "hybrid"
+      is_modal = True
     # end
   # end
 
@@ -53,6 +58,14 @@ def interpolate(ctx, **kwargs):
               fg="red")
       )
     # end
+
+    if basis_type == "hybrid":
+      if kwargs["vdim"]:
+        dat.ctx["num_vdim"] = kwargs["vdim"]
+      elif kwargs["vdim"] is None and dat.ctx["num_vdim"] is None:
+        ctx.fail(
+          click.style("ERROR in interpolate: did not specify number of velocity space dimensions with --vdim", fg="red")
+        )
 
     if is_modal or dat.ctx["is_modal"]:
       dg = GInterpModal(dat, kwargs["poly_order"], kwargs["basis_type"],

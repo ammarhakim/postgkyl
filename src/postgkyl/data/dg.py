@@ -34,8 +34,14 @@ num_nodesTensor = np.array([
     [64, 729, 4096, 15625]])
 
 num_nodesGkHybrid = np.array([1, 6, 12, 24, 48])
-num_nodeshybrid = np.array([1, 6, 12, 24, 48])
+# num_nodeshybrid = np.array([1, 6, 12, 24, 48])
 
+num_nodesHybrid = np.array([
+  [6, -1, -1], # 2D:    1x1v, N/A,  N/A
+  [12, 16, -1], # 3D:   2x1v, 1x2v, N/A
+  [24, 32, 40], # 4D:   3x1v, 2x2v, 1x3v
+  [-1, 64, 80], # 5D:   N/A,  3x2v, 2x3v,
+  [-1, -1, 160]]) # 6D: N/A,  N/A,  3x3v
 
 def _get_basis_p(num_dim, num_comp):
   basis, poly_order = None, None
@@ -51,8 +57,7 @@ def _get_basis_p(num_dim, num_comp):
   # end
   return basis, poly_order
 
-
-def _getnum_nodes(dim, poly_order, basis_type):
+def _getnum_nodes(dim, poly_order, basis_type, num_cdim):
   if basis_type.lower() == "serendipity":
     num_nodes = num_nodesSerendipity[dim - 1, poly_order]
   elif basis_type.lower() == "maximal-order":
@@ -62,7 +67,7 @@ def _getnum_nodes(dim, poly_order, basis_type):
   elif basis_type.lower() == "gkhybrid":
     num_nodes = num_nodesGkHybrid[dim - 1]
   elif basis_type.lower() == "hybrid":
-    num_nodes = num_nodeshybrid[dim - 1]
+    num_nodes = num_nodesHybrid[dim - 2, dim - num_cdim - 1]
   else:
     raise NameError(
         "GInterp: Basis '{:s}' is not supported!\n"
@@ -74,13 +79,18 @@ def _getnum_nodes(dim, poly_order, basis_type):
   # end
   return num_nodes
 
+def _get_hybrid_cdim(dim, num_comp):
+  idx = np.argwhere(num_nodesHybrid == num_comp).squeeze()
+  vdim = idx[1]+1
+  cdim = dim - vdim
+  return cdim
 
-def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=False):
+def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=False, num_cdim=0):
   if (interp is not None and read is None) or c2p:
     if interp is None:
       interp = poly_order + 1
     # end
-    mat = createInterpMatrix(dim, poly_order, basis_type, interp, modal, c2p)
+    mat = createInterpMatrix(dim, poly_order, basis_type, interp, modal, c2p, num_cdim)
     return mat
   elif basis_type == "tensor":
     mat = createInterpMatrix(dim, poly_order, "tensor", poly_order + 1, True, c2p)
@@ -89,7 +99,7 @@ def _loadInterpMatrix(dim, poly_order, basis_type, interp, read, modal, c2p=Fals
     mat = createInterpMatrix(dim, poly_order, "gkhybrid", poly_order + 1, True, c2p)
     return mat
   elif basis_type == "hybrid":
-    mat = createInterpMatrix(dim, poly_order, "hybrid", poly_order + 1, True, c2p)
+    mat = createInterpMatrix(dim, poly_order, "hybrid", poly_order + 1, True, c2p, num_cdim)
     return mat
   else:
     # Load interpolation matrix from the pre-computed HDF5 file.
@@ -179,7 +189,11 @@ def _interpOnMesh(cMat, qIn, nInterpIn, basis_type, c2p=False):
     num_interp[vpardir] = nInterpIn + 1
   # end
   if basis_type == "hybrid":
-    num_interp[-1] = nInterpIn + 1
+    # p=1 in configuration space, p=2 in velocity space
+    num_comp = qIn.shape[-1]
+    cdim = _get_hybrid_cdim(num_dims, num_comp)
+    for i in range(num_dims-cdim):
+      num_interp[cdim+i] = nInterpIn + 1
   # end
   if c2p:
     qOut = np.zeros(numCells*(num_interp - 1) + 1, np.float64)
@@ -409,6 +423,8 @@ class GInterpModal(GInterp):
         self.basis_type = "gkhybrid"
       elif basis_type == "pkpmhyb":
         self.basis_type = "hybrid"
+      elif basis_type == "hyb":
+        self.basis_type = "hybrid"
       # end
     elif data.ctx["basis_type"]:
       self.basis_type = data.ctx["basis_type"]
@@ -436,7 +452,14 @@ class GInterpModal(GInterp):
       self.num_interp = self.poly_order + 1
     # end
     self.read = read
-    num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type)
+
+   # Number of p=1 dimensions for hybrid basis. Need cdim for selecting interpolation
+   # matrix later
+    self.num_cdim = 0
+    if self.basis_type == "hybrid":
+      self.num_cdim = self.num_dims - data.ctx["num_vdim"]
+
+    num_nodes = _getnum_nodes(self.num_dims, self.poly_order, self.basis_type, self.num_cdim)
     GInterp.__init__(self, data, num_nodes)
 
   def interpolate(self, comp=0, overwrite=False, stack=False):
@@ -445,7 +468,7 @@ class GInterpModal(GInterp):
       print("Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'")
     # end
     cMat = _loadInterpMatrix(self.num_dims, self.poly_order, self.basis_type,
-        self.num_interp, self.read, True)
+        self.num_interp, self.read, True, num_cdim=self.num_cdim)
     if isinstance(comp, int):
       q = self._getRawModal(comp)
       values = _interpOnMesh(cMat, q, self.num_interp, self.basis_type)[..., np.newaxis]
@@ -473,7 +496,7 @@ class GInterpModal(GInterp):
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
       cMat = _loadInterpMatrix(self.num_dims, poly_order, basis, self.num_interp,
-          self.read, True, True)
+          self.read, True, True, num_cdim=self.num_cdim)
       grid = []
       for d in range(self.num_dims):
         grid.append(_interpOnMesh(cMat, q[d], self.num_interp + 1, basis, True))
@@ -486,8 +509,11 @@ class GInterpModal(GInterp):
         num_interp = [self.num_interp] * self.num_dims
         num_interp[vpardir] = self.num_interp + 1
       elif self.basis_type == "hybrid":
+        num_comp = q[0].shape[-1]
         num_interp = [self.num_interp] * self.num_dims
-        num_interp[-1] = self.num_interp + 1
+        cdim = _get_hybrid_cdim(self.num_dims, num_comp)
+        for i in range(self.num_dims-cdim):
+          num_interp[cdim+i] = self.num_interp + 1
       else:
         num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
       # end
@@ -500,7 +526,7 @@ class GInterpModal(GInterp):
         basis, poly_order = _get_basis_p(1, num_comp)
         for d in range(num_vdim):
           cMat = _loadInterpMatrix(1, poly_order, basis, num_interp[num_cdim + d],
-              self.read, True, True)
+              self.read, True, True, num_cdim=self.num_cdim)
           grid[num_cdim + d] = _interpOnMesh(cMat, q[num_cdim + d],
               num_interp[num_cdim + d] + 1, basis, True)
         # end
@@ -519,7 +545,7 @@ class GInterpModal(GInterp):
       num_comp = q[0].shape[-1]
       basis, poly_order = _get_basis_p(self.num_dims, num_comp)
       cMat = _loadInterpMatrix(self.num_dims, poly_order, basis, self.num_interp,
-          self.read, True, True)
+          self.read, True, True, num_cdim=self.num_cdim)
       grid = []
       for d in range(self.num_dims):
         grid.append(_interpOnMesh(cMat, q[d], self.num_interp, self.basis_type, True))
@@ -569,8 +595,8 @@ class GInterpModal(GInterp):
       return grid, values
     # end
 
-  # def recovery(self, comp=0, c1=False, overwrite=False, stack=False):
-  #   if stack:
+  def recovery(self, comp=0, c1=False, overwrite=False, stack=False):
+    # if stack:
   #     overwrite = stack
   #     print(
   #         "Deprecation warning: The 'stack' parameter is going to be replaced with 'overwrite'"
@@ -628,9 +654,9 @@ class GInterpModal(GInterp):
   #     # end
   #   # end
 
-  #   values = values[..., np.newaxis]
-  #   if overwrite:
-  #     self.data.push(grid, values)
-  #   else:
-  #     return grid, values
-  #   # end
+    values = values[..., np.newaxis]
+    if overwrite:
+      self.data.push(grid, values)
+    else:
+      return grid, values
+    # end
