@@ -7941,12 +7941,12 @@ def createInterpMatrix(dim, order, basis_type, interp, modal=True, c2p=False, nu
                         .subs(v, interpListND[4][i])
                         )
 
-        else:
-            raise NameError(
-                "interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(
-                    order
-                )
-            )      
+      else:
+        raise NameError(
+            "interpMatrix: Order {} is not supported!\nPolynomial order must be =1".format(
+                order
+            )
+        )      
 
     elif modal == False and basis_type == "serendipity":
       if order == 1:
