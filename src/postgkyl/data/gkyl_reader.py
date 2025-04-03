@@ -309,11 +309,13 @@ class GkylReader(object):
     return idx
   #end
 
-  def _get_raw_data(self, count : int,
+  def _get_raw_data(self, count : int | None = None,
         lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> np.ndarray:
     """Read raw data and account for partial load."""
     if not self.partial_load:
-      return np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
+      out = np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
+      self.offset += count * self.doffset
+      return out
     else:
       if lo_idx is None:
         lo_idx = np.zeros(self.num_dims, dtype=self.dti)
@@ -325,25 +327,22 @@ class GkylReader(object):
       num_elems = self.orig_size_array.copy()
       num_elems[:-1] = up_idx - lo_idx
 
+      # Adjust the offsets for the partial load for distributed memory data
       dim_offsets = np.zeros_like(self.global_offsets, dtype=self.dti)
       dim_offsets[:-1, 0] = self.global_offsets[:-1, 0] - lo_idx
       dim_offsets[:-1, 1] = self.global_offsets[:-1, 1] - (num_elems[:-1] - up_idx)
       dim_offsets[-1, :] = self.global_offsets[-1, :]
       dim_offsets = dim_offsets.clip(min=0)
 
-      #for i in range(self.num_dims):
-      #  self.cells[i] = self.cells[i] - dim_offsets[i, 1] - dim_offsets[i, 0]
-      #  cell_size = (self.upper[i] - self.lower[i]) / num_elems[i]
-      #  self.lower[i] = self.lower[i] + dim_offsets[i, 0] * cell_size
-      #  self.upper[i] = self.upper[i] - dim_offsets[i, 1] * cell_size
-      #end
-      #self.num_comps = self.num_comps - dim_offsets[-1, 1] - dim_offsets[-1, 0]
-
+      # Calculate the size to allocate the memory
       cells = (up_idx - lo_idx) - dim_offsets[:-1, 1] - dim_offsets[:-1, 0]
       size = np.prod(cells) * self.num_comps
       out = np.zeros(size, dtype=self.dtf) # Allocate space for the data
       self._get_block(dim=0, out=out, idx=0, dim_offsets=dim_offsets,
           num_elems=num_elems)
+
+      lo_idx = (lo_idx - self.global_offsets[:-1, 0]).clip(min=1)
+      up_idx = (up_idx - self.global_offsets[:-1, 0]).clip(min=1)
       return out
     #end
   #end
@@ -369,23 +368,26 @@ class GkylReader(object):
       gshape[d] = self.cells[d]
     #end
     gshape[-1] = self.num_comps
+    data = np.zeros(gshape, dtype=self.dtf) # Allocate space for the data
 
-    data = np.zeros(gshape, dtype=self.dtf)
     for _ in range(num_range):
-      loidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
+      lo_idx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
-      upidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
+      up_idx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
-      for d in range(self.num_dims):
-        gshape[d] = upidx[d] - loidx[d] + 1
-      #end
-      slices = [slice(loidx[d] - 1, upidx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
 
       asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
-      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
-          offset=self.offset)
-      self.offset += asize * self.num_comps * self.doffset
+      #data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
+      #    offset=self.offset)
+      #self.offset += asize * self.num_comps * self.doffset
+      data_raw = self._get_raw_data(count=asize*self.num_comps,
+          lo_idx=lo_idx, up_idx=up_idx)
+
+      for d in range(self.num_dims):
+        gshape[d] = up_idx[d] - lo_idx[d] + 1
+      #end
+      slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
       data[tuple(slices)] = data_raw.reshape(gshape, order="C")
     #end
     return data
