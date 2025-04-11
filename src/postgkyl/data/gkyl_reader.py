@@ -286,7 +286,7 @@ class GkylReader(object):
   #end
 
   def _get_block(self, dim : int, out : np.ndarray, idx : int,
-      dim_offsets : np.ndarray, num_elems : np.ndarray) -> int:
+      dim_offsets : np.ndarray, num_elems : np.ndarray, cells : np.ndarray) -> int:
     """Reads a block of data.
 
     A recursion is used to read the data from the fastest going index (the last one;
@@ -300,9 +300,9 @@ class GkylReader(object):
       idx += self.num_comps
     else:
       self.offset += dim_offsets[dim, 0] * np.prod(num_elems[dim+1:]) * self.doffset
-      for i in range(self.cells[dim]):
+      for _ in range(cells[dim]):
         idx = self._get_block(dim=dim+1, out=out, idx=idx, dim_offsets=dim_offsets,
-                  num_elems=num_elems)
+                  num_elems=num_elems, cells=cells)
       #end
       self.offset += dim_offsets[dim, 1] * np.prod(num_elems[dim+1:]) * self.doffset
     #end
@@ -310,46 +310,50 @@ class GkylReader(object):
   #end
 
   def _get_raw_data(self, count : int | None = None,
-        lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> np.ndarray:
+        lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Read raw data and account for partial load."""
+    if lo_idx is None:
+      lo_idx = np.ones(self.num_dims, dtype=self.dti) # Gkeyll index is 1-indexed
+    #end
+
     if not self.partial_load:
+      if up_idx is None:
+        up_idx = self.cells
+      #end
       out = np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
       self.offset += count * self.doffset
-      return out
+      return out, lo_idx, up_idx
     else:
-      if lo_idx is None:
-        lo_idx = np.zeros(self.num_dims, dtype=self.dti)
-      #end
       if up_idx is None:
         up_idx = self.orig_size_array[:-1]
       #end
-
       num_elems = self.orig_size_array.copy()
-      num_elems[:-1] = up_idx - lo_idx
 
       # Adjust the offsets for the partial load for distributed memory data
       dim_offsets = np.zeros_like(self.global_offsets, dtype=self.dti)
-      dim_offsets[:-1, 0] = self.global_offsets[:-1, 0] - lo_idx
+      dim_offsets[:-1, 0] = self.global_offsets[:-1, 0] - (lo_idx - 1)
       dim_offsets[:-1, 1] = self.global_offsets[:-1, 1] - (num_elems[:-1] - up_idx)
       dim_offsets[-1, :] = self.global_offsets[-1, :]
       dim_offsets = dim_offsets.clip(min=0)
 
       # Calculate the size to allocate the memory
-      cells = (up_idx - lo_idx) - dim_offsets[:-1, 1] - dim_offsets[:-1, 0]
+      num_elems[:-1] = up_idx - lo_idx + 1 # Gkeyll index is 1-indexed
+      cells = num_elems[:-1] - dim_offsets[:-1, 1] - dim_offsets[:-1, 0]
       size = np.prod(cells) * self.num_comps
       out = np.zeros(size, dtype=self.dtf) # Allocate space for the data
       self._get_block(dim=0, out=out, idx=0, dim_offsets=dim_offsets,
-          num_elems=num_elems)
+          num_elems=num_elems, cells=cells)
 
       lo_idx = (lo_idx - self.global_offsets[:-1, 0]).clip(min=1)
-      up_idx = (up_idx - self.global_offsets[:-1, 0]).clip(min=1)
-      return out
+      up_idx = (up_idx - self.global_offsets[:-1, 0] - dim_offsets[:-1, 1]).clip(min=1)
+      return out, lo_idx, up_idx
     #end
+
   #end
 
   def _read_t1_v1_data(self) -> np.ndarray:
     """Reat field data for file type 1."""
-    data_raw = self._get_raw_data(self.asize*self.num_comps)
+    data_raw, _, _ = self._get_raw_data(self.asize*self.num_comps)
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
     for d in range(self.num_dims):
       gshape[d] = self.cells[d]
@@ -381,7 +385,7 @@ class GkylReader(object):
       #data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
       #    offset=self.offset)
       #self.offset += asize * self.num_comps * self.doffset
-      data_raw = self._get_raw_data(count=asize*self.num_comps,
+      data_raw, lo_idx, up_idx = self._get_raw_data(count=asize*self.num_comps,
           lo_idx=lo_idx, up_idx=up_idx)
 
       for d in range(self.num_dims):
