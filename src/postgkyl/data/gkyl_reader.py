@@ -234,10 +234,11 @@ class GkylReader(object):
     self.offset += 8
 
     # prep for partial loading
+    self.orig_size_array = np.zeros(self.num_dims+1, dtype=self.dti)
+    self.orig_size_array[:-1] = self.cells.copy()
+    self.orig_size_array[-1] = self.num_comps
     if self.partial_load:
-      self.orig_size_array = np.zeros(self.num_dims+1, dtype=self.dti)
-      self.orig_size_array[:-1] = self.cells.copy()
-      self.orig_size_array[-1] = self.num_comps
+
 
       # The offsets are set to zero by default
       self.global_offsets = np.zeros((self.num_dims+1, 2), dtype=self.dti)
@@ -309,21 +310,32 @@ class GkylReader(object):
     return idx
   #end
 
-  def _get_raw_data(self, count : int | None = None,
-        lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+  def _get_data(self, count : int | None = None,
+        lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> Tuple[np.ndarray, Tuple]:
     """Read raw data and account for partial load."""
-    if lo_idx is None:
-      lo_idx = np.ones(self.num_dims, dtype=self.dti) # Gkeyll index is 1-indexed
-    #end
+    slices = []
+    gshape = np.ones(self.num_dims + 1, dtype=self.dti)
+    gshape[-1] = self.num_comps
 
     if not self.partial_load:
-      if up_idx is None:
-        up_idx = self.cells
-      #end
       out = np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
       self.offset += count * self.doffset
-      return out, lo_idx, up_idx
+
+      if lo_idx is not None:
+        for d in range(self.num_dims):
+          gshape[d] = up_idx[d] - lo_idx[d] + 1
+        #end
+        slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
+      else:
+        for d in range(self.num_dims):
+          gshape[d] = self.cells[d]
+        #end
+      #end
+
     else:
+      if lo_idx is None:
+        lo_idx = np.ones(self.num_dims, dtype=self.dti) # Gkeyll index is 1-indexed
+      #end
       if up_idx is None:
         up_idx = self.orig_size_array[:-1]
       #end
@@ -339,6 +351,10 @@ class GkylReader(object):
       # Calculate the size to allocate the memory
       num_elems[:-1] = up_idx - lo_idx + 1 # Gkeyll index is 1-indexed
       cells = num_elems[:-1] - dim_offsets[:-1, 1] - dim_offsets[:-1, 0]
+      if np.any(cells < 1):
+        self.offset += count * self.doffset
+        return np.array([]), tuple(slices)
+      #end
       size = np.prod(cells) * self.num_comps
       out = np.zeros(size, dtype=self.dtf) # Allocate space for the data
       self._get_block(dim=0, out=out, idx=0, dim_offsets=dim_offsets,
@@ -346,20 +362,20 @@ class GkylReader(object):
 
       lo_idx = (lo_idx - self.global_offsets[:-1, 0]).clip(min=1)
       up_idx = (up_idx - self.global_offsets[:-1, 0] - dim_offsets[:-1, 1]).clip(min=1)
-      return out, lo_idx, up_idx
-    #end
 
+      for d in range(self.num_dims):
+        gshape[d] = up_idx[d] - lo_idx[d] + 1
+      #end
+
+      slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
+    #end
+    return out.reshape(gshape, order="C"), tuple(slices)
   #end
 
   def _read_t1_v1_data(self) -> np.ndarray:
     """Reat field data for file type 1."""
-    data_raw, _, _ = self._get_raw_data(self.asize*self.num_comps)
-    gshape = np.ones(self.num_dims + 1, dtype=self.dti)
-    for d in range(self.num_dims):
-      gshape[d] = self.cells[d]
-    #end
-    gshape[-1] = self.num_comps
-    return data_raw.reshape(gshape, order="C")
+    data, _ = self._get_data(self.asize*self.num_comps)
+    return data
 
   def _read_t3_v1_data(self) -> np.ndarray:
     """Read field data for file type 3."""
@@ -385,14 +401,13 @@ class GkylReader(object):
       #data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
       #    offset=self.offset)
       #self.offset += asize * self.num_comps * self.doffset
-      data_raw, lo_idx, up_idx = self._get_raw_data(count=asize*self.num_comps,
+      data_block, slices = self._get_data(count=asize*self.orig_size_array[-1],
           lo_idx=lo_idx, up_idx=up_idx)
 
-      for d in range(self.num_dims):
-        gshape[d] = up_idx[d] - lo_idx[d] + 1
+      if len(data_block) == 0:
+        continue
       #end
-      slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
-      data[tuple(slices)] = data_raw.reshape(gshape, order="C")
+      data[slices] = data_block
     #end
     return data
   #end
