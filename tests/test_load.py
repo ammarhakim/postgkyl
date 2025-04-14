@@ -15,6 +15,11 @@ class TestGkyl:
     data = pg.GData(f"{self.dir_path:s}/shock-f-ser-p1.gkyl")
     np.testing.assert_array_equal(data.num_cells, (8, 8))
 
+  def test_gkyl_type1_partial(self):  # Partial frame without distributed memory
+    data = pg.GData(f"{self.dir_path:s}/twostream-f-p2.gkyl",
+        z0='16', z1='8:-8', comp='0')
+    np.testing.assert_array_equal(data.values.shape, (1, 16, 1))
+
   def test_gkyl_type1_c2p(self):  # Frame with coordinate mapping
     data = pg.GData(f"{self.dir_path:s}/shock-f-ser-p1.gkyl",
         mapc2p_name=f"{self.dir_path:s}/shock-rtheta-ser.gkyl")
@@ -27,6 +32,11 @@ class TestGkyl:
   def test_gkyl_type3(self):  # Frame with distributed memory
     data = pg.GData(f"{self.dir_path:s}/hll-euler.gkyl")
     np.testing.assert_array_equal(data.num_cells, (50, 50))
+
+  def test_gkyl_type3_partial(self):  # Partial frame with distributed memory
+    data = pg.GData(f"{self.dir_path:s}/hll-euler.gkyl",
+        z0='30', z1='30:-5', comp='1')
+    np.testing.assert_array_equal(data.values.shape, (1, 15, 1))
 
   def test_gkyl_meta(self):  # Frame with msgpack meta data included
     data = pg.GData(f"{self.dir_path:s}/hll-euler.gkyl")

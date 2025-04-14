@@ -82,7 +82,10 @@ class GkylReader(object):
   """Provides a framework to read Gkeyll binary output."""
 
   def __init__(self, file_name: str, ctx: dict | None = None,
-      c2p: str = "", c2p_vel: str = "", **kwargs):
+      c2p: str = "", c2p_vel: str = "",
+      axes: tuple | None = (None, None, None, None, None, None),
+      comp: str | None = None,
+      **kwargs):
     """Initialize the instance of Gkeyll reader.
 
     Args:
@@ -95,6 +98,10 @@ class GkylReader(object):
       c2p_vel: str
         Allows to specify a name of the file containing c2p mapping for only the
         velocity dimension.
+      axes: tuple
+        Allows to specify the axes to be loaded.
+      comp: int or slice
+        Allows to specify the components to be loaded.
       **kwargs
         This is not directly used but allowes for unified interface to all the readers
         we use.
@@ -121,7 +128,21 @@ class GkylReader(object):
       self.ctx = ctx
     else:
       self.ctx = {}
-    # end
+    #end
+
+    # Prepare for partial load
+    self.partial_load = False
+    self.partial_idxs = [""] * 7
+    for i, ax in enumerate(axes):
+      if ax:
+        self.partial_load = True
+        self.partial_idxs[i] = ax
+      #end
+    #end
+    if comp:
+      self.partial_load = True
+      self.partial_idxs[6] = comp
+    #end
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""
@@ -132,14 +153,16 @@ class GkylReader(object):
         return True
       else:
         return False
-      # end
+      #end
     except:
       return False
     #end
+  #end
 
-  # Starting with version 1, .gkyl files contatin a header; version 0
-  # files only include the real-type info
+  # Starting with version 1, .gkyl files contain a header;
+  # Version 0 files only include the real-type info
   def _read_header(self) -> None:
+    """Reads header information for version 1 files and above."""
     if self.is_compatible():
       self.offset += 5  # Header contatins the gkyl magic sequence
 
@@ -157,36 +180,34 @@ class GkylReader(object):
         fh = open(self.file_name, "rb")
         fh.seek(self.offset)
         unp = mp.unpackb(fh.read(meta_size))
-        if isinstance(unp, Iterable):
+        if isinstance(unp, Iterable) and self.ctx is not None:
           for key in unp:
-            if self.ctx:
-              if key == "polyOrder":
-                self.ctx["poly_order"] = unp[key]
-              elif key == "basisType":
-                self.ctx["basis_type"] = unp[key]
-                self.ctx["is_modal"] = True
-              else:
-                self.ctx[key] = unp[key]
-              # end
-            # end
-          # end
-        # end
+            if key == "polyOrder":
+              self.ctx["poly_order"] = unp[key]
+            elif key == "basisType":
+              self.ctx["basis_type"] = unp[key]
+              self.ctx["is_modal"] = True
+            else:
+              self.ctx[key] = unp[key]
+            #end
+          #end
+        #end
         self.offset += meta_size
         fh.close()
-      # end
-    # end
+      #end
+    #end
 
     # read real-type
-    real_type = np.fromfile(
-        self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
+    real_type = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     if real_type == 1:
       self.dtf = np.dtype("f4")
       self.doffset = 4
-    # end
+    #end
     self.offset += 8
+  #end
 
-  # ---- Read field data (version 1) ----
-  def _read_domain_t1a3_v1(self) -> None:
+  def _read_t1t3_v1_domain(self) -> None:
+    """Read domain information for file type 1 and 3."""
     # read grid dimensions
     self.num_dims = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
@@ -212,16 +233,152 @@ class GkylReader(object):
     self.asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
 
-  def _read_data_t1_v1(self) -> np.ndarray:
-    data_raw = np.fromfile(self.file_name, dtype=self.dtf, offset=self.offset)
-    gshape = np.ones(self.num_dims + 1, dtype=self.dti)
-    for d in range(self.num_dims):
-      gshape[d] = self.cells[d]
-    # end
-    gshape[-1] = self.num_comps
-    return data_raw.reshape(gshape)
+    # prep for partial loading
+    self.orig_size_array = np.zeros(self.num_dims+1, dtype=self.dti)
+    self.orig_size_array[:-1] = self.cells.copy()
+    self.orig_size_array[-1] = self.num_comps
+    if self.partial_load:
 
-  def _read_data_t3_v1(self) -> np.ndarray:
+
+      # The offsets are set to zero by default
+      self.global_offsets = np.zeros((self.num_dims+1, 2), dtype=self.dti)
+
+      # The offsets need to be parsed; note that for ":", the Python syntax is used,
+      # i.e., the first index is included, the second is excluded. Negative indices are
+      # also allowed, e.g., ":-1".
+      for i in range(self.num_dims):
+        sl = self.partial_idxs[i]
+        if sl.isdigit():
+          self.global_offsets[i, 0] = int(sl)
+          self.global_offsets[i, 1] = self.cells[i] - int(sl) - 1
+        elif ":" in sl:
+          start, stop = sl.split(":")
+          if start:
+            self.global_offsets[i, 0] = int(start)
+          if stop and int(stop) > 0:
+            self.global_offsets[i, 1] = self.cells[i] - int(stop)
+          elif stop:
+            self.global_offsets[i, 1] = -int(stop)
+          #end
+        #end
+      #end
+
+      sl = self.partial_idxs[6]
+      if sl.isdigit():
+        self.global_offsets[-1, 0] = int(sl)
+        self.global_offsets[-1, 1] = self.num_comps - int(sl) - 1
+      elif ":" in sl:
+        start, stop = sl.split(":")
+        if start:
+          self.global_offsets[-1, 0] = int(start)
+        if stop and int(stop) > 0:
+          self.global_offsets[-1, 1] = self.num_comps - int(stop)
+        elif stop:
+          self.global_offsets[-1, 1] = -int(stop)
+        #end
+      #end
+
+      self.cells -= (self.global_offsets[:-1, 1] + self.global_offsets[:-1, 0])
+      cell_size = (self.upper - self.lower) / self.orig_size_array[:-1]
+      self.lower += self.global_offsets[:-1, 0] * cell_size
+      self.upper -= self.global_offsets[:-1, 1] * cell_size
+      self.num_comps -= (self.global_offsets[-1, 1] + self.global_offsets[-1, 0])
+    #end
+  #end
+
+  def _get_block(self, dim : int, out : np.ndarray, idx : int,
+      dim_offsets : np.ndarray, num_elems : np.ndarray, cells : np.ndarray) -> int:
+    """Reads a block of data.
+
+    A recursion is used to read the data from the fastest going index (the last one;
+    i.e., the field components) to the slowest.
+    """
+    if dim == self.num_dims:
+      self.offset += dim_offsets[-1, 0] * self.doffset
+      out[idx : idx+self.num_comps] = np.fromfile(self.file_name,
+          dtype=self.dtf, count=self.num_comps, offset=self.offset)
+      self.offset += (self.num_comps + dim_offsets[-1, 1]) * self.doffset
+      idx += self.num_comps
+    else:
+      self.offset += dim_offsets[dim, 0] * np.prod(num_elems[dim+1:]) * self.doffset
+      for _ in range(cells[dim]):
+        idx = self._get_block(dim=dim+1, out=out, idx=idx, dim_offsets=dim_offsets,
+                  num_elems=num_elems, cells=cells)
+      #end
+      self.offset += dim_offsets[dim, 1] * np.prod(num_elems[dim+1:]) * self.doffset
+    #end
+    return idx
+  #end
+
+  def _get_data(self, count : int | None = None,
+        lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> Tuple[np.ndarray, Tuple]:
+    """Read raw data and account for partial load."""
+    slices = []
+    gshape = np.ones(self.num_dims + 1, dtype=self.dti)
+    gshape[-1] = self.num_comps
+
+    if not self.partial_load:
+      out = np.fromfile(self.file_name, dtype=self.dtf, count=count, offset=self.offset)
+      self.offset += count * self.doffset
+
+      if lo_idx is not None:
+        for d in range(self.num_dims):
+          gshape[d] = up_idx[d] - lo_idx[d] + 1
+        #end
+        slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
+      else:
+        for d in range(self.num_dims):
+          gshape[d] = self.cells[d]
+        #end
+      #end
+
+    else:
+      if lo_idx is None:
+        lo_idx = np.ones(self.num_dims, dtype=self.dti) # Gkeyll index is 1-indexed
+      #end
+      if up_idx is None:
+        up_idx = self.orig_size_array[:-1]
+      #end
+      num_elems = self.orig_size_array.copy()
+
+      # Adjust the offsets for the partial load for distributed memory data
+      dim_offsets = np.zeros_like(self.global_offsets, dtype=self.dti)
+      dim_offsets[:-1, 0] = self.global_offsets[:-1, 0] - (lo_idx - 1)
+      dim_offsets[:-1, 1] = self.global_offsets[:-1, 1] - (num_elems[:-1] - up_idx)
+      dim_offsets[-1, :] = self.global_offsets[-1, :]
+      dim_offsets = dim_offsets.clip(min=0)
+
+      # Calculate the size to allocate the memory
+      num_elems[:-1] = up_idx - lo_idx + 1 # Gkeyll index is 1-indexed
+      cells = num_elems[:-1] - dim_offsets[:-1, 1] - dim_offsets[:-1, 0]
+      if np.any(cells < 1):
+        self.offset += count * self.doffset
+        return np.array([]), tuple(slices)
+      #end
+      size = np.prod(cells) * self.num_comps
+      out = np.zeros(size, dtype=self.dtf) # Allocate space for the data
+      self._get_block(dim=0, out=out, idx=0, dim_offsets=dim_offsets,
+          num_elems=num_elems, cells=cells)
+
+      lo_idx = (lo_idx - self.global_offsets[:-1, 0]).clip(min=1)
+      up_idx = (up_idx - self.global_offsets[:-1, 0] - dim_offsets[:-1, 1]).clip(min=1)
+
+      for d in range(self.num_dims):
+        gshape[d] = up_idx[d] - lo_idx[d] + 1
+      #end
+
+      slices = [slice(lo_idx[d] - 1, up_idx[d]) for d in range(self.num_dims)] # Gkeyll is 1-indexed
+    #end
+    return out.reshape(gshape, order="C"), tuple(slices)
+  #end
+
+  def _read_t1_v1_data(self) -> np.ndarray:
+    """Reat field data for file type 1."""
+    data, _ = self._get_data(self.asize*self.num_comps)
+    return data
+
+  def _read_t3_v1_data(self) -> np.ndarray:
+    """Read field data for file type 3."""
     # get the number of stored ranges
     num_range = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
     self.offset += 8
@@ -229,31 +386,34 @@ class GkylReader(object):
     gshape = np.ones(self.num_dims + 1, dtype=self.dti)
     for d in range(self.num_dims):
       gshape[d] = self.cells[d]
-    # end
+    #end
     gshape[-1] = self.num_comps
+    data = np.zeros(gshape, dtype=self.dtf) # Allocate space for the data
 
-    data = np.zeros(gshape, dtype=self.dtf)
     for _ in range(num_range):
-      loidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
+      lo_idx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
-      upidx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
+      up_idx = np.fromfile(self.file_name, dtype=self.dti, count=self.num_dims, offset=self.offset)
       self.offset += self.num_dims * 8
-      for d in range(self.num_dims):
-        gshape[d] = upidx[d] - loidx[d] + 1
-      # end
-      slices = [slice(loidx[d] - 1, upidx[d]) for d in range(self.num_dims)]
 
       asize = np.fromfile(self.file_name, dtype=self.dti, count=1, offset=self.offset)[0]
       self.offset += 8
-      data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize * self.num_comps,
-          offset=self.offset)
-      self.offset += asize * self.num_comps * self.doffset
-      data[tuple(slices)] = data_raw.reshape(gshape)
-    # end
-    return data
+      #data_raw = np.fromfile(self.file_name, dtype=self.dtf, count=asize*self.num_comps,
+      #    offset=self.offset)
+      #self.offset += asize * self.num_comps * self.doffset
+      data_block, slices = self._get_data(count=asize*self.orig_size_array[-1],
+          lo_idx=lo_idx, up_idx=up_idx)
 
-  # ---- Read dynvector data (version 1) ----
+      if len(data_block) == 0:
+        continue
+      #end
+      data[slices] = data_block
+    #end
+    return data
+  #end
+
   def _read_t2_v1(self) -> Tuple[list, np.ndarray]:
+    """Read dynvector data for file type 2."""
     cells = 0
     time = np.array([])
     data = np.array([[]])
@@ -275,37 +435,39 @@ class GkylReader(object):
 
       time = np.append(time, loop_time)
       if cells == 0:
-        data = data_raw.reshape(gshape)
+        data = data_raw.reshape(gshape, order="C")
       else:
-        data = np.append(data, data_raw.reshape(gshape), axis=0)
-      # end
+        data = np.append(data, data_raw.reshape(gshape, order="C"), axis=0)
+      #end
       cells += loop_cells
       if self.offset >= os.path.getsize(self.file_name):
         break
-      # end
+      #end
       self._read_header()
       if self.file_type != 2:
         raise TypeError("Inconsitent data in g0 dynVector file.")
-      # end
-    # end
+      #end
+    #end
     self.cells = [cells]
     self.lower = np.atleast_1d(time.min())
     self.upper = np.atleast_1d(time.max())
     return time, data
+  #end
 
   # ---- Exposed functions -----
   def preload(self) -> None:
     """Loads metadata."""
     self._read_header()
     if self.file_type == 1 or self.file_type == 3 or self.version == 0:
-      self._read_domain_t1a3_v1()
+      self._read_t1t3_v1_domain()
       if self.ctx:
         self.ctx["cells"] = self.cells
         self.ctx["lower"] = self.lower
         self.ctx["upper"] = self.upper
         self.ctx["num_comps"] = self.num_comps
-      # end
-    # end
+      #end
+    #end
+  #end
 
   def load(self) -> Tuple[list, np.ndarray]:
     """Loads data.
@@ -318,14 +480,14 @@ class GkylReader(object):
     """
     time = None
     if self.file_type == 1 or self.version == 0:
-      data = self._read_data_t1_v1()
+      data = self._read_t1_v1_data()
     elif self.file_type == 2:
       time, data = self._read_t2_v1()
     elif self.file_type == 3:
-      data = self._read_data_t3_v1()
+      data = self._read_t3_v1_data()
     else:
       raise TypeError("This g0 format is not presently supported")
-    # end
+    #end
 
     # Load or construct grid
     num_dims = len(self.cells)
@@ -333,7 +495,7 @@ class GkylReader(object):
       grid = [time]
       if self.ctx:
         self.ctx["grid_type"] = "nodal"
-      # end
+      #end
     elif self.c2p:
       grid_reader = GkylReader(self.c2p)
       grid_reader.preload()
@@ -343,7 +505,7 @@ class GkylReader(object):
       grid = [tmp[..., int(d * num_coeff) : int((d + 1)*num_coeff)] for d in range(num_dims)]
       if self.ctx:
         self.ctx["grid_type"] = "c2p"
-      # end
+      #end
     elif self.c2p_vel:
       grid_reader = GkylReader(self.c2p_vel)
       grid_reader.preload()
@@ -354,7 +516,7 @@ class GkylReader(object):
       if self.ctx:
         self.ctx["num_vdim"] = num_vdim
         self.ctx["num_cdim"] = num_cdim
-      # end
+      #end
 
       # Create uniform configuration space grid
       grid = [np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1) for d in range(num_cdim)]
@@ -367,11 +529,11 @@ class GkylReader(object):
         idx[d] = slice(None)
         idx[-1] = slice(int(d * num_coeff), int((d + 1) * num_coeff))
         grid.append(tmp[tuple(idx)])
-      # end
+      #end
 
       if self.ctx:
         self.ctx["grid_type"] = "c2p_vel"
-      # end
+      #end
     else:  # Create sparse unifrom grid
       # Adjust for ghost cells
       dz = (self.upper - self.lower) / self.cells
@@ -382,12 +544,14 @@ class GkylReader(object):
           self.cells[d] = data.shape[d]
           self.lower[d] = self.lower[d] - ngl * dz[d]
           self.upper[d] = self.upper[d] + ngu * dz[d]
-        # end
-      # end
+        #end
+      #end
       grid = [np.linspace(self.lower[d], self.upper[d], self.cells[d] + 1) for d in range(num_dims)]
       if self.ctx:
         self.ctx["grid_type"] = "uniform"
-      # end
-    # end
+      #end
+    #end
 
     return grid, data
+  #end
+#end
