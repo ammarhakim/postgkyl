@@ -33,6 +33,7 @@ from postgkyl.commands.plot import plot
 from postgkyl.commands.pr import pr
 from postgkyl.commands.relchange import relchange
 from postgkyl.commands.select import select
+from postgkyl.commands.showgrid import showgrid
 from postgkyl.commands.status import activate
 from postgkyl.commands.status import deactivate
 from postgkyl.commands.style import style

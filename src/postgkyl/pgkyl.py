@@ -159,6 +159,7 @@ cli.add_command(cmd.velocity)
 cli.add_command(cmd.write)
 cli.add_command(cmd.transformframe)
 cli.add_command(cmd.pkpm)
+cli.add_command(cmd.showgrid)
 
 if __name__ == "__main__":
   ctx = []
