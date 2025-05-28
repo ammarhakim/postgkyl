@@ -84,7 +84,7 @@ class GkylReader(object):
   def __init__(self, file_name: str, ctx: dict | None = None,
       c2p: str = "", c2p_vel: str = "",
       axes: tuple | None = (None, None, None, None, None, None),
-      comp: str | None = None,
+      comp: str | int | None = None,
       **kwargs):
     """Initialize the instance of Gkeyll reader.
 
@@ -119,10 +119,10 @@ class GkylReader(object):
     self.file_type = 1
     self.version = 0
 
-    self.lower = None
-    self.upper = None
-    self.num_comps = None
-    self.cells = None
+    self.lower : np.ndarray
+    self.upper : np.ndarray
+    self.num_comps : int
+    self.cells : np.ndarray
 
     if ctx is not None:
       self.ctx = ctx
@@ -133,15 +133,17 @@ class GkylReader(object):
     # Prepare for partial load
     self.partial_load = False
     self.partial_idxs = [""] * 7
-    for i, ax in enumerate(axes):
-      if ax:
-        self.partial_load = True
-        self.partial_idxs[i] = ax
+    if axes is not None:
+      for i, ax in enumerate(axes):
+        if ax is not None:
+          self.partial_load = True
+          self.partial_idxs[i] = str(ax)
+        #end
       #end
     #end
-    if comp:
+    if comp is not None:
       self.partial_load = True
-      self.partial_idxs[6] = comp
+      self.partial_idxs[6] = str(comp)
     #end
 
   def is_compatible(self) -> bool:
@@ -180,7 +182,7 @@ class GkylReader(object):
         fh = open(self.file_name, "rb")
         fh.seek(self.offset)
         unp = mp.unpackb(fh.read(meta_size))
-        if isinstance(unp, Iterable) and self.ctx is not None:
+        if isinstance(unp, dict) and self.ctx is not None:
           for key in unp:
             if key == "polyOrder":
               self.ctx["poly_order"] = unp[key]
@@ -238,8 +240,6 @@ class GkylReader(object):
     self.orig_size_array[:-1] = self.cells.copy()
     self.orig_size_array[-1] = self.num_comps
     if self.partial_load:
-
-
       # The offsets are set to zero by default
       self.global_offsets = np.zeros((self.num_dims+1, 2), dtype=self.dti)
 
@@ -295,7 +295,7 @@ class GkylReader(object):
     """
     if dim == self.num_dims:
       self.offset += dim_offsets[-1, 0] * self.doffset
-      out[idx : idx+self.num_comps] = np.fromfile(self.file_name,
+      out[idx : idx+self.num_comps] = np.fromfile(file=self.file_name,
           dtype=self.dtf, count=self.num_comps, offset=self.offset)
       self.offset += (self.num_comps + dim_offsets[-1, 1]) * self.doffset
       idx += self.num_comps
@@ -310,7 +310,7 @@ class GkylReader(object):
     return idx
   #end
 
-  def _get_data(self, count : int | None = None,
+  def _get_data(self, count : int,
         lo_idx : np.ndarray | None = None, up_idx : np.ndarray | None = None) -> Tuple[np.ndarray, Tuple]:
     """Read raw data and account for partial load."""
     slices = []
