@@ -1,5 +1,6 @@
 """Postgkyl module for testing data loading."""
 import importlib
+import importlib.util
 import numpy as np
 import os
 import pytest
@@ -35,7 +36,7 @@ class TestGkyl:
 
   def test_gkyl_type3_partial(self):  # Partial frame with distributed memory
     data = pg.GData(f"{self.dir_path:s}/hll-euler.gkyl",
-        z0='30', z1='30:-5', comp='1')
+        z0=30, z1='30:-5', comp=0)
     np.testing.assert_array_equal(data.values.shape, (1, 15, 1))
 
   def test_gkyl_meta(self):  # Frame with msgpack meta data included
@@ -60,11 +61,6 @@ class TestAdios:
   @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
   def test_adios_frame(self):
     data = pg.GData(f"{self.dir_path:s}/twostream-f-p2_0.bp")
-    np.testing.assert_array_equal(data.num_cells, (64, 32))
-
-  @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
-  def test_adios_frame(self):
-    data = pg.GData(f"{self.dir_path:s}/twostream-f-p1.bp")
     np.testing.assert_array_equal(data.num_cells, (64, 32))
 
   @pytest.mark.skipif(adios_missing, reason="ADIOS2 is not installed")
