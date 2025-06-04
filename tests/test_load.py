@@ -1,5 +1,4 @@
 """Postgkyl module for testing data loading."""
-import importlib
 import importlib.util
 import numpy as np
 import os
@@ -50,7 +49,6 @@ class TestGkyl:
     dg.interpolate(overwrite=True)
     np.testing.assert_approx_equal(data.bounds[0][1], -1.060964e07)
     np.testing.assert_approx_equal(data.bounds[1][2], 1.206345e-16)
-
 class TestAdios:
   """Test Gkeyll's ADIOS2 output format."""
   dir_path =  f"{os.path.dirname(__file__)}/test_data"

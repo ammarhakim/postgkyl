@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
 
 def select(data: GData, comp: int | str | None = None,
-      z0: int | str | None = None, z1: int | str | None = None,
-      z2: int | str | None = None, z3: int | str | None = None,
-      z4: int | str | None = None, z5: int | str | None = None,
+      z0: int | float | str | None = None, z1: int | float | str | None = None,
+      z2: int | float | str | None = None, z3: int | float | str | None = None,
+      z4: int | float | str | None = None, z5: int | float | str | None = None,
       overwrite: bool = False) -> Tuple[list, np.ndarray]:
   """Selects parts of the GData.
 
@@ -41,12 +41,12 @@ def select(data: GData, comp: int | str | None = None,
   # Loop for coordinates
   for d, z in enumerate(zs):
     if d < num_dims and z is not None:
-      dat_range = bounds[1][d] - bounds[0][d]
-      if '.' in z:
-        if bounds[1][d] + 0.25 * dat_range < float(z) or bounds[0][d] - 0.25 * dat_range > float(z):
-          raise TypeError("The coordinate select is outside of the data boundaries")
-        #end
-      #end
+      #dat_range = bounds[1][d] - bounds[0][d]
+      #if '.' in z:
+      #  if bounds[1][d] + 0.25 * dat_range < float(z) or bounds[0][d] - 0.25 * dat_range > float(z):
+      #    raise TypeError("The coordinate select is outside of the data boundaries")
+      #  #end
+      ##end
       if uniform_grid:
         len_grid = grid[d].shape[0]
       else:

@@ -1,6 +1,6 @@
 """Postgkyl module for testing click commands."""
 import click
-import importlib
+import importlib.util
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -14,7 +14,7 @@ class TestCommands:
   """Base class for testing Postgkyl commands.
 
   Note that commands which just wrap other Postgkyl functions are not tested thoroughly,
-  the goal here is to test if the command runs; more thorough testing should be
+  the goal here is to test if the command runs at all; more thorough testing should be
   delegated to the functions themselves.
   """
   dir_path = f"{os.path.dirname(__file__)}/test_data"
