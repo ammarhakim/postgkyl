@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
 
 def select(data: GData, comp: int | str | None = None,
-      z0: int | str | None = None, z1: int | str | None = None,
-      z2: int | str | None = None, z3: int | str | None = None,
-      z4: int | str | None = None, z5: int | str | None = None,
+      z0: int | float | str | None = None, z1: int | float | str | None = None,
+      z2: int | float | str | None = None, z3: int | float | str | None = None,
+      z4: int | float | str | None = None, z5: int | float | str | None = None,
       overwrite: bool = False) -> Tuple[list, np.ndarray]:
   """Selects parts of the GData.
 
