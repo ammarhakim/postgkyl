@@ -540,7 +540,7 @@ class GData(object):
 
       fh.close()
     elif extension == "txt":
-      num_rows = int(num_cells.prod())
+      num_rows = np.prod(num_cells)
       grid = self.get_grid()
       for d in range(num_dims):
         grid[d] = 0.5 * (grid[d][1:] + grid[d][:-1])
@@ -548,7 +548,7 @@ class GData(object):
 
       basis = np.full(num_dims, 1.0)
       for d in range(num_dims - 1):
-        basis[d] = num_cells[(d + 1) :].prod()
+        basis[d] = np.prod(num_cells[(d + 1) :])
       # end
 
       fh = open(out_name, "w", encoding="utf-8")
