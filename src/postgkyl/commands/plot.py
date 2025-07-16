@@ -78,6 +78,7 @@ import postgkyl.output.plot
 @click.option("-y", "--ylabel", type=click.STRING, help="Specify a y-axis label.")
 @click.option("--clabel", type=click.STRING, help="Specify a label for colorbar.")
 @click.option("--title", type=click.STRING, help="Specify a title.")
+@click.option("--subplot-titles", type=click.STRING, help="Comma-separated titles for each subplot.")
 @click.option("--save", is_flag=True, help="Save figure as PNG file.")
 @click.option("--saveas", type=click.STRING, default=None, help="Name of figure file.")
 @click.option("--dpi", type=click.INT, default=200, help="DPI (resolution) for output.")
