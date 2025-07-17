@@ -387,6 +387,27 @@ def scale_comp(in_grid, in_values):
   
   return [out_grid], [original_data]
 
+def scale_zi_axis(in_grid, in_values):
+  """Scale the axis of the z_i dimension of the data
+
+  Args:
+    in_values[0]: Scaling factor (float) - from RPN stack order
+    in_values[1]: Axis direction (int) - 0,1,2,3,4,5
+    in_values[2]: Original data array (f)
+    
+  Usage: f 1000 scale_xaxis  (scales x-axis by 1000)
+  """
+  
+  out_grid = in_grid[2]  # Use grid from original data (f)
+  original_data = in_values[2].copy()  # Original data (make a copy)
+  idx_scale = in_values[1].item()  # Axis direction (int)
+  scale_factor = in_values[0].item()  # Ensure scale_factor is a float
+
+  # Scale the z_i axis
+  out_grid[int(idx_scale)] *= scale_factor
+
+  return [out_grid], [original_data]
+
 cmds = {
     "+": {"num_in": 2, "num_out": 1, "func": add},
     "-": {"num_in": 2, "num_out": 1, "func": subtract},
@@ -416,4 +437,5 @@ cmds = {
     "div": {"num_in": 1, "num_out": 1, "func": divergence},
     "curl": {"num_in": 1, "num_out": 1, "func": curl},
     "scale_comp": {"num_in": 3, "num_out": 1, "func": scale_comp},
+    "scale_zi_axis": {"num_in": 3, "num_out": 1, "func": scale_zi_axis},
 }
