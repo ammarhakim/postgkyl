@@ -72,6 +72,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
     relax: bool = False, style: str | None = None, rcParams: dict | None = None,
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, clabel: str | None = None, title: str | None = None,
+    subplot_titles: str | None = None, subplot_xlabels: str | None = None, subplot_ylabels: str | None = None,
     logx: bool = False, logy: bool = False, logz: bool = False,
     fixaspect: bool = False, aspect: float | None = None,
     edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
@@ -299,15 +300,34 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
       for i in range(num_comps, len(ax)):
         ax[i].axis("off")
       # end
-      # Adding labels only to the right subplots
+      # Add labels as super labels and titles
+      if bool(title):
+        fig.suptitle(title)
+      if bool(xlabel):
+        fig.supxlabel(xlabel)
+      if bool(ylabel):
+        fig.supylabel(ylabel)
+
       for ax_idx, _ in enumerate(ax):
-        if ax_idx >= (num_rows - 1) * num_cols:
-          ax[ax_idx].set_xlabel(xlabel)
+        if bool(subplot_titles):
+          title = subplot_titles.split(",")[ax_idx] if ax_idx < len(subplot_titles.split(",")) else ""
+        else:
+          title = ""
         # end
-        if ax_idx % num_cols == 0:
-          ax[ax_idx].set_ylabel(ylabel)
+        if bool(subplot_xlabels):
+          xlabel = subplot_xlabels.split(",")[ax_idx] if ax_idx < len(subplot_xlabels.split(",")) else ""
+        else:
+          xlabel = ""
         # end
-        if ax_idx < num_cols and bool(title):
+        if bool(subplot_ylabels):
+          ylabel = subplot_ylabels.split(",")[ax_idx] if ax_idx < len(subplot_ylabels.split(",")) else ""
+        else:
+          ylabel = ""
+        # end
+
+        ax[ax_idx].set_xlabel(xlabel)
+        ax[ax_idx].set_ylabel(ylabel)
+        if bool(title):
           ax[ax_idx].set_title(title, y=1.08)
         # end
       # end
