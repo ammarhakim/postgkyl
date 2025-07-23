@@ -147,6 +147,7 @@ class TestCommands:
     self.ctx.obj["in_data_strings_loaded"] = 0
     label = fig.figure.get_supylabel()
     plt.close("all")
+    assert label == "$z_1$"
 
 
   @pytest.mark.skipif(ffmpeg_missing, reason="ffmpeg is not installed")
