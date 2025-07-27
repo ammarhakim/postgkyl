@@ -90,7 +90,7 @@ The Postgkyl itself is installed with `pip`.[^1] Developers and uses who want to
 have the most up-to-date version should install Postgkyl from the source code:
 
 ```bash
-git clone git@github.com:ammarhakim/postgkyl.git
+git clone https://github.com/ammarhakim/postgkyl.git
 cd postgkyl
 pip install -e .[adios,test]
 ```
@@ -120,8 +120,7 @@ The full list of authors can be found [here](AUTHORS.md).
 
 ## License
 
-See [Gkyl License](http://gkyl.readthedocs.io/en/latest/license.html)
-for usage conditions.
+Postgkyl is distributed under the MIT License.
 
 [^1]: This does *not* require any additional modifications of `PYTHONPATH`. If
     Postgkyl was used previously through `PYTHONPATH`, we strongly recommend
