@@ -252,11 +252,14 @@ def plot(ctx, **kwargs):
       kwargs["show"] = False
     # end
 
-    if ctx.obj["batch_mode"]:
-      file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
-      plt.savefig(file_name, dpi=kwargs["dpi"])
-      kwargs["show"] = False
+    if "batch_mode" in ctx.obj:
+      if ctx.obj["batch_mode"]:
+        file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
+        plt.savefig(file_name, dpi=kwargs["dpi"])
+        kwargs["show"] = False
+      # end
     # end
+
 
   # end
   if (kwargs["save"] or kwargs["saveas"]) and kwargs["figure"] is not None:
