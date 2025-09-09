@@ -63,9 +63,12 @@ class PgkylCommandGroup(click.Group):
 
 
 # The command line mode entry command
-@click.command(cls=PgkylCommandGroup, chain=True,
+@click.command(name="pgkyl", cls=PgkylCommandGroup, chain=True,
     context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--verbose", "-v", is_flag=True, help="Turn on verbosity.")
+@click.option("--batch-mode", is_flag=True, help="Run in batch mode (no plots will be shown).")
+@click.option("--saveframes-prefix", default=os.path.expanduser("~")+"/pg",
+              help="Output prefix to use for plot output in batch mode.")
 @click.option("--version", is_flag=True, callback=_print_version, expose_value=False,
     is_eager=True, help="Print the version information.")
 @click.option("--z0", help="Partial file load: 0th coord (either int or slice)")
@@ -102,6 +105,14 @@ def cli(ctx, **kwargs):
   else:
     ctx.obj["verbose"] = False
   # end
+
+  ctx.obj["batch_mode"] = False
+  if kwargs["batch_mode"]:
+    ctx.obj["batch_mode"] = True
+  #end
+
+  ctx.obj["saveframes_prefix"] = kwargs["saveframes_prefix"]
+
   ctx.obj["in_data_strings"] = []
   ctx.obj["in_data_strings_loaded"] = 0
 
