@@ -106,10 +106,9 @@ def cli(ctx, **kwargs):
     ctx.obj["verbose"] = False
   # end
 
+  ctx.obj["batch_mode"] = False
   if kwargs["batch_mode"]:
     ctx.obj["batch_mode"] = True
-  else:
-    ctx.obj["batch_mode"] = False
   #end
 
   ctx.obj["saveframes_prefix"] = kwargs["saveframes_prefix"]
