@@ -70,7 +70,9 @@ import postgkyl.output.plot
 @click.option("--globalrange", "-r", is_flag=True, help="Make uniform extends across datasets.")
 @click.option("--cutoffglobalrange", "-cogr", default=None, type=click.FLOAT,
               help="Set custom limit for uniform across datasets")
-@click.option("--legend/--no-legend", default=True, help="Show legend.")
+@click.option("--legend", default=None, type=click.STRING,
+    help="If specified, comma-separated legend labels (e.g., 'a,b,c'). Use '--no-legend' to hide legend.")
+@click.option("--no-legend", is_flag=True, help="Hide legend.")
 @click.option("--force-legend", "forcelegend", is_flag=True,
     help="Force legend even when plotting a single dataset.")
 @click.option("--color", type=click.STRING, help="Set color when available.")
@@ -202,6 +204,20 @@ def plot(ctx, **kwargs):
     kwargs["clevels"] = f"{kwargs['zmin']}:{kwargs['zmax']}:10"
   # end
 
+  # Parse legend labels if provided
+  legend_labels = None
+  if kwargs["legend"] is not None:
+    legend_labels = [label.strip() for label in kwargs["legend"].split(",")]
+  # end
+  
+  # Convert legend to boolean for the plot function
+  show_legend = not kwargs["no_legend"]
+  if kwargs["legend"] is not None:
+    show_legend = True
+  # end
+  kwargs["legend"] = show_legend
+  del kwargs["no_legend"]
+
   file_name = ""
 
   # ---- Loop over all the datasets ----
@@ -213,7 +229,11 @@ def plot(ctx, **kwargs):
     if kwargs["multiblock"]:
       kwargs["figure"] = 0
     # end
-    if ctx.obj["data"].get_num_datasets() > 1 or kwargs["forcelegend"]:
+    
+    # Determine the label for this dataset
+    if legend_labels is not None and i < len(legend_labels):
+      label = legend_labels[i]
+    elif ctx.obj["data"].get_num_datasets() > 1 or kwargs["forcelegend"]:
       label = dat.get_label()
     else:
       label = ""
