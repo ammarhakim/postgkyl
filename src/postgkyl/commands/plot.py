@@ -71,7 +71,7 @@ import postgkyl.output.plot
 @click.option("--cutoffglobalrange", "-cogr", default=None, type=click.FLOAT,
               help="Set custom limit for uniform across datasets")
 @click.option("--legend", default=None, type=click.STRING,
-    help="If specified, comma-separated legend labels (e.g., 'a,b,c'). Use '--no-legend' to hide legend.")
+    help="If specified, comma-separated legend labels (e.g., 'a,b,c').")
 @click.option("--no-legend", is_flag=True, help="Hide legend.")
 @click.option("--force-legend", "forcelegend", is_flag=True,
     help="Force legend even when plotting a single dataset.")
