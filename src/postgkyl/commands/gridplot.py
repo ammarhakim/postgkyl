@@ -10,17 +10,20 @@ from postgkyl.utils import verb_print
 
 @click.command()
 @click.argument("name")
-@click.argument("half_domain", type=bool, required=True, default=False)
-@click.argument("null_type", type=click.Choice(['DN', 'SN']), required=True, default='SN')
+@click.argument("half_domain", type=bool, required=True)
+@click.argument("null_type", type=click.Choice(['DN', 'SN']), required=True)
 @click.argument("psisep", type=float, required=False)
 @click.pass_context
 def gridplot(ctx, name, half_domain, null_type, psisep):
   """Plot grid lines and nodes for a given <name>.
 
-  Usage: pgkyl gridplot <name> [half_domain] [psisep]
+  Usage: pgkyl gridplot <name> [half_domain] [null_type] [psisep]
+  
   Expects files like '<name>_psi.gkyl' and '<name>_bX-nodes.gkyl'.
-  half_domain must be set to true if using an 8 block DN geom, otherwise for 12 block DN geoms and SN geoms half_domain must be false.
-  Specify DN for double null configuration and SN for single null configuration
+  
+  half_domain must be set to true if using an 8 block (half domain) DN geom, otherwise for full 12 block DN geoms and SN geoms half_domain must be false.
+  
+  Specify null_type as DN for double null configuration and SN for single null configuration
   
   """
   verb_print(ctx, "Starting gridplot")
@@ -38,9 +41,6 @@ def gridplot(ctx, name, half_domain, null_type, psisep):
     grid[d] = 0.5 * (grid[d][:-1] + grid[d][1:])
   # end
 
-  # Separatrix value: use provided value if given, else fallback default
-  if psisep is None:
-    psisep = 1.5093065418975686
 
   fig, ax = plt.subplots(figsize=(4, 9))
 
