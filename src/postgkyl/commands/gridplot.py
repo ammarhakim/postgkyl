@@ -10,19 +10,23 @@ from postgkyl.utils import verb_print
 
 @click.command()
 @click.argument("name")
-@click.argument("half_domain", type=bool, required=False, default=False)
+@click.argument("half_domain", type=bool, required=True, default=False)
+@click.argument("null_type", type=click.Choice(['DN', 'SN']), required=True, default='SN')
 @click.argument("psisep", type=float, required=False)
 @click.pass_context
-def gridplot(ctx, name, half_domain, psisep):
+def gridplot(ctx, name, half_domain, null_type, psisep):
   """Plot grid lines and nodes for a given <name>.
 
   Usage: pgkyl gridplot <name> [half_domain] [psisep]
   Expects files like '<name>_psi.gkyl' and '<name>_bX-nodes.gkyl'.
+  half_domain must be set to true if using an 8 block DN geom, otherwise for 12 block DN geoms and SN geoms half_domain must be false.
+  Specify DN for double null configuration and SN for single null configuration
+  
   """
   verb_print(ctx, "Starting gridplot")
 
   # Determine if configuration is double-null based on name
-  DN = True if name in ["nstxu_DN", "step"] else False
+  DN = True if null_type == 'DN' else False
 
   # Load psi field and interpolate to cell centers
   psid = GData(f"{name}_psi.gkyl")
