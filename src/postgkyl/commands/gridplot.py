@@ -10,26 +10,55 @@ from postgkyl.utils import verb_print
 
 @click.command()
 @click.argument("name")
-@click.argument("half_domain", type=bool, required=True)
-@click.argument("null_type", type=click.Choice(['DN', 'SN']), required=True)
-@click.argument("psisep", type=float, required=False)
 @click.pass_context
-def gridplot(ctx, name, half_domain, null_type, psisep):
+def gridplot(ctx, name):
   """Plot grid lines and nodes for a given <name>.
 
-  Usage: pgkyl gridplot <name> [half_domain] [null_type] [psisep]
+  Usage: pgkyl gridplot <name>
   
-  Expects files like '<name>_psi.gkyl' and '<name>_bX-nodes.gkyl'.
+  Expects files like '<name>_psi.gkyl', '<name>_bX-nodes.gkyl', and '<name>_settings.gkyl'.
   
-  half_domain must be set to true if using an 8 block (half domain) DN geom, otherwise for full 12 block DN geoms and SN geoms half_domain must be false.
-  
-  Specify null_type as DN for double null configuration and SN for single null configuration
+  Parameters (use_half_domain, toka_type, psisep) are automatically loaded from '<name>_settings.gkyl'.
   
   """
   verb_print(ctx, "Starting gridplot")
 
+  # Load parameters from settings file
+  settings_file = f"{name}_settings.gkyl"
+  try:
+    verb_print(ctx, f"Loading parameters from {settings_file}")
+    
+    # Read only the header metadata, not the data section
+    from postgkyl.data.gkyl_reader import GkylReader
+    reader = GkylReader(settings_file)
+    if reader.is_compatible():
+      reader._read_header()  # Only read header, not domain data
+    
+    # Debug: Print all available context keys
+    verb_print(ctx, f"Available context keys: {list(reader.ctx.keys())}")
+    verb_print(ctx, f"Full context: {reader.ctx}")
+    
+    # Extract parameters from context
+    use_half_domain = reader.ctx.get("use_half_domain")
+    toka_type = reader.ctx.get("toka_type")
+    psisep = reader.ctx.get("psisep")
+    
+
+    verb_print(ctx, f"Loaded use_half_domain: {use_half_domain}")
+    verb_print(ctx, f"Loaded toka_type: {toka_type}")
+    verb_print(ctx, f"Loaded psisep: {psisep}")
+      
+  except Exception as e:
+    ctx.fail(f"Could not load settings from {settings_file}: {e}")
+
+  # Validate required parameters
+  if use_half_domain is None:
+    ctx.fail("use_half_domain not found in settings file")
+  if toka_type is None:
+    ctx.fail("toka_type not found in settings file")
+
   # Determine if configuration is double-null based on name
-  DN = True if null_type == 'DN' else False
+  DN = True if toka_type == 'GKYL_TOKA_GRID_GEN_DOUBLE_NULL' else False
 
   # Load psi field and interpolate to cell centers
   psid = GData(f"{name}_psi.gkyl")
@@ -53,7 +82,7 @@ def gridplot(ctx, name, half_domain, null_type, psisep):
   sim_dir = "./"
   baseName = sim_dir + name
   bmin = 0
-  bmax = 8 if (DN and half_domain) else (12 if DN else 6)
+  bmax = 8 if (DN and use_half_domain) else (12 if DN else 6)
   simNames = [f"{baseName}_b{i}" for i in range(bmin, bmax)]
   Rlist = []
   Zlist = []
@@ -73,7 +102,7 @@ def gridplot(ctx, name, half_domain, null_type, psisep):
     Rlist.append(R)
     Zlist.append(Z)
     # For double null configuration, plot mirrored data with Z -> -Z
-    if DN and half_domain:
+    if DN and use_half_domain:
       Zm = -Z
       segs1m = np.stack((R, Zm), axis=2)
       segs2m = segs1m.transpose(1, 0, 2)
@@ -86,7 +115,7 @@ def gridplot(ctx, name, half_domain, null_type, psisep):
   # end
 
    #Draw divertor plates
-  if DN and half_domain:
+  if DN and use_half_domain:
     for bidx in [4,5]:
         ax.plot(Rlist[bidx][:,-1], Zlist[bidx][:,-1], color='r', linewidth=3.0)
         ax.plot(Rlist[bidx][:,-1], -Zlist[bidx][:,-1], color='r', linewidth=3.0)
@@ -96,7 +125,7 @@ def gridplot(ctx, name, half_domain, null_type, psisep):
         ax.plot(Rlist[bidx][:,0], Zlist[bidx][:,0], color='r', linewidth=3.0)
         ax.plot(Rlist[bidx][:,0], -Zlist[bidx][:,0], color='r', linewidth=3.0)
 
-  elif DN and not half_domain:
+  elif DN and not use_half_domain:
     for bidx in [3, 4, 8, 9]:
         ax.plot(Rlist[bidx][:,-1], Zlist[bidx][:,-1], color='r', linewidth=3.0)
 
