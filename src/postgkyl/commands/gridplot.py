@@ -16,15 +16,15 @@ def gridplot(ctx, name):
 
   Usage: pgkyl gridplot <name>
   
-  Expects files like '<name>_psi.gkyl', '<name>_bX-nodes.gkyl', and '<name>_settings.gkyl'.
+  Expects files like '<name>_geometry/<name>_psi.gkyl', '<name>_geometry/<name>_bX-nodes.gkyl', and '<name>_geometry/<name>_settings.gkyl'.
   
-  Parameters (use_half_domain, toka_type, psisep) are automatically loaded from '<name>_settings.gkyl'.
+  Parameters (use_half_domain, toka_type, psisep) are automatically loaded from '<name>_geometry/<name>_settings.gkyl'.
   
   """
   verb_print(ctx, "Starting gridplot")
-
+  
   # Load parameters from settings file
-  settings_file = f"{name}_settings.gkyl"
+  settings_file = f"{name}_geometry/{name}_settings.gkyl"
   try:
     verb_print(ctx, f"Loading parameters from {settings_file}")
     
@@ -61,7 +61,7 @@ def gridplot(ctx, name):
   DN = True if toka_type == 'GKYL_TOKA_GRID_GEN_DOUBLE_NULL' else False
 
   # Load psi field and interpolate to cell centers
-  psid = GData(f"{name}_psi.gkyl")
+  psid = GData(f"{name}_geometry/{name}_psi.gkyl")
   interp = GInterpModal(psid, 2, "mt")
   grid, psi = interp.interpolate()
 
@@ -79,7 +79,7 @@ def gridplot(ctx, name):
   
 
   colors = ["tab:orange", "tab:blue", "tab:green", "tab:brown", "tab:purple"]
-  sim_dir = "./"
+  sim_dir = f"{name}_geometry/"
   baseName = sim_dir + name
   bmin = 0
   bmax = 8 if (DN and use_half_domain) else (12 if DN else 6)
