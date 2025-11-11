@@ -40,11 +40,11 @@ def fft(data: GData, psd: bool = False, iso: bool = False,
     # end
   # end
   if idx:
-    grid = np.delete(grid, idx)
+    #grid = np.delete(grid, idx)
+    [grid.pop(i) for i in idx[::-1]]
     values = np.squeeze(values, tuple(idx))
     num_dims = len(grid)
   # end
-
   num_comps = data.get_num_comps()
   if num_dims == 1:
     N = len(grid[0])
