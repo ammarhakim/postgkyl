@@ -1,5 +1,6 @@
 import click
 import numpy as np
+from postgkyl.data.idx_parser import idx_parser
 
 
 def _get_grid(grid0, grid1):
@@ -349,6 +350,63 @@ def curl(in_grid, in_values):
   # end
   return [out_grid], [out_values]
 
+def scale_comp(in_grid, in_values):
+  """Scale specific components of the data.
+  
+  Args:
+    in_values[0]: Scaling factor (float) - from RPN stack order
+    in_values[1]: Component specification (string like "2:4" or number)
+    in_values[2]: Original data array (f)
+    
+  Usage: f 2:4 1000 scale_comp  (scales components 2 and 3 by 1000)
+  """
+  
+  out_grid = in_grid[2]  # Use grid from original data (f)
+  original_data = in_values[2].copy()  # Original data (make a copy)
+  comp_spec = in_values[1]  # Component specification (can be string or number)
+  scale_factor = in_values[0]  # Scaling factor
+  
+  scale_factor = scale_factor.item() # Ensure scale_factor is a float
+  # Parse component specification
+  if isinstance(comp_spec, str):
+    comp_idx = idx_parser(comp_spec)
+  elif isinstance(comp_spec, np.ndarray) and comp_spec.size == 1:
+    # Handle single number case
+    comp_idx = int(comp_spec.item()) 
+  else:
+    comp_idx = int(comp_spec)
+  
+  # Apply scaling to specified components
+  if isinstance(comp_idx, slice):
+    original_data[..., comp_idx] *= scale_factor
+  elif isinstance(comp_idx, tuple):
+    for idx in comp_idx:
+      original_data[..., idx] *= scale_factor
+  else:
+    original_data[..., comp_idx] *= scale_factor
+  
+  return [out_grid], [original_data]
+
+def scale_zi_axis(in_grid, in_values):
+  """Scale the axis of the z_i dimension of the data
+
+  Args:
+    in_values[0]: Scaling factor (float) - from RPN stack order
+    in_values[1]: Axis direction (int) - 0,1,2,3,4,5
+    in_values[2]: Original data array (f)
+    
+  Usage: f 1000 scale_xaxis  (scales x-axis by 1000)
+  """
+  
+  out_grid = in_grid[2]  # Use grid from original data (f)
+  original_data = in_values[2].copy()  # Original data (make a copy)
+  idx_scale = in_values[1].item()  # Axis direction (int)
+  scale_factor = in_values[0].item()  # Ensure scale_factor is a float
+
+  # Scale the z_i axis
+  out_grid[int(idx_scale)] *= scale_factor
+
+  return [out_grid], [original_data]
 
 cmds = {
     "+": {"num_in": 2, "num_out": 1, "func": add},
@@ -378,4 +436,6 @@ cmds = {
     "int": {"num_in": 2, "num_out": 1, "func": integrate},
     "div": {"num_in": 1, "num_out": 1, "func": divergence},
     "curl": {"num_in": 1, "num_out": 1, "func": curl},
+    "scale_comp": {"num_in": 3, "num_out": 1, "func": scale_comp},
+    "scale_zi_axis": {"num_in": 3, "num_out": 1, "func": scale_zi_axis},
 }

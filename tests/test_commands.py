@@ -145,7 +145,7 @@ class TestCommands:
     fig = plt.gcf()
     self.ctx.obj['data'].clean()
     self.ctx.obj["in_data_strings_loaded"] = 0
-    label = fig.axes[0].get_ylabel()
+    label = fig.figure.get_supylabel()
     plt.close("all")
     assert label == "$z_1$"
 
@@ -157,7 +157,7 @@ class TestCommands:
     fn = tmp_path / "test_anim.mp4"
     self.ctx.invoke(cmd.animate, show=False, saveas=fn)
     fig = plt.gcf()
-    label = fig.get_axes()[0].get_ylabel()
+    label = fig.figure.get_supylabel()
     self.ctx.obj['data'].clean()
     self.ctx.obj["in_data_strings_loaded"] = 0
     plt.close("all")
