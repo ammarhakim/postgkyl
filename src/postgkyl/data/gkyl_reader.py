@@ -146,6 +146,7 @@ class GkylReader(object):
       self.partial_idxs[6] = str(comp)
     #end
 
+  # Test comment
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll reader."""
     try:
