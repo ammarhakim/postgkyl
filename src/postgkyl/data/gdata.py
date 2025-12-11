@@ -534,7 +534,7 @@ class GData(object):
       # elem_sz
       np.array([num_comps * 8], dtype=dti).tofile(fh, sep="")
       # asize
-      np.array([len(values)], dtype=dti).tofile(fh, sep="")
+      np.array([np.size(values)], dtype=dti).tofile(fh, sep="")
       # data
       np.array(values, dtype=dtf).tofile(fh, sep="")
 
