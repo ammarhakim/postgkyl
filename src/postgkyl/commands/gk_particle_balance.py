@@ -2,45 +2,67 @@ import click
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import glob
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
 @click.command()
-@click.option("--name", "-n", required=True, type=click.STRING, default=None, help="Simulation name (also the file prefix, e.g. gk_sheath_1x2v_p1).")
-@click.option("--species", "-s", required=True, type=click.STRING, default=None, help="Species name.")
-@click.option("--path", "-p", type=click.STRING, default='./.', help="Path to simulation data.")
-@click.option("--relative_error", "-r", is_flag=True, help="Plot the relative error only.")
-@click.option("--fdot_file", type=click.STRING, default=None, help="Integrated moments of change in f over a time step.")
-@click.option("--source_file", type=click.STRING, default=None, help="Integrated moments of the source(s).")
-@click.option("--bflux_x_lower_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through lower x boundary.")
-@click.option("--bflux_y_lower_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through lower y boundary.")
-@click.option("--bflux_z_lower_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through lower z boundary.")
-@click.option("--bflux_x_upper_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through upper x boundary.")
-@click.option("--bflux_y_upper_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through upper y boundary.")
-@click.option("--bflux_z_upper_file", type=click.STRING, default=None, help="Integrated moments of boundary flux through upper z boundary.")
-@click.option("--f_file", type=click.STRING, default=None, help="Integrated moments of f.")
-@click.option("--dt_file", type=click.STRING, default=None, help="Time step.")
-@click.option("--saveas", type=click.STRING, default=None, help="Name of figure file.")
+@click.option("--name", "-n", required=True, type=click.STRING, default=None,
+  help="Simulation name (also the file prefix, e.g. gk_sheath_1x2v_p1).")
+@click.option("--species", "-s", required=True, type=click.STRING, default=None,
+  help="Species name.")
+@click.option("--path", "-p", type=click.STRING, default='./.',
+  help="Path to simulation data.")
+@click.option("--relative_error", "-r", is_flag=True,
+  help="Plot the relative error only.")
+@click.option("--multib", "-m", is_flag=False, flag_value="-1", default="-10",
+  help="Multiblock. Optional: pass block indices as comma-separated list or slice (start:stop:step). If no indices are given, all blocks are used.")
+@click.option("--fdot_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of change in f over a time step.")
+@click.option("--source_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of the source(s).")
+@click.option("--bflux_x_lower_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through lower x boundary.")
+@click.option("--bflux_y_lower_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through lower y boundary.")
+@click.option("--bflux_z_lower_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through lower z boundary.")
+@click.option("--bflux_x_upper_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through upper x boundary.")
+@click.option("--bflux_y_upper_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through upper y boundary.")
+@click.option("--bflux_z_upper_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of boundary flux through upper z boundary.")
+@click.option("--f_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated moments of f.")
+@click.option("--dt_file", type=click.STRING, default=None,
+  help="Time step.")
+@click.option("--saveas", type=click.STRING, default=None,
+  help="Name of figure file.")
 @click.pass_context
 def gk_particle_balance(ctx, **kwargs):
   """
   \b
   Gyrokinetics: Plot the particle balance of a given species.
   Requires the following files:
-    ... _fdot_integrated_moms.gkyl
-    ... _source_integrated_moms.gkyl
-    ... _bflux_<direction><side>_integrated_HamiltonianMoments.gkyl
+    ..._fdot_integrated_moms.gkyl
+    ..._source_integrated_moms.gkyl
+    ..._bflux_<direction><side>_integrated_HamiltonianMoments.gkyl
   where ... means <simulation_name>-<species_name>.
   The last two files above are only needed if the simulation had
   sources or non-periodic boundaries. If the relative error is
   requested, these are also needed:
-    ... _integrated_moms.gkyl
+    ..._integrated_moms.gkyl
     <simulation_name>-dt.gkyl
   are also needed.
 
   The default assumes these are in the current directory.
   Alternatively, the full path to each file can be specified.
+
+  If simulation is multiblock, and you wish to specify files manually:
+    1) Pass * for the block index.
+    2) Use --multib/-m to specify desired blocks (or ommit to use all).
 
   NOTE: this command cannot be combined with other postgkyl commands.
   """
@@ -78,50 +100,131 @@ def gk_particle_balance(ctx, **kwargs):
     else:
       return False
   
+  def parse_slice_string(value):
+    # Parse a 'slice()' from string, like 'start:stop:step'.
+    parts = value.split(':')
+    # Convert parts to integers, replacing empty strings with None for slice defaults
+    parsed_parts = []
+    for p in parts:
+      try:
+        parsed_parts.append(int(p) if p else None)
+      except ValueError:
+        # Handle cases where the part might not be a number
+        raise ValueError(f"Invalid slice part: {p}")
+    # Create the slice object with the appropriate number of arguments
+    return slice(*parsed_parts)
+
   kwargs["path"] = kwargs["path"] + '/' # For safety.
-  file_path_prefix = kwargs["path"] + kwargs["name"] + '-'
 
-  # Load change in species over a time step.
-  if kwargs["fdot_file"]:
-    fdot_file = kwargs["path"] + kwargs["fdot_file"]
+  # Determine blocks to plot, number of blocks, and set file prefix.
+  if kwargs["multib"] == "-10":
+    # Single block.
+    file_path_prefix = kwargs["path"] + kwargs["name"] + '-'
+    blocks = [0]
+    num_blocks = 1
   else:
-    fdot_file = file_path_prefix + kwargs["species"] + '_fdot_integrated_moms.gkyl'
+    # Multi block.
+    file_path_prefix = kwargs["path"] + kwargs["name"] + '_b*-'
 
-  time_fdot, fdot = read_dyn_vector(fdot_file)
-
-  # Load integrated moments of the source.
-  if kwargs["source_file"]:
-    source_file = kwargs["path"] + kwargs["source_file"]
-  else:
-    source_file = file_path_prefix + kwargs["species"] + '_source_integrated_moms.gkyl'
-
-  has_source = does_file_exist(source_file)
-  if has_source:
-    time_src, src = read_dyn_vector(source_file)
-  else:
-    verb_print(ctx, "  -> Particle source file not found.")
-
-  # Load particle boundary fluxes.
-  nbflux = 0
-  time_bflux, bflux = list(), list()
-  has_bflux = False
-  for d in dirs:
-    for e in edges:
-      if kwargs["source_file"]:
-        bflux_file = kwargs["path"] + kwargs["bflux_"+d+e+"_file"]
+    if kwargs["multib"] == "-1":
+      # Find and use all blocks.
+      if kwargs["fdot_file"]:
+        fdot_file = kwargs["path"] + kwargs["fdot_file"]
       else:
-        bflux_file = file_path_prefix + kwargs["species"] + '_bflux_' + d + e + '_integrated_HamiltonianMoments.gkyl'
+        fdot_file = file_path_prefix + kwargs["species"] + '_fdot_integrated_moms.gkyl'
 
-      has_bflux_at_boundary = does_file_exist(bflux_file)
-      if has_bflux_at_boundary:
-        time_bflux_tmp, bflux_tmp = read_dyn_vector(bflux_file)
-        time_bflux.append(time_bflux_tmp)
-        bflux.append(bflux_tmp)
-        has_bflux = has_bflux or has_bflux_at_boundary
-        nbflux += 1
+      fdot_file_list = glob.glob(fdot_file)
+      num_blocks = len(fdot_file_list)
+      blocks = list(range(num_blocks))
+    else:
+      # Use specified blocks.
+      if ',' in kwargs["multib"]:
+        blocks = kwargs["multib"].split(",")
+        num_blocks = len(blocks)
+        blocks = [int(blocks[i]) for i in range(num_blocks)]
+      elif ':' in kwargs["multib"]:
+        slice_obj = parse_slice_string(kwargs["multib"])
+        max_num_blocks = 10000
+        blocks = list(range(*slice_obj.indices(max_num_blocks)))
+        num_blocks = len(blocks)
+
       else:
-        verb_print(ctx, "  -> File with particle fluxes through "+e+" "+d+" boundary not found.")
+        raise NameError("Blocks given to --multib -m must be a comma separated list or slice.")
 
+  block_path_prefix = file_path_prefix
+  for bI in range(num_blocks):
+
+    block_path_prefix = file_path_prefix.replace("*",str(bI))
+
+    # Load change in species over a time step.
+    if kwargs["fdot_file"]:
+      fdot_file = kwargs["path"] + kwargs["fdot_file"].replace("*",str(bI))
+    else:
+      fdot_file = block_path_prefix + kwargs["species"] + '_fdot_integrated_moms.gkyl'
+
+    time_fdot, fdot_pb = read_dyn_vector(fdot_file)
+
+    # Load integrated moments of the source.
+    if kwargs["source_file"]:
+      source_file = kwargs["path"] + kwargs["source_file"].replace("*",str(bI))
+    else:
+      source_file = block_path_prefix + kwargs["species"] + '_source_integrated_moms.gkyl'
+
+    has_source = does_file_exist(source_file)
+    if has_source:
+      time_src, src_pb = read_dyn_vector(source_file)
+    else:
+      verb_print(ctx, "  -> Particle source file not found.")
+
+    # Load particle boundary fluxes.
+    nbflux = 0
+    time_bflux, bflux_pb = list(), list()
+    has_bflux = False
+    for d in dirs:
+      for e in edges:
+        if kwargs["source_file"]:
+          bflux_file = kwargs["path"] + kwargs["bflux_"+d+e+"_file"].replace("*",str(bI))
+        else:
+          bflux_file = block_path_prefix + kwargs["species"] + '_bflux_' + d + e + '_integrated_HamiltonianMoments.gkyl'
+
+        has_bflux_at_boundary = does_file_exist(bflux_file)
+        if has_bflux_at_boundary:
+          time_bflux_tmp, bflux_tmp = read_dyn_vector(bflux_file)
+          time_bflux.append(time_bflux_tmp)
+          bflux_pb.append(bflux_tmp)
+          has_bflux = has_bflux or has_bflux_at_boundary
+          nbflux += 1
+        else:
+          verb_print(ctx, "  -> File with particle fluxes through "+e+" "+d+" boundary not found.")
+
+    # Select the M0 moment.
+    fdot_pb = fdot_pb[:,0]
+    if has_source:
+      src_pb = src_pb[:,0]
+    else:
+      src_pb = 0.0*fdot_pb
+
+    if has_bflux:
+      for i in range(nbflux):
+        bflux_pb[i] = bflux_pb[i][:,0]
+
+      time_bflux_tot = time_bflux[0]
+      bflux_tot_pb = bflux_pb[0] # Total boundary flux loss.
+      for i in range(1,nbflux):
+        bflux_tot_pb += bflux_pb[i]
+    else:
+      bflux_tot_pb = 0.0*fdot_pb
+
+    # Add over blocks.
+    if bI == 0:
+      fdot = fdot_pb
+      src = src_pb
+      bflux_tot = bflux_tot_pb
+    else:
+      fdot += fdot_pb
+      src += src_pb
+      bflux_tot += bflux_tot_pb
+  
   # Create figure.
   figProp1a = (7.5, 4.5)
   ax1aPos = [0.11, 0.15, 0.87, 0.78]
@@ -131,24 +234,7 @@ def gk_particle_balance(ctx, **kwargs):
   if not kwargs["relative_error"]:
     # Plot every term in the particle balance.
 
-    # Select the M0 moment.
-    fdot = fdot[:,0]
-    if has_source:
-      src = src[:,0]
-      src[0] = 0.0 # Set source=0 at t=0 since we don't have fdot and bflux then.
-    else:
-      src = 0.0*fdot
-
-    if has_bflux:
-      for i in range(nbflux):
-        bflux[i] = bflux[i][:,0]
-    
-      time_bflux_tot = time_bflux[0]
-      bflux_tot = bflux[0] # Total boundary flux loss.
-      for i in range(1,nbflux):
-        bflux_tot += bflux[i]
-    else:
-      bflux_tot = 0.0*fdot
+    src[0] = 0.0 # Set source=0 at t=0 since we don't have fdot and bflux then.
 
     # Compute the error.
     mom_err = src - bflux_tot - fdot
@@ -177,40 +263,40 @@ def gk_particle_balance(ctx, **kwargs):
   else:
     # Plot the relative error.
   
-    # Load integrated moments and time step.
-    if kwargs["f_file"]:
-      f_file = kwargs["path"] + kwargs["f_file"]
-    else:
-      f_file = file_path_prefix + kwargs["species"] + '_integrated_moms.gkyl'
-
-    time_distf, distf = read_dyn_vector(f_file)
-
     if kwargs["dt_file"]:
       f_file = kwargs["path"] + kwargs["dt_file"]
     else:
-      f_file = file_path_prefix + 'dt.gkyl'
+      f_file = file_path_prefix.replace("_b*","") + 'dt.gkyl'
 
     time_dt, dt = read_dyn_vector(f_file)
     
-    # Select the M0 moment and remove the t=0 data point.
-    fdot = fdot[1:,0]
-    if has_source:
-      src = src[1:,0]
-    else:
-      src = 0.0*fdot
+    for bI in range(num_blocks):
 
-    if has_bflux:
-      for i in range(nbflux):
-        bflux[i] = bflux[i][1:,0]
+      block_path_prefix = file_path_prefix.replace("*",str(bI))
 
-      bflux_tot = bflux[0]
-      for i in range(1,nbflux):
-        bflux_tot += bflux[i]
-    else:
-      bflux_tot = 0.0*fdot
+      # Load integrated moments and time step.
+      if kwargs["f_file"]:
+        f_file = kwargs["path"] + kwargs["f_file"].replace("*",str(bI))
+      else:
+        f_file = block_path_prefix + kwargs["species"] + '_integrated_moms.gkyl'
 
-    distf = distf[1:,0]
+      time_distf, distf_pb = read_dyn_vector(f_file)
+
+      #[ Select the M0 moment.
+      distf_pb = distf_pb[:,0]
+
+      #[ Add over blocks.
+      if bI == 0:
+        distf = distf_pb
+      else:
+        distf += distf_pb
     
+    # Remove the t=0 data point.
+    fdot = fdot[1:]
+    src = src[1:]
+    bflux_tot = bflux_tot[1:]
+    distf = distf[1:]
+
     # Compute the relative error.
     mom_err = src - bflux_tot - fdot
     mom_err_norm = mom_err*dt/distf
