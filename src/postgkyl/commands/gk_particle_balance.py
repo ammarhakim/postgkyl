@@ -38,6 +38,20 @@ from postgkyl.utils import verb_print
   help="Integrated moments of f.")
 @click.option("--dt_file", type=click.STRING, default=None,
   help="Time step.")
+@click.option("--logy", is_flag=True, default=False,
+  help="Logarithmic scale for y axis.")
+@click.option("--absy", is_flag=True, default=False,
+  help="Take absolute value of time traces.")
+@click.option("--xlabel", type=click.STRING, default="Time (s)",
+  help="Label for the x axis.")
+@click.option("--ylabel", type=click.STRING, default=None,
+  help="Label for the y axis.")
+@click.option("--title", type=click.STRING, default=None,
+  help="Take absolute value of time traces.")
+@click.option("--indent_left", type=click.FLOAT, default=0.0,
+  help="A number in the [-0.11,0.88] range by which to shift the left boundary of the plot.")
+@click.option("--add_width", type=click.FLOAT, default=0.0,
+  help="A number in the [-0.86,0.13] range by which to increase the width the plot.")
 @click.option("--saveas", type=click.STRING, default=None,
   help="Name of figure file.")
 @click.pass_context
@@ -80,12 +94,13 @@ def gk_particle_balance(ctx, **kwargs):
   line_styles = ['-','--',':','-.','None','None','None','None']
   # Font sizes.
   xy_label_font_size = 17
+  title_font_size = 17
   tick_font_size = 14
   legend_font_size = 14
 
   # Create figure.
   figProp1a = (7.5, 4.5)
-  ax1aPos = [0.11, 0.15, 0.87, 0.78]
+  ax1aPos = [0.11+kwargs["indent_left"], 0.15, 0.87+kwargs["add_width"], 0.78]
   fig1a = plt.figure(figsize=figProp1a)
   ax1a = fig1a.add_axes(ax1aPos)
 
@@ -132,6 +147,14 @@ def gk_particle_balance(ctx, **kwargs):
     else:
       target_arr += old_arr
       return target_arr
+
+  def absy_enabled(data_in):
+    # Take the absolute value of the data
+    return np.abs(data_in)
+
+  def absy_disabled(data_in):
+    # Don't take the absolute value of the data
+    return data_in
   #
   # End of hardcoded parameters and auxiliary functions.
   #
@@ -139,6 +162,10 @@ def gk_particle_balance(ctx, **kwargs):
   data = ctx.obj["data"]  # Data stack.
   
   verb_print(ctx, "Plotting particle balance for " + kwargs["species"] + " species.")
+
+  absy_func = absy_disabled
+  if kwargs["absy"]:
+    absy_func = absy_enabled
 
   kwargs["path"] = kwargs["path"] + '/' # For safety.
 
@@ -262,23 +289,28 @@ def gk_particle_balance(ctx, **kwargs):
     mom_err = src - bflux_tot - fdot
     
     # Plot.
-    hpl1a.append(ax1a.plot(time_fdot, fdot, linestyle=line_styles[0]))
+    hpl1a.append(ax1a.plot(time_fdot, absy_func(fdot), linestyle=line_styles[0]))
     legend_strings = [r'$\dot{f}$']
     if has_src:
-      hpl1a.append(ax1a.plot(time_src, src, linestyle=line_styles[2]))
+      hpl1a.append(ax1a.plot(time_src, absy_func(src), linestyle=line_styles[2]))
       legend_strings.append(r'$\mathcal{S}$')
 
     if has_bflux:
-      hpl1a.append(ax1a.plot(time_bflux_tot, -bflux_tot, linestyle=line_styles[1]))
+      hpl1a.append(ax1a.plot(time_bflux_tot, absy_func(-bflux_tot), linestyle=line_styles[1]))
       legend_strings.append(r'$-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f$')
 
-    hpl1a.append(ax1a.plot(time_fdot, mom_err, linestyle=line_styles[3]))
+    hpl1a.append(ax1a.plot(time_fdot, absy_func(mom_err), linestyle=line_styles[3]))
     legend_strings.append(r'$E_{\dot{\mathcal{N}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-\dot{f}$')
 
-    ax1a.set_xlabel(r'Time',fontsize=xy_label_font_size)
-    ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
+    ylabel_string = ""
+    if kwargs["ylabel"]:
+      ylabel_string = kwargs["ylabel"]
+
+    title_string = r'Particle balance'
+    if kwargs["title"]:
+      title_string = kwargs["title"]
+
     ax1a.legend([hpl1a[i][0] for i in range(1,len(hpl1a))], legend_strings, fontsize=legend_font_size, frameon=False)
-    set_tick_font_size(ax1a,tick_font_size)
 
     # Add datasets plotted to stack.
     gdat_fdot.push(time_fdot, fdot)
@@ -337,16 +369,28 @@ def gk_particle_balance(ctx, **kwargs):
     mom_err_norm = mom_err*dt/distf
 
     # Plot.
-    hpl1a.append(ax1a.plot(time_dt, mom_err_norm))
+    hpl1a.append(ax1a.plot(time_dt, absy_func(mom_err_norm)))
     
-    ax1a.set_xlabel(r'Time',fontsize=xy_label_font_size)
-    ax1a.set_ylabel(r'$E_{\dot{\mathcal{N}}}~\Delta t/\mathcal{N}$',fontsize=xy_label_font_size)
-    ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
-    set_tick_font_size(ax1a,tick_font_size)
-    
+    ylabel_string = r'$E_{\dot{\mathcal{N}}}~\Delta t/\mathcal{N}$'
+    if kwargs["ylabel"]:
+      ylabel_string = kwargs["ylabel"]
+  
+    title_string = r'Relative error in particle conservation'
+    if kwargs["title"]:
+      title_string = kwargs["title"]
+
     # Add datasets plotted to stack.
     gdat_rel_err.push(time_dt, mom_err_norm)
     data.add(gdat_rel_err)
+
+  if kwargs["logy"]:
+    ax1a.set_yscale("log")
+
+  ax1a.set_xlabel(kwargs["xlabel"],fontsize=xy_label_font_size)
+  ax1a.set_ylabel(ylabel_string,fontsize=xy_label_font_size)
+  ax1a.set_title(title_string,fontsize=title_font_size)
+  ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
+  set_tick_font_size(ax1a,tick_font_size)
 
   if kwargs["saveas"]:
     plt.savefig(kwargs["saveas"])

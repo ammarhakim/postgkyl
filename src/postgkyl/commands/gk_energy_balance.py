@@ -163,7 +163,6 @@ def gk_energy_balance(ctx, **kwargs):
   def absy_disabled(data_in):
     # Don't take the absolute value of the data
     return data_in
-
   #
   # End of hardcoded parameters and auxiliary functions.
   #
@@ -172,10 +171,9 @@ def gk_energy_balance(ctx, **kwargs):
   
   verb_print(ctx, "Plotting energy balance for " + kwargs["name"])
 
+  absy_func = absy_disabled
   if kwargs["absy"]:
     absy_func = absy_enabled
-  else:
-    absy_func = absy_disabled
 
   kwargs["path"] = kwargs["path"] + '/' # For safety.
  
@@ -344,9 +342,6 @@ def gk_energy_balance(ctx, **kwargs):
     hpl1a.append(ax1a.plot(time_fdot, absy_func(mom_err), linestyle=line_styles[3]))
     legend_strings.append(r'$E_{\dot{\mathcal{E}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-(\dot{f}-\dot{\phi})$')
 
-    if kwargs["logy"]:
-      ax1a.set_yscale("log")
-
     ylabel_string = ""
     if kwargs["ylabel"]:
       ylabel_string = kwargs["ylabel"]
@@ -439,8 +434,6 @@ def gk_energy_balance(ctx, **kwargs):
 
     # Plot.
     hpl1a.append(ax1a.plot(time_dt, absy_func(mom_err_norm)))
-    if kwargs["logy"]:
-      ax1a.set_yscale("log")
 
     ylabel_string = r'$|E_{\dot{\mathcal{E}}}~\Delta t/\mathcal{E}|$'
     if kwargs["ylabel"]:
@@ -454,10 +447,13 @@ def gk_energy_balance(ctx, **kwargs):
     gdat_rel_err.push(time_dt, mom_err_norm)
     data.add(gdat_rel_err)
 
-  ax1a.set_ylabel(ylabel_string,fontsize=xy_label_font_size)
+  if kwargs["logy"]:
+    ax1a.set_yscale("log")
+
   ax1a.set_xlabel(kwargs["xlabel"],fontsize=xy_label_font_size)
-  ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
+  ax1a.set_ylabel(ylabel_string,fontsize=xy_label_font_size)
   ax1a.set_title(title_string,fontsize=title_font_size)
+  ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
   set_tick_font_size(ax1a,tick_font_size)
 
   if kwargs["saveas"]:
