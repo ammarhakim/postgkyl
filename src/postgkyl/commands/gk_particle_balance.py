@@ -66,6 +66,9 @@ def gk_particle_balance(ctx, **kwargs):
 
   NOTE: this command cannot be combined with other postgkyl commands.
   """
+
+  data = ctx.obj["data"]  # shortcut
+  
   verb_print(ctx, "Plotting particle balance for " + kwargs["species"] + " species.")
 
   # Labels used to identify boundary flux files.
@@ -91,7 +94,7 @@ def gk_particle_balance(ctx, **kwargs):
     pgData = GData(dataFile)  # Read data with pgkyl.
     time = pgData.get_grid()  # Time stamps of the simulation.
     val = pgData.get_values()  # Data values.
-    return np.squeeze(time), np.squeeze(val)
+    return np.squeeze(time), np.squeeze(val), pgData
   
   def does_file_exist(fileIn):
     # Check if a file exists.
@@ -162,7 +165,9 @@ def gk_particle_balance(ctx, **kwargs):
     else:
       fdot_file = block_path_prefix + kwargs["species"] + '_fdot_integrated_moms.gkyl'
 
-    time_fdot, fdot_pb = read_dyn_vector(fdot_file)
+    time_fdot, fdot_pb, gdat = read_dyn_vector(fdot_file)
+    if bI == 0:
+      gdat_fdot = GData(tag="fdot", label="fdot", ctx=gdat.ctx)
 
     # Load integrated moments of the source.
     if kwargs["source_file"]:
@@ -172,7 +177,8 @@ def gk_particle_balance(ctx, **kwargs):
 
     has_source = does_file_exist(source_file)
     if has_source:
-      time_src, src_pb = read_dyn_vector(source_file)
+      time_src, src_pb, gdat = read_dyn_vector(source_file)
+      gdat_src = GData(tag="src", label="src", ctx=gdat.ctx)
     else:
       verb_print(ctx, "  -> Particle source file not found.")
 
@@ -189,7 +195,9 @@ def gk_particle_balance(ctx, **kwargs):
 
         has_bflux_at_boundary = does_file_exist(bflux_file)
         if has_bflux_at_boundary:
-          time_bflux_tmp, bflux_tmp = read_dyn_vector(bflux_file)
+          time_bflux_tmp, bflux_tmp, gdat = read_dyn_vector(bflux_file)
+          gdat_bflux = GData(tag="bflux", label="bflux", ctx=gdat.ctx)
+
           time_bflux.append(time_bflux_tmp)
           bflux_pb.append(bflux_tmp)
           has_bflux = has_bflux or has_bflux_at_boundary
@@ -224,7 +232,7 @@ def gk_particle_balance(ctx, **kwargs):
       fdot += fdot_pb
       src += src_pb
       bflux_tot += bflux_tot_pb
-  
+
   # Create figure.
   figProp1a = (7.5, 4.5)
   ax1aPos = [0.11, 0.15, 0.87, 0.78]
@@ -260,6 +268,22 @@ def gk_particle_balance(ctx, **kwargs):
     ax1a.legend([hpl1a[i][0] for i in range(1,len(hpl1a))], legend_strings, fontsize=legend_font_size, frameon=False)
     set_tick_font_size(ax1a,tick_font_size)
 
+    # Add datasets plotted to stack.
+    gdat_fdot.push(time_fdot, fdot)
+    data.add(gdat_fdot)
+
+    if has_source:
+      gdat_src.push(time_src, src)
+      data.add(gdat_src)
+
+    if has_bflux:
+      gdat_bflux.push(time_bflux, -bflux_tot)
+      data.add(gdat_bflux)
+
+    gdat_err = GData(tag="err", label="err", ctx=gdat_fdot.ctx)
+    gdat_err.push(time_fdot, mom_err)
+    data.add(gdat_err)
+
   else:
     # Plot the relative error.
   
@@ -268,7 +292,8 @@ def gk_particle_balance(ctx, **kwargs):
     else:
       f_file = file_path_prefix.replace("_b*","") + 'dt.gkyl'
 
-    time_dt, dt = read_dyn_vector(f_file)
+    time_dt, dt, gdat = read_dyn_vector(f_file)
+    gdat_rel_err = GData(tag="rel_err", label="rel_err", ctx=gdat.ctx)
     
     for bI in range(num_blocks):
 
@@ -280,7 +305,7 @@ def gk_particle_balance(ctx, **kwargs):
       else:
         f_file = block_path_prefix + kwargs["species"] + '_integrated_moms.gkyl'
 
-      time_distf, distf_pb = read_dyn_vector(f_file)
+      time_distf, distf_pb, _ = read_dyn_vector(f_file)
 
       #[ Select the M0 moment.
       distf_pb = distf_pb[:,0]
@@ -311,9 +336,13 @@ def gk_particle_balance(ctx, **kwargs):
     ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
     set_tick_font_size(ax1a,tick_font_size)
     
+    # Add datasets plotted to stack.
+    gdat_rel_err.push(time_dt, mom_err_norm)
+    data.add(gdat_rel_err)
+
   if kwargs["saveas"]:
     plt.savefig(kwargs["saveas"])
   else:
     plt.show()
-  
+
   verb_print(ctx, "Finishing particle balance.")
