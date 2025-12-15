@@ -63,7 +63,14 @@ def read_interp_gfile(file_name, poly_order, basis_type, comp=0):
   pgData = GData(file_name) # Read data with pgkyl.
   interp = GInterpModal(pgData,poly_order,basis_type)
   grid, vals = interp.interpolate(comp)
-  return np.squeeze(grid), np.squeeze(vals), pgData
+  if isinstance(grid, np.ndarray):
+    grid_out = np.squeeze(grid)
+  else:
+    grid_out = list()
+    for d in range(len(grid)):
+      grid_out.append(np.squeeze(grid[d]))
+
+  return grid_out, np.squeeze(vals), pgData
 
 def parse_slice_string(value):
   # Parse a 'slice()' from string, like 'start:stop:step'.

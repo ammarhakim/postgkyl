@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 from matplotlib.collections import LineCollection
+from itertools import cycle
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
@@ -44,6 +45,7 @@ import postgkyl.utils.gk_utils as gku
   help="A number in the [-0.11,0.88] range by which to shift the left boundary of the plot.")
 @click.option("--add_width", type=click.FLOAT, default=0.0,
   help="A number in the [-0.86,0.13] range by which to increase the width the plot.")
+@click.option("--multib_unicolor", is_flag=True, default=False, help="Use one color for all blocks.")
 @click.option("--saveas", type=click.STRING, default=None,
   help="Name of figure file.")
 @click.pass_context
@@ -100,7 +102,7 @@ def gk_nodes(ctx, **kwargs):
   # Loop through blocks to find extrema.
   majorR_ex = [1e9, -1e9]
   vertZ_ex = [1e9, -1e9]
-  for bI in range(num_blocks):
+  for bI in blocks:
     block_path_prefix = file_path_prefix.replace("*",str(bI))
 
     # Load nodes.
@@ -126,10 +128,15 @@ def gk_nodes(ctx, **kwargs):
   fig1a     = plt.figure(figsize=figProp1a)
   ax1a      = fig1a.add_axes(ax1aPos)
 
+  # Color cycler for plotting each block in a different color.
+  block_colors = cycle(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+  if kwargs["multib_unicolor"]:
+    block_colors = cycle([plt.rcParams['axes.prop_cycle'].by_key()['color'][0]])
+
   # Loop through blocks to plot.
   hpl1a = list()
   hcb1a = list()
-  for bI in range(num_blocks):
+  for bI in blocks:
 
     block_path_prefix = file_path_prefix.replace("*",str(bI))
     # Load nodes.
@@ -141,13 +148,13 @@ def gk_nodes(ctx, **kwargs):
 
     # Plot each node.
     hpl1a.append(ax1a.plot(majorR,vertZ,marker=".", color="k", linestyle="none"))
-    #plt.scatter(R,Z, marker=".")
 
     # Connect nodes with line segments.
+    cell_color = next(block_colors)
     segs1 = np.stack((majorR,vertZ), axis=2)
     segs2 = segs1.transpose(1,0,2)
-    ax1a.add_collection(LineCollection(segs1))
-    ax1a.add_collection(LineCollection(segs2))
+    ax1a.add_collection(LineCollection(segs1, color=cell_color))
+    ax1a.add_collection(LineCollection(segs2, color=cell_color))
 
 #    # Add datasets plotted to stack.
 #    gdat_fdot.push(time_fdot, fdot)
