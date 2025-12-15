@@ -5,6 +5,7 @@
 import numpy as np
 import os
 import glob
+from postgkyl.data import GInterpModal
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 
@@ -20,6 +21,7 @@ xy_label_font_size = 17
 title_font_size = 17
 tick_font_size = 14
 legend_font_size = 14
+colorbar_label_font_size = 17
 
 def set_tick_font_size(axIn,fontSizeIn):
   # Set the font size of the ticks to a given size.
@@ -45,6 +47,16 @@ def read_gfile_if_present(file_name):
   else:
     verb_print(ctx, "  -> File "+file_name+" not found. Proceeding w/o it.")
     return False, None, None, None
+
+def read_interp_gfile(file_name, poly_order, basis_type, comp=0):
+  # Read a Gkeyll file and interpolate its DG dataset assuming it has a
+  # polynomial basis of 'poly_order' order and basis type 'basis_type'.
+  # Optional argument 'comp' requests a specific component if a file
+  # contains multiple DG datasets.
+  pgData = GData(file_name) # Read data with pgkyl.
+  interp = GInterpModal(pgData,poly_order,basis_type)
+  grid, vals = interp.interpolate(comp)
+  return np.squeeze(grid), np.squeeze(vals), pgData
 
 def parse_slice_string(value):
   # Parse a 'slice()' from string, like 'start:stop:step'.

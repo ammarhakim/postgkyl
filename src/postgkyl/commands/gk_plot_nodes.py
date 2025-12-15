@@ -18,10 +18,14 @@ import postgkyl.utils.gk_utils as gku
   help="Multiblock. Optional: pass block indices as comma-separated list or slice (start:stop:step). If no indices are given, all blocks are used.")
 @click.option("--nodes_file", type=click.STRING, default=None, multiple=True,
   help="Grid nodes (.gkyl format).")
-@click.option("--psi_file", type=click.STRING, default=None, multiple=True,
+@click.option("--psi_file", type=click.STRING, default=None,
   help="Poloidal flux (.gkyl format).")
-@click.option("--wall_file", type=click.STRING, default=None, multiple=True,
+@click.option("--wall_file", type=click.STRING, default=None,
   help="Vacuum vessel wall (.csv format).")
+@click.option("--contour", "-c", is_flag=True, help="Plot contours of psi.")
+@click.option("--clevels", type=click.STRING,
+    help="Specify levels for contours: comma-separated level values or start:end:nlevels.")
+@click.option("--cnlevels", type=click.INT, default=11, help="Specify the number of levels for contours.")
 @click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
     help="Enforce the same scaling on both axes.")
 @click.option("--xlim", default=None, type=click.STRING,
@@ -32,6 +36,8 @@ import postgkyl.utils.gk_utils as gku
   help="Label for the x axis.")
 @click.option("--ylabel", type=click.STRING, default="R (z)",
   help="Label for the y axis.")
+@click.option("--zlabel", type=click.STRING, default=r"$\psi$",
+  help="Label for the color bar.")
 @click.option("--title", type=click.STRING, default=None,
   help="Title for the figure.")
 @click.option("--saveas", type=click.STRING, default=None,
@@ -108,14 +114,16 @@ def gk_plot_nodes(ctx, **kwargs):
   lengthR, lengthZ = Rmax-Rmin, Zmax-Zmin
   aspect_ratio = lengthR/lengthZ
 
-  ax1aPos   = [0.88-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.14), 0.08,
-               (8.36*aspect_ratio)/(8.36*aspect_ratio+2.14), 0.88]
-  figProp1a = (8.36*aspect_ratio+2.14, 8.36+1.14)
+  ax1aPos   = [0.82-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.5), 0.08,
+               (8.36*aspect_ratio)/(8.36*aspect_ratio+2.5), 0.88]
+  cax1aPos  = [ax1aPos[0]+ax1aPos[2]+0.01, ax1aPos[1], 0.02, ax1aPos[3]];
+  figProp1a = (8.36*aspect_ratio+2.5, 8.36+1.14)
   fig1a     = plt.figure(figsize=figProp1a)
   ax1a      = fig1a.add_axes(ax1aPos)
 
   # Loop through blocks to plot.
   hpl1a = list()
+  hcb1a = list()
   for bI in range(num_blocks):
 
     block_path_prefix = file_path_prefix.replace("*",str(bI))
@@ -133,8 +141,8 @@ def gk_plot_nodes(ctx, **kwargs):
     # Connect nodes with line segments.
     segs1 = np.stack((majorR,vertZ), axis=2)
     segs2 = segs1.transpose(1,0,2)
-    plt.gca().add_collection(LineCollection(segs1))
-    plt.gca().add_collection(LineCollection(segs2))
+    ax1a.add_collection(LineCollection(segs1))
+    ax1a.add_collection(LineCollection(segs2))
 
 #    # Add datasets plotted to stack.
 #    gdat_fdot.push(time_fdot, fdot)
@@ -143,6 +151,53 @@ def gk_plot_nodes(ctx, **kwargs):
 #    gdat_err = GData(tag="err", label="err", ctx=gdat_fdot.ctx)
 #    gdat_err.push(time_fdot, mom_err)
 #    data.add(gdat_err)
+
+  if kwargs["psi_file"]:
+    colorbar = True
+    # Plot poloidal flux.
+    psi_grid, psi_values, gdat = gku.read_interp_gfile(kwargs["psi_file"], 2, 'mt')
+    # Convert nodal to cell center coordinates.
+    psi_grid_cc = list()
+    for d in range(len(psi_grid)):
+      psi_grid_cc.append(0.5*(psi_grid[d][:-1] + psi_grid[d][1:]))
+
+    if kwargs["contour"]:
+      # Contour plot.
+      if kwargs["clevels"]:
+        if ":" in kwargs["clevels"]:
+          s = clevels.split(":")
+          psi_clevels = np.linspace(float(s[0]), float(s[1]), int(s[2]))
+        else:
+          psi_clevels = np.array(kwargs["clevels"].split(","))
+          # Filter out empty elements
+          psi_clevels = np.array(list(filter(None, psi_clevels)))
+      else:
+        psi_clevels = kwargs["cnlevels"]
+
+      if isinstance(psi_clevels, np.ndarray) and len(psi_clevels) == 1:
+        colorbar = False
+
+      hpl1a.append(ax1a.contour(psi_grid_cc[0], psi_grid_cc[1], psi_values.transpose(), psi_clevels))
+
+      # Add colorbar.
+      if isinstance(psi_clevels, np.ndarray):
+        if np.size(psi_clevels) == 1:
+          colorbar = False
+
+    else:
+      # Color plot.
+      hpl1a.append(ax1a.pcolormesh(psi_grid[0], psi_grid[1], psi_values.transpose(), cmap='inferno'))
+
+    if colorbar:
+      cbar_ax1a = fig1a.add_axes(cax1aPos)
+      hcb1a.append(plt.colorbar(hpl1a[-1], ax=ax1a, cax=cbar_ax1a))
+      hcb1a[0].ax.tick_params(labelsize=gku.tick_font_size)
+      hcb1a[0].set_label(kwargs["zlabel"], rotation=90, labelpad=0, fontsize=gku.colorbar_label_font_size)
+
+  if kwargs["wall_file"]:
+    # Plot the wall.
+    wall_data = np.loadtxt(open(kwargs["wall_file"]),delimiter=',')
+    ax1a.plot(wall_data[:,0],wall_data[:,1],color="grey")
 
   ax1a.set_xlabel(kwargs["xlabel"],fontsize=gku.xy_label_font_size)
   ax1a.set_ylabel(kwargs["ylabel"],fontsize=gku.xy_label_font_size)
