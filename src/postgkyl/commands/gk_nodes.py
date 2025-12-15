@@ -67,14 +67,6 @@ def gk_nodes(ctx, **kwargs):
   NOTE: this command cannot be combined with other postgkyl commands.
   """
 
-  #
-  # Hardcoded parameters and auxiliary functions.
-  #
-
-  #
-  # End of hardcoded parameters and auxiliary functions.
-  #
-
   data = ctx.obj["data"]  # Data stack.
 
   verb_print(ctx, "Plotting nodes for " + kwargs["name"])
@@ -129,9 +121,10 @@ def gk_nodes(ctx, **kwargs):
   ax1a      = fig1a.add_axes(ax1aPos)
 
   # Color cycler for plotting each block in a different color.
-  block_colors = cycle(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+  color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+  block_colors = cycle(color_list)
   if kwargs["multib_unicolor"]:
-    block_colors = cycle([plt.rcParams['axes.prop_cycle'].by_key()['color'][0]])
+    block_colors = cycle([color_list[0]])
 
   # Loop through blocks to plot.
   hpl1a = list()
@@ -141,7 +134,6 @@ def gk_nodes(ctx, **kwargs):
     block_path_prefix = file_path_prefix.replace("*",str(bI))
     # Load nodes.
     grid, nodes, gdat = gku.read_gfile(nodes_file.replace("*",str(bI)))
-    gdat_out = GData(tag="nodes", label="nodes", ctx=gdat.ctx)
 
     majorR = nodes[:,:,0] # Major radius.
     vertZ = nodes[:,:,1] # Vertical location.
@@ -150,19 +142,16 @@ def gk_nodes(ctx, **kwargs):
     hpl1a.append(ax1a.plot(majorR,vertZ,marker=".", color="k", linestyle="none"))
 
     # Connect nodes with line segments.
-    cell_color = next(block_colors)
     segs1 = np.stack((majorR,vertZ), axis=2)
     segs2 = segs1.transpose(1,0,2)
-    ax1a.add_collection(LineCollection(segs1, color=cell_color))
-    ax1a.add_collection(LineCollection(segs2, color=cell_color))
+    cell_color = next(block_colors)
+    hpl1a.append(ax1a.add_collection(LineCollection(segs1, color=cell_color)))
+    hpl1a.append(ax1a.add_collection(LineCollection(segs2, color=cell_color)))
 
-#    # Add datasets plotted to stack.
-#    gdat_fdot.push(time_fdot, fdot)
-#    data.add(gdat_fdot)
-#
-#    gdat_err = GData(tag="err", label="err", ctx=gdat_fdot.ctx)
-#    gdat_err.push(time_fdot, mom_err)
-#    data.add(gdat_err)
+    # Add datasets plotted to stack.
+    gdat_nodes = GData(tag="nodes", label="nodes", ctx=gdat.ctx)
+    gdat_nodes.push(majorR, vertZ)
+    data.add(gdat_nodes)
 
   if kwargs["psi_file"]:
     colorbar = True
@@ -205,6 +194,15 @@ def gk_nodes(ctx, **kwargs):
       hcb1a.append(plt.colorbar(hpl1a[-1], ax=ax1a, cax=cbar_ax1a))
       hcb1a[0].ax.tick_params(labelsize=gku.tick_font_size)
       hcb1a[0].set_label(kwargs["zlabel"], rotation=90, labelpad=0, fontsize=gku.colorbar_label_font_size)
+
+    # Add datasets plotted to stack.
+    gdat_psi = GData(tag="psi", label="psi", ctx=gdat.ctx)
+    if kwargs["contour"]:
+      gdat_psi.push(psi_grid_cc, psi_values.transpose())
+    else:
+      gdat_psi.push(psi_grid, psi_values.transpose())
+
+    data.add(gdat_psi)
 
   if kwargs["wall_file"]:
     # Plot the wall.
