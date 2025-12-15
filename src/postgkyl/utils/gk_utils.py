@@ -36,7 +36,14 @@ def read_gfile(file_name):
   pgData = GData(file_name) # Read data with pgkyl.
   grid = pgData.get_grid() # Time stamps of the simulation.
   vals = pgData.get_values() # Data values.
-  return np.squeeze(grid), np.squeeze(vals), pgData
+  if isinstance(grid, np.ndarray):
+    grid_out = np.squeeze(grid)
+  else:
+    grid_out = list()
+    for d in range(len(grid)):
+      grid_out.append(np.squeeze(grid[d]))
+
+  return grid_out, np.squeeze(vals), pgData
 
 def read_gfile_if_present(file_name):
   # Check if a Gkeyll file exists. If it does, read it and return

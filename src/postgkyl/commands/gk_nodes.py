@@ -40,6 +40,10 @@ import postgkyl.utils.gk_utils as gku
   help="Label for the color bar.")
 @click.option("--title", type=click.STRING, default=None,
   help="Title for the figure.")
+@click.option("--indent_left", type=click.FLOAT, default=0.0,
+  help="A number in the [-0.11,0.88] range by which to shift the left boundary of the plot.")
+@click.option("--add_width", type=click.FLOAT, default=0.0,
+  help="A number in the [-0.86,0.13] range by which to increase the width the plot.")
 @click.option("--saveas", type=click.STRING, default=None,
   help="Name of figure file.")
 @click.pass_context
@@ -100,6 +104,7 @@ def gk_nodes(ctx, **kwargs):
     block_path_prefix = file_path_prefix.replace("*",str(bI))
 
     # Load nodes.
+    print(nodes_file)
     grid, nodes, gdat = gku.read_gfile(nodes_file.replace("*",str(bI)))
 
     majorR = nodes[:,:,0] # Major radius.
@@ -114,8 +119,8 @@ def gk_nodes(ctx, **kwargs):
   lengthR, lengthZ = Rmax-Rmin, Zmax-Zmin
   aspect_ratio = lengthR/lengthZ
 
-  ax1aPos   = [0.82-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.5), 0.08,
-               (8.36*aspect_ratio)/(8.36*aspect_ratio+2.5), 0.88]
+  ax1aPos   = [0.82-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["indent_left"], 0.08,
+               (8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["add_width"], 0.88]
   cax1aPos  = [ax1aPos[0]+ax1aPos[2]+0.01, ax1aPos[1], 0.02, ax1aPos[3]];
   figProp1a = (8.36*aspect_ratio+2.5, 8.36+1.14)
   fig1a     = plt.figure(figsize=figProp1a)
