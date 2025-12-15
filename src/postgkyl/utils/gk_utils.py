@@ -108,6 +108,7 @@ def get_block_indices(multib, file_path_name):
       # Use specified blocks.
       if ',' in multib:
         blocks = multib.split(",")
+        num_blocks = len(blocks)
         blocks = [int(blocks[i]) for i in range(num_blocks)]
       elif ':' in multib:
         slice_obj = parse_slice_string(multib)
