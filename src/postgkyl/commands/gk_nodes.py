@@ -43,7 +43,7 @@ import postgkyl.utils.gk_utils as gku
 @click.option("--saveas", type=click.STRING, default=None,
   help="Name of figure file.")
 @click.pass_context
-def gk_plot_nodes(ctx, **kwargs):
+def gk_nodes(ctx, **kwargs):
   """
   \b
   Gyrokinetics: Plot nodes of the grid, with an option to overlay
