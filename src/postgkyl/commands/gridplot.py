@@ -149,7 +149,7 @@ def gridplot(ctx, name):
   ax.set_ylabel("Z [m]")
   ax.axis("tight")
   ax.axis("image")
-  #ax.legend(handles=handles, loc="best")
+  ax.legend(handles=handles, loc="upper right")
 
   fig.tight_layout()
 
