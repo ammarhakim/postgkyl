@@ -16,7 +16,8 @@ def gridplot(ctx, name):
 
   Usage: pgkyl gridplot <name>
   
-  Expects files like '<name>_geometry/<name>_psi.gkyl', '<name>_geometry/<name>_bX-nodes.gkyl', and '<name>_geometry/<name>_settings.gkyl'.
+  Expects a directory like '<name>_geometry/' to exist., the files '<name>_bX-nodes.gkyl', and '<name>_settings.gkyl' must exist in that directory. 
+  Directory and relevant files can be generated using tokagridgen tool.
   
   Parameters (use_half_domain, toka_type, psisep) are automatically loaded from '<name>_geometry/<name>_settings.gkyl'.
   
