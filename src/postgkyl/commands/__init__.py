@@ -29,6 +29,7 @@ from postgkyl.commands.mask import mask
 from postgkyl.commands.mhd import mhd
 from postgkyl.commands.parrotate import parrotate
 from postgkyl.commands.perprotate import perprotate
+from postgkyl.commands.gridplot import gridplot
 from postgkyl.commands.plot import plot
 from postgkyl.commands.pr import pr
 from postgkyl.commands.relchange import relchange
