@@ -408,10 +408,25 @@ class GData(object):
       output += f"│  ├─ Changeset: {self.ctx['changeset']:s}\n"
       output += f"│  └─ Build Date: {self.ctx['builddate']:s}"
     # end
+    if "geometry_type" in self.ctx:
+      geo_types = [
+        "GKYL_GEOMETRY_NONE",
+        "GKYL_GEOMETRY_TOKAMAK",
+        "GKYL_GEOMETRY_MIRROR",
+        "GKYL_GEOMETRY_MAPC2P",
+        "GKYL_GEOMETRY_FROMFILE",
+      ] # Has to match what's in gkeyll.
+
+      output += "\n├─ Geometry info:\n"
+      output += f"│  ├─ Type: {geo_types[self.ctx['geometry_type']]:s}"
+      if "geqdsk_sign_convention" in self.ctx:
+        output += f"\n│  ├─ GEQDSK sign convention: {self.ctx['geqdsk_sign_convention']:d}"
+      # end
+    # end
     for key, val in self.ctx.items():
       if key not in ["time", "frame", "changeset", "builddate", "basis_type",
           "poly_order","is_modal", "lower", "upper", "cells", "num_comps",
-          "grid_type", "num_cdim", "num_vdim"] and val is not None:
+          "grid_type", "num_cdim", "num_vdim","geometry_type","geqdsk_sign_convention"] and val is not None:
         output += f"\n├─ {key:s}: {val}"
       # end
     # end
