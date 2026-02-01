@@ -394,13 +394,18 @@ class GData(object):
         output += f" component {min_idx[-1]:d}"
       # end
     # end
-    if self.ctx["poly_order"] and self.ctx["basis_type"]:
+    if ("poly_order" in self.ctx) or \
+       ("basis_type" in self.ctx):
       output += "\n├─ DG info:\n"
-      output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
-      if self.ctx["is_modal"]:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
-      else:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
+      if "poly_order" in self.ctx:
+        output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
+      # end
+      if "basis_type" in self.ctx:
+        if self.ctx["is_modal"]:
+          output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
+        else:
+          output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
+        # end
       # end
     # end
     if self.ctx["changeset"] and self.ctx["builddate"]:
