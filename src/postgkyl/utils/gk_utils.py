@@ -94,6 +94,15 @@ def get_block_indices(multib, file_path_name):
   #             =comma-separated list or slice of desired blocks to use.
   #   - file_path_name: path and file name used to find blocks, with block
   #                     index replaced by "*", e.g. "<sim_name>_b*-<species>_field_0.gkyl".
+  def is_str_an_int(str_in):
+    try:
+      int(str_in)
+      return True
+    except ValueError:
+      return False
+    # end
+  # end
+
   if multib == "-10":
     # Single block.
     blocks = [0]
@@ -113,6 +122,8 @@ def get_block_indices(multib, file_path_name):
       elif ':' in multib:
         slice_obj = parse_slice_string(multib)
         blocks = list(range(*slice_obj.indices(max_num_blocks)))
+      elif is_str_an_int(multib): 
+        blocks = [int(multib)]
       else:
         raise NameError("Blocks given to --multib -m must be a comma separated list or slice.")
 

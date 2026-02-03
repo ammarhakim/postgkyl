@@ -5,17 +5,68 @@ import os
 import glob
 from matplotlib.collections import LineCollection
 from itertools import cycle
+from typing import Tuple
 
 from postgkyl.data import GData
 from postgkyl.utils import verb_print
 import postgkyl.utils.gk_utils as gku
+import postgkyl.utils.gkeyll_enums as gkenums
+
+
+def is_geo_mapc2p(gdata):
+  # Determine whether the GData object, gdata, is from a simulation with MAPC2P
+  # geometry. If geometry_type is missing from the metadata, default to true.
+  gdata_meta = gdata.get_ctx()
+  is_mapc2p = True
+  if ("geometry_type" in gdata_meta):
+    if gdata_meta["geometry_type"] is not None:
+      mc2p_idx = gkenums.enum_key_to_idx(gkenums.gkyl_geometry_id,"GKYL_GEOMETRY_MAPC2P")
+      is_mapc2p = mc2p_idx == gdata_meta["geometry_type"]
+    # end
+  #end
+  return is_mapc2p
+
+def nodes_to_RZ(nodes, is_mapc2p):
+  # Given the nodes array with data, compute the R-Z variables.
+  nx_nod = np.shape(nodes)
+  cdim = np.size(nx_nod)-1
+
+  if is_mapc2p:
+    # Nodes in Cartesian coordinates.
+    cart_dim = 3
+    lo_idx = [[0 for d in range(cdim)] + [cd] for cd in range(cart_dim)]
+    up_idx = [[nx_nod[d] for d in range(cdim)] + [cd+1] for cd in range(cart_dim)]
+    
+    if (cdim == 3):
+      yidx = 0 #[ Index in the y direction to select 3D nodes at.
+      for cd in range(cart_dim):
+        lo_idx[cd][1] = yidx
+        up_idx[cd][1] = yidx+1
+      # end
+    # end
+
+    slices = [[slice(lo_idx[cd][d], up_idx[cd][d]) for d in range(cdim+1)] for cd in range(cart_dim)]
+
+    cartX = [np.squeeze(nodes[tuple(slices[d])]) for d in range(cart_dim)] # X, Y, Z
+
+    torPhi = np.arctan2(cartX[1],cartX[0]) # Toroidal angle.
+    majorR = np.sqrt(np.power(cartX[0],2) + np.power(cartX[1],2)) # Major radius.
+    vertZ = cartX[2] # Vertical location.
+  else:
+    # Nodes in R, Z, Phi coordinates.
+    majorR = nodes[:,:,0] # Major radius.
+    vertZ  = nodes[:,:,1] # Vertical location.
+  # end
+
+  return majorR, vertZ
+
 
 @click.command()
 @click.option("--name", "-n", required=True, type=click.STRING, default=None,
   help="Simulation name (also the file prefix, e.g. gk_sheath_1x2v_p1).")
 @click.option("--path", "-p", type=click.STRING, default='./.',
   help="Path to simulation data.")
-@click.option("--multib", "-m", is_flag=False, flag_value="-1", default="-10",
+@click.option("--multib", "-m", type=click.STRING, is_flag=False, flag_value="-1", default="-10",
   help="Multiblock. Optional: pass block indices as comma-separated list or slice (start:stop:step). If no indices are given, all blocks are used.")
 @click.option("--nodes_file", type=click.STRING, default=None, multiple=True,
   help="Grid nodes (.gkyl format).")
@@ -98,11 +149,10 @@ def gk_nodes(ctx, **kwargs):
     block_path_prefix = file_path_prefix.replace("*",str(bI))
 
     # Load nodes.
-    print(nodes_file)
     grid, nodes, gdat = gku.read_gfile(nodes_file.replace("*",str(bI)))
 
-    majorR = nodes[:,:,0] # Major radius.
-    vertZ = nodes[:,:,1] # Vertical location.
+    is_mapc2p = is_geo_mapc2p(gdat)
+    majorR, vertZ = nodes_to_RZ(nodes, is_mapc2p) # Major radius and vertical location.
 
     majorR_ex = [min([majorR_ex[0],np.amin(majorR)]), max([majorR_ex[1],np.amax(majorR)])] 
     vertZ_ex = [min([vertZ_ex[0],np.amin(vertZ)]), max([vertZ_ex[1],np.amax(vertZ)])] 
@@ -135,18 +185,22 @@ def gk_nodes(ctx, **kwargs):
     # Load nodes.
     grid, nodes, gdat = gku.read_gfile(nodes_file.replace("*",str(bI)))
 
-    majorR = nodes[:,:,0] # Major radius.
-    vertZ = nodes[:,:,1] # Vertical location.
+    is_mapc2p = is_geo_mapc2p(gdat)
+    majorR, vertZ = nodes_to_RZ(nodes, is_mapc2p) # Major radius and vertical location.
 
     # Plot each node.
     hpl1a.append(ax1a.plot(majorR,vertZ,marker=".", color="k", linestyle="none"))
 
+    cdim = np.size(np.shape(nodes))-1
     # Connect nodes with line segments.
-    segs1 = np.stack((majorR,vertZ), axis=2)
-    segs2 = segs1.transpose(1,0,2)
     cell_color = next(block_colors)
-    hpl1a.append(ax1a.add_collection(LineCollection(segs1, color=cell_color)))
-    hpl1a.append(ax1a.add_collection(LineCollection(segs2, color=cell_color)))
+    if (cdim == 1):
+      hpl1a.append(ax1a.plot(majorR,vertZ,color=cell_color, linestyle="-"))
+    else:
+      segs1 = np.stack((majorR,vertZ), axis=2)
+      segs2 = segs1.transpose(1,0,2)
+      hpl1a.append(ax1a.add_collection(LineCollection(segs1, color=cell_color)))
+      hpl1a.append(ax1a.add_collection(LineCollection(segs2, color=cell_color)))
 
     # Add datasets plotted to stack.
     gdat_nodes = GData(tag="nodes", label="nodes", ctx=gdat.ctx)
@@ -214,13 +268,13 @@ def gk_nodes(ctx, **kwargs):
   ax1a.set_title(kwargs["title"],fontsize=gku.title_font_size)
   if kwargs["xlim"]:
     ax1a.set_xlim( float(kwargs["xlim"].split(",")[0]), float(kwargs["xlim"].split(",")[1]) )
-  else:
-    ax1a.set_xlim( Rmin-0.05*lengthR, Rmax+0.05*lengthR )
+#  else:
+#    ax1a.set_xlim( Rmin-0.05*lengthR, Rmax+0.05*lengthR )
 
   if kwargs["ylim"]:
     ax1a.set_ylim( float(kwargs["ylim"].split(",")[0]), float(kwargs["ylim"].split(",")[1]) )
-  else:
-    ax1a.set_ylim( Zmin-0.05*lengthZ, Zmax+0.05*lengthZ )
+#  else:
+#    ax1a.set_ylim( Zmin-0.05*lengthZ, Zmax+0.05*lengthZ )
 
   gku.set_tick_font_size(ax1a,gku.tick_font_size)
 
