@@ -184,9 +184,9 @@ class GkylReader(object):
         unp = mp.unpackb(fh.read(meta_size))
         if isinstance(unp, dict) and self.ctx is not None:
           for key in unp:
-            if key == "polyOrder":
+            if key == "polyOrder" or key == "poly_order":
               self.ctx["poly_order"] = unp[key]
-            elif key == "basisType":
+            elif key == "basisType" or key == "basis_type":
               self.ctx["basis_type"] = unp[key]
               self.ctx["is_modal"] = True
             else:
