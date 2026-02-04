@@ -28,25 +28,26 @@ def is_geo_mapc2p(gdata):
 
 def nodes_to_RZ(nodes, is_mapc2p):
   # Given the nodes array with data, compute the R-Z variables.
+  yidx = 0 #[ Index in the y direction to select 3D nodes at.
+
   nx_nod = np.shape(nodes)
   cdim = np.size(nx_nod)-1
 
+  cart_dim = 3
+  lo_idx = [[0 for d in range(cdim)] + [cd] for cd in range(cart_dim)]
+  up_idx = [[nx_nod[d] for d in range(cdim)] + [cd+1] for cd in range(cart_dim)]
+    
+  if (cdim == 3):
+    for cd in range(cart_dim):
+      lo_idx[cd][1] = yidx
+      up_idx[cd][1] = yidx+1
+    # end
+  # end
+
+  slices = [[slice(lo_idx[cd][d], up_idx[cd][d]) for d in range(cdim+1)] for cd in range(cart_dim)]
+
   if is_mapc2p:
     # Nodes in Cartesian coordinates.
-    cart_dim = 3
-    lo_idx = [[0 for d in range(cdim)] + [cd] for cd in range(cart_dim)]
-    up_idx = [[nx_nod[d] for d in range(cdim)] + [cd+1] for cd in range(cart_dim)]
-    
-    if (cdim == 3):
-      yidx = 0 #[ Index in the y direction to select 3D nodes at.
-      for cd in range(cart_dim):
-        lo_idx[cd][1] = yidx
-        up_idx[cd][1] = yidx+1
-      # end
-    # end
-
-    slices = [[slice(lo_idx[cd][d], up_idx[cd][d]) for d in range(cdim+1)] for cd in range(cart_dim)]
-
     cartX = [np.squeeze(nodes[tuple(slices[d])]) for d in range(cart_dim)] # X, Y, Z
 
     torPhi = np.arctan2(cartX[1],cartX[0]) # Toroidal angle.
@@ -54,8 +55,8 @@ def nodes_to_RZ(nodes, is_mapc2p):
     vertZ = cartX[2] # Vertical location.
   else:
     # Nodes in R, Z, Phi coordinates.
-    majorR = nodes[:,:,0] # Major radius.
-    vertZ  = nodes[:,:,1] # Vertical location.
+    majorR = np.squeeze(nodes[tuple(slices[0])]) # Major radius.
+    vertZ  = np.squeeze(nodes[tuple(slices[1])]) # Vertical location.
   # end
 
   return majorR, vertZ
