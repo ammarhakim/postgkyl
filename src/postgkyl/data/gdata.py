@@ -15,6 +15,7 @@ from postgkyl.data.gkyl_reader import GkylReader
 from postgkyl.data.gkyl_adios_reader import GkylAdiosReader
 from postgkyl.data.gkyl_h5_reader import GkylH5Reader
 from postgkyl.data.flash_h5_reader import FlashH5Reader
+import postgkyl.utils.gkeyll_enums as gkenums
 
 
 class GData(object):
@@ -123,10 +124,12 @@ class GData(object):
 
     zs = (z0, z1, z2, z3, z4, z5)
 
-    readers = {"gkyl": GkylReader,
-        "adios": GkylAdiosReader,
-        "h5": GkylH5Reader,
-        "flash": FlashH5Reader}
+    readers = {
+      "gkyl": GkylReader,
+      "adios": GkylAdiosReader,
+      "h5": GkylH5Reader,
+      "flash": FlashH5Reader,
+    }
     if self._file_name:
       reader_set = False
       if reader_name in readers:
@@ -137,8 +140,8 @@ class GData(object):
       # end
       for key, rd in readers.items():
         self._reader = rd(file_name=self._file_name, ctx=self.ctx, var_name=var_name,
-            c2p=mapc2p_name, c2p_vel=mapc2p_vel_name, axes=zs, comp=comp,
-            click_mode=click_mode)
+          c2p=mapc2p_name, c2p_vel=mapc2p_vel_name, axes=zs, comp=comp,
+          click_mode=click_mode)
         if self._reader.is_compatible():
           reader_set = True
           break
@@ -394,24 +397,39 @@ class GData(object):
         output += f" component {min_idx[-1]:d}"
       # end
     # end
-    if self.ctx["poly_order"] and self.ctx["basis_type"]:
-      output += "\n├─ DG info:\n"
-      output += f"│  ├─ Polynomial Order: {self.ctx['poly_order']:d}\n"
-      if self.ctx["is_modal"]:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
-      else:
-        output += f"│  └─ Basis Type: {self.ctx['basis_type']:s}"
+    if ("poly_order" in self.ctx) or ("basis_type" in self.ctx):
+      if (self.ctx["poly_order"] is not None) or (self.ctx["basis_type"] is not None):
+        output += "\n├─ DG info:"
+      if self.ctx["poly_order"] is not None:
+        output += f"\n│  ├─ Polynomial Order: {self.ctx['poly_order']:d}"
+      # end
+      if self.ctx["basis_type"] is not None:
+        if self.ctx["is_modal"]:
+          output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
+        else:
+          output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s}"
+        # end
       # end
     # end
-    if self.ctx["changeset"] and self.ctx["builddate"]:
-      output += "\n├─ Created with Gkeyll:\n"
-      output += f"│  ├─ Changeset: {self.ctx['changeset']:s}\n"
-      output += f"│  └─ Build Date: {self.ctx['builddate']:s}"
+    if self.ctx["changeset"] or self.ctx["builddate"]:
+      output += "\n├─ Created with Gkeyll:"
+      if self.ctx["changeset"] is not None:
+        output += f"\n│  ├─ Changeset: {self.ctx['changeset']:s}"
+      if self.ctx["builddate"] is not None:
+        output += f"\n│  └─ Build Date: {self.ctx['builddate']:s}"
+    # end
+    if ("geometry_type" in self.ctx) or ("geqdsk_sign_convention" in self.ctx):
+      output += "\n├─ Geometry info:"
+      if self.ctx["geometry_type"] is not None:
+        output += f"\n│  ├─ Type: {gkenums.gkyl_geometry_id[self.ctx['geometry_type']]:s}"
+      if self.ctx["geqdsk_sign_convention"] is not None:
+        output += f"\n│  ├─ GEQDSK sign convention: {self.ctx['geqdsk_sign_convention']:d}"
+      # end
     # end
     for key, val in self.ctx.items():
       if key not in ["time", "frame", "changeset", "builddate", "basis_type",
           "poly_order","is_modal", "lower", "upper", "cells", "num_comps",
-          "grid_type", "num_cdim", "num_vdim"] and val is not None:
+          "grid_type", "num_cdim", "num_vdim","geometry_type","geqdsk_sign_convention"] and val is not None:
         output += f"\n├─ {key:s}: {val}"
       # end
     # end
@@ -573,3 +591,8 @@ class GData(object):
     elif extension == "npy":
       np.save(out_name, values.squeeze())
     # end
+
+  # ---- Context (metadata) ----
+  def get_ctx(self) -> dict:
+    return self.ctx
+
