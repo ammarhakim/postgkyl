@@ -29,6 +29,8 @@ from postgkyl.commands.magsq import magsq
 from postgkyl.commands.mask import mask
 from postgkyl.commands.mhd import mhd
 from postgkyl.commands.parrotate import parrotate
+from postgkyl.commands.gk_energy_balance import gk_energy_balance
+from postgkyl.commands.gk_particle_balance import gk_particle_balance
 from postgkyl.commands.perprotate import perprotate
 from postgkyl.commands.plot import plot
 from postgkyl.commands.pr import pr
