@@ -69,7 +69,7 @@ def nodes_to_RZ(nodes, is_mapc2p):
   help="Path to simulation data.")
 @click.option("--multib", "-m", type=click.STRING, is_flag=False, flag_value="-1", default="-10",
   help="Multiblock. Optional: pass block indices as comma-separated list or slice (start:stop:step). If no indices are given, all blocks are used.")
-@click.option("--nodes_file", type=click.STRING, default=None, multiple=True,
+@click.option("--nodes_file", type=click.STRING, default=None,
   help="Grid nodes (.gkyl format).")
 @click.option("--psi_file", type=click.STRING, default=None,
   help="Poloidal flux (.gkyl format).")
@@ -130,12 +130,19 @@ def gk_nodes(ctx, **kwargs):
     file_path_prefix = kwargs["path"] + kwargs["name"] + '-' # Single block.
   else:
     file_path_prefix = kwargs["path"] + kwargs["name"] + '_b*-' # Multi block.
+  # end
 
   # File with nodes to plot.
   if kwargs["nodes_file"]:
-    nodes_file = kwargs["path"] + kwargs["nodes_file"]
+    if kwargs["nodes_file"][0] == "/":
+      # Absolute path included in node file. Don't append path.
+      nodes_file = kwargs["nodes_file"]
+    else:
+      nodes_file = kwargs["path"] + kwargs["nodes_file"]
+    #end
   else:
     nodes_file = file_path_prefix + 'nodes.gkyl'
+  # end
 
   # Determine number of blocks.
   blocks = gku.get_block_indices(kwargs["multib"], nodes_file)
@@ -157,6 +164,7 @@ def gk_nodes(ctx, **kwargs):
 
     majorR_ex = [min([majorR_ex[0],np.amin(majorR)]), max([majorR_ex[1],np.amax(majorR)])] 
     vertZ_ex = [min([vertZ_ex[0],np.amin(vertZ)]), max([vertZ_ex[1],np.amax(vertZ)])] 
+  # end
 
   # Create figure.
   Rmin, Rmax = majorR_ex[0], majorR_ex[1]
@@ -176,6 +184,7 @@ def gk_nodes(ctx, **kwargs):
   block_colors = cycle(color_list)
   if kwargs["multib_unicolor"]:
     block_colors = cycle([color_list[0]])
+  # end
 
   # Loop through blocks to plot.
   hpl1a = list()
@@ -202,20 +211,30 @@ def gk_nodes(ctx, **kwargs):
       segs2 = segs1.transpose(1,0,2)
       hpl1a.append(ax1a.add_collection(LineCollection(segs1, color=cell_color)))
       hpl1a.append(ax1a.add_collection(LineCollection(segs2, color=cell_color)))
+    # end
 
     # Add datasets plotted to stack.
     gdat_nodes = GData(tag="nodes", label="nodes", ctx=gdat.ctx)
     gdat_nodes.push(majorR, vertZ)
     data.add(gdat_nodes)
+  # end
 
   if kwargs["psi_file"]:
+    if kwargs["psi_file"][0] == "/":
+      # Absolute path included in node file. Don't append path.
+      psi_file = kwargs["psi_file"]
+    else:
+      psi_file = kwargs["path"] + kwargs["psi_file"]
+    #end
+
     colorbar = True
     # Plot poloidal flux.
-    psi_grid, psi_values, gdat = gku.read_interp_gfile(kwargs["psi_file"], 2, 'mt')
+    psi_grid, psi_values, gdat = gku.read_interp_gfile(psi_file, 2, 'mt')
     # Convert nodal to cell center coordinates.
     psi_grid_cc = list()
     for d in range(len(psi_grid)):
       psi_grid_cc.append(0.5*(psi_grid[d][:-1] + psi_grid[d][1:]))
+    # end
 
     if kwargs["contour"]:
       # Contour plot.
@@ -227,11 +246,14 @@ def gk_nodes(ctx, **kwargs):
           psi_clevels = np.array(kwargs["clevels"].split(","))
           # Filter out empty elements
           psi_clevels = np.array(list(filter(None, psi_clevels)))
+        # end
       else:
         psi_clevels = kwargs["cnlevels"]
+      # end
 
       if isinstance(psi_clevels, np.ndarray) and len(psi_clevels) == 1:
         colorbar = False
+      # end
 
       hpl1a.append(ax1a.contour(psi_grid_cc[0], psi_grid_cc[1], psi_values.transpose(), psi_clevels))
 
@@ -239,16 +261,20 @@ def gk_nodes(ctx, **kwargs):
       if isinstance(psi_clevels, np.ndarray):
         if np.size(psi_clevels) == 1:
           colorbar = False
+        # end
+      # end
 
     else:
       # Color plot.
       hpl1a.append(ax1a.pcolormesh(psi_grid[0], psi_grid[1], psi_values.transpose(), cmap='inferno'))
+    # end
 
     if colorbar:
       cbar_ax1a = fig1a.add_axes(cax1aPos)
       hcb1a.append(plt.colorbar(hpl1a[-1], ax=ax1a, cax=cbar_ax1a))
       hcb1a[0].ax.tick_params(labelsize=gku.tick_font_size)
       hcb1a[0].set_label(kwargs["zlabel"], rotation=90, labelpad=0, fontsize=gku.colorbar_label_font_size)
+    # end
 
     # Add datasets plotted to stack.
     gdat_psi = GData(tag="psi", label="psi", ctx=gdat.ctx)
@@ -256,13 +282,23 @@ def gk_nodes(ctx, **kwargs):
       gdat_psi.push(psi_grid_cc, psi_values.transpose())
     else:
       gdat_psi.push(psi_grid, psi_values.transpose())
+    # end
 
     data.add(gdat_psi)
+  # end
 
   if kwargs["wall_file"]:
     # Plot the wall.
-    wall_data = np.loadtxt(open(kwargs["wall_file"]),delimiter=',')
+    if kwargs["wall_file"][0] == "/":
+      # Absolute path included in node file. Don't append path.
+      wall_file = kwargs["wall_file"]
+    else:
+      wall_file = kwargs["path"] + kwargs["wall_file"]
+    #end
+
+    wall_data = np.loadtxt(open(wall_file),delimiter=',')
     ax1a.plot(wall_data[:,0],wall_data[:,1],color="grey")
+  # end
 
   ax1a.set_xlabel(kwargs["xlabel"],fontsize=gku.xy_label_font_size)
   ax1a.set_ylabel(kwargs["ylabel"],fontsize=gku.xy_label_font_size)
@@ -271,11 +307,13 @@ def gk_nodes(ctx, **kwargs):
     ax1a.set_xlim( float(kwargs["xlim"].split(",")[0]), float(kwargs["xlim"].split(",")[1]) )
 #  else:
 #    ax1a.set_xlim( Rmin-0.05*lengthR, Rmax+0.05*lengthR )
+  # end
 
   if kwargs["ylim"]:
     ax1a.set_ylim( float(kwargs["ylim"].split(",")[0]), float(kwargs["ylim"].split(",")[1]) )
 #  else:
 #    ax1a.set_ylim( Zmin-0.05*lengthZ, Zmax+0.05*lengthZ )
+  # end
 
   gku.set_tick_font_size(ax1a,gku.tick_font_size)
 
@@ -283,5 +321,6 @@ def gk_nodes(ctx, **kwargs):
     plt.savefig(kwargs["saveas"])
   else:
     plt.show()
+  # end
 
   verb_print(ctx, "Finishing nodes plot.")
