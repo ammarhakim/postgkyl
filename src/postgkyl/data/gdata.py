@@ -95,7 +95,9 @@ class GData(object):
     self.ctx["basis_type"] = None
     self.ctx["is_modal"] = None
     self.ctx["grid_type"] = "uniform"
-
+    self.ctx["geqdsk_sign_convention"] = None
+    self.ctx["geometry_type"] = None
+    
     self.ctx["mass"] = None
     self.ctx["charge"] = None
     self.ctx["epsilon_0"] = None
