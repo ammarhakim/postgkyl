@@ -209,14 +209,13 @@ def plot(ctx, **kwargs):
 
   # Parse legend labels if provided
   legend_labels = None
-  show_legend = False
   if "legend" in kwargs.keys():
     if kwargs["legend"] is not None:
       legend_labels = [label.strip() for label in kwargs["legend"].split(",")]
-      show_legend = True
   # end
   
   # Overwrite show_legend if no_legend is set
+  show_legend = True
   if "no_legend" in kwargs.keys():
     if kwargs["no_legend"]:
       show_legend = False
