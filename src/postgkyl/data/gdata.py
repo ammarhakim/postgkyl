@@ -81,7 +81,7 @@ class GData(object):
     self._values = None  # (N+1)D narray of values
 
     # Context dictionary to store metadata, filled by the reader.
-    self.ctx = {} 
+    self.ctx = {}
     
     # Allow to copy input context variable
     if ctx:
