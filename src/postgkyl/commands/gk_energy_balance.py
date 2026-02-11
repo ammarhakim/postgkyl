@@ -233,6 +233,8 @@ def gk_energy_balance(ctx, **kwargs):
       field_dot_file = block_path_prefix + 'field_energy_dot.gkyl'
 
     has_field_dot, time_field_dot, field_dot_pb, gdat = read_gfile_if_present(field_dot_file)
+    if not has_field_dot or gdat is None:
+      raise FileNotFoundError(f"Required file not found: {field_dot_file}")
     gdat_field_dot = GData(tag="field_dot", label="field_dot", ctx=gdat.ctx)
  
     fdot_pb = None
@@ -247,7 +249,9 @@ def gk_energy_balance(ctx, **kwargs):
       else:
         fdot_file = block_path_prefix + spec_nm + '_fdot_integrated_moms.gkyl'
  
-      _, time_fdot, fdot_ps, gdat = read_gfile_if_present(fdot_file)
+      has_fdot, time_fdot, fdot_ps, gdat = read_gfile_if_present(fdot_file)
+      if not has_fdot or gdat is None:
+        raise FileNotFoundError(f"Required file not found: {fdot_file}")
       gdat_fdot = GData(tag="fdot", label="fdot", ctx=gdat.ctx)
  
       # Load integrated moments of the source.
