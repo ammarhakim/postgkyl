@@ -277,9 +277,9 @@ class GData(object):
 
   def set_values(self, values) -> None:
     self._values = values
-    if not np.array_equal(values.shape[:-1], self.ctx["cells"]):
+    if "cells" not in self.ctx or not np.array_equal(values.shape[:-1], self.ctx["cells"]):
       self.ctx["cells"] = values.shape[:-1]
-    if values.shape[-1] != self.ctx["num_comps"]:
+    if "num_comps" not in self.ctx or values.shape[-1] != self.ctx["num_comps"]:
       self.ctx["num_comps"] = values.shape[-1]
 
   values = property(get_values, set_values)
