@@ -25,7 +25,7 @@ def recovery(ctx, **kwargs):
   verb_print(ctx, "Starting recovery")
   data = ctx.obj["data"]
 
-  if kwargs["basis_type"] is not None:
+  if "basis_type" in kwargs.keys():
     if kwargs["basis_type"] == "ms" or kwargs["basis_type"] == "ns":
       basis_type = "serendipity"
     elif kwargs["basis_type"] == "mo":

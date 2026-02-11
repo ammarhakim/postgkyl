@@ -218,7 +218,9 @@ def gk_particle_balance(ctx, **kwargs):
     else:
       fdot_file = block_path_prefix + kwargs["species"] + '_fdot_integrated_moms.gkyl'
 
-    _, time_fdot, fdot_pb, gdat = read_gfile_if_present(fdot_file)
+    has_fdot, time_fdot, fdot_pb, gdat = read_gfile_if_present(fdot_file)
+    if not has_fdot or gdat is None:
+      raise FileNotFoundError(f"Required file not found: {fdot_file}")
     gdat_fdot = GData(tag="fdot", label="fdot", ctx=gdat.ctx)
 
     # Load integrated moments of the source.

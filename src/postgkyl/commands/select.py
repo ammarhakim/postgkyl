@@ -60,14 +60,14 @@ def select(ctx, **kwargs):
         botlef_point.append(min([dat.get_bounds()[0][dim] for dat in frame]))
       # end
       #find starting block for lineout coordinate
-      if kwargs["z0"] is not None:
+      if "z0" in kwargs.keys():
         for dat in frame:
           if dat.get_bounds()[0][0] <= float(kwargs["z0"]) <= dat.get_bounds()[1][0] and dat.get_bounds()[0][1] == botlef_point[1]:
             block = dat
           # end
         # end
       # end
-      if kwargs["z1"] is not None:
+      if "z1" in kwargs.keys():
         for dat in frame:
           if dat.get_bounds()[0][1] <= float(kwargs["z1"]) <= dat.get_bounds()[1][1] and dat.get_bounds()[0][0] == botlef_point[0]:
             block = dat
@@ -80,7 +80,7 @@ def select(ctx, **kwargs):
       value_list = []
 
       #creates new grid and value list containing data from blocks which contain specified z0 coordinate
-      if kwargs["z0"] is not None:
+      if "z0" in kwargs.keys():
         grid, values = postgkyl.data.select(block,
                                             z0=kwargs["z0"],
                                             comp=kwargs["comp"])
@@ -105,7 +105,7 @@ def select(ctx, **kwargs):
 
 
       #same but for z1 coordinate
-      if kwargs["z1"] is not None:
+      if "z1" in kwargs.keys():
         grid, values = postgkyl.data.select(block,
                                               z1=kwargs["z1"],
                                               comp=kwargs["comp"])
