@@ -61,7 +61,7 @@ class GkylAdiosReader(object):
 
     self.ctx = ctx
     if not ("grid_type" in self.ctx.keys()):
-      self.ctx["grid_type"] == "uniform":
+      self.ctx["grid_type"] = "uniform"
 
   def is_compatible(self) -> bool:
     """Checks if file can be read with Gkeyll ADIOS reader."""
