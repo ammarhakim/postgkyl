@@ -316,6 +316,20 @@ class GData(object):
       # end
     # end
 
+  def __dict_has_key_from_group__(self, dict_in, group_members_in):
+    # Check if a dictionary with key-value pairs, where the key is the name of a group and
+    # the value a list of group members (as strings), has a member from a given
+    # group.
+    #  dict_in: input dictionary.
+    #  group_members_in: group members to check for in dict_in.
+    dict_keys = dict_in.keys()
+    for key in group_members_in:
+      if key in dict_keys:
+        return True
+      #end
+    #end
+    return False
+      
 
   # ---- Info -----
   def info(self) -> str:
@@ -337,6 +351,15 @@ class GData(object):
     num_cells = self.num_cells
     lower, upper = self.bounds
 
+    # Groups of metadata.
+    info_groups = {
+      "time_info" : ["time","frame"],
+      "grid_info" : ["lower","upper","cells","grid_type"],
+      "basis_info" : ["poly_order","basis_type","is_modal","num_comps"],
+      "build_info" : ["changeset","builddate"], 
+      "geometry_info": ["geometry_type", "geqdsk_sign_convention"],
+    }
+
     output = ""
     
     printed_keys = []
@@ -351,11 +374,12 @@ class GData(object):
 
     output += f"├─ Number of components: {num_comps:d}\n"
     output += f"├─ Number of dimensions: {num_dims:d}\n"
-    if lower is not None:
+    if self.__dict_has_key_from_group__(self.ctx, info_groups["grid_info"]):
       output += f"├─ Grid: ({self.get_grid_type():s})\n"
-      for d in range(num_dims - 1):
-        output += f"│  ├─ Dim {d:d}: Num. cells: {num_cells[d]:d}; "
-        output += f"Lower: {lower[d]:e}; Upper: {upper[d]:e}\n"
+      if "lower" in self.ctx.keys() and "upper" in self.ctx.keys() and "cells" in self.ctx.keys():
+        for d in range(num_dims - 1):
+          output += f"│  ├─ Dim {d:d}: Num. cells: {num_cells[d]:d}; "
+          output += f"Lower: {lower[d]:e}; Upper: {upper[d]:e}\n"
 
       output += f"│  └─ Dim {num_dims - 1:d}: Num. cells: {num_cells[-1]:d}; "
       output += f"Lower: {lower[-1]:e}; Upper: {upper[-1]:e}"
@@ -374,7 +398,7 @@ class GData(object):
       if num_comps > 1:
         output += f" component {min_idx[-1]:d}"
 
-    if ("poly_order" in self.ctx.keys()) or ("basis_type" in self.ctx.keys()):
+    if self.__dict_has_key_from_group__(self.ctx, info_groups["basis_info"]):
       output += "\n├─ DG info:"
       if "poly_order" in self.ctx.keys():
         printed_keys.append("poly_order")
@@ -385,7 +409,8 @@ class GData(object):
           output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
         else:
           output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s}"
-    if "changeset" in self.ctx.keys() or "builddate" in self.ctx.keys():
+
+    if self.__dict_has_key_from_group__(self.ctx, info_groups["build_info"]):
       output += "\n├─ Created with Gkeyll:"
       if "changeset" in self.ctx.keys():
         printed_keys.append("changeset")
@@ -393,7 +418,8 @@ class GData(object):
       if "builddate" in self.ctx.keys():
         printed_keys.append("builddate")
         output += f"\n│  └─ Build Date: {self.ctx['builddate']:s}"
-    if ("geometry_type" in self.ctx.keys()) or ("geqdsk_sign_convention" in self.ctx.keys()):
+
+    if self.__dict_has_key_from_group__(self.ctx, info_groups["geometry_info"]):
       output += "\n├─ Geometry info:"
       if "geometry_type" in self.ctx.keys():
         printed_keys.append("geometry_type")
@@ -404,7 +430,7 @@ class GData(object):
       
     # Print any other keys in the context that were not printed above
     for key, val in self.ctx.items():
-      if key not in printed_keys:
+      if key not in sum(info_groups.values(), []):
         output += f"\n├─ {key:s}: {val}"
 
     return output

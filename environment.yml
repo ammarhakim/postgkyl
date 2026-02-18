@@ -1,9 +1,8 @@
-name: pgkyl
+name: pgkylSrcH5
 channels:
   - defaults
   - conda-forge
 dependencies:
-  - conda-forge::adios2==2.9.2
   - click>=8.1.7
   - matplotlib>=3.7.0
   - msgpack-python>=1.0.3
@@ -13,3 +12,4 @@ dependencies:
   - python>=3.11
   - scipy>=1.10.1
   - sympy>=1.12
+  - h5py
