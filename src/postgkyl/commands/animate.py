@@ -27,16 +27,16 @@ def _update(frame, data, fig, kwargs):
   for i, dat in enumerate(data[frame]):
     kwargs["title"] = ""
     if not kwargs["notitle"]:
-      if "frame" in dat.ctx.keys():
+      if dat.ctx.get("frame"):
         kwargs["title"] = f"{kwargs['title']:s} frame: {dat.ctx['frame']:d} "
       # end
-      if "time" in dat.ctx.keys():
+      if dat.ctx.get("time"):
         kwargs["title"] = f"{kwargs['title']:s} time: {dat.ctx['time']:.4e}"
       # end
     # end
 
     if i == 0:
-      if "arg" in kwargs.keys():
+      if kwargs.get("arg"):
         im = postgkyl.output.plot(dat, kwargs["arg"], **kwargs)
       else:
         im = postgkyl.output.plot(dat, **kwargs)
@@ -44,7 +44,7 @@ def _update(frame, data, fig, kwargs):
     else:
       kwargs_ncb = kwargs.copy()
       kwargs_ncb["colorbar"] = False
-      if "arg" in kwargs.keys():
+      if kwargs.get("arg"):
         im = postgkyl.output.plot(dat, kwargs["arg"], **kwargs_ncb)
       else:
         im = postgkyl.output.plot(dat, **kwargs_ncb)
