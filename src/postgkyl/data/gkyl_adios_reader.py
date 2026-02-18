@@ -200,12 +200,16 @@ class GkylAdiosReader(object):
     data = fh.read(self.var_name, start=offset, count=count)
 
     # Adjust boundaries for 'offset' and 'count'
+    grid_type = "uniform"
+    if "grid_type" in self.ctx.keys():
+      grid_type = self.ctx["grid_type"]
+
     dz = (self.upper - self.lower) / self.cells
     if offset:
-      if self.ctx["grid_type"] == "uniform":
+      if grid_type == "uniform":
         self.lower = self.lower + offset[:num_dims] * dz
         self.cells = self.cells - offset[:num_dims]
-      elif self.ctx["grid_type"] == "mapped":
+      elif grid_type == "mapped":
         idx = np.full(num_dims, 0)
         for d in range(num_dims):
           self.lower[d] = self._grid[d][tuple(idx)]
@@ -214,10 +218,10 @@ class GkylAdiosReader(object):
       # end
     # end
     if count:
-      if self.ctx["grid_type"] == "uniform":
+      if grid_type == "uniform":
         self.upper = self.lower + count[:num_dims] * dz
         self.cells = count[:num_dims]
-      elif self.ctx["grid_type"] == "mapped":
+      elif grid_type == "mapped":
         idx = np.full(num_dims, 0)
         for d in range(num_dims):
           idx[-d - 1] = (
