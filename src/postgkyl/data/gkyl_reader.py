@@ -130,6 +130,9 @@ class GkylReader(object):
       self.ctx = {}
     #end
 
+    if not ("grid_type" in self.ctx.keys()):
+      self.ctx["grid_type"] = "uniform"
+
     # Prepare for partial load
     self.partial_load = False
     self.partial_idxs = [""] * 7

@@ -24,7 +24,7 @@ def differentiate(ctx, **kwargs):
 
   basis_type = None
   is_modal = None
-  if kwargs["basis_type"] is not None:
+  if "basis_type" in kwargs.keys():
     if kwargs["basis_type"] == "ms":
       basis_type = "serendipity"
       is_modal = True

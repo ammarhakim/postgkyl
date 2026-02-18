@@ -19,7 +19,7 @@ def is_geo_mapc2p(gdata):
   gdata_meta = gdata.get_ctx()
   is_mapc2p = True
   if ("geometry_type" in gdata_meta):
-    if gdata_meta["geometry_type"] is not None:
+    if "geometry_type" in gdata_meta.keys():
       mc2p_idx = gkenums.enum_key_to_idx(gkenums.gkyl_geometry_id,"GKYL_GEOMETRY_MAPC2P")
       is_mapc2p = mc2p_idx == gdata_meta["geometry_type"]
     # end
