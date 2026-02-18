@@ -270,7 +270,10 @@ class GData(object):
   grid = property(get_grid, set_grid)
 
   def get_grid_type(self) -> str:
-    return self.ctx["grid_type"]
+    if "grid_type" in self.ctx.keys():
+      return self.ctx["grid_type"]
+    else:
+      return "uniform"
 
   def get_values(self) -> np.ndarray:
     return self._values
