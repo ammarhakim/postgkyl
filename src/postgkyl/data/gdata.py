@@ -82,6 +82,7 @@ class GData(object):
 
     # Context dictionary to store metadata, filled by the reader.
     self.ctx = {}
+    self.ctx["grid_type"] = "uniform" # MF 2026/02/18: shouldn't be necessary, but done here for backward compatibility.
     
     # Allow to copy input context variable
     if ctx:
