@@ -64,6 +64,7 @@ def nodes_to_RZ(nodes, is_mapc2p):
 def str_append_multib_suffix_mb(str_in, suffix, bidx):
   # Append the suffix to the input string str_in and format it with the block
   # index bidx.
+  print(str_in, suffix % bidx)
   return str_in + suffix % bidx
 
 def str_append_multib_suffix_sb(str_in, suffix, bidx):
@@ -163,7 +164,7 @@ def gk_nodes(ctx, **kwargs):
   tag_multib_suffix = ""
   str_append_multib_suffix = str_append_multib_suffix_sb
   if num_blocks > 1:
-    tag_multib_suffix = "_b%"
+    tag_multib_suffix = "_b%d"
     str_append_multib_suffix = str_append_multib_suffix_mb
 
   block_path_prefix = file_path_prefix
