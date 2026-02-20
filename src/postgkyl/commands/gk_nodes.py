@@ -64,7 +64,6 @@ def nodes_to_RZ(nodes, is_mapc2p):
 def str_append_multib_suffix_mb(str_in, suffix, bidx):
   # Append the suffix to the input string str_in and format it with the block
   # index bidx.
-  print(str_in, suffix % bidx)
   return str_in + suffix % bidx
 
 def str_append_multib_suffix_sb(str_in, suffix, bidx):
