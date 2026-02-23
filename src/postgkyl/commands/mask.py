@@ -28,11 +28,11 @@ def mask(ctx, **kwargs):
     if kwargs["filename"]:
       mask_fld_rep = np.repeat(mask_fld, dat.get_num_comps(), axis=-1)
       data.set_values(np.ma.masked_where(mask_fld_rep < 0.0, values))
-    elif "lower" in kwargs.keys() and "upper" in kwargs.keys():
+    elif kwargs.get("lower") and kwargs.get("upper"):
       dat.set_values(np.ma.masked_outside(values, kwargs["lower"], kwargs["upper"]))
-    elif "lower" in kwargs.keys():
+    elif kwargs.get("lower"):
       dat.set_values(np.ma.masked_less(values, kwargs["lower"]))
-    elif "upper" in kwargs.keys():
+    elif kwargs.get("upper"):
       dat.set_values(np.ma.masked_greater(values, kwargs["upper"]))
     else:
       data.set_values(values)

@@ -209,14 +209,13 @@ def plot(ctx, **kwargs):
 
   # Parse legend labels if provided
   legend_labels = None
-  if "legend" in kwargs.keys():
-    if kwargs["legend"] is not None:
-      legend_labels = [label.strip() for label in kwargs["legend"].split(",")]
+  if kwargs.get("legend"):
+    legend_labels = [label.strip() for label in kwargs["legend"].split(",")]
   # end
   
   # Overwrite show_legend if no_legend is set
   show_legend = True
-  if "no_legend" in kwargs.keys():
+  if kwargs.get("no_legend"):
     if kwargs["no_legend"]:
       show_legend = False
 
@@ -287,7 +286,7 @@ def plot(ctx, **kwargs):
 
 
   # end
-  if (kwargs["save"] or kwargs["saveas"]) and "figure" in kwargs.keys():
+  if (kwargs["save"] or kwargs["saveas"]):
     file_name = str(file_name)
     plt.savefig(file_name, dpi=kwargs["dpi"])
   # end

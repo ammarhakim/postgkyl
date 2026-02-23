@@ -92,7 +92,7 @@ def collect(ctx, **kwargs):
       time[i] = np.array(time[i])
       values[i] = np.array(values[i])
 
-      if "period" in kwargs.keys():
+      if kwargs.get("period"):
         time[i] = (time[i] - kwargs["offset"]) % kwargs["period"]
       # end
 
