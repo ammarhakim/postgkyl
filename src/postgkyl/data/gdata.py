@@ -189,7 +189,7 @@ class GData(object):
 
   # ---- Number of Cells ----
   def get_num_cells(self) -> np.ndarray:
-    if "cells" in self.ctx.keys():
+    if self.ctx.get("cells") is not None:
       return self.ctx["cells"]
     elif self._values is not None:
       num_dims = len(self._values.shape) - 1
@@ -206,7 +206,7 @@ class GData(object):
 
   # ---- Number of Components ----
   def get_num_comps(self) -> int:
-    if "num_comps" in self.ctx.keys():
+    if self.ctx.get("num_comps"):
       return self.ctx["num_comps"]
     elif self._values is not None:
       return int(self._values.shape[-1])
@@ -218,7 +218,7 @@ class GData(object):
 
   # ---- Number of Dimensions -----
   def get_num_dims(self, squeeze: bool = False) -> int:
-    if "cells" in self.ctx.keys():
+    if self.ctx.get("cells") is not None:
       num_dims = len(self.ctx["cells"])
     elif self._values is not None:
       num_dims = int(len(self._values.shape) - 1)
@@ -247,9 +247,11 @@ class GData(object):
       for d in range(num_dims):
         lo[d] = self._grid[d].min()
         up[d] = self._grid[d].max()
+      # end
       return lo, up
     else:
       return None, None
+    # end
 
   bounds = property(get_bounds)
 
@@ -270,7 +272,7 @@ class GData(object):
   grid = property(get_grid, set_grid)
 
   def get_grid_type(self) -> str:
-     return self.ctx["grid_type"]
+    return self.ctx["grid_type"]
 
   def get_values(self) -> np.ndarray:
     return self._values
@@ -367,10 +369,12 @@ class GData(object):
     if "time" in self.ctx.keys():
       printed_keys.append("time")
       output += f"├─ Time: {self.ctx['time']:e}\n"
+    # end
 
     if "frame" in self.ctx.keys():
       printed_keys.append("frame")
       output += f"├─ Frame: {self.ctx['frame']:d}\n"
+    # end
 
     output += f"├─ Number of components: {num_comps:d}\n"
     output += f"├─ Number of dimensions: {num_dims:d}\n"
@@ -380,9 +384,12 @@ class GData(object):
         for d in range(num_dims - 1):
           output += f"│  ├─ Dim {d:d}: Num. cells: {num_cells[d]:d}; "
           output += f"Lower: {lower[d]:e}; Upper: {upper[d]:e}\n"
+        # end
+      # end
 
       output += f"│  └─ Dim {num_dims - 1:d}: Num. cells: {num_cells[-1]:d}; "
       output += f"Lower: {lower[-1]:e}; Upper: {upper[-1]:e}"
+    # end
 
     if values is not None:
       maximum = np.nanmax(values)
@@ -394,44 +401,59 @@ class GData(object):
         output += f" component {max_idx[-1]:d}\n"
       else:
         output += "\n"
+      # end
       output += f"├─ Minimum: {minimum:e} at {str(min_idx[:num_dims]):s}"
       if num_comps > 1:
         output += f" component {min_idx[-1]:d}"
+      # end
+    # end
 
     if self.__dict_has_key_from_group__(self.ctx, info_groups["basis_info"]):
       output += "\n├─ DG info:"
       if "poly_order" in self.ctx.keys():
         printed_keys.append("poly_order")
         output += f"\n│  ├─ Polynomial Order: {self.ctx['poly_order']:d}"
+      # end
       if "basis_type" in self.ctx.keys():
         printed_keys.append("basis_type")
         if self.ctx["is_modal"]:
           output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s} (modal)"
         else:
           output += f"\n│  └─ Basis Type: {self.ctx['basis_type']:s}"
+        # end
+      # end
+    # end
 
     if self.__dict_has_key_from_group__(self.ctx, info_groups["build_info"]):
       output += "\n├─ Created with Gkeyll:"
       if "changeset" in self.ctx.keys():
         printed_keys.append("changeset")
         output += f"\n│  ├─ Changeset: {self.ctx['changeset']:s}"
+      # end
       if "builddate" in self.ctx.keys():
         printed_keys.append("builddate")
         output += f"\n│  └─ Build Date: {self.ctx['builddate']:s}"
+      # end
+    # end
 
     if self.__dict_has_key_from_group__(self.ctx, info_groups["geometry_info"]):
       output += "\n├─ Geometry info:"
       if "geometry_type" in self.ctx.keys():
         printed_keys.append("geometry_type")
         output += f"\n│  ├─ Type: {gkenums.gkyl_geometry_id[self.ctx['geometry_type']]:s}"
+      # end
       if "geqdsk_sign_convention" in self.ctx.keys():
         printed_keys.append("geqdsk_sign_convention")
         output += f"\n│  ├─ GEQDSK sign convention: {self.ctx['geqdsk_sign_convention']:d}"
+      # end
+    # end
       
     # Print any other keys in the context that were not printed above
     for key, val in self.ctx.items():
       if key not in sum(info_groups.values(), []):
         output += f"\n├─ {key:s}: {val}"
+      # end
+    # end
 
     return output
 

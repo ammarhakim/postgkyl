@@ -392,7 +392,7 @@ class GInterpModal(GInterp):
     self.num_dims = data.get_num_dims()
     if poly_order is not None:
       self.poly_order = poly_order
-    elif "poly_order" in data.ctx.keys():
+    elif data.ctx.get("poly_order"):
       self.poly_order = data.ctx["poly_order"]
     else:
       raise ValueError(
@@ -410,7 +410,7 @@ class GInterpModal(GInterp):
       elif basis_type == "pkpmhyb":
         self.basis_type = "hybrid"
       # end
-    elif "basis_type" in data.ctx.keys():
+    elif data.ctx.get("basis_type"):
       self.basis_type = data.ctx["basis_type"]
     else:
       raise ValueError(
@@ -477,6 +477,7 @@ class GInterpModal(GInterp):
       grid = []
       for d in range(self.num_dims):
         grid.append(_interpOnMesh(cMat, q[d], self.num_interp + 1, basis, True))
+      # end
     else:
       if self.basis_type == "gkhybrid":
         # 1x1v, 1x2v, 2x2v, 3x2v cases, with p=2 in the first velocity dim.
@@ -489,6 +490,7 @@ class GInterpModal(GInterp):
         num_interp[-1] = self.num_interp + 1
       else:
         num_interp = [int(round(cMat.shape[0] ** (1.0 / self.num_dims)))] * self.num_dims
+      # end
 
       grid = _make1Dgrids(num_interp, self.Xc, self.num_dims, None)
       if self.data.ctx["grid_type"] == "c2p_vel":
@@ -502,11 +504,15 @@ class GInterpModal(GInterp):
               self.read, True, True)
           grid[num_cdim + d] = _interpOnMesh(cMat, q[num_cdim + d],
               num_interp[num_cdim + d] + 1, basis, True)
+        # end
+      # end
+    # end
 
     if overwrite:
       self.data.push(grid, values)
     else:
       return grid, values
+    # end
 
   def interpolateGrid(self, overwrite=False):
     if self.data.ctx["grid_type"] == "c2p":

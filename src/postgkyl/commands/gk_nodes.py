@@ -61,6 +61,14 @@ def nodes_to_RZ(nodes, is_mapc2p):
 
   return majorR, vertZ
 
+def str_append_multib_suffix_mb(str_in, suffix, bidx):
+  # Append the suffix to the input string str_in and format it with the block
+  # index bidx.
+  return str_in + suffix % bidx
+
+def str_append_multib_suffix_sb(str_in, suffix, bidx):
+  # Just return the input string.
+  return str_in
 
 @click.command()
 @click.option("--name", "-n", required=True, type=click.STRING, default=None,
@@ -77,17 +85,17 @@ def nodes_to_RZ(nodes, is_mapc2p):
   help="Vacuum vessel wall (.csv format).")
 @click.option("--contour", "-c", is_flag=True, help="Plot contours of psi.")
 @click.option("--clevels", type=click.STRING,
-    help="Specify levels for contours: comma-separated level values or start:end:nlevels.")
+  help="Specify levels for contours: comma-separated level values or start:end:nlevels.")
 @click.option("--cnlevels", type=click.INT, default=11, help="Specify the number of levels for contours.")
-@click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
-    help="Enforce the same scaling on both axes.")
+@click.option("--fix_aspect", "-a", "fixaspect", is_flag=True,
+  help="Enforce the same scaling on both axes.")
 @click.option("--xlim", default=None, type=click.STRING,
-    help="Set limits for the x-coordinate (lower,upper)")
+  help="Set limits for the x-coordinate (lower,upper)")
 @click.option("--ylim", default=None, type=click.STRING,
-    help="Set limits for the y-coordinate (lower,upper).")
+  help="Set limits for the y-coordinate (lower,upper).")
 @click.option("--xlabel", type=click.STRING, default="R (m)",
   help="Label for the x axis.")
-@click.option("--ylabel", type=click.STRING, default="R (z)",
+@click.option("--ylabel", type=click.STRING, default="Z (m)",
   help="Label for the y axis.")
 @click.option("--zlabel", type=click.STRING, default=r"$\psi$",
   help="Label for the color bar.")
@@ -100,6 +108,8 @@ def nodes_to_RZ(nodes, is_mapc2p):
 @click.option("--multib_unicolor", is_flag=True, default=False, help="Use one color for all blocks.")
 @click.option("--saveas", type=click.STRING, default=None,
   help="Name of figure file.")
+@click.option("--no_show", is_flag=True, default=False,
+  help="Suppreses showing the figure.")
 @click.pass_context
 def gk_nodes(ctx, **kwargs):
   """
@@ -120,6 +130,8 @@ def gk_nodes(ctx, **kwargs):
   """
 
   data = ctx.obj["data"]  # Data stack.
+  ctx.obj["plot_handles"] = {}  # Handles to objects in plot.
+  handles = ctx.obj["plot_handles"]
 
   verb_print(ctx, "Plotting nodes for " + kwargs["name"])
 
@@ -147,6 +159,12 @@ def gk_nodes(ctx, **kwargs):
   # Determine number of blocks.
   blocks = gku.get_block_indices(kwargs["multib"], nodes_file)
   num_blocks = len(blocks)
+  # Tag for dataset.
+  tag_multib_suffix = ""
+  str_append_multib_suffix = str_append_multib_suffix_sb
+  if num_blocks > 1:
+    tag_multib_suffix = "_b%d"
+    str_append_multib_suffix = str_append_multib_suffix_mb
 
   block_path_prefix = file_path_prefix
 
@@ -172,12 +190,16 @@ def gk_nodes(ctx, **kwargs):
   lengthR, lengthZ = Rmax-Rmin, Zmax-Zmin
   aspect_ratio = lengthR/lengthZ
 
-  ax1aPos   = [0.82-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["indent_left"], 0.08,
-               (8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["add_width"], 0.88]
-  cax1aPos  = [ax1aPos[0]+ax1aPos[2]+0.01, ax1aPos[1], 0.02, ax1aPos[3]];
-  figProp1a = (8.36*aspect_ratio+2.5, 8.36+1.14)
-  fig1a     = plt.figure(figsize=figProp1a)
-  ax1a      = fig1a.add_axes(ax1aPos)
+  ax_pos   = [0.82-(8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["indent_left"], 0.08,
+              (8.36*aspect_ratio)/(8.36*aspect_ratio+2.5)+kwargs["add_width"], 0.88]
+  cax_pos  = [ax_pos[0]+ax_pos[2]+0.01, ax_pos[1], 0.02, ax_pos[3]];
+  fig_prop = (8.36*aspect_ratio+2.5, 8.36+1.14)
+  fig_h    = plt.figure(figsize=fig_prop)
+  ax_h     = fig_h.add_axes(ax_pos)
+
+  # Store figure handles in case script mode wishes to modify them.
+  handles["figure"] = fig_h
+  handles["axis"] = ax_h
 
   # Color cycler for plotting each block in a different color.
   color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -187,8 +209,8 @@ def gk_nodes(ctx, **kwargs):
   # end
 
   # Loop through blocks to plot.
-  hpl1a = list()
-  hcb1a = list()
+  pl_nodes_h = list()
+  pl_edges_h = list()
   for bI in blocks:
 
     block_path_prefix = file_path_prefix.replace("*",str(bI))
@@ -199,25 +221,33 @@ def gk_nodes(ctx, **kwargs):
     majorR, vertZ = nodes_to_RZ(nodes, is_mapc2p) # Major radius and vertical location.
 
     # Plot each node.
-    hpl1a.append(ax1a.plot(majorR,vertZ,marker=".", color="k", linestyle="none"))
+    pl_nodes_h.append(ax_h.plot(majorR,vertZ,marker=".", color="k", linestyle="none"))
 
     cdim = np.size(np.shape(nodes))-1
     # Connect nodes with line segments.
     cell_color = next(block_colors)
     if (cdim == 1):
-      hpl1a.append(ax1a.plot(majorR,vertZ,color=cell_color, linestyle="-"))
+      pl_edges_h.append(ax_h.plot(majorR,vertZ,color=cell_color, linestyle="-"))
     else:
-      segs1 = np.stack((majorR,vertZ), axis=2)
-      segs2 = segs1.transpose(1,0,2)
-      hpl1a.append(ax1a.add_collection(LineCollection(segs1, color=cell_color)))
-      hpl1a.append(ax1a.add_collection(LineCollection(segs2, color=cell_color)))
+      segs_constx = np.stack((majorR,vertZ), axis=2)
+      segs_consty = segs_constx.transpose(1,0,2)
+      pl_edges_h.append(ax_h.add_collection(LineCollection(segs_constx, color=cell_color)))
+      pl_edges_h.append(ax_h.add_collection(LineCollection(segs_consty, color=cell_color)))
+
+      # Add datasets plotted to stack.
+      gdat_edges = GData(tag=str_append_multib_suffix("edges",tag_multib_suffix,bI), ctx=gdat.ctx)
+      gdat_edges.push(segs_constx, segs_consty)
+      data.add(gdat_edges)
     # end
 
     # Add datasets plotted to stack.
-    gdat_nodes = GData(tag="nodes", label="nodes", ctx=gdat.ctx)
+    gdat_nodes = GData(tag=str_append_multib_suffix("nodes",tag_multib_suffix,bI), ctx=gdat.ctx)
     gdat_nodes.push(majorR, vertZ)
     data.add(gdat_nodes)
   # end
+
+  handles["nodes"] = pl_nodes_h
+  handles["edges"] = pl_edges_h
 
   if kwargs["psi_file"]:
     if kwargs["psi_file"][0] == "/":
@@ -255,7 +285,7 @@ def gk_nodes(ctx, **kwargs):
         colorbar = False
       # end
 
-      hpl1a.append(ax1a.contour(psi_grid_cc[0], psi_grid_cc[1], psi_values.transpose(), psi_clevels))
+      pl_psi_h = ax_h.contour(psi_grid_cc[0], psi_grid_cc[1], psi_values.transpose(), psi_clevels)
 
       # Add colorbar.
       if isinstance(psi_clevels, np.ndarray):
@@ -266,25 +296,29 @@ def gk_nodes(ctx, **kwargs):
 
     else:
       # Color plot.
-      hpl1a.append(ax1a.pcolormesh(psi_grid[0], psi_grid[1], psi_values.transpose(), cmap='inferno'))
+      pl_psi_h = ax_h.pcolormesh(psi_grid[0], psi_grid[1], psi_values.transpose(), cmap='inferno')
     # end
 
+    handles["psi"] = pl_psi_h
+
     if colorbar:
-      cbar_ax1a = fig1a.add_axes(cax1aPos)
-      hcb1a.append(plt.colorbar(hpl1a[-1], ax=ax1a, cax=cbar_ax1a))
-      hcb1a[0].ax.tick_params(labelsize=gku.tick_font_size)
-      hcb1a[0].set_label(kwargs["zlabel"], rotation=90, labelpad=0, fontsize=gku.colorbar_label_font_size)
+      psi_cbar_ax_h = fig_h.add_axes(cax_pos)
+      psi_cbar_h = plt.colorbar(pl_psi_h, ax=ax_h, cax=psi_cbar_ax_h)
+      psi_cbar_h.ax.tick_params(labelsize=gku.tick_font_size)
+      psi_cbar_h.set_label(kwargs["zlabel"], rotation=90, labelpad=0, fontsize=gku.colorbar_label_font_size)
+      handles["psi_colorbar_axis"] = psi_cbar_ax_h
+      handles["psi_colorbar"] = psi_cbar_h
     # end
 
     # Add datasets plotted to stack.
-    gdat_psi = GData(tag="psi", label="psi", ctx=gdat.ctx)
+    gdat_psi = GData(tag="psi", ctx=gdat.ctx)
     if kwargs["contour"]:
       gdat_psi.push(psi_grid_cc, psi_values.transpose())
     else:
       gdat_psi.push(psi_grid, psi_values.transpose())
     # end
-
     data.add(gdat_psi)
+
   # end
 
   if kwargs["wall_file"]:
@@ -297,29 +331,32 @@ def gk_nodes(ctx, **kwargs):
     #end
 
     wall_data = np.loadtxt(open(wall_file),delimiter=',')
-    ax1a.plot(wall_data[:,0],wall_data[:,1],color="grey")
+    wall_h = ax_h.plot(wall_data[:,0],wall_data[:,1],color="grey")
+    handles["wall"] = wall_h
   # end
 
-  ax1a.set_xlabel(kwargs["xlabel"],fontsize=gku.xy_label_font_size)
-  ax1a.set_ylabel(kwargs["ylabel"],fontsize=gku.xy_label_font_size)
-  ax1a.set_title(kwargs["title"],fontsize=gku.title_font_size)
+  ax_h.set_xlabel(kwargs["xlabel"],fontsize=gku.xy_label_font_size)
+  ax_h.set_ylabel(kwargs["ylabel"],fontsize=gku.xy_label_font_size)
+  ax_h.set_title(kwargs["title"],fontsize=gku.title_font_size)
   if kwargs["xlim"]:
-    ax1a.set_xlim( float(kwargs["xlim"].split(",")[0]), float(kwargs["xlim"].split(",")[1]) )
+    ax_h.set_xlim( float(kwargs["xlim"].split(",")[0]), float(kwargs["xlim"].split(",")[1]) )
 #  else:
-#    ax1a.set_xlim( Rmin-0.05*lengthR, Rmax+0.05*lengthR )
+#    ax_h.set_xlim( Rmin-0.05*lengthR, Rmax+0.05*lengthR )
   # end
 
   if kwargs["ylim"]:
-    ax1a.set_ylim( float(kwargs["ylim"].split(",")[0]), float(kwargs["ylim"].split(",")[1]) )
+    ax_h.set_ylim( float(kwargs["ylim"].split(",")[0]), float(kwargs["ylim"].split(",")[1]) )
 #  else:
-#    ax1a.set_ylim( Zmin-0.05*lengthZ, Zmax+0.05*lengthZ )
+#    ax_h.set_ylim( Zmin-0.05*lengthZ, Zmax+0.05*lengthZ )
   # end
 
-  gku.set_tick_font_size(ax1a,gku.tick_font_size)
+  gku.set_tick_font_size(ax_h,gku.tick_font_size)
 
   if kwargs["saveas"]:
     plt.savefig(kwargs["saveas"])
-  else:
+  # end
+
+  if not kwargs["no_show"]:
     plt.show()
   # end
 

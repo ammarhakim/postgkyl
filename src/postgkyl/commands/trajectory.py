@@ -108,7 +108,7 @@ def trajectory(ctx, **kwargs):
   num_pos = dat.get_num_cells()[0]
 
   jump = 1
-  if "numframes" in kwargs.keys():
+  if kwargs.get("numframes"):
     jump = int(math.floor(num_pos / kwargs["numframes"]))
     num_pos = int(kwargs["numframes"])
   # end
