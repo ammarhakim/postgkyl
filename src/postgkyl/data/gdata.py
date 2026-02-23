@@ -189,7 +189,7 @@ class GData(object):
 
   # ---- Number of Cells ----
   def get_num_cells(self) -> np.ndarray:
-    if self.ctx.get("cells"):
+    if self.ctx.get("cells") is not None:
       return self.ctx["cells"]
     elif self._values is not None:
       num_dims = len(self._values.shape) - 1
@@ -218,7 +218,7 @@ class GData(object):
 
   # ---- Number of Dimensions -----
   def get_num_dims(self, squeeze: bool = False) -> int:
-    if self.ctx.get("cells"):
+    if self.ctx.get("cells") is not None:
       num_dims = len(self.ctx["cells"])
     elif self._values is not None:
       num_dims = int(len(self._values.shape) - 1)
