@@ -14,8 +14,11 @@ def _resolve_path(path: str, file_name: str) -> str:
   return os.path.join(path, file_name)
 
 
-def _resolve_files(name: str, species: str, frame: int, path: str):
-  frame_file = _resolve_path(path, f"{name}-{species}_{frame}.gkyl")
+def _resolve_files(name: str, species: str, frame: int, path: str, source: bool = False):
+  if source:
+    frame_file = _resolve_path(path, f"{name}-{species}_source_{frame}.gkyl")
+  else:
+    frame_file = _resolve_path(path, f"{name}-{species}_{frame}.gkyl")
   mapc2p_vel_file = _resolve_path(path, f"{name}-{species}_mapc2p_vel.gkyl")
   mc2nu_file = _resolve_path(path, f"{name}-mc2nu_pos_deflated.gkyl")
   jacobvel_file = _resolve_path(path, f"{name}-{species}_jacobvel.gkyl")
@@ -152,6 +155,8 @@ def _interpolate_fjx_and_jacob(fjx_data: GData, jacobtot_inv_data: GData):
     help="Species name (e.g. ion or elc).")
 @click.option("--frame", "-f", required=True, type=click.INT,
     help="Frame number.")
+@click.option("--source", is_flag=True,
+  help="Use <name>-<species>_source_<frame>.gkyl as the input distribution.")
 @click.option("--path", "-p", default="./", type=click.STRING,
     help="Path to simulation data.")
 @click.option("--tag", "-t", default="df", type=click.STRING,
@@ -170,7 +175,7 @@ def gk_distf(ctx, **kwargs):
 
   files = {}
   jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
-      kwargs["name"], kwargs["species"], kwargs["frame"], kwargs["path"])
+      kwargs["name"], kwargs["species"], kwargs["frame"], kwargs["path"], kwargs["source"])
   files["Jf"] = jf_file
   files["jacobvel"] = jacobvel_file
   files["jacobtot_inv"] = jacobtot_inv_file
