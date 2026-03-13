@@ -17,9 +17,77 @@ def _resolve_path(path: str, file_name: str) -> str:
 def _resolve_files(name: str, species: str, frame: int, path: str):
   frame_file = _resolve_path(path, f"{name}-{species}_{frame}.gkyl")
   mapc2p_vel_file = _resolve_path(path, f"{name}-{species}_mapc2p_vel.gkyl")
+  mc2nu_file = _resolve_path(path, f"{name}-mc2nu_pos_deflated.gkyl")
   jacobvel_file = _resolve_path(path, f"{name}-{species}_jacobvel.gkyl")
   jacobtot_inv_file = _resolve_path(path, f"{name}-jacobtot_inv.gkyl")
-  return frame_file, mapc2p_vel_file, jacobvel_file, jacobtot_inv_file
+  return frame_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file
+
+
+def _resolve_mapping_kwargs(use_c2p_vel: bool, mapc2p_vel_file: str) -> dict:
+  if use_c2p_vel:
+    return {"mapc2p_vel_name": mapc2p_vel_file}
+  return {"mapc2p_vel_name": ""}
+
+
+def _cell_centers_to_nodes(cell_centers: np.ndarray) -> np.ndarray:
+  nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
+  nodes[1:-1] = 0.5 * (cell_centers[:-1] + cell_centers[1:])
+  nodes[0] = cell_centers[0] - (nodes[1] - cell_centers[0])
+  nodes[-1] = cell_centers[-1] + (cell_centers[-1] - nodes[-2])
+  return nodes
+
+
+def _get_dim_split(out_grid: list, mc2nu_data: GData) -> tuple[int, int]:
+  total_dims = len(out_grid)
+  cdim = mc2nu_data.get_num_dims()
+  if cdim < 1 or cdim > total_dims:
+    raise ValueError(f"Invalid cdim={cdim} for total_dims={total_dims}")
+  vdim = total_dims - cdim
+  return cdim, vdim
+
+
+def _extract_mapped_axis(mapped_values: np.ndarray, axis: int, cdim: int) -> np.ndarray:
+  if cdim == 1:
+    return np.asarray(mapped_values[..., axis]).reshape(-1)
+
+  # Extract one mapped coordinate direction at a reference point in the
+  # remaining configuration directions to construct a 1D axis grid.
+  idx = [0] * (cdim + 1)
+  idx[axis] = slice(None)
+  idx[-1] = axis
+  return np.asarray(mapped_values[tuple(idx)]).reshape(-1)
+
+
+def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str, debug: bool) -> tuple[list, int, int]:
+  mc2nu_data = GData(mc2nu_file)
+  cdim, vdim = _get_dim_split(out_grid, mc2nu_data)
+
+  mc2nu_interp = GInterpModal(mc2nu_data, 1, "ms")
+  _, mc2nu_values = mc2nu_interp.interpolate(tuple(range(cdim)))
+  mapped_values = np.asarray(mc2nu_values)
+
+  deformed_grid = list(out_grid)
+  for d in range(cdim):
+    mapped_cfg = _extract_mapped_axis(mapped_values, d, cdim)
+
+    old_cfg = np.asarray(out_grid[d])
+    if mapped_cfg.size == old_cfg.size:
+      new_cfg = mapped_cfg
+    elif mapped_cfg.size + 1 == old_cfg.size:
+      new_cfg = _cell_centers_to_nodes(mapped_cfg)
+    else:
+      raise ValueError(
+          "mc2nu mapping size is incompatible with configuration grid on axis "
+          f"{d}: {mapped_cfg.size} vs {old_cfg.size}"
+      )
+
+    deformed_grid[d] = new_cfg
+
+  if debug:
+    click.echo(f"gk_distf: cdim={cdim}, vdim={vdim}")
+    click.echo(f"gk_distf: mc2nu mapped {cdim} configuration axis/axes")
+
+  return deformed_grid, cdim, vdim
 
 
 def _assert_files_exist(files: dict):
@@ -88,8 +156,10 @@ def _interpolate_fjx_and_jacob(fjx_data: GData, jacobtot_inv_data: GData):
     help="Path to simulation data.")
 @click.option("--tag", "-t", default="df", type=click.STRING,
     help="Tag for output dataset.")
-@click.option("--c2p-vel", default=False,
+@click.option("--c2p-vel/--no-c2p-vel", default=False,
     help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
+@click.option("--mc2nu", is_flag=True,
+  help="Use <name>-mc2nu_pos_deflated.gkyl to deform configuration-space grid.")
 @click.option("--debug", is_flag=True,
     help="Print resolved file names and shape diagnostics.")
 @click.pass_context
@@ -99,15 +169,20 @@ def gk_distf(ctx, **kwargs):
   data = ctx.obj["data"]
 
   files = {}
-  jf_file, mapc2p_vel_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
+  jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
       kwargs["name"], kwargs["species"], kwargs["frame"], kwargs["path"])
   files["Jf"] = jf_file
   files["jacobvel"] = jacobvel_file
   files["jacobtot_inv"] = jacobtot_inv_file
+
   if kwargs["c2p_vel"]:
     files["mapc2p_vel"] = mapc2p_vel_file
+  if kwargs["mc2nu"]:
+    files["mc2nu"] = mc2nu_file
 
   _assert_files_exist(files)
+
+  map_kwargs = _resolve_mapping_kwargs(kwargs["c2p_vel"], mapc2p_vel_file)
 
   if kwargs["debug"]:
     click.echo(f"gk_distf: Jf={jf_file}")
@@ -115,8 +190,10 @@ def gk_distf(ctx, **kwargs):
     click.echo(f"gk_distf: jacobtot_inv={jacobtot_inv_file}")
     if kwargs["c2p_vel"]:
       click.echo(f"gk_distf: mapc2p_vel={mapc2p_vel_file}")
+    if kwargs["mc2nu"]:
+      click.echo(f"gk_distf: mc2nu={mc2nu_file}")
 
-  jf_data = GData(jf_file, mapc2p_vel_name=mapc2p_vel_file if kwargs["c2p_vel"] else "")
+  jf_data = GData(jf_file, mapc2p_vel_name=map_kwargs["mapc2p_vel_name"])
   jacobvel_data = GData(jacobvel_file)
   jacobtot_inv_data = GData(jacobtot_inv_file)
 
@@ -126,6 +203,10 @@ def gk_distf(ctx, **kwargs):
 
   out_grid, fjx_interp, jacob_interp = _interpolate_fjx_and_jacob(fjx_data, jacobtot_inv_data)
   distf_values = _broadcast_multiply(fjx_interp, jacob_interp)
+
+  if kwargs["mc2nu"]:
+    out_grid, cdim, vdim = _apply_mc2nu_grid(out_grid, mc2nu_file, kwargs["debug"])
+    jf_data.ctx["grid_type"] = "mc2nu"
 
   if kwargs["debug"]:
     click.echo(f"gk_distf: output shape={distf_values.shape}")
