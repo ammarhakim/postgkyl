@@ -148,6 +148,61 @@ def _interpolate_fjx_and_jacob(fjx_data: GData, jacobtot_inv_data: GData):
   return grid, fjx_values, jacob_values
 
 
+def build_gk_distf(name: str, species: str, frame: int, path: str = "./",
+    tag: str = "df", source: bool = False, use_c2p_vel: bool = False,
+    use_mc2nu: bool = False, debug: bool = False) -> GData:
+  """Build a real distribution function from saved Jf data.
+
+  This is the Python API used by the ``gk-distf`` CLI command.
+  """
+  files = {}
+  jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
+      name, species, frame, path, source)
+  files["Jf"] = jf_file
+  files["jacobvel"] = jacobvel_file
+  files["jacobtot_inv"] = jacobtot_inv_file
+
+  if use_c2p_vel:
+    files["mapc2p_vel"] = mapc2p_vel_file
+  if use_mc2nu:
+    files["mc2nu"] = mc2nu_file
+
+  _assert_files_exist(files)
+
+  map_kwargs = _resolve_mapping_kwargs(use_c2p_vel, mapc2p_vel_file)
+
+  if debug:
+    click.echo(f"gk_distf: Jf={jf_file}")
+    click.echo(f"gk_distf: jacobvel={jacobvel_file}")
+    click.echo(f"gk_distf: jacobtot_inv={jacobtot_inv_file}")
+    if use_c2p_vel:
+      click.echo(f"gk_distf: mapc2p_vel={mapc2p_vel_file}")
+    if use_mc2nu:
+      click.echo(f"gk_distf: mc2nu={mc2nu_file}")
+
+  jf_data = GData(jf_file, mapc2p_vel_name=map_kwargs["mapc2p_vel_name"])
+  jacobvel_data = GData(jacobvel_file)
+  jacobtot_inv_data = GData(jacobtot_inv_file)
+
+  fjx_data = GData(tag=tag, ctx=jf_data.ctx)
+  fjx_values = _compute_fjx(jf_data.get_values(), jacobvel_data.get_values())
+  fjx_data.push(jf_data.get_grid(), fjx_values)
+
+  out_grid, fjx_interp, jacob_interp = _interpolate_fjx_and_jacob(fjx_data, jacobtot_inv_data)
+  distf_values = _broadcast_multiply(fjx_interp, jacob_interp)
+
+  if use_mc2nu:
+    out_grid, _, _ = _apply_mc2nu_grid(out_grid, mc2nu_file, debug)
+    jf_data.ctx["grid_type"] = "mc2nu"
+
+  if debug:
+    click.echo(f"gk_distf: output shape={distf_values.shape}")
+
+  out = GData(tag=tag, ctx=jf_data.ctx)
+  out.push(out_grid, np.asarray(distf_values)[..., np.newaxis])
+  return out
+
+
 @click.command()
 @click.option("--name", "-n", required=True, type=click.STRING,
     help="Simulation name prefix (e.g. gk_lorentzian_mirror).")
@@ -173,51 +228,16 @@ def gk_distf(ctx, **kwargs):
   verb_print(ctx, "Starting gk_distf")
   data = ctx.obj["data"]
 
-  files = {}
-  jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
-      kwargs["name"], kwargs["species"], kwargs["frame"], kwargs["path"], kwargs["source"])
-  files["Jf"] = jf_file
-  files["jacobvel"] = jacobvel_file
-  files["jacobtot_inv"] = jacobtot_inv_file
-
-  if kwargs["c2p_vel"]:
-    files["mapc2p_vel"] = mapc2p_vel_file
-  if kwargs["mc2nu"]:
-    files["mc2nu"] = mc2nu_file
-
-  _assert_files_exist(files)
-
-  map_kwargs = _resolve_mapping_kwargs(kwargs["c2p_vel"], mapc2p_vel_file)
-
-  if kwargs["debug"]:
-    click.echo(f"gk_distf: Jf={jf_file}")
-    click.echo(f"gk_distf: jacobvel={jacobvel_file}")
-    click.echo(f"gk_distf: jacobtot_inv={jacobtot_inv_file}")
-    if kwargs["c2p_vel"]:
-      click.echo(f"gk_distf: mapc2p_vel={mapc2p_vel_file}")
-    if kwargs["mc2nu"]:
-      click.echo(f"gk_distf: mc2nu={mc2nu_file}")
-
-  jf_data = GData(jf_file, mapc2p_vel_name=map_kwargs["mapc2p_vel_name"])
-  jacobvel_data = GData(jacobvel_file)
-  jacobtot_inv_data = GData(jacobtot_inv_file)
-
-  fjx_data = GData(tag=kwargs["tag"], ctx=jf_data.ctx)
-  fjx_values = _compute_fjx(jf_data.get_values(), jacobvel_data.get_values())
-  fjx_data.push(jf_data.get_grid(), fjx_values)
-
-  out_grid, fjx_interp, jacob_interp = _interpolate_fjx_and_jacob(fjx_data, jacobtot_inv_data)
-  distf_values = _broadcast_multiply(fjx_interp, jacob_interp)
-
-  if kwargs["mc2nu"]:
-    out_grid, cdim, vdim = _apply_mc2nu_grid(out_grid, mc2nu_file, kwargs["debug"])
-    jf_data.ctx["grid_type"] = "mc2nu"
-
-  if kwargs["debug"]:
-    click.echo(f"gk_distf: output shape={distf_values.shape}")
-
-  out = GData(tag=kwargs["tag"], ctx=jf_data.ctx)
-  out.push(out_grid, np.asarray(distf_values)[..., np.newaxis])
+  out = build_gk_distf(
+      name=kwargs["name"],
+      species=kwargs["species"],
+      frame=kwargs["frame"],
+      path=kwargs["path"],
+      tag=kwargs["tag"],
+      source=kwargs["source"],
+      use_c2p_vel=kwargs["c2p_vel"],
+      use_mc2nu=kwargs["mc2nu"],
+      debug=kwargs["debug"])
   data.add(out)
 
   verb_print(ctx, "Finishing gk_distf")
