@@ -1,3 +1,4 @@
+import glob
 import os
 
 import click
@@ -24,6 +25,85 @@ def _resolve_files(name: str, species: str, frame: int, path: str, source: bool 
   jacobvel_file = _resolve_path(path, f"{name}-{species}_jacobvel.gkyl")
   jacobtot_inv_file = _resolve_path(path, f"{name}-jacobtot_inv.gkyl")
   return frame_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file
+
+
+def _resolve_available_frames(name: str, species: str, path: str,
+    source: bool = False) -> list[int]:
+  if source:
+    prefix = _resolve_path(path, f"{name}-{species}_source_")
+  else:
+    prefix = _resolve_path(path, f"{name}-{species}_")
+
+  files = glob.glob(f"{glob.escape(prefix)}*.gkyl")
+  frames = []
+  for file_name in files:
+    suffix = file_name.removeprefix(prefix)
+    if suffix.endswith(".gkyl"):
+      frame_str = suffix[:-5]
+      try:
+        frames.append(int(frame_str))
+      except ValueError:
+        pass
+
+  return sorted(set(frames))
+
+
+def _parse_frame_bounds(frame: str) -> tuple[int | None, int | None, int]:
+  parts = frame.split(":")
+  if len(parts) < 2 or len(parts) > 3:
+    raise ValueError(
+        "Frame range must use the form 'start:stop[:step]' or ':' for all frames."
+    )
+
+  try:
+    start = int(parts[0]) if parts[0] else None
+    stop = int(parts[1]) if parts[1] else None
+    step = int(parts[2]) if len(parts) == 3 and parts[2] else 1
+  except ValueError as err:
+    raise ValueError(
+        "Frame range must use integer bounds, e.g. ':', '40:50', or '40:50:2'."
+    ) from err
+
+  if step <= 0:
+    raise ValueError("Frame range step must be a positive integer.")
+
+  return start, stop, step
+
+
+def _resolve_frames(name: str, species: str, frame: str, path: str,
+    source: bool = False) -> list[int]:
+  frame = frame.strip()
+  if not frame:
+    raise ValueError("Frame cannot be empty.")
+
+  if ":" not in frame:
+    try:
+      return [int(frame)]
+    except ValueError as err:
+      raise ValueError(
+          "Frame must be an integer or a slice like ':', '40:50', or '40:50:2'."
+      ) from err
+
+  available_frames = _resolve_available_frames(name, species, path, source)
+  if not available_frames:
+    raise FileNotFoundError(
+        f"No frame files found for {name}-{species} in {path}."
+    )
+
+  start, stop, step = _parse_frame_bounds(frame)
+  lower = available_frames[0] if start is None else start
+  upper = available_frames[-1] + 1 if stop is None else stop
+
+  frames = [
+      frame_num for frame_num in available_frames
+      if lower <= frame_num < upper and (frame_num - lower) % step == 0
+  ]
+  if not frames:
+    raise FileNotFoundError(
+        f"No frames matched '{frame}' for {name}-{species} in {path}."
+    )
+
+  return frames
 
 
 def _resolve_mapping_kwargs(use_c2p_vel: bool, mapc2p_vel_file: str) -> dict:
@@ -208,8 +288,8 @@ def build_gk_distf(name: str, species: str, frame: int, path: str = "./",
     help="Simulation name prefix (e.g. gk_lorentzian_mirror).")
 @click.option("--species", "-s", required=True, type=click.STRING,
     help="Species name (e.g. ion or elc).")
-@click.option("--frame", "-f", required=True, type=click.INT,
-    help="Frame number.")
+@click.option("--frame", "-f", required=True, type=click.STRING,
+  help="Frame number or range. Use ':' for all frames and 'start:stop[:step]' for ranges.")
 @click.option("--source", is_flag=True,
   help="Use <name>-<species>_source_<frame>.gkyl as the input distribution.")
 @click.option("--path", "-p", default="./", type=click.STRING,
@@ -228,16 +308,33 @@ def gk_distf(ctx, **kwargs):
   verb_print(ctx, "Starting gk_distf")
   data = ctx.obj["data"]
 
-  out = build_gk_distf(
-      name=kwargs["name"],
-      species=kwargs["species"],
-      frame=kwargs["frame"],
-      path=kwargs["path"],
-      tag=kwargs["tag"],
-      source=kwargs["source"],
-      use_c2p_vel=kwargs["c2p_vel"],
-      use_mc2nu=kwargs["mc2nu"],
-      debug=kwargs["debug"])
-  data.add(out)
+  try:
+    frames = _resolve_frames(
+        name=kwargs["name"],
+        species=kwargs["species"],
+        frame=kwargs["frame"],
+        path=kwargs["path"],
+        source=kwargs["source"])
+  except (FileNotFoundError, ValueError) as err:
+    ctx.fail(click.style(str(err), fg="red"))
+
+  if kwargs["debug"] and len(frames) > 1:
+    click.echo(f"gk_distf: resolved frames={frames}")
+
+  for frame in frames:
+    out = build_gk_distf(
+        name=kwargs["name"],
+        species=kwargs["species"],
+        frame=frame,
+        path=kwargs["path"],
+        tag=kwargs["tag"],
+        source=kwargs["source"],
+        use_c2p_vel=kwargs["c2p_vel"],
+        use_mc2nu=kwargs["mc2nu"],
+        debug=kwargs["debug"])
+    data.add(out)
+
+  if len(frames) > 1:
+    data.set_unique_labels()
 
   verb_print(ctx, "Finishing gk_distf")
