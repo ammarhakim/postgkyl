@@ -228,7 +228,7 @@ def _interpolate_fjx_and_jacob(fjx_data: GData, jacobtot_inv_data: GData):
   return grid, fjx_values, jacob_values
 
 
-def build_gk_distf(name: str, species: str, frame: int, path: str = "./",
+def load_gk_distf(name: str, species: str, frame: int, path: str = "./",
     tag: str = "df", source: bool = False, use_c2p_vel: bool = False,
     use_mc2nu: bool = False, debug: bool = False) -> GData:
   """Build a real distribution function from saved Jf data.
@@ -322,7 +322,7 @@ def gk_distf(ctx, **kwargs):
     click.echo(f"gk_distf: resolved frames={frames}")
 
   for frame in frames:
-    out = build_gk_distf(
+    out = load_gk_distf(
         name=kwargs["name"],
         species=kwargs["species"],
         frame=frame,
