@@ -411,23 +411,23 @@ def load_gk_distf_mb(name: str, species: str, frame: int, path: str = "./",
     help="Simulation name prefix (e.g. gk_lorentzian_mirror).")
 @click.option("--species", "-s", required=True, type=click.STRING,
     help="Species name (e.g. ion or elc).")
-@click.option("--frame", "-f", required=True, type=click.STRING,
-  help="Frame number or range. Use ':' for all frames and 'start:stop[:step]' for ranges.")
 @click.option("--source", is_flag=True,
   help="Use <name>-<species>_source_<frame>.gkyl as the input distribution.")
+@click.option("--frame", "-f", required=True, type=click.STRING,
+  help="Frame number or range. Use ':' for all frames and 'start:stop[:step]' for ranges.")
 @click.option("--path", "-p", default="./", type=click.STRING,
     help="Path to simulation data.")
 @click.option("--tag", "-t", default="df", type=click.STRING,
     help="Tag for output dataset.")
-@click.option("--c2p-vel/--no-c2p-vel", default=False,
+@click.option("--c2p-vel", "-v", is_flag=True, default=False,
     help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
-@click.option("--mc2nu", is_flag=True,
+@click.option("--mc2nu", "-m", is_flag=True,
   help="Use <name>-mc2nu_pos_deflated.gkyl to deform configuration-space grid.")
-@click.option("--mb", "-b", is_flag=True, default=False,
+@click.option("--multi-block", "-b", is_flag=True, default=False,
     help="Multiblock mode. Files are expected as {name}_b{N}-{species}_{frame}.gkyl.")
-@click.option("--mb-blocks", type=click.STRING, default=None,
+@click.option("--block", type=click.STRING, default=None,
     help=("Restrict multiblock to specific blocks: comma-separated list or slice "
-          "(start:stop:step). Requires --mb. Defaults to all discovered blocks."))
+          "(start:stop:step). Requires --multi-block. Defaults to all discovered blocks."))
 @click.option("--debug", is_flag=True,
     help="Print resolved file names and shape diagnostics.")
 @click.pass_context
@@ -436,8 +436,8 @@ def gk_distf(ctx, **kwargs):
   verb_print(ctx, "Starting gk_distf")
   data = ctx.obj["data"]
 
-  is_multib = kwargs["mb"]
-  mb_blocks_str = kwargs["mb_blocks"] if kwargs["mb_blocks"] is not None else "-1"
+  is_multib = kwargs["multi_block"]
+  mb_blocks_str = kwargs["block"] if kwargs["block"] is not None else "-1"
 
   # For frame-range resolution, use block 0 as the reference when multiblock.
   ref_block = None
