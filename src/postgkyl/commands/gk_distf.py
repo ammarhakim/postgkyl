@@ -9,7 +9,7 @@ from postgkyl.utils import verb_print
 # mc2nu grid deformation helpers
 # This is a result of the gkyl_reader not having support for both mapc2p and mapc2p-vel grids.
 # Particularly, the gkyl_reader, does not support mapping phase space arrays with mapc2p
-def _cell_centers_to_nodes(cell_centers: np.ndarray) -> np.ndarray:
+def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
   """ Given an array of cell centers, return the corresponding node coordinates by extrapolating half a cell width at the boundaries."""
   nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
   nodes[1:-1] = 0.5 * (cell_centers[:-1] + cell_centers[1:])
@@ -18,34 +18,17 @@ def _cell_centers_to_nodes(cell_centers: np.ndarray) -> np.ndarray:
   return nodes
 # end
 
-
-def _extract_mapped_axis(mapped_values: np.ndarray, axis: int, cdim: int) -> np.ndarray:
-  """Extract a 1D mapped coordinate array for the given configuration axis."""
-  if cdim == 1:
-    return np.asarray(mapped_values[..., axis]).reshape(-1)
-  # end
-
-  # Pick a reference point in all other config directions.
-  idx = [0] * (cdim + 1)
-  idx[axis] = slice(None)
-  idx[-1] = axis
-  return np.asarray(mapped_values[tuple(idx)]).reshape(-1)
-# end
-
-
 def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str) -> list:
   """Replace computational configuration-space grid with non-uniform spatial coordinates."""
   mc2nu_data = GData(mc2nu_file)
   cdim = mc2nu_data.get_num_dims()
 
   _, mc2nu_values = GInterpModal(mc2nu_data, 1, "ms").interpolate(tuple(range(cdim)))
-  mapped_values = np.asarray(mc2nu_values)
+  mc2nu_values = np.squeeze(mc2nu_values)
 
   deformed_grid = list(out_grid)
   for d in range(cdim):
-    mapped_cfg = _extract_mapped_axis(mapped_values, d, cdim)
-    old_cfg = np.asarray(out_grid[d])
-    deformed_grid[d] = mapped_cfg if mapped_cfg.size == old_cfg.size else _cell_centers_to_nodes(mapped_cfg)
+    deformed_grid[d] = _convert_cell_centered_to_nodal(mc2nu_values)
   # end
   return deformed_grid
 # end
