@@ -96,10 +96,6 @@ def load_gk_distf(
   return out
 # end
 
-# ---------------------------------------------------------------------------
-# CLI command
-# ---------------------------------------------------------------------------
-
 @click.command()
 @click.option("--name", "-n", required=True, type=click.STRING,
     help="Simulation name prefix (e.g. gk_lorentzian_mirror).")
@@ -143,6 +139,7 @@ def gk_distf(ctx, **kwargs):
     step  = int(parts[2]) if len(parts) == 3 and parts[2] else 1
     frames = [f for f in available if lower <= f < upper and (f - lower) % step == 0]
   # end
+  verb_print(ctx, f"Loading frames: {frames}")
 
   for frame in frames:
     out = load_gk_distf(
