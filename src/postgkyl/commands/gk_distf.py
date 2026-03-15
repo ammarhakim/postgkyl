@@ -4,80 +4,7 @@ import click
 import numpy as np
 
 from postgkyl.data import GData, GInterpModal
-
-
-def _parse_file_names(
-    name: str, species: str, frame: int,
-    source: bool = False, block_idx: int | None = None,
-    use_c2p_vel: bool = False, use_mc2nu: bool = False
-) -> tuple[str, str, str, str, str]:
-  "Find all relevant files for the given frame, checking for existence and returning paths."
-  prefix = f"{name}_b{block_idx}" if block_idx is not None else name
-  frame_infix = "source_" if source else ""
-  frame_file = f"{prefix}-{species}_{frame_infix}{frame}.gkyl"
-  mapc2p_vel_file = f"{prefix}-{species}_mapc2p_vel.gkyl"
-  mc2nu_file = f"{prefix}-mc2nu_pos_deflated.gkyl"
-  jacobvel_file = f"{prefix}-{species}_jacobvel.gkyl"
-  jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
-
-  # Check all files exist.
-  for file in [frame_file, jacobvel_file, jacobtot_inv_file]:
-    if not glob.glob(file):
-      raise FileNotFoundError(f"Required file not found: {file}")
-    # end
-  # end
-  if use_c2p_vel:
-    if not glob.glob(mapc2p_vel_file):
-      raise FileNotFoundError(f"Required file not found: {mapc2p_vel_file}")
-    # end
-  # end
-
-  if use_mc2nu:
-    if not glob.glob(mc2nu_file):
-      raise FileNotFoundError(f"Required file not found: {mc2nu_file}")
-    # end
-  # end
-  return frame_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file
-# end
-
-def _parse_frames_in_directory(
-    name: str, species: str, frame: str,
-    source: bool = False, block_idx: int | None = None,
-) -> list[int]:
-  """Parse frame input and resolve to a list of available frame numbers."""
-  frame = frame.strip()
-
-  # If frame is a single number, return it as a list.
-  if ":" not in frame:
-    return [int(frame)]
-  # end
-
-  prefix_name = f"{name}_b{block_idx}" if block_idx is not None else name
-  frame_infix = "source_" if source else ""
-  prefix = f"{prefix_name}-{species}_{frame_infix}"
-
-  # Keep only files whose suffix is an integer frame number.
-  frames = [
-      int(suffix[:-5])
-      for file_name in glob.glob(f"{glob.escape(prefix)}*.gkyl")
-      if (suffix := file_name.removeprefix(prefix)).endswith(".gkyl")
-      and suffix[:-5].isdigit()
-  ]
-  available = sorted(set(frames))
-
-  parts = frame.split(":")
-  start = int(parts[0]) if parts[0] else None
-  stop = int(parts[1]) if parts[1] else None
-  step = int(parts[2]) if len(parts) == 3 and parts[2] else 1
-  lower = available[0] if start is None else start
-  upper = available[-1] + 1 if stop is None else stop
-
-  frames = [
-      f for f in available
-      if lower <= f < upper and (f - lower) % step == 0
-  ]
-  return frames
-# end
+from postgkyl.utils import verb_print
 
 # ---------------------------------------------------------------------------
 # mc2nu grid deformation helpers
@@ -107,20 +34,19 @@ def _extract_mapped_axis(mapped_values: np.ndarray, axis: int, cdim: int) -> np.
 # end
 
 
-def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str, ctx=None) -> list:
+def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str) -> list:
   """Replace computational configuration-space grid with non-uniform spatial coordinates."""
   mc2nu_data = GData(mc2nu_file)
   cdim = mc2nu_data.get_num_dims()
 
-  mc2nu_interp = GInterpModal(mc2nu_data, 1, "ms")
-  _, mc2nu_values = mc2nu_interp.interpolate(tuple(range(cdim)))
+  _, mc2nu_values = GInterpModal(mc2nu_data, 1, "ms").interpolate(tuple(range(cdim)))
   mapped_values = np.asarray(mc2nu_values)
 
   deformed_grid = list(out_grid)
   for d in range(cdim):
     mapped_cfg = _extract_mapped_axis(mapped_values, d, cdim)
-    deformed_grid[d] = _cell_centers_to_nodes(mapped_cfg)
-    # end
+    old_cfg = np.asarray(out_grid[d])
+    deformed_grid[d] = mapped_cfg if mapped_cfg.size == old_cfg.size else _cell_centers_to_nodes(mapped_cfg)
   # end
   return deformed_grid
 # end
@@ -132,38 +58,41 @@ def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str, ctx=None) -> list:
 
 def load_gk_distf(
     name: str, species: str, frame: int,
-    tag: str = "df", source: bool = False, use_c2p_vel: bool = False,
-    use_mc2nu: bool = False,
-    block_idx: int | None = None,
-    ctx=None,
+    tag: str = "f", source: bool = False, use_c2p_vel: bool = False,
+    use_mc2nu: bool = False, block_idx: int | None = None,
 ) -> GData:
   """Build a real distribution function from saved JBf data."""
-  jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _parse_file_names(
-      name, species, frame, source, block_idx=block_idx, use_c2p_vel=use_c2p_vel, use_mc2nu=use_mc2nu)
+  prefix = f"{name}_b{block_idx}" if block_idx is not None else name
+  frame_infix = "source_" if source else ""
 
-  jf_data = GData(jf_file, mapc2p_vel_name=mapc2p_vel_file)
-  jacobvel_data = GData(jacobvel_file)
+  jf_file           = f"{prefix}-{species}_{frame_infix}{frame}.gkyl"
+  mapc2p_vel_file   = f"{prefix}-{species}_mapc2p_vel.gkyl"
+  mc2nu_file        = f"{prefix}-mc2nu_pos_deflated.gkyl"
+  jacobvel_file     = f"{prefix}-{species}_jacobvel.gkyl"
+  jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
+
+  jf_data           = GData(jf_file, mapc2p_vel_name=mapc2p_vel_file if use_c2p_vel else None)
+  jacobvel_data     = GData(jacobvel_file)
   jacobtot_inv_data = GData(jacobtot_inv_file)
 
-  # Divide Jf by jacobvel to get f * J_x * B
-  # Could be improved using weak division
+  # Divide Jf by jacobvel to get f * J_x * B.
   fjxB_data = GData(tag=tag, ctx=jf_data.ctx)
   fjxB_values = jf_data.get_values() / jacobvel_data.get_values()
   fjxB_data.push(jf_data.get_grid(), fjxB_values)
 
   # Interpolate f * J_x * B and jacobtot_inv to the same grid.
-  out_grid, fjxB_values = GInterpModal(fjxB_data, 1, "gkhyb").interpolate()
-  _, jacobtot_inv_values = GInterpModal(jacobtot_inv_data, 1, "ms").interpolate()
-  fjxB_values = np.squeeze(fjxB_values)
-  jacobtot_inv_values = np.squeeze(jacobtot_inv_values)
+  out_grid, fjxB_values    = GInterpModal(fjxB_data, 1, "gkhyb").interpolate()
+  _, jacobtot_inv_values   = GInterpModal(jacobtot_inv_data, 1, "ms").interpolate()
+  fjxB_values              = np.squeeze(fjxB_values)
+  jacobtot_inv_values      = np.squeeze(jacobtot_inv_values)
 
-  # Reshape jacobtot_inv so that we can multiply f * J_x * B by 1/(J_x B)
+  # Reshape jacobtot_inv to broadcast over velocity dimensions, then multiply.
   vdim = fjxB_values.ndim - jacobtot_inv_values.ndim
-  jacob_shape = jacobtot_inv_values.shape + (1,) * vdim # Single array index in velocity directions
-  distf_values = fjxB_values * jacobtot_inv_values.reshape(jacob_shape)
+  jacobtot_inv_reshaped = jacobtot_inv_values.reshape(jacobtot_inv_values.shape + (1,) * vdim)
+  distf_values = fjxB_values * jacobtot_inv_reshaped
 
   if use_mc2nu:
-    out_grid = _apply_mc2nu_grid(out_grid, mc2nu_file, ctx)
+    out_grid = _apply_mc2nu_grid(out_grid, mc2nu_file)
     jf_data.ctx["grid_type"] = "mc2nu"
   # end
 
@@ -198,21 +127,35 @@ def gk_distf(ctx, **kwargs):
   """Gyrokinetics: build real distribution function from saved Jf data."""
   data = ctx.obj["data"]
 
-  frames = _parse_frames_in_directory(
-      name=kwargs["name"], species=kwargs["species"],
-      frame=kwargs["frame"],
-      source=kwargs["source"], block_idx=kwargs["block"])
+  verb_print(ctx, "Building distribution function for " + kwargs["name"])
 
-  common = dict(
-      name=kwargs["name"], species=kwargs["species"],
-      tag=kwargs["tag"],
-      source=kwargs["source"], use_c2p_vel=kwargs["c2p_vel"],
-      use_mc2nu=kwargs["mc2nu"],
-      block_idx=kwargs["block"],
-      ctx=ctx,
-  )
+  # Resolve list of frame numbers.
+  frame_spec = kwargs["frame"].strip()
+  if ":" not in frame_spec:
+    frames = [int(frame_spec)]
+  else:
+    prefix = f"{kwargs['name']}_b{kwargs['block']}" if kwargs["block"] is not None else kwargs["name"]
+    frame_infix = "source_" if kwargs["source"] else ""
+    stem = f"{prefix}-{kwargs['species']}_{frame_infix}"
+    available = sorted({
+        int(f.removeprefix(stem)[:-5])
+        for f in glob.glob(f"{glob.escape(stem)}*.gkyl")
+        if f.removeprefix(stem)[:-5].isdigit()
+    })
+    parts = frame_spec.split(":")
+    lower = int(parts[0]) if parts[0] else available[0]
+    upper = int(parts[1]) if parts[1] else available[-1] + 1
+    step  = int(parts[2]) if len(parts) == 3 and parts[2] else 1
+    frames = [f for f in available if lower <= f < upper and (f - lower) % step == 0]
+  # end
+
   for frame in frames:
-    out = load_gk_distf(frame=frame, **common)
+    out = load_gk_distf(
+        name=kwargs["name"], species=kwargs["species"], frame=frame,
+        tag=kwargs["tag"], source=kwargs["source"],
+        use_c2p_vel=kwargs["c2p_vel"], use_mc2nu=kwargs["mc2nu"],
+        block_idx=kwargs["block"],
+    )
     data.add(out)
   # end
 
