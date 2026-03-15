@@ -268,6 +268,11 @@ class GData(object):
       up[d] = self._grid[d].max()
     self.ctx["lower"] = lo
     self.ctx["upper"] = up
+    if "grid_type" not in self.ctx:
+      if all(len(np.asarray(coord).shape) == 1 for coord in self._grid):
+        self.ctx["grid_type"] = "uniform"
+      else:
+        self.ctx["grid_type"] = "mapped"
 
   grid = property(get_grid, set_grid)
 
