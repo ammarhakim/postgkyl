@@ -6,10 +6,9 @@ import numpy as np
 from postgkyl.data import GData, GInterpModal
 from postgkyl.utils import verb_print
 
-# ---------------------------------------------------------------------------
 # mc2nu grid deformation helpers
-# ---------------------------------------------------------------------------
-
+# This is a result of the gkyl_reader not having support for both mapc2p and mapc2p-vel grids.
+# Particularly, the gkyl_reader, does not support mapping phase space arrays with mapc2p
 def _cell_centers_to_nodes(cell_centers: np.ndarray) -> np.ndarray:
   """ Given an array of cell centers, return the corresponding node coordinates by extrapolating half a cell width at the boundaries."""
   nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
@@ -51,11 +50,7 @@ def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str) -> list:
   return deformed_grid
 # end
 
-
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
-
 def load_gk_distf(
     name: str, species: str, frame: int,
     tag: str = "f", source: bool = False, use_c2p_vel: bool = False,
