@@ -174,6 +174,7 @@ def _error_check(check: str, **kwargs):
 def _resolve_available_frames(
     name: str, species: str, path: str,
     source: bool = False, block_idx: int | None = None,) -> list[int]:
+  """Scan the path for available frame files matching the naming pattern."""
   prefix_name = f"{name}_b{block_idx}" if block_idx is not None else name
   frame_infix = "source_" if source else ""
   prefix = _resolve_path(path, f"{prefix_name}-{species}_{frame_infix}")
@@ -197,6 +198,7 @@ def _resolve_frames(
     name: str, species: str, frame: str, path: str,
     source: bool = False, block_idx: int | None = None,
 ) -> list[int]:
+  """Parse frame input and resolve to a list of available frame numbers."""
   frame = frame.strip()
   _error_check("frame_nonempty", frame=frame)
 
@@ -207,8 +209,8 @@ def _resolve_frames(
 
   available = _resolve_available_frames(name, species, path, source, block_idx=block_idx)
   _error_check("available_frames", available=available, name=name, species=species, path=path)
-
   _error_check("frame_bounds", frame=frame)
+
   parts = frame.split(":")
   start = int(parts[0]) if parts[0] else None
   stop = int(parts[1]) if parts[1] else None
@@ -229,14 +231,14 @@ def _resolve_frames(
 # ---------------------------------------------------------------------------
 
 def _compute_fjx(jf_values: np.ndarray, jac_values: np.ndarray) -> np.ndarray:
-  """Divide Jf by jacobvel to get f * J_x."""
+  """Divide Jf by jacobvel to get f * J_x * B. Could be improved with weak division"""
   _error_check("fjx_shape", jf_shape=jf_values.shape, jac_shape=jac_values.shape)
   return jf_values / jac_values
 # end
 
 
 def _broadcast_multiply(distf: np.ndarray, jacobtot_inv: np.ndarray) -> np.ndarray:
-  """Multiply distf by jacobtot_inv, broadcasting over the component axis."""
+  """Multiply f * J_x * B by jacobtot_inv, broadcasting over the component axis."""
   _error_check("broadcast_shape", distf_shape=distf.shape, jac_shape=jacobtot_inv.shape)
   jacob_shape = jacobtot_inv.shape + (1,) * (distf.ndim - jacobtot_inv.ndim)
   return distf * jacobtot_inv.reshape(jacob_shape)
@@ -246,7 +248,7 @@ def _broadcast_multiply(distf: np.ndarray, jacobtot_inv: np.ndarray) -> np.ndarr
 def _interpolate_distf_components(
     fjx_data: GData, jacobtot_inv_data: GData,
 ) -> tuple[list, np.ndarray, np.ndarray]:
-  """Interpolate f/J_x (gkhyb basis) and jacobtot_inv (ms basis)."""
+  """Interpolate f * J_x * B (gkhyb basis) and jacobtot_inv (ms basis)."""
   grid, fjx_values = GInterpModal(fjx_data, 1, "gkhyb").interpolate()
   _, jacob_values = GInterpModal(jacobtot_inv_data, 1, "ms").interpolate()
   return grid, np.squeeze(fjx_values), np.squeeze(jacob_values)
@@ -317,7 +319,7 @@ def load_gk_distf(
     block_idx: int | None = None,
     ctx=None,
 ) -> GData:
-  """Build a real distribution function from saved Jf data."""
+  """Build a real distribution function from saved JBf data."""
   jf_file, mapc2p_vel_file, mc2nu_file, jacobvel_file, jacobtot_inv_file = _resolve_files(
       name, species, frame, path, source, block_idx=block_idx)
 
@@ -338,10 +340,10 @@ def load_gk_distf(
   jacobvel_data = GData(jacobvel_file)
   jacobtot_inv_data = GData(jacobtot_inv_file)
 
-  fjx_data = GData(tag=tag, ctx=jf_data.ctx)
-  fjx_data.push(jf_data.get_grid(), _compute_fjx(jf_data.get_values(), jacobvel_data.get_values()))
+  fjxB_data = GData(tag=tag, ctx=jf_data.ctx)
+  fjxB_data.push(jf_data.get_grid(), _compute_fjx(jf_data.get_values(), jacobvel_data.get_values()))
 
-  out_grid, fjx_values, jacob_values = _interpolate_distf_components(fjx_data, jacobtot_inv_data)
+  out_grid, fjx_values, jacob_values = _interpolate_distf_components(fjxB_data, jacobtot_inv_data)
   distf_values = _broadcast_multiply(fjx_values, jacob_values)
 
   if use_mc2nu:
@@ -361,21 +363,21 @@ def load_gk_distf(
 # ---------------------------------------------------------------------------
 
 @click.command()
-@click.option("--name",        "-n", required=True,  type=click.STRING,
+@click.option("--name", "-n", required=True, type=click.STRING,
     help="Simulation name prefix (e.g. gk_lorentzian_mirror).")
-@click.option("--species",     "-s", required=True,  type=click.STRING,
+@click.option("--species", "-s", required=True, type=click.STRING,
     help="Species name (e.g. ion or elc).")
-@click.option("--frame",       "-f", required=True,  type=click.STRING,
+@click.option("--frame", "-f", required=True, type=click.STRING,
     help="Frame number or range. Use ':' for all frames and 'start:stop[:step]' for ranges.")
-@click.option("--path",        "-p", default="./",   type=click.STRING,
+@click.option("--path", "-p", default="./", type=click.STRING,
     help="Path to simulation data.")
-@click.option("--tag",         "-t", default="df",   type=click.STRING,
+@click.option("--tag", "-t", default="df", type=click.STRING,
     help="Tag for output dataset.")
-@click.option("--source",            is_flag=True,
+@click.option("--source", is_flag=True,
     help="Use <name>-<species>_source_<frame>.gkyl as the input distribution.")
-@click.option("--c2p-vel",     "-v", is_flag=True,   default=False,
+@click.option("--c2p-vel", "-v", is_flag=True, default=False,
     help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
-@click.option("--mc2nu",       "-m", is_flag=True,
+@click.option("--mc2nu", "-m", is_flag=True,
     help="Use <name>-mc2nu_pos_deflated.gkyl to deform the configuration-space grid.")
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
