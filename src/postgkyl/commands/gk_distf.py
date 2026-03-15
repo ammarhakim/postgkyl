@@ -62,8 +62,8 @@ def load_gk_distf(
 
   jf_file           = f"{prefix}-{species}_{frame_infix}{frame}.gkyl"
   mapc2p_vel_file   = f"{prefix}-{species}_mapc2p_vel.gkyl"
-  mc2nu_file        = f"{prefix}-mc2nu_pos_deflated.gkyl"
   jacobvel_file     = f"{prefix}-{species}_jacobvel.gkyl"
+  mc2nu_file        = f"{prefix}-mc2nu_pos_deflated.gkyl"
   jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
 
   jf_data           = GData(jf_file, mapc2p_vel_name=mapc2p_vel_file if use_c2p_vel else None)
