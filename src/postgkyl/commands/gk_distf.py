@@ -118,11 +118,11 @@ def gk_distf(ctx, **kwargs):
 
   verb_print(ctx, "Building distribution function for " + kwargs["name"])
 
-  # Resolve list of frame numbers.
   frame_spec = kwargs["frame"].strip()
   if ":" not in frame_spec:
-    frames = [int(frame_spec)]
+    frames = [int(frame_spec)] # Stick to the frame specified on input
   else:
+    # Figure out how many frames are possible to read based on what files are available
     prefix = f"{kwargs['name']}_b{kwargs['block']}" if kwargs["block"] is not None else kwargs["name"]
     frame_infix = "source_" if kwargs["source"] else ""
     stem = f"{prefix}-{kwargs['species']}_{frame_infix}"
@@ -131,6 +131,7 @@ def gk_distf(ctx, **kwargs):
         for f in glob.glob(f"{glob.escape(stem)}*.gkyl")
         if f.removeprefix(stem)[:-5].isdigit()
     })
+    # Slice the data accordingly
     parts = frame_spec.split(":")
     lower = int(parts[0]) if parts[0] else available[0]
     upper = int(parts[1]) if parts[1] else available[-1] + 1
