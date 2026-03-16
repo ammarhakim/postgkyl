@@ -21,7 +21,7 @@ def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
 
 def _extract_values_along_dimension(mapped_values: np.ndarray, axis: int, cdim: int) -> np.ndarray:
   """Decompose mapped_values into a 1D array along the specified axis"""
-  idx = [0] * (cdim + 1)  # Initilize index array. mc2nu has cdim+1 dimensions.
+  idx = [0] * (cdim + 1)  # Initialize indexing array. mc2nu has cdim+1 dimensions.
   idx[axis] = slice(None)  # Define a slice along the desired axis.
   idx[-1] = axis  # Select the appropriate component of mc2nu
   return mapped_values[tuple(idx)].reshape(-1)  # Apply indices and flatten to 1D.
