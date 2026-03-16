@@ -105,7 +105,7 @@ def load_gk_distf(
     help="Frame number or range. Use ':' for all frames and 'start:stop[:step]' for ranges.")
 @click.option("--c2p-vel", "-v", is_flag=True, default=False,
     help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
-@click.option("--mc2nu", "-m", is_flag=True,
+@click.option("--mc2nu", "-m", is_flag=True, default=False,
     help="Use <name>-mc2nu_pos_deflated.gkyl to deform the configuration-space grid.")
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
