@@ -8,6 +8,7 @@ to Gkeyll data together with a broad variety of analytical and visualization too
 __version__ = "1.7.5"
 
 # import submodules
+from postgkyl import commands
 from postgkyl import data
 from postgkyl import utils
 from postgkyl import tools
