@@ -10,7 +10,8 @@ from postgkyl.utils import verb_print
 # This is a result of the gkyl_reader not having support for both mapc2p and mapc2p-vel grids.
 # Particularly, the gkyl_reader, does not support mapping phase space arrays with mapc2p
 def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
-  """ Given an array of cell centers, return the corresponding node coordinates by extrapolating half a cell width at the boundaries."""
+  """ Given an array defined at cell centers, return the corresponding nodal values
+   by interpolating half a cell width at the boundaries."""
   nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
   nodes[1:-1] = 0.5 * (cell_centers[:-1] + cell_centers[1:])
   nodes[0]  = cell_centers[0]  - (nodes[1]  - cell_centers[0])
@@ -18,19 +19,27 @@ def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
   return nodes
 # end
 
-def _apply_mc2nu_grid(out_grid: list, mc2nu_file: str) -> list:
+def _extract_values_along_dimension(mapped_values: np.ndarray, axis: int, cdim: int) -> np.ndarray:
+  """Decompose mapped_values into a 1D array along the specified axis"""
+  idx = [0] * (cdim + 1)  # Initilize index array. mc2nu has cdim+1 dimensions.
+  idx[axis] = slice(None)  # Define a slice along the desired axis.
+  idx[-1] = axis  # Select the appropriate component of mc2nu
+  return mapped_values[tuple(idx)].reshape(-1)  # Apply indices and flatten to 1D.
+# end
+
+def _apply_mc2nu_grid(uniform_grid: list, mc2nu_file: str) -> list:
   """Replace computational configuration-space grid with non-uniform spatial coordinates."""
   mc2nu_data = GData(mc2nu_file)
   cdim = mc2nu_data.get_num_dims()
 
   _, mc2nu_values = GInterpModal(mc2nu_data, 1, "ms").interpolate(tuple(range(cdim)))
-  mc2nu_values = np.squeeze(mc2nu_values)
 
-  deformed_grid = list(out_grid)
+  nonuniform_grid = list(uniform_grid)
   for d in range(cdim):
-    deformed_grid[d] = _convert_cell_centered_to_nodal(mc2nu_values)
+    mc2nu_single_axis = _extract_values_along_dimension(mc2nu_values, d, cdim)
+    nonuniform_grid[d] = _convert_cell_centered_to_nodal(mc2nu_single_axis)
   # end
-  return deformed_grid
+  return nonuniform_grid
 # end
 
 # Public API
