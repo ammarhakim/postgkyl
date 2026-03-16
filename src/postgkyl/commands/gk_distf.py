@@ -119,10 +119,10 @@ def gk_distf(ctx, **kwargs):
   verb_print(ctx, "Building distribution function for " + kwargs["name"])
 
   frame_spec = kwargs["frame"].strip()
-  if ":" not in frame_spec:
-    frames = [int(frame_spec)] # Stick to the frame specified on input
-  elif "," in frame_spec:
+  if "," in frame_spec:
     frames = [int(f.strip()) for f in frame_spec.split(",")] # List of frames specified on input
+  elif ":" not in frame_spec:
+    frames = [int(frame_spec)] # Stick to the frame specified on input
   else:
     # Figure out how many frames are possible to read based on what files are available
     prefix = f"{kwargs['name']}_b{kwargs['block']}" if kwargs["block"] is not None else kwargs["name"]
