@@ -63,7 +63,7 @@ def load_gk_distf(
   jacobtot_inv_data = GData(jacobtot_inv_file)
 
   # Divide Jf by jacobvel to get f * J_x * B.
-  fjxB_data = GData(ctx=jf_data.ctx)
+  fjxB_data = GData(ctx=jf_data.ctx) # Inside a GData object so we can interpolate
   fjxB_values = jf_data.get_values() / jacobvel_data.get_values()
   fjxB_data.push(jf_data.get_grid(), fjxB_values)
 
