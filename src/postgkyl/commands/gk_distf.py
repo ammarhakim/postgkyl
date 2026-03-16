@@ -15,7 +15,7 @@ def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
   nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
   nodes[1:-1] = 0.5 * (cell_centers[:-1] + cell_centers[1:])
   nodes[0]  = cell_centers[0]  - (nodes[1]  - cell_centers[0])
-  nodes[-1] = cell_centers[-1] + (cell_centers[-1] - nodes[-2])
+  nodes[-1] = cell_centers[-1] - (nodes[-2] - cell_centers[-1])
   return nodes
 # end
 
