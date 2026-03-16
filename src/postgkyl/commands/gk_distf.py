@@ -8,14 +8,14 @@ from postgkyl.utils import verb_print
 
 # mc2nu grid deformation helpers
 # This is a result of the gkyl_reader not having support for both mapc2p and mapc2p-vel grids.
-# Particularly, the gkyl_reader, does not support mapping phase space arrays with mapc2p
+# Particularly, the gkyl_reader does not support mapping phase space arrays with mapc2p
 def _convert_cell_centered_to_nodal(cell_centers: np.ndarray) -> np.ndarray:
   """ Given an array defined at cell centers, return the corresponding nodal values
    by interpolating half a cell width at the boundaries."""
   nodes = np.zeros(cell_centers.size + 1, dtype=cell_centers.dtype)
   nodes[1:-1] = 0.5 * (cell_centers[:-1] + cell_centers[1:])
-  nodes[0]  = cell_centers[0]  - (nodes[1]  - cell_centers[0])
-  nodes[-1] = cell_centers[-1] - (nodes[-2] - cell_centers[-1])
+  nodes[0]  = cell_centers[0]  + (cell_centers[0]  - nodes[1]) # Cell center plus half a cell width
+  nodes[-1] = cell_centers[-1] + (cell_centers[-1] - nodes[-2]) # Cell center plus half a cell width
   return nodes
 # end
 
@@ -63,7 +63,7 @@ def load_gk_distf(
   jacobtot_inv_data = GData(jacobtot_inv_file)
 
   # Divide Jf by jacobvel to get f * J_x * B.
-  fjxB_data = GData(tag=tag, ctx=jf_data.ctx)
+  fjxB_data = GData(ctx=jf_data.ctx)
   fjxB_values = jf_data.get_values() / jacobvel_data.get_values()
   fjxB_data.push(jf_data.get_grid(), fjxB_values)
 
@@ -73,18 +73,24 @@ def load_gk_distf(
   fjxB_values              = np.squeeze(fjxB_values)
   jacobtot_inv_values      = np.squeeze(jacobtot_inv_values)
 
-  # Reshape jacobtot_inv to broadcast over velocity dimensions, then multiply.
+  # Reshape jacobtot_inv to have 1 component over velocity dimensions, then multiply.
   vdim = fjxB_values.ndim - jacobtot_inv_values.ndim
   jacobtot_inv_reshaped = jacobtot_inv_values.reshape(jacobtot_inv_values.shape + (1,) * vdim)
-  distf_values = fjxB_values * jacobtot_inv_reshaped
+  f_values = fjxB_values * jacobtot_inv_reshaped
+  # Add 1 dimension to represent 1 component
+  f_values = f_values.reshape(f_values.shape + (1,))
 
   if use_mc2nu:
     out_grid = _apply_mc2nu_grid(out_grid, mc2nu_file)
-    jf_data.ctx["grid_type"] = "mc2nu"
+    if use_c2p_vel:
+      jf_data.ctx["grid_type"] = "c2p_vel + mc2nu"
+    else:
+      jf_data.ctx["grid_type"] = "mc2nu"
+    # end
   # end
 
   out = GData(tag=tag, ctx=jf_data.ctx)
-  out.push(out_grid, np.asarray(distf_values)[..., np.newaxis])
+  out.push(out_grid, f_values)
   return out
 # end
 
