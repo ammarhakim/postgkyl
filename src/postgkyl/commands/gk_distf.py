@@ -1,5 +1,16 @@
 # MR was heavily inspired by LLMs (copilot) in writing this file. Highly specific and detailed prompts were used, with several iterations of refactors. Copilot inserted several unnecessary error checks because it didn't understand the assumptions we can make about the data. It was incredibly helpful in checking. I had to remove a lot of functions it used to make load_gk_distf more concise.
 
+"""
+Script example of usage in python
+
+distf = pg.commands.load_gk_distf(
+                name="gk_lorentzian_mirror",
+                species="ion",
+                frame=0)
+pg.data.select(distf, z0=0.0, overwrite=True)
+pg.output.plot(distf)
+plt.show()
+"""
 import glob
 
 import click
@@ -52,17 +63,32 @@ def load_gk_distf(
     name: str, species: str, frame: int,
     tag: str = "f", suffix: str = "", use_c2p_vel: bool = False,
     use_mc2nu: bool = False, block_idx: int | None = None,
+    jf_file: str | None = None,
+    mapc2p_vel_file: str | None = None,
+    jacobvel_file: str | None = None,
+    mc2nu_file: str | None = None,
+    jacobtot_inv_file: str | None = None,
 ) -> GData:
   """Build a real distribution function from saved JBf data."""
   # Mostly by LLMs, but heavily refactored and verified by MR 3/16/26
   prefix = f"{name}_b{block_idx}" if block_idx is not None else name
   frame_infix = f"{suffix}_" if suffix else ""
 
-  jf_file           = f"{prefix}-{species}_{frame_infix}{frame}.gkyl"
-  mapc2p_vel_file   = f"{prefix}-{species}_mapc2p_vel.gkyl"
-  jacobvel_file     = f"{prefix}-{species}_jacobvel.gkyl"
-  mc2nu_file        = f"{prefix}-mc2nu_pos_deflated.gkyl"
-  jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
+  if jf_file is None:
+    jf_file = f"{prefix}-{species}_{frame_infix}{frame}.gkyl"
+  # end
+  if mapc2p_vel_file is None:
+    mapc2p_vel_file = f"{prefix}-{species}_mapc2p_vel.gkyl"
+  # end
+  if jacobvel_file is None:
+    jacobvel_file = f"{prefix}-{species}_jacobvel.gkyl"
+  # end
+  if mc2nu_file is None:
+    mc2nu_file = f"{prefix}-mc2nu_pos_deflated.gkyl"
+  # end
+  if jacobtot_inv_file is None:
+    jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
+  # end
 
   jf_data           = GData(jf_file, mapc2p_vel_name=mapc2p_vel_file if use_c2p_vel else None)
   jacobvel_data     = GData(jacobvel_file)
@@ -107,7 +133,17 @@ def load_gk_distf(
 @click.option("--species", "-s", required=True, type=click.STRING,
     help="Species name (e.g. ion or elc).")
 @click.option("--suffix", default="", type=click.STRING,
-  help="Use <name>-<species>_<suffix>_<frame>.gkyl as the input distribution.")
+    help="Use <name>-<species>_<suffix>_<frame>.gkyl as the input distribution.")
+@click.option("--jf-file", default=None, type=click.STRING,
+    help="Literal Jf filename override. If omitted, the default naming convention is used.")
+@click.option("--mapc2p-vel-file", default=None, type=click.STRING,
+    help="Literal mapc2p_vel filename override. If omitted, the default naming convention is used.")
+@click.option("--jacobvel-file", default=None, type=click.STRING,
+    help="Literal jacobvel filename override. If omitted, the default naming convention is used.")
+@click.option("--mc2nu-file", default=None, type=click.STRING,
+    help="Literal mc2nu filename override. If omitted, the default naming convention is used.")
+@click.option("--jacobtot-inv-file", default=None, type=click.STRING,
+    help="Literal jacobtot_inv filename override. If omitted, the default naming convention is used.")
 @click.option("--frame", "-f", required=True, type=click.STRING,
     help="Frame number, comma separated values, or range. Use ':' for all frames\n"
     " and 'start:stop[:step]' for ranges.")
@@ -157,6 +193,11 @@ def gk_distf(ctx, **kwargs):
         tag=kwargs["tag"], suffix=kwargs["suffix"],
         use_c2p_vel=kwargs["c2p_vel"], use_mc2nu=kwargs["mc2nu"],
         block_idx=kwargs["block"],
+        jf_file=kwargs["jf_file"],
+        mapc2p_vel_file=kwargs["mapc2p_vel_file"],
+        jacobvel_file=kwargs["jacobvel_file"],
+        mc2nu_file=kwargs["mc2nu_file"],
+        jacobtot_inv_file=kwargs["jacobtot_inv_file"],
     )
     data.add(out)
   # end
