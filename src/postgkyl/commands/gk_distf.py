@@ -62,11 +62,12 @@ def _apply_mc2nu_grid(uniform_grid: list, mc2nu_file: str) -> list:
 def load_gk_distf(
     name: str, species: str, frame: int,
     tag: str = "f", suffix: str = "", use_c2p_vel: bool = False,
-    use_mc2nu: bool = False, block_idx: int | None = None,
+    use_mc2nu: bool = False, use_mapc2p: bool = False, block_idx: int | None = None,
     jf_file: str | None = None,
     mapc2p_vel_file: str | None = None,
     jacobvel_file: str | None = None,
     mc2nu_file: str | None = None,
+    mapc2p_file: str | None = None,
     jacobtot_inv_file: str | None = None,
 ) -> GData:
   """Build a real distribution function from saved JBf data."""
@@ -85,6 +86,9 @@ def load_gk_distf(
   # end
   if mc2nu_file is None:
     mc2nu_file = f"{prefix}-mc2nu_pos_deflated.gkyl"
+  # end
+  if mapc2p_file is None:
+    mapc2p_file = f"{prefix}-mapc2p_deflated.gkyl"
   # end
   if jacobtot_inv_file is None:
     jacobtot_inv_file = f"{prefix}-jacobtot_inv.gkyl"
@@ -119,6 +123,13 @@ def load_gk_distf(
     else:
       jf_data.ctx["grid_type"] = "mc2nu"
     # end
+  elif use_mapc2p:
+    out_grid = _apply_mc2nu_grid(out_grid, mapc2p_file)
+    if use_c2p_vel:
+      jf_data.ctx["grid_type"] = "c2p_vel + mapc2p"
+    else:
+      jf_data.ctx["grid_type"] = "mapc2p"
+    # end
   # end
 
   out = GData(tag=tag, ctx=jf_data.ctx)
@@ -142,6 +153,8 @@ def load_gk_distf(
     help="Literal jacobvel filename override. If omitted, the default naming convention is used.")
 @click.option("--mc2nu-file", default=None, type=click.STRING,
     help="Literal mc2nu filename override. If omitted, the default naming convention is used.")
+@click.option("--mapc2p-file", default=None, type=click.STRING,
+  help="Literal mapc2p filename override. If omitted, the default naming convention is used.")
 @click.option("--jacobtot-inv-file", default=None, type=click.STRING,
     help="Literal jacobtot_inv filename override. If omitted, the default naming convention is used.")
 @click.option("--frame", "-f", required=True, type=click.STRING,
@@ -151,6 +164,8 @@ def load_gk_distf(
     help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
 @click.option("--mc2nu", "-m", is_flag=True, default=False,
     help="Use <name>-mc2nu_pos_deflated.gkyl to deform the configuration-space grid.")
+@click.option("--mapc2p", "-p", is_flag=True, default=False,
+  help="Use <name>-mapc2p_deflated.gkyl to deform the configuration-space grid.")
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
 @click.option("--tag", "-t", default="f", type=click.STRING,
@@ -191,12 +206,14 @@ def gk_distf(ctx, **kwargs):
     out = load_gk_distf(
         name=kwargs["name"], species=kwargs["species"], frame=frame,
         tag=kwargs["tag"], suffix=kwargs["suffix"],
-        use_c2p_vel=kwargs["c2p_vel"], use_mc2nu=kwargs["mc2nu"],
+        use_c2p_vel=kwargs["c2p_vel"],
+        use_mc2nu=kwargs["mc2nu"], use_mapc2p=kwargs["mapc2p"],
         block_idx=kwargs["block"],
         jf_file=kwargs["jf_file"],
         mapc2p_vel_file=kwargs["mapc2p_vel_file"],
         jacobvel_file=kwargs["jacobvel_file"],
         mc2nu_file=kwargs["mc2nu_file"],
+        mapc2p_file=kwargs["mapc2p_file"],
         jacobtot_inv_file=kwargs["jacobtot_inv_file"],
     )
     data.add(out)
