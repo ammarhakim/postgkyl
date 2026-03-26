@@ -1,7 +1,10 @@
 # MR was heavily inspired by LLMs (copilot) in writing this file. Highly specific and detailed prompts were used, with several iterations of refactors. Copilot inserted several unnecessary error checks because it didn't understand the assumptions we can make about the data. It was incredibly helpful in checking. I had to remove a lot of functions it used to make load_gk_distf more concise.
 
 """
-Script example of usage in python
+# Script example of usage in python
+import postgkyl as pg
+from postgkyl.commands import load_gk_distf
+import matplotlib.pyplot as plt
 
 distf = pg.commands.load_gk_distf(
                 name="gk_lorentzian_mirror",
@@ -153,8 +156,6 @@ def load_gk_distf(
     help="Literal jacobvel filename override. If omitted, the default naming convention is used.")
 @click.option("--mc2nu-file", default=None, type=click.STRING,
     help="Literal mc2nu filename override. If omitted, the default naming convention is used.")
-@click.option("--mapc2p-file", default=None, type=click.STRING,
-  help="Literal mapc2p filename override. If omitted, the default naming convention is used.")
 @click.option("--jacobtot-inv-file", default=None, type=click.STRING,
     help="Literal jacobtot_inv filename override. If omitted, the default naming convention is used.")
 @click.option("--frame", "-f", required=True, type=click.STRING,
@@ -213,7 +214,6 @@ def gk_distf(ctx, **kwargs):
         mapc2p_vel_file=kwargs["mapc2p_vel_file"],
         jacobvel_file=kwargs["jacobvel_file"],
         mc2nu_file=kwargs["mc2nu_file"],
-        mapc2p_file=kwargs["mapc2p_file"],
         jacobtot_inv_file=kwargs["jacobtot_inv_file"],
     )
     data.add(out)
