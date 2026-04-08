@@ -8,4 +8,6 @@ File convention: We use the `*.mo.py` extension for Marimo notebooks, which are 
 
 
 ### How to use Marimo notebooks
-First install Marimo, e.g. `pip install marimo`. Then you can run the notebooks with `marimo run <notebook_name>`. For example, to run the twist_shift notebook, you would use `marimo run twist_shift.mo.py`. This will execute the notebook in a web browser, allowing you to interact with the code and visualize the results.
+1. Install Marimo: e.g. `pip install marimo`.
+2. Run the notebook: e.g. `marimo run <notebook_name>`. 
+This will execute the notebook in a web browser, allowing you to interact with the code and visualize the results.
