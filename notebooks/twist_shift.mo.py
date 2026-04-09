@@ -13,6 +13,60 @@ def _():
         Separable: filters along y (periodic) then x (non-periodic edge-padded).
         np.sinc is normalised: sinc(x) = sin(pi*x)/(pi*x), sinc(0) = 1.
         """
+        if filter_type == "5point":
+            Nx_f, Ny_f = field.shape
+            tmp = np.zeros_like(field)
+            
+            # --- 1. filter along x (non-periodic, 2-point at boundaries) ---
+            if Nx_f >= 3:
+                tmp[1:-1, :] = (field[:-2, :] + field[1:-1, :] + field[2:, :]) / 3.0
+                tmp[0, :] = (field[0, :] + field[1, :]) / 2.0
+                tmp[-1, :] = (field[-2, :] + field[-1, :]) / 2.0
+            else:
+                tmp[...] = field
+                
+            # --- 2. filter along y ---
+            out = np.zeros_like(tmp)
+            if Ny_f >= 3:
+                if periodic_y:
+                    pad_y = np.concatenate([tmp[:, -1:], tmp, tmp[:, :1]], axis=1)
+                    out = (pad_y[:, :-2] + pad_y[:, 1:-1] + pad_y[:, 2:]) / 3.0
+                else:
+                    out[:, 1:-1] = (tmp[:, :-2] + tmp[:, 1:-1] + tmp[:, 2:]) / 3.0
+                    out[:, 0] = (tmp[:, 0] + tmp[:, 1]) / 2.0
+                    out[:, -1] = (tmp[:, -2] + tmp[:, -1]) / 2.0
+            else:
+                out[...] = tmp
+                
+            return out[::nint_x, ::nint_y]
+
+        elif filter_type == "9point":
+            Nx_f, Ny_f = field.shape
+            mask = np.ones_like(field)
+            if periodic_y:
+                pf_y = np.concatenate([field[:, -1:], field, field[:, :1]], axis=1)
+                pm_y = np.concatenate([mask[:, -1:], mask, mask[:, :1]], axis=1)
+            else:
+                pf_y = np.pad(field, ((0, 0), (1, 1)), mode='constant')
+                pm_y = np.pad(mask, ((0, 0), (1, 1)), mode='constant')
+                
+            pad_field = np.pad(pf_y, ((1, 1), (0, 0)), mode='constant')
+            pad_mask = np.pad(pm_y, ((1, 1), (0, 0)), mode='constant')
+            
+            sum_field = (
+                pad_field[:-2, :-2] + pad_field[:-2, 1:-1] + pad_field[:-2, 2:] +
+                pad_field[1:-1, :-2] + pad_field[1:-1, 1:-1] + pad_field[1:-1, 2:] +
+                pad_field[2:, :-2] + pad_field[2:, 1:-1] + pad_field[2:, 2:]
+            )
+            sum_mask = (
+                pad_mask[:-2, :-2] + pad_mask[:-2, 1:-1] + pad_mask[:-2, 2:] +
+                pad_mask[1:-1, :-2] + pad_mask[1:-1, 1:-1] + pad_mask[1:-1, 2:] +
+                pad_mask[2:, :-2] + pad_mask[2:, 1:-1] + pad_mask[2:, 2:]
+            )
+                
+            out = sum_field / np.maximum(sum_mask, 1)
+            return out[::nint_x, ::nint_y]
+
         def make_kernel(n, filter_type, a, sigma):
             if n == 1:
                 return np.ones(1)
@@ -156,7 +210,7 @@ def _(mo):
     nint_y_slider = mo.ui.slider(value=4, start=1, stop=8, step=1, label="Oversampling y (nint_y)")
     apply_filter = mo.ui.checkbox(value=True, label="Apply downsampling filter")
     filter_dropdown = mo.ui.dropdown(
-        options=["gaussian", "triangle", "hann", "blackman", "box"],
+        options=["gaussian", "triangle", "hann", "blackman", "box", "5point", "9point"],
         value="gaussian", label="Downsampling filter",
     )
     lanczos_a_slider = mo.ui.slider(value=2, start=1, stop=5, step=1, label="Lobe count a (lanczos/hann/blackman)")
