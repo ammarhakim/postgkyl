@@ -167,11 +167,11 @@ def load_gk_distf(
     help="Frame number, comma separated values, or range. Use ':' for all frames\n"
     " and 'start:stop[:step]' for ranges.")
 @click.option("--c2p-vel", "-v", default=None, flag_value="", type=click.STRING,
-  help="Use velocity mapc2p when loading Jf. Optionally provide a mapc2p_vel file.")
+  help="Convert velocity-space computational to physical coordinates, using mapping in (optionally) given file (default _mapc2p_vel.gkyl).")
 @click.option("--mc2nu", "-m", default=None, flag_value="", type=click.STRING,
   help="Deform the configuration-space grid with mc2nu. Optionally provide an mc2nu file.")
 @click.option("--mapc2p", "-p", default=None, flag_value="", type=click.STRING,
-  help="Deform the configuration-space grid with mapc2p. Optionally provide a mapc2p file.")
+  help="Convert position-space computational to Cartesian (GKYL_GEOMETRY_MAPC2P) or cylindrical (GKYL_GEOMETRY_TOKAMAK, GKYL_GEOMETRY_MIRROR) coordinates, using mapping in (optionally) given file (default: _mapc2p.gkyl)") 
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
 @click.option("--tag", "-t", default="f", type=click.STRING,
