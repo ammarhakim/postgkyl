@@ -61,6 +61,15 @@ def _apply_mc2nu_grid(uniform_grid: list, mc2nu_file: str) -> list:
   return nonuniform_grid
 # end
 
+def _resolve_optional_file_option(option_value: str | None) -> tuple[bool, str | None]:
+  """Interpret an optional-value CLI option as (enabled, override_file)."""
+  if option_value is None:
+    return False, None
+  if option_value == "":
+    return True, None
+  return True, option_value
+# end
+
 # Public API
 def load_gk_distf(
     name: str, species: str, frame: int,
@@ -149,24 +158,20 @@ def load_gk_distf(
 @click.option("--suffix", default="", type=click.STRING,
     help="Use <name>-<species>_<suffix>_<frame>.gkyl as the input distribution.")
 @click.option("--jf-file", default=None, type=click.STRING,
-    help="Literal Jf filename override. If omitted, the default naming convention is used.")
-@click.option("--mapc2p-vel-file", default=None, type=click.STRING,
-    help="Literal mapc2p_vel filename override. If omitted, the default naming convention is used.")
+  help="Jf filename override. If omitted, the default naming convention is used.")
 @click.option("--jacobvel-file", default=None, type=click.STRING,
-    help="Literal jacobvel filename override. If omitted, the default naming convention is used.")
-@click.option("--mc2nu-file", default=None, type=click.STRING,
-    help="Literal mc2nu filename override. If omitted, the default naming convention is used.")
+  help="jacobvel filename override. If omitted, the default naming convention is used.")
 @click.option("--jacobtot-inv-file", default=None, type=click.STRING,
-    help="Literal jacobtot_inv filename override. If omitted, the default naming convention is used.")
+  help="jacobtot_inv filename override. If omitted, the default naming convention is used.")
 @click.option("--frame", "-f", required=True, type=click.STRING,
     help="Frame number, comma separated values, or range. Use ':' for all frames\n"
     " and 'start:stop[:step]' for ranges.")
-@click.option("--c2p-vel", "-v", is_flag=True, default=False,
-    help="Use <name>-<species>_mapc2p_vel.gkyl when loading Jf.")
-@click.option("--mc2nu", "-m", is_flag=True, default=False,
-    help="Use <name>-mc2nu_pos_deflated.gkyl to deform the configuration-space grid.")
-@click.option("--mapc2p", "-p", is_flag=True, default=False,
-  help="Use <name>-mapc2p_deflated.gkyl to deform the configuration-space grid.")
+@click.option("--c2p-vel", "-v", default=None, flag_value="", type=click.STRING,
+  help="Use velocity mapc2p when loading Jf. Optionally provide a mapc2p_vel file.")
+@click.option("--mc2nu", "-m", default=None, flag_value="", type=click.STRING,
+  help="Deform the configuration-space grid with mc2nu. Optionally provide an mc2nu file.")
+@click.option("--mapc2p", "-p", default=None, flag_value="", type=click.STRING,
+  help="Deform the configuration-space grid with mapc2p. Optionally provide a mapc2p file.")
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
 @click.option("--tag", "-t", default="f", type=click.STRING,
@@ -203,17 +208,22 @@ def gk_distf(ctx, **kwargs):
   # end
   verb_print(ctx, f"Loading frames: {frames}")
 
+  use_c2p_vel, mapc2p_vel_file = _resolve_optional_file_option(kwargs["c2p_vel"])
+  use_mc2nu, mc2nu_file = _resolve_optional_file_option(kwargs["mc2nu"])
+  use_mapc2p, mapc2p_file = _resolve_optional_file_option(kwargs["mapc2p"])
+
   for frame in frames:
     out = load_gk_distf(
         name=kwargs["name"], species=kwargs["species"], frame=frame,
         tag=kwargs["tag"], suffix=kwargs["suffix"],
-        use_c2p_vel=kwargs["c2p_vel"],
-        use_mc2nu=kwargs["mc2nu"], use_mapc2p=kwargs["mapc2p"],
+        use_c2p_vel=use_c2p_vel,
+        use_mc2nu=use_mc2nu, use_mapc2p=use_mapc2p,
         block_idx=kwargs["block"],
         jf_file=kwargs["jf_file"],
-        mapc2p_vel_file=kwargs["mapc2p_vel_file"],
+        mapc2p_vel_file=mapc2p_vel_file,
         jacobvel_file=kwargs["jacobvel_file"],
-        mc2nu_file=kwargs["mc2nu_file"],
+        mc2nu_file=mc2nu_file,
+        mapc2p_file=mapc2p_file,
         jacobtot_inv_file=kwargs["jacobtot_inv_file"],
     )
     data.add(out)
