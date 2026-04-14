@@ -178,7 +178,7 @@ def load_gk_distf(
     help="Tag for output dataset.")
 @click.pass_context
 def gk_distf(ctx, **kwargs):
-  """Gyrokinetics: build real distribution function from saved Jf data."""
+  """Gyrokinetics: load distribution function from files containing the distribution (f) times one or multiple Jacobians (jf). Optionally, use mappings (in files) to convert the native coordinates of jf to physical velocity space coordinates or Cartesian/cyclindrical position space coordinates."""
   data = ctx.obj["data"]
 
   verb_print(ctx, "Building distribution function for " + kwargs["name"])
