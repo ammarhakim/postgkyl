@@ -46,12 +46,12 @@ def _extract_values_along_dimension(mapped_values: np.ndarray, axis: int, cdim: 
 # end
 
 # Nearly 100% by LLMs, commented and verified by MR 3/16/26, removing extra code.
-def _apply_mc2nu_grid(uniform_grid: list, mc2nu_file: str) -> list:
+def _apply_mc2nu_grid(uniform_grid: list, mc2nu_file: str, interp: int | None = None) -> list:
   """Replace computational configuration-space grid with non-uniform spatial coordinates."""
   mc2nu_data = GData(mc2nu_file)
   cdim = mc2nu_data.get_num_dims()
 
-  _, mc2nu_values = GInterpModal(mc2nu_data, 1, "ms").interpolate(tuple(range(cdim)))
+  _, mc2nu_values = GInterpModal(mc2nu_data, 1, "ms", interp).interpolate(tuple(range(cdim)))
 
   nonuniform_grid = list(uniform_grid)
   for d in range(cdim):
@@ -75,6 +75,7 @@ def load_gk_distf(
     name: str, species: str, frame: int,
     tag: str = "f", suffix: str = "", use_c2p_vel: bool = False,
     use_mc2nu: bool = False, use_mapc2p: bool = False, block_idx: int | None = None,
+    interp: int | None = None,
     jf_file: str | None = None,
     mapc2p_vel_file: str | None = None,
     jacobvel_file: str | None = None,
@@ -116,8 +117,8 @@ def load_gk_distf(
   fjxB_data.push(jf_data.get_grid(), fjxB_values)
 
   # Interpolate f * J_x * B and jacobtot_inv to the same grid.
-  out_grid, fjxB_values    = GInterpModal(fjxB_data, 1, "gkhyb").interpolate()
-  _, jacobtot_inv_values   = GInterpModal(jacobtot_inv_data, 1, "ms").interpolate()
+  out_grid, fjxB_values    = GInterpModal(fjxB_data, 1, "gkhyb", interp).interpolate()
+  _, jacobtot_inv_values   = GInterpModal(jacobtot_inv_data, 1, "ms", interp).interpolate()
   fjxB_values              = np.squeeze(fjxB_values)
   jacobtot_inv_values      = np.squeeze(jacobtot_inv_values)
 
@@ -129,14 +130,14 @@ def load_gk_distf(
   f_values = f_values.reshape(f_values.shape + (1,))
 
   if use_mc2nu:
-    out_grid = _apply_mc2nu_grid(out_grid, mc2nu_file)
+    out_grid = _apply_mc2nu_grid(out_grid, mc2nu_file, interp)
     if use_c2p_vel:
       jf_data.ctx["grid_type"] = "c2p_vel + mc2nu"
     else:
       jf_data.ctx["grid_type"] = "mc2nu"
     # end
   elif use_mapc2p:
-    out_grid = _apply_mc2nu_grid(out_grid, mapc2p_file)
+    out_grid = _apply_mc2nu_grid(out_grid, mapc2p_file, interp)
     if use_c2p_vel:
       jf_data.ctx["grid_type"] = "c2p_vel + mapc2p"
     else:
@@ -166,19 +167,28 @@ def load_gk_distf(
 @click.option("--frame", "-f", required=True, type=click.STRING,
   help="Frame number, comma separated values, or range. Use ':' for all frames\n"
        " and 'start:stop[:step]' for ranges.")
+@click.option("--interp", "-i", type=click.INT,
+  help="Interpolation onto a general mesh of specified amount.")
 @click.option("--c2p-vel", "-v", default=None, flag_value="", type=click.STRING,
-  help="Convert velocity-space computational to physical coordinates, using mapping in (optionally) given file (default *_mapc2p_vel.gkyl).")
+  help="Convert velocity-space computational to physical coordinates, using mapping\n"
+        "n (optionally) given file (default *_mapc2p_vel.gkyl).")
 @click.option("--mc2nu", "-m", default=None, flag_value="", type=click.STRING,
-  help="Convert non-uniform computational to field-aligned coordinates using mapping in (optionally) given file (default: *q_mc2nu_pos_deflated.gkyl).")
+  help="Convert non-uniform computational to field-aligned coordinates using mapping \n"
+        "in (optionally) given file (default: *q_mc2nu_pos_deflated.gkyl).")
 @click.option("--mapc2p", "-p", default=None, flag_value="", type=click.STRING,
-  help="Convert position-space computational to Cartesian (GKYL_GEOMETRY_MAPC2P) or cylindrical (GKYL_GEOMETRY_TOKAMAK, GKYL_GEOMETRY_MIRROR) coordinates, using mapping in (optionally) given file (default: *_mapc2p.gkyl)") 
+  help="Convert position-space computational to Cartesian (GKYL_GEOMETRY_MAPC2P) or \n"
+        "cylindrical (GKYL_GEOMETRY_TOKAMAK, GKYL_GEOMETRY_MIRROR) coordinates, using \n"
+        "mapping in (optionally) given file (default: *_mapc2p.gkyl)") 
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
 @click.option("--tag", "-t", default="f", type=click.STRING,
   help="Tag for output dataset.")
 @click.pass_context
 def gk_distf(ctx, **kwargs):
-  """Gyrokinetics: load distribution function from files containing the distribution (f) times one or multiple Jacobians (jf). Optionally, use mappings (in files) to convert the native coordinates of jf to physical velocity space coordinates or Cartesian/cyclindrical position space coordinates."""
+  """Gyrokinetics: loads and interpolates distribution function from files containing the 
+  distribution (f) times one or multiple Jacobians (jf). Optionally, use mappings (in files) 
+  to convert the native coordinates of jf to physical velocity space coordinates or
+  Cartesian/cyclindrical position space coordinates."""
   data = ctx.obj["data"]
 
   verb_print(ctx, "Building distribution function for " + kwargs["name"])
@@ -219,6 +229,7 @@ def gk_distf(ctx, **kwargs):
       use_c2p_vel=use_c2p_vel,
       use_mc2nu=use_mc2nu, use_mapc2p=use_mapc2p,
       block_idx=kwargs["block"],
+      interp=kwargs["interp"],
       jf_file=kwargs["jf_file"],
       mapc2p_vel_file=mapc2p_vel_file,
       jacobvel_file=kwargs["jacobvel_file"],
