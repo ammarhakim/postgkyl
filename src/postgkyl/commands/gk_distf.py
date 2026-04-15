@@ -171,14 +171,14 @@ def load_gk_distf(
   help="Interpolation onto a general mesh of specified amount.")
 @click.option("--c2p-vel", "-v", default=None, flag_value="", type=click.STRING,
   help="Convert velocity-space computational to physical coordinates, using mapping\n"
-        "n (optionally) given file (default *_mapc2p_vel.gkyl).")
+       "in (optionally) given file (default *_mapc2p_vel.gkyl).")
 @click.option("--mc2nu", "-m", default=None, flag_value="", type=click.STRING,
   help="Convert non-uniform computational to field-aligned coordinates using mapping \n"
-        "in (optionally) given file (default: *q_mc2nu_pos_deflated.gkyl).")
+       "in (optionally) given file (default: *_mc2nu_pos_deflated.gkyl).")
 @click.option("--mapc2p", "-p", default=None, flag_value="", type=click.STRING,
   help="Convert position-space computational to Cartesian (GKYL_GEOMETRY_MAPC2P) or \n"
-        "cylindrical (GKYL_GEOMETRY_TOKAMAK, GKYL_GEOMETRY_MIRROR) coordinates, using \n"
-        "mapping in (optionally) given file (default: *_mapc2p.gkyl)") 
+       "cylindrical (GKYL_GEOMETRY_TOKAMAK, GKYL_GEOMETRY_MIRROR) coordinates, using \n"
+       "mapping in (optionally) given file (default: *_mapc2p.gkyl)") 
 @click.option("--block", "-b", default=None, type=click.INT,
   help="Use block-specific files with _b<idx> prefix, e.g. -b 1 loads <name>_b1-*.gkyl.")
 @click.option("--tag", "-t", default="f", type=click.STRING,
