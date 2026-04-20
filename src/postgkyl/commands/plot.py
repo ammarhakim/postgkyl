@@ -34,7 +34,7 @@ import postgkyl.output.plot
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
 @click.option("-o","--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
-@click.option("--mppa","--maximum-points-per-axis", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
+@click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
   help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging color map.")
