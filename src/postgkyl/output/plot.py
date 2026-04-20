@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover - optional dependency
   make_subplots = None
 
 from postgkyl.utils import input_parser
+from postgkyl.data.idx_parser import idx_parser as parse_idx
 from postgkyl.data.select import select as data_select
 if TYPE_CHECKING:
   from postgkyl import GData
@@ -112,48 +113,6 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
     colorscale.append([float(x), f"rgba({int(r * 255)}, {int(g * 255)}, {int(b * 255)}, {float(a):.3f})"])
   # end
   return colorscale
-
-
-def _transparent_black_colorscale(colorscale: list[list[float | str]]) -> list[list[float | str]]:
-  transparent_colorscale = []
-  for position, color_value in colorscale:
-    rgba = None
-    if isinstance(color_value, str):
-      value = color_value.strip().lower()
-      if value.startswith("rgba(") and value.endswith(")"):
-        parts = [part.strip() for part in value[5:-1].split(",")]
-        if len(parts) == 4:
-          try:
-            red, green, blue = (float(parts[0]), float(parts[1]), float(parts[2]))
-            alpha = float(parts[3])
-            if red == 0.0 and green == 0.0 and blue == 0.0:
-              rgba = f"rgba(0, 0, 0, 0.000)"
-            else:
-              rgba = f"rgba({int(red)}, {int(green)}, {int(blue)}, {alpha:.3f})"
-          except ValueError:
-            rgba = None
-          # end
-        # end
-      # end
-      if rgba is None:
-        try:
-          red, green, blue, alpha = colors.to_rgba(color_value)
-        except ValueError:
-          rgba = color_value
-        else:
-          if red == 0.0 and green == 0.0 and blue == 0.0:
-            rgba = "rgba(0, 0, 0, 0.000)"
-          else:
-            rgba = f"rgba({int(red * 255)}, {int(green * 255)}, {int(blue * 255)}, {alpha:.3f})"
-          # end
-        # end
-      # end
-    else:
-      rgba = color_value
-    # end
-    transparent_colorscale.append([position, rgba])
-  # end
-  return transparent_colorscale
 
 
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
@@ -419,6 +378,29 @@ def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
     return arrays[0], arrays[1], arrays[2]
   # end
   return arrays[0], arrays[1], arrays[2]
+
+
+def _resolve_slice_plane_index(axis_grid: np.ndarray, selector: int | float, axis_cells: int) -> int:
+  axis_values = np.asarray(axis_grid)
+  if axis_values.ndim == 1:
+    len_grid = axis_values.shape[0]
+  else:
+    len_grid = axis_cells
+  # end
+
+  is_matching = axis_cells == len_grid
+  axis_index = parse_idx(selector, axis_values, is_matching)
+  if not isinstance(axis_index, int):
+    raise TypeError("Slice selectors must resolve to a single axis index")
+  # end
+
+  if axis_index < 0:
+    axis_index = axis_cells + axis_index
+  # end
+  if axis_index < 0 or axis_index >= axis_cells:
+    raise IndexError(f"Slice selector index {axis_index:d} is out of range for axis size {axis_cells:d}")
+  # end
+  return axis_index
 
 
 def _downsample_3d_volume(
@@ -1219,7 +1201,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     font=dict(color=text_color),
   )
 
-  slice_planes: list[tuple[int, list[np.ndarray], np.ndarray]] = []
+  slice_planes: list[tuple[int, int | float, list[np.ndarray], np.ndarray]] = []
   if slice_plane:
     if isinstance(data, tuple):
       raise ValueError("slice_plane rendering requires GData input")
@@ -1237,7 +1219,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       # end
       for axis_value in selector_values:
         slice_grid, slice_values = data_select(data, **{axis_key: axis_value})
-        slice_planes.append((slice_axis, slice_grid, slice_values))
+        slice_planes.append((slice_axis, axis_value, slice_grid, slice_values))
       # end
     # end
     if not slice_planes:
@@ -1399,8 +1381,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       )
       trace_list = [volume_trace]
 
-      for plane_idx, (slice_axis, slice_grid, slice_values) in enumerate(slice_planes):
-        slice_value = np.asarray(slice_values[..., comp]) * zscale + zshift
+      for plane_idx, (slice_axis, slice_selector, slice_grid, slice_values) in enumerate(slice_planes):
+        slice_value = np.squeeze(np.asarray(slice_values[..., comp])) * zscale + zshift
         slice_color_value = slice_value * cscale + cshift
 
         if logc:
@@ -1415,14 +1397,21 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           )
         # end
 
-        slice_cells = np.asarray(slice_values.shape[:-1], dtype=int)
-        slice_nodal_grid = _get_nodal_grid(slice_grid, slice_cells)
-        sx_3d, sy_3d, sz_3d = _prepare_3d_coordinates(slice_nodal_grid, slice_value.shape)
-
-        sx = np.squeeze(np.asarray(sx_3d), axis=slice_axis)
-        sy = np.squeeze(np.asarray(sy_3d), axis=slice_axis)
-        sz = np.squeeze(np.asarray(sz_3d), axis=slice_axis)
-        sc = np.squeeze(np.asarray(slice_color_value), axis=slice_axis)
+        plane_index = _resolve_slice_plane_index(grid[slice_axis], slice_selector, value.shape[slice_axis])
+        if slice_axis == 0:
+          sx = x[plane_index, :, :]
+          sy = y[plane_index, :, :]
+          sz = z[plane_index, :, :]
+        elif slice_axis == 1:
+          sx = x[:, plane_index, :]
+          sy = y[:, plane_index, :]
+          sz = z[:, plane_index, :]
+        else:
+          sx = x[:, :, plane_index]
+          sy = y[:, :, plane_index]
+          sz = z[:, :, plane_index]
+        # end
+        sc = np.asarray(slice_color_value)
 
         surface_trace = go.Surface(
             x=sx,

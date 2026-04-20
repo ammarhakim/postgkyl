@@ -55,6 +55,10 @@ def select(data: GData, comp: int | str | None = None,
       is_matching = values.shape[d] == len_grid
       idx = idx_parser.idx_parser(z, grid[d], is_matching)
       if isinstance(idx, int):
+        axis_cells = values.shape[d]
+        if idx < 0:
+          idx = axis_cells + idx
+        # end
         # when 'slice' is used instead of an integer
         # number, numpy array is not squeezed after
         # subselecting
