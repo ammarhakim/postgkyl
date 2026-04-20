@@ -69,6 +69,18 @@ class TestPlot:
     np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.0, 1.0))
     np.testing.assert_allclose(fig.layout.scene.zaxis.range, (0.0, 3.0))
 
+  def test_plot_plotly_2d_surface_animation(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 5)]
+    x, y = np.meshgrid(grid[0], grid[1], indexing="ij")
+    values0 = (x + 2.0 * y)[..., np.newaxis]
+    values1 = (x + 2.0 * y + 0.5)[..., np.newaxis]
+    fig = pg.output.animate3d([(grid, values0), (grid, values1)], frame_duration=40)
+    assert isinstance(fig, go.Figure)
+    assert isinstance(fig.data[0], go.Surface)
+    assert len(fig.frames) == 1
+    assert fig.frames[0].name == "1"
+    assert fig.layout.updatemenus[0].buttons[0].label == "Play"
+
   def test_plot_plotly_3d_ranges_override(self):
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")

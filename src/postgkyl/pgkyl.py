@@ -50,6 +50,9 @@ class PgkylCommandGroup(click.Group):
         "pl": "plot",
         "pl3": "plot3d",
         "pl3d": "plot3d",
+        "anim": "animate",
+        "anim3": "animate3d",
+        "anim3d": "animate3d",
     }
     target = aliases.get(cmd_name)
     if target is not None:
@@ -152,6 +155,7 @@ cli.add_command(cmd.activate)
 cli.add_command(cmd.agyro)
 cli.add_command(cmd.mom_agyro)
 cli.add_command(cmd.animate)
+cli.add_command(cmd.animate3d)
 cli.add_command(cmd.collect)
 cli.add_command(cmd.current)
 cli.add_command(cmd.deactivate)

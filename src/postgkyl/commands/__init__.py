@@ -5,6 +5,7 @@ from postgkyl.commands import ev_cmd
 from postgkyl.commands.agyro import agyro
 from postgkyl.commands.agyro import mom_agyro
 from postgkyl.commands.animate import animate
+from postgkyl.commands.animate3d import animate3d
 from postgkyl.commands.bparrotate import bparrotate
 from postgkyl.commands.bperprotate import bperprotate
 from postgkyl.commands.collect import collect

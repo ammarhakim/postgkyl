@@ -1396,4 +1396,107 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
   return fig
 
 
-__all__ = ["plot3d", "save_rotating_plotly_figure"]
+def animate3d(
+    data_sequence: list[GData | Tuple[list, np.ndarray]],
+    frame_labels: list[str] | None = None,
+    frame_duration: int = 50,
+    transition_duration: int = 0,
+    fromcurrent: bool = True,
+    redraw: bool = True,
+    **plot_kwargs,
+):
+  """Build a Plotly 3D animation figure from a sequence of datasets."""
+  if not data_sequence:
+    raise ValueError("animate3d requires at least one dataset")
+  # end
+
+  base_fig = plot3d(data_sequence[0], **plot_kwargs)
+  num_traces = len(base_fig.data)
+
+  if frame_labels is None:
+    frame_labels = [str(idx) for idx in range(len(data_sequence))]
+  # end
+
+  if len(frame_labels) != len(data_sequence):
+    raise ValueError("frame_labels length must match data_sequence length")
+  # end
+
+  frames = []
+  for idx, dat in enumerate(data_sequence):
+    if idx == 0:
+      continue
+    # end
+    frame_fig = plot3d(dat, **plot_kwargs)
+    if len(frame_fig.data) != num_traces:
+      raise ValueError(
+          "All animation frames must produce the same number of traces; "
+          f"frame 0 has {num_traces:d}, frame {idx:d} has {len(frame_fig.data):d}."
+      )
+    # end
+    frames.append(go.Frame(
+        name=str(frame_labels[idx]),
+        data=list(frame_fig.data),
+        traces=list(range(num_traces)),
+    ))
+  # end
+
+  base_fig.frames = frames
+
+  animation_args = {
+      "frame": {"duration": int(frame_duration), "redraw": bool(redraw)},
+      "transition": {"duration": int(transition_duration)},
+      "fromcurrent": bool(fromcurrent),
+  }
+
+  pause_args = {
+      "frame": {"duration": 0, "redraw": bool(redraw)},
+      "transition": {"duration": 0},
+      "mode": "immediate",
+  }
+
+  slider_steps = []
+  for idx, label in enumerate(frame_labels):
+    slider_steps.append({
+        "label": str(label),
+        "method": "animate",
+        "args": [[str(label)], {
+            "mode": "immediate",
+            "frame": {"duration": int(frame_duration), "redraw": bool(redraw)},
+            "transition": {"duration": int(transition_duration)},
+        }],
+    })
+  # end
+
+  base_fig.update_layout(
+      updatemenus=[{
+          "type": "buttons",
+          "showactive": False,
+          "buttons": [
+              {
+                  "label": "Play",
+                  "method": "animate",
+                  "args": [None, animation_args],
+              },
+              {
+                  "label": "Pause",
+                  "method": "animate",
+                  "args": [[None], pause_args],
+              },
+          ],
+          "x": 0.02,
+          "y": 0.0,
+          "xanchor": "left",
+          "yanchor": "bottom",
+      }],
+      sliders=[{
+          "active": 0,
+          "currentvalue": {"prefix": "Frame: "},
+          "pad": {"t": 24},
+          "steps": slider_steps,
+      }],
+  )
+
+  return base_fig
+
+
+__all__ = ["plot3d", "animate3d", "save_rotating_plotly_figure"]
