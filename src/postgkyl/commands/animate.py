@@ -1,7 +1,11 @@
 from matplotlib.animation import FuncAnimation
 import click
+import importlib
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path
+import subprocess
+import tempfile
 
 from postgkyl.utils import verb_print, set_frame
 import postgkyl.output.plot
@@ -87,10 +91,92 @@ def globalrange(data,kwargs):
 # end
 
 
+def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
+  starting_azimuthal_angle: float, fps: int, polar_angle: float,
+  num_rotations_completed: float, radius: float = 2.0) -> None:
+  """Save a rotating Plotly 3D figure as GIF or MP4.
+
+  Rotates the camera 360 degrees around the vertical axis, starting from
+  ``starting_azimuthal_angle`` in degrees.
+  """
+  root, ext = os.path.splitext(file_name)
+  ext = ext.lower()
+  if ext not in (".gif", ".mp4"):
+    raise ValueError("--save-rotating expects an output ending with .gif or .mp4")
+  # end
+  if num_rotation_angles <= 0:
+    raise ValueError("num_rotation_angles must be a positive integer")
+  # end
+  if fps <= 0:
+    raise ValueError("fps must be a positive integer")
+  # end
+
+  scene_names = [name for name in fig.layout.to_plotly_json().keys() if name == "scene" or name.startswith("scene")]
+  if not scene_names:
+    raise ValueError("Rotating export requires a Plotly 3D scene figure")
+  # end
+
+  polar_rad = np.deg2rad(polar_angle)
+  xy_radius = radius * np.sin(polar_rad)
+  z_eye = radius * np.cos(polar_rad)
+
+  with tempfile.TemporaryDirectory(prefix="pgkyl_rotate_") as tmp_dir:
+    frame_pattern = os.path.join(tmp_dir, "frame_%05d.png")
+    angle_denominator = max(1, num_rotation_angles - 1)
+    for idx in range(num_rotation_angles):
+      theta = np.deg2rad(
+          starting_azimuthal_angle + 360.0 * num_rotations_completed * idx / angle_denominator
+      )
+      camera = dict(
+          eye=dict(x=float(xy_radius * np.cos(theta)), y=float(xy_radius * np.sin(theta)), z=float(z_eye)),
+          up=dict(x=0.0, y=0.0, z=1.0),
+          center=dict(x=0.0, y=0.0, z=0.0),
+      )
+      fig.update_layout(**{scene_name: dict(camera=camera) for scene_name in scene_names})
+
+      png_bytes = fig.to_image(format="png")
+
+      frame_path = os.path.join(tmp_dir, f"frame_{idx:05d}.png")
+      with open(frame_path, "wb") as frame_file:
+        frame_file.write(png_bytes)
+      # end
+    # end
+
+    if ext == ".mp4":
+      ffmpeg_cmd = [
+          "ffmpeg",
+          "-y",
+          "-framerate",
+          str(fps),
+          "-i",
+          frame_pattern,
+          "-pix_fmt",
+          "yuv420p",
+          file_name,
+      ]
+    else:
+      ffmpeg_cmd = [
+          "ffmpeg",
+          "-y",
+          "-framerate",
+          str(fps),
+          "-i",
+          frame_pattern,
+          "-vf",
+          "split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+          file_name,
+      ]
+    # end
+
+    subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  # end
+# end
+
+
 @click.command()
 @click.option("--use", "-u", default=None, help="Specify a tag to plot.")
 @click.option("--grouptags", is_flag=True, help="Group coresponding tagged frames.")
-@click.option("--squeeze", "-s", is_flag=True, help="Squeeze the components into one panel.")
+@click.option("--squeeze", is_flag=True, help="Squeeze the components into one panel.")
 @click.option("--subplots", "-b", is_flag=True, help="Make subplots from multiple datasets.")
 @click.option("--nsubplotrow", "nSubplotRow", type=click.INT,
     help="Manually set the number of rows for subplots.")
@@ -100,6 +186,8 @@ def globalrange(data,kwargs):
 @click.option("-c", "--contour", is_flag=True, help="Make contour plot.")
 @click.option("--clevels", type=click.STRING,
     help="Specify levels for contours: either integer or start:end:nlevels")
+@click.option("--cnlevels", type=click.INT, help="Specify the number of levels for contours.")
+@click.option("--contlabel", "cont_label", is_flag=True, help="Add labels to contours")
 @click.option("-q", "--quiver", is_flag=True, help="Make quiver plot.")
 @click.option("-l", "--streamline", is_flag=True, help="Make streamline plot.")
 @click.option("--sdensity", type=click.FLOAT, help="Control density of the streamlines.")
@@ -110,27 +198,37 @@ def globalrange(data,kwargs):
 @click.option("--linewidth", type=click.FLOAT, help="Set the linewidth.")
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
+@click.option("-o", "--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
 @click.option("--color", type=click.STRING, help="Set color when available.")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
+@click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
+  help="Background mode for plots.")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging colormesh mode.")
 @click.option("--arg", type=click.STRING, help="Additional plotting arguments, e.g., '*--'.")
 @click.option("-a", "--fix-aspect", "fixaspect", is_flag=True,
     help="Enforce the same scaling on both axes.")
+@click.option("--aspect", default=None,
+  help="Specify aspect behavior. For Plotly 3D use one of: auto,data,cube (or a numeric ratio).")
 @click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
 @click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
 @click.option("--logz", is_flag=True, help="Set values of 2D plot to log scale.")
+@click.option("--logc", is_flag=True, help="Set colorbar to log scale for 3D plots.")
 @click.option("--xshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the x-axis.")
 @click.option("--yshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the y-axis.")
 @click.option("--zshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the z-axis.")
+@click.option("--cshift", default=0.0, type=click.FLOAT, show_default=True,
+  help="Value to shift the color values for 3D plots.")
 @click.option("--xscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the x-axis.")
 @click.option("--yscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the y-axis.")
 @click.option("--zscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the z-axis.")
+@click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
+  help="Value to scale the color values for 3D plots.")
 @click.option("--float", is_flag=True,
     help="Choose min/max levels based on current frame (i.e., each frame uses a different color range).")
 @click.option("--xmax", default=None, type=click.FLOAT, help="Set maximal x-value.")
@@ -139,6 +237,12 @@ def globalrange(data,kwargs):
 @click.option("--ymin", default=None, type=click.FLOAT, help="Set minimal y-values.")
 @click.option("--zmax", default=None, type=click.FLOAT, help="Set maximal z-value.")
 @click.option("--zmin", default=None, type=click.FLOAT, help="Set minimal z-values.")
+@click.option("--cmax", default=None, type=click.FLOAT, help="Set maximal color value for 3D plots.")
+@click.option("--cmin", default=None, type=click.FLOAT, help="Set minimal color value for 3D plots.")
+@click.option("--surface-count", type=click.INT, default=32, show_default=True,
+  help="Number of Plotly volume isosurfaces to render for 3D plots.")
+@click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
+  help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
 @click.option("--xlim", default=None, type=click.STRING,
     help="Set limits for the x-coordinate (lower,upper).")
 @click.option("--ylim", default=None, type=click.STRING,
@@ -154,13 +258,24 @@ def globalrange(data,kwargs):
     help="Force legend even when plotting a single dataset.")
 @click.option("-x", "--xlabel", type=click.STRING, help="Specify a x-axis label.")
 @click.option("-y", "--ylabel", type=click.STRING, help="Specify a y-axis label.")
+@click.option("-z", "--zlabel", type=click.STRING, help="Specify a z-axis label.")
 @click.option("--clabel", type=click.STRING, help="Specify a label for colorbar.")
 @click.option("--title", type=click.STRING, help="Specify a title.")
 @click.option("--notitle", is_flag=True, help="Do not show title.")
 @click.option("-i", "--interval", default=100, help="Specify the animation interval.")
 @click.option("--save", is_flag=True, help="Save figure as PNG.")
 @click.option("--saveas", type=click.STRING, default=None, help="Name to save the plot as.")
-@click.option("--fps", type=click.INT, help="Specify frames per second for saving.")
+@click.option("--num-rotation-angles", type=click.INT, default=15, show_default=True,
+  help="Number of camera angles/frames for 3D animation")
+@click.option("--starting-azimuthal-angle", "azimuthal_angle", "--azimuthal-angle",
+    type=click.FLOAT, default=0.0, show_default=True,
+    help="Starting azimuthal angle in degrees for 3D animation")
+@click.option("--polar-angle", type=click.FLOAT, default=90.0, show_default=True,
+  help="Polar angle in degrees for rotating 3D. 90 degrees is the x-y plane.")
+@click.option("--num-rotations-completed", type=click.FLOAT, default=1.0, show_default=True,
+  help="Total number of rotations completed across the saved video; 0 keeps the view fixed.")
+@click.option("--fps", type=click.INT, default=5, show_default=True,
+    help="Specify frames per second for saving.")
 @click.option("--dpi", type=click.INT, help="DPI (resolution) for output.")
 @click.option("-e", "--edgecolors", type=click.STRING, help="Set color for cell edges.")
 @click.option("--showgrid/--no-showgrid", default=True, help="Show grid-lines.")
@@ -171,6 +286,11 @@ def globalrange(data,kwargs):
 @click.option("--saveframes", type=click.STRING,
     help="Save individual frames as PNGS instead of an animation")
 @click.option("--figsize", help="Comma-separated values for x and y size.")
+@click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
+@click.option("--cmap", type=click.STRING, default=None,
+  help="Override default colormap with a valid matplotlib cmap.")
+@click.option("--invert-cmap", is_flag=True,
+  help="Invert the selected colormap (or the default colormap for the chosen background mode).")
 @click.option("-m", "--multiblock", is_flag=True, help="Plots blocks from each frame together")
 @click.pass_context
 def animate(ctx, **kwargs):
@@ -181,6 +301,60 @@ def animate(ctx, **kwargs):
   """
   verb_print(ctx, "Starting animate")
   data = ctx.obj["data"]
+  plot_output_module = importlib.import_module("postgkyl.output.plot")
+
+  def _save_rotating_output_3d(fig, file_name, idx, num_datasets):
+    root, ext = os.path.splitext(file_name)
+    ext = ext.lower()
+    if ext == "":
+      ext = ".mp4"
+      root = file_name
+    # end
+    if ext not in (".mp4", ".gif"):
+      raise click.ClickException("Rotating 3D save expects --saveas ending with .mp4 or .gif")
+    # end
+
+    output_name = f"{root}_{idx}{ext}" if num_datasets > 1 else f"{root}{ext}"
+    plot_output_module.save_rotating_plotly_figure(
+        fig,
+        output_name,
+        num_rotation_angles=kwargs["num_rotation_angles"],
+        starting_azimuthal_angle=kwargs["azimuthal_angle"],
+        polar_angle=kwargs["polar_angle"],
+        num_rotations_completed=kwargs["num_rotations_completed"],
+      fps=kwargs["fps"],
+    )
+
+  saveas_ext = ""
+  if kwargs["saveas"]:
+    saveas_ext = os.path.splitext(str(kwargs["saveas"]))[1].lower()
+  # end
+
+  use_rotating_save = bool(kwargs["saveas"]) and saveas_ext in (".mp4", ".gif") and data.get_num_datasets() == 1
+  if use_rotating_save:
+    datasets = list(data.iterator(kwargs["use"]))
+    if not datasets:
+      raise click.ClickException("No datasets available for rotating 3D save")
+    # end
+
+    for i, dat in enumerate(datasets):
+      plot_kwargs = kwargs.copy()
+      plot_kwargs["show"] = False
+      plot_kwargs["save"] = False
+      plot_kwargs["saveas"] = None
+      plot_kwargs["saveframes"] = None
+      plot_kwargs["figure"] = None
+      if plot_kwargs.get("arg"):
+        fig = postgkyl.output.plot(dat, plot_kwargs["arg"], **plot_kwargs)
+      else:
+        fig = postgkyl.output.plot(dat, **plot_kwargs)
+      # end
+      _save_rotating_output_3d(fig, kwargs["saveas"], i, len(datasets))
+    # end
+    kwargs["show"] = False
+    verb_print(ctx, "Finishing animate")
+    return
+  # end
 
   if kwargs["xlim"]:
     kwargs["xmin"] = float(kwargs["xlim"].split(",")[0])
@@ -211,6 +385,9 @@ def animate(ctx, **kwargs):
       if kwargs["zmax"] is None:
         kwargs["zmax"] = vmax
       # end
+
+      if kwargs["lineouts"]:
+        kwargs["lineouts"] = int(kwargs["lineouts"])
     # end
   # end
 

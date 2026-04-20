@@ -1,6 +1,8 @@
 """Module including custom Gkeyll plotting function"""
 from __future__ import annotations
 
+import subprocess
+import tempfile
 from itertools import product
 from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -34,9 +36,14 @@ def pgkyl_colorbar(obj, fig : matplotlib.figure.Figure, cax : matplotlib.axes.Ax
 
 
 def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
-    cmap: str | None, jet: bool, xkcd: bool) -> None:
+    cmap: str | None, jet: bool, xkcd: bool, background: str = "dark",
+    invert_cmap: bool = False) -> None:
+  background_name = (background or "dark").strip().lower()
+
   if bool(style):
     plt.style.use(style)
+  elif background_name == "light":
+    plt.style.use("default")
   elif bool(rcParams):
     for key in rcParams:
       mpl.rcParams[key] = rcParams[key]
@@ -45,14 +52,48 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/postgkyl.mplstyle")
   # end
 
+  if background_name == "light":
+    mpl.rcParams["figure.facecolor"] = "#ffffff"
+    mpl.rcParams["axes.facecolor"] = "#ffffff"
+    mpl.rcParams["savefig.facecolor"] = "#ffffff"
+    mpl.rcParams["text.color"] = "#111111"
+    mpl.rcParams["axes.labelcolor"] = "#111111"
+    mpl.rcParams["xtick.color"] = "#111111"
+    mpl.rcParams["ytick.color"] = "#111111"
+    mpl.rcParams["axes.edgecolor"] = "#222222"
+    mpl.rcParams["grid.color"] = "#b8b8b8"
+  # end
+
+  if bool(rcParams):
+    for key in rcParams:
+      mpl.rcParams[key] = rcParams[key]
+    # end
+  # end
+
+  cmap_name = None
   if bool(cmap):
-    mpl.rcParams["image.cmap"] = cmap
+    cmap_name = cmap
   elif bool(diverging):
-    mpl.rcParams["image.cmap"] = "RdBu_r"
+    cmap_name = "RdBu_r"
+  else:
+    cmap_name = "inferno"
   # end
 
   if bool(jet):
-    mpl.rcParams["image.cmap"] = "jet"
+    cmap_name = "jet"
+  # end
+
+  if cmap_name is not None:
+    mpl.rcParams["image.cmap"] = cmap_name
+  # end
+
+  if invert_cmap:
+    current_cmap = mpl.rcParams["image.cmap"]
+    if current_cmap.endswith("_r"):
+      mpl.rcParams["image.cmap"] = current_cmap[:-2]
+    else:
+      mpl.rcParams["image.cmap"] = f"{current_cmap}_r"
+    # end
   # end
 
   if xkcd:
@@ -146,6 +187,87 @@ def _resolve_plotly_aspect(aspect: str | float | None, fixaspect: bool) -> tuple
 
   ratio = float(aspect)
   return "manual", dict(x=ratio, y=ratio, z=ratio)
+
+
+def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
+  starting_azimuthal_angle: float, fps: int, polar_angle: float,
+  num_rotations_completed: float, radius: float = 2.0) -> None:
+  """Save a rotating Plotly 3D figure as GIF or MP4.
+
+  Rotates the camera 360 degrees around the vertical axis, starting from
+  ``starting_azimuthal_angle`` in degrees.
+  """
+  root, ext = os.path.splitext(file_name)
+  ext = ext.lower()
+  if ext not in (".gif", ".mp4"):
+    raise ValueError("--save-rotating expects an output ending with .gif or .mp4")
+  # end
+  if num_rotation_angles <= 0:
+    raise ValueError("num_rotation_angles must be a positive integer")
+  # end
+  if fps <= 0:
+    raise ValueError("fps must be a positive integer")
+  # end
+
+  scene_names = [name for name in fig.layout.to_plotly_json().keys() if name == "scene" or name.startswith("scene")]
+  if not scene_names:
+    raise ValueError("Rotating export requires a Plotly 3D scene figure")
+  # end
+
+  polar_rad = np.deg2rad(polar_angle)
+  xy_radius = radius * np.sin(polar_rad)
+  z_eye = radius * np.cos(polar_rad)
+
+  with tempfile.TemporaryDirectory(prefix="pgkyl_rotate_") as tmp_dir:
+    frame_pattern = os.path.join(tmp_dir, "frame_%05d.png")
+    angle_denominator = max(1, num_rotation_angles - 1)
+    for idx in range(num_rotation_angles):
+      theta = np.deg2rad(
+          starting_azimuthal_angle + 360.0 * num_rotations_completed * idx / angle_denominator
+      )
+      camera = dict(
+          eye=dict(x=float(xy_radius * np.cos(theta)), y=float(xy_radius * np.sin(theta)), z=float(z_eye)),
+          up=dict(x=0.0, y=0.0, z=1.0),
+          center=dict(x=0.0, y=0.0, z=0.0),
+      )
+      fig.update_layout(**{scene_name: dict(camera=camera) for scene_name in scene_names})
+
+      png_bytes = fig.to_image(format="png")
+
+      frame_path = os.path.join(tmp_dir, f"frame_{idx:05d}.png")
+      with open(frame_path, "wb") as frame_file:
+        frame_file.write(png_bytes)
+      # end
+    # end
+
+    if ext == ".mp4":
+      ffmpeg_cmd = [
+          "ffmpeg",
+          "-y",
+          "-framerate",
+          str(fps),
+          "-i",
+          frame_pattern,
+          "-pix_fmt",
+          "yuv420p",
+          file_name,
+      ]
+    else:
+      ffmpeg_cmd = [
+          "ffmpeg",
+          "-y",
+          "-framerate",
+          str(fps),
+          "-i",
+          frame_pattern,
+          "-vf",
+          "split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+          file_name,
+      ]
+    # end
+
+    subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  # end
 
 
 def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ...]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -316,6 +438,7 @@ def plot_matplotlib(data: GData | Tuple[list, np.ndarray], args: list = (),
     ymin: float | None = None, ymax: float | None = None, yscale: float = 1.0, yshift: float = 0.0,
     zmin: float | None = None, zmax: float | None = None, zscale: float = 1.0, zshift: float = 0.0,
     relax: bool = False, style: str | None = None, rcParams: dict | None = None,
+    background: str = "dark", invert_cmap: bool = False,
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
     subplot_titles: str | None = None, subplot_xlabels: str | None = None, subplot_ylabels: str | None = None,
@@ -337,7 +460,8 @@ def plot_matplotlib(data: GData | Tuple[list, np.ndarray], args: list = (),
   # ---- Set style and process inputs ----
   # Default to Postgkyl style file file if no style is specified
   # Use the rcParams dictionary which is passed with click contex
-  _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd)
+  _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd, background=background,
+      invert_cmap=invert_cmap)
 
   # Process input parameters
   if not bool(aspect):
@@ -766,6 +890,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     cmin: float | None = None, cmax: float | None = None, cscale: float = 1.0, cshift: float = 0.0,
     clim: tuple[float, float] | None = None,
     relax: bool = False, style: str | None = None, rcParams: dict | None = None,
+    background: str = "dark", invert_cmap: bool = False,
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
     subplot_titles: str | None = None, subplot_xlabels: str | None = None, subplot_ylabels: str | None = None,
@@ -787,7 +912,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     raise ImportError("Plotly is required for 3D plots")
   # end
 
-  _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd)
+  _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd, background=background,
+      invert_cmap=invert_cmap)
 
   grid_in, values = input_parser(data)
   grid = grid_in.copy()
@@ -919,15 +1045,24 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  dark_paper = "#000000"
-  dark_scene = "#000000"
-  text_color = "#e6e6e6"
-  grid_color = "#2a3242"
-  axis_line_color = "#9aa3b2"
+  background_name = (background or "dark").strip().lower()
+  if background_name == "light":
+    paper_color = "#ffffff"
+    scene_color = "#ffffff"
+    text_color = "#111111"
+    grid_color = "#b8b8b8"
+    axis_line_color = "#222222"
+  else:
+    paper_color = "#000000"
+    scene_color = "#000000"
+    text_color = "#e6e6e6"
+    grid_color = "#2a3242"
+    axis_line_color = "#9aa3b2"
+  # end
 
   fig.update_layout(
-    paper_bgcolor=dark_paper,
-    plot_bgcolor=dark_paper,
+    paper_bgcolor=paper_color,
+    plot_bgcolor=paper_color,
     font=dict(color=text_color),
   )
 
@@ -936,7 +1071,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     exponentformat="e",
     showexponent="all",
     tickfont=dict(color=text_color),
-    bgcolor=dark_paper,
+    bgcolor=paper_color,
   )
 
   for comp_idx, comp in enumerate(idx_comps):
@@ -981,25 +1116,25 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       xaxis=dict(
         title=dict(text=_latex_to_html(xlabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logx else "linear", exponentformat="e", range=x_axis_range,
-        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
         zerolinecolor=grid_color,
       ),
       yaxis=dict(
         title=dict(text=_latex_to_html(ylabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logy else "linear", exponentformat="e", range=y_axis_range,
-        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
         zerolinecolor=grid_color,
       ),
       zaxis=dict(
         title=dict(text=z_axis_label, font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logz else "linear", exponentformat="e", range=z_axis_range,
-        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
         zerolinecolor=grid_color,
       ),
-      bgcolor=dark_scene,
+      bgcolor=scene_color,
       aspectmode=scene_aspectmode,
       aspectratio=scene_aspectratio,
     )

@@ -55,6 +55,8 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
   help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
+@click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
+    help="Background mode for plots (dark/light).")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging color map.")
 @click.option("--arg", type=click.STRING, default="",
     help="Additional plotting arguments, e.g., '*--'.")
@@ -132,6 +134,8 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
 @click.option("--cmap", type=click.STRING, default=None,
     help="Override default colormap with a valid matplotlib cmap.")
+@click.option("--invert-cmap", is_flag=True,
+  help="Invert the selected colormap (or the default colormap for the chosen background mode).")
 @click.option("-m", "--multiblock", is_flag=True, default=False)
 @click.pass_context
 def plot(ctx, **kwargs):
