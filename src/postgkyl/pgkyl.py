@@ -45,6 +45,20 @@ class PgkylCommandGroup(click.Group):
       return rv
     # end
 
+    # Explicit aliases that should not appear in --help output.
+    aliases = {
+        "pl": "plot",
+        "pl3": "plot3d",
+        "anim3": "animate3d",
+    }
+    target = aliases.get(cmd_name)
+    if target is not None:
+      rv = click.Group.get_command(self, ctx, target)
+      if rv is not None:
+        return rv
+      # end
+    # end
+
     # cmd_name is an abreviation of a pgkyl command
     matches = [x for x in self.list_commands(ctx) if x.startswith(cmd_name)]
     if matches and len(matches) == 1:
