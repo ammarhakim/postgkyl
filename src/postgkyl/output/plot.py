@@ -94,6 +94,31 @@ def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
   return arrays[0], arrays[1], arrays[2]
 
 
+def _downsample_3d_volume(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+    value: np.ndarray,
+    maximum_points_per_axis: int = 0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+  """Downsample 3D arrays so no axis exceeds the configured maximum."""
+  if value.ndim != 3:
+    return x, y, z, value
+  # end
+
+  if maximum_points_per_axis is None or maximum_points_per_axis <= 0:
+    return x, y, z, value
+  # end
+
+  steps = [max(1, int(np.ceil(size / maximum_points_per_axis))) for size in value.shape]
+  if max(steps) == 1:
+    return x, y, z, value
+  # end
+
+  slicer = tuple(slice(None, None, step) for step in steps)
+  return x[slicer], y[slicer], z[slicer], value[slicer]
+
+
 def _latex_to_html(text: str) -> str:
   """Convert LaTeX subscripts and Greek letters to HTML."""
   if not text:
@@ -230,6 +255,7 @@ def plot_matplotlib(data: GData | Tuple[list, np.ndarray], args: list = (),
     edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None, markersize: float | None = None,
     linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = None,
+    maximum_points_per_axis: int = 0,
     figsize: tuple | None = None,
     jet: bool = False, cmap: str | None = None,
     **kwargs):
@@ -677,6 +703,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None, markersize: float | None = None,
     linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = None,
+    maximum_points_per_axis: int = 0,
     figsize: tuple | None = None,
     jet: bool = False, cmap: str | None = None,
     **kwargs):
@@ -822,7 +849,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all")
+  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all", tickformat=".2e")
 
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
@@ -946,6 +973,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
         zmax_local = valid_max
         trace_colorscale = scalar_colorscale
       # end
+
+      x, y, z, value = _downsample_3d_volume(x, y, z, value, maximum_points_per_axis=maximum_points_per_axis)
       trace = go.Volume(
           x=x.ravel(), y=y.ravel(), z=z.ravel(), value=value.ravel(),
           colorscale=trace_colorscale,
