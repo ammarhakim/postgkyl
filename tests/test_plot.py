@@ -52,3 +52,38 @@ class TestPlot:
     values = (x + y + z)[..., np.newaxis]
     fig = pg.output.plot((grid, values))
     assert isinstance(fig, go.Figure)
+    np.testing.assert_allclose(fig.layout.scene.xaxis.range, (0.0, 1.0))
+    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.0, 1.0))
+    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (0.0, 1.0))
+    assert fig.data[0].surface.count == 32
+
+  def test_plot_plotly_3d_ranges_override(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), xrange=(0.2, 0.8), yrange=(0.1, 0.9), zrange=(0.3, 0.7), surface_count=12)
+    assert isinstance(fig, go.Figure)
+    np.testing.assert_allclose(fig.layout.scene.xaxis.range, (0.2, 0.8))
+    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.1, 0.9))
+    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (0.3, 0.7))
+    assert fig.data[0].surface.count == 12
+
+  def test_plot_plotly_3d_color_controls(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), cscale=2.0, cshift=1.0, clim=(1.5, 5.5))
+    assert isinstance(fig, go.Figure)
+    np.testing.assert_allclose(fig.data[0].cmin, 1.5)
+    np.testing.assert_allclose(fig.data[0].cmax, 5.5)
+    np.testing.assert_allclose(np.nanmin(fig.data[0].value), 1.0)
+    np.testing.assert_allclose(np.nanmax(fig.data[0].value), 7.0)
+
+  def test_plot_plotly_3d_logc_converts_linear_clim(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (1.0e-2 + x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), logc=True, cmin=1.0e-20, cmax=1.0e-2)
+    assert isinstance(fig, go.Figure)
+    np.testing.assert_allclose(fig.data[0].cmin, -20.0)
+    np.testing.assert_allclose(fig.data[0].cmax, -2.0)

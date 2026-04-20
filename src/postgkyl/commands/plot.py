@@ -7,6 +7,22 @@ from postgkyl.utils import verb_print
 import postgkyl.output.plot
 
 
+def _parse_range_option(_ctx, _param, value):
+  if value is None:
+    return None
+  # end
+
+  parts = [part.strip() for part in value.replace(":", ",").split(",") if part.strip()]
+  if len(parts) != 2:
+    raise click.BadParameter("Expected two numbers in the form 'lower,upper' or 'lower:upper'.")
+  # end
+
+  try:
+    return (float(parts[0]), float(parts[1]))
+  except ValueError as exc:
+    raise click.BadParameter("Expected two numbers in the form 'lower,upper' or 'lower:upper'.") from exc
+  # end
+
 @click.command()
 @click.option("--use", "-u", default=None, help="Specify the tag to plot.")
 @click.option("--figure", "-f", default=None,
@@ -34,6 +50,8 @@ import postgkyl.output.plot
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
 @click.option("-o","--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
+@click.option("--surface-count", type=click.INT, default=32, show_default=True,
+  help="Number of Plotly volume isosurfaces to render for 3D plots.")
 @click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
   help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
@@ -45,7 +63,7 @@ import postgkyl.output.plot
 @click.option("--aspect", default=None, help="Specify the scaling ratio.")
 @click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
 @click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
-@click.option("--logz", is_flag=True, help="Set values of 2D plot to log scale.")
+@click.option("--logz", is_flag=True, help="Set z-axis (in 2D, values of the plot) to log scale.")
 @click.option("--logc", is_flag=True, help="Set colorbar to log scale for 3D plots.")
 @click.option("--xshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the x-axis.")
@@ -53,24 +71,32 @@ import postgkyl.output.plot
     help="Value to shift the y-axis.")
 @click.option("--zshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the z-axis.")
+@click.option("--cshift", default=0.0, type=click.FLOAT, show_default=True,
+    help="Value to shift the color values for 3D plots.")
 @click.option("--xscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the x-axis.")
 @click.option("--yscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the y-axis.")
 @click.option("--zscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the z-axis (default: 1.0).")
+@click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
+    help="Value to scale the color values for 3D plots.")
 @click.option("--xmax", default=None, type=click.FLOAT, help="Set maximal x-value.")
 @click.option("--xmin", default=None, type=click.FLOAT, help="Set minimal x-values.")
 @click.option("--ymax", default=None, type=click.FLOAT, help="Set maximal y-value.")
 @click.option("--ymin", default=None, type=click.FLOAT, help="Set minimal y-values.")
 @click.option("--zmax", default=None, type=click.FLOAT, help="Set maximal z-value.")
 @click.option("--zmin", default=None, type=click.FLOAT, help="Set minimal z-values.")
-@click.option("--xlim", default=None, type=click.STRING,
+@click.option("--cmax", default=None, type=click.FLOAT, help="Set maximal color value for 3D plots.")
+@click.option("--cmin", default=None, type=click.FLOAT, help="Set minimal color value for 3D plots.")
+@click.option("--xlim", default=None, type=click.STRING, callback=_parse_range_option,
     help="Set limits for the x-coordinate (lower,upper)")
-@click.option("--ylim", default=None, type=click.STRING,
+@click.option("--ylim", default=None, type=click.STRING, callback=_parse_range_option,
     help="Set limits for the y-coordinate (lower,upper).")
-@click.option("--zlim", default=None, type=click.STRING,
+@click.option("--zlim", default=None, type=click.STRING, callback=_parse_range_option,
     help="Set limits for the z-coordinate (lower,upper).")
+@click.option("--clim", default=None, type=click.STRING, callback=_parse_range_option,
+    help="Set limits for the color scale (lower,upper).")
 @click.option("--relax", is_flag=True, help="Relax the stringent x axis limits for 1D plots.")
 @click.option("--globalrange", "-r", is_flag=True, help="Make uniform extends across datasets.")
 @click.option("--cutoffglobalrange", "-cogr", default=None, type=click.FLOAT,
@@ -160,16 +186,25 @@ def plot(ctx, **kwargs):
   # end
 
   if kwargs["xlim"]:
-    kwargs["xmin"] = float(kwargs["xlim"].split(",")[0])
-    kwargs["xmax"] = float(kwargs["xlim"].split(",")[1])
+    kwargs["xmin"], kwargs["xmax"] = kwargs["xlim"]
+    kwargs["xrange"] = kwargs["xlim"]
   # end
   if kwargs["ylim"]:
-    kwargs["ymin"] = float(kwargs["ylim"].split(",")[0])
-    kwargs["ymax"] = float(kwargs["ylim"].split(",")[1])
+    kwargs["ymin"], kwargs["ymax"] = kwargs["ylim"]
+    kwargs["yrange"] = kwargs["ylim"]
   # end
   if kwargs["zlim"]:
-    kwargs["zmin"] = float(kwargs["zlim"].split(",")[0])
-    kwargs["zmax"] = float(kwargs["zlim"].split(",")[1])
+    kwargs["zrange"] = kwargs["zlim"]
+    kwargs["zmin"], kwargs["zmax"] = kwargs["zlim"]
+  # end
+  if kwargs["clim"]:
+    kwargs["cmin"], kwargs["cmax"] = kwargs["clim"]
+  # end
+  if kwargs["cmin"] is not None:
+    kwargs["zmin"] = kwargs["cmin"]
+  # end
+  if kwargs["cmax"] is not None:
+    kwargs["zmax"] = kwargs["cmax"]
   # end
 
   dataset_fignum = False

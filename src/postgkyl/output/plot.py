@@ -6,6 +6,7 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import Tuple, TYPE_CHECKING
 import matplotlib as mpl
+import matplotlib.cm as cm
 import matplotlib.axes
 import matplotlib.figure
 import matplotlib.pyplot as plt
@@ -77,6 +78,56 @@ def _finite_range(values: np.ndarray) -> tuple[float, float]:
     return float(np.nanmin(finite_values)), float(np.nanmax(finite_values))
   # end
   return float("nan"), float("nan")
+
+
+def _axis_range(values: np.ndarray, axis_range: tuple[float, float] | None,
+    log_axis: bool = False) -> list[float] | None:
+  if axis_range is None:
+    lower, upper = _finite_range(values)
+  else:
+    lower, upper = axis_range
+  # end
+
+  if not np.isfinite(lower) or not np.isfinite(upper):
+    return None
+  # end
+
+  if log_axis:
+    lower = np.log10(max(lower, np.finfo(float).tiny))
+    upper = np.log10(max(upper, np.finfo(float).tiny))
+  # end
+
+  if lower == upper:
+    padding = 1.0 if lower == 0.0 else abs(lower) * 0.05
+    lower -= padding
+    upper += padding
+  # end
+
+  return [lower, upper]
+
+
+def _log_colorbar_ticks(log_min: float, log_max: float, max_ticks: int = 8) -> tuple[list[float], list[str]]:
+  if not np.isfinite(log_min) or not np.isfinite(log_max):
+    return [], []
+  # end
+
+  lo = int(np.floor(log_min))
+  hi = int(np.ceil(log_max))
+  if hi < lo:
+    hi = lo
+  # end
+
+  count = hi - lo + 1
+  step = max(1, int(np.ceil(count / max_ticks)))
+  tick_vals = list(range(lo, hi + 1, step))
+
+  # Ensure the upper bound appears as a tick label.
+  if tick_vals[-1] != hi:
+    tick_vals.append(hi)
+  # end
+
+  tick_text = [f"10<sup>{val:d}</sup>" for val in tick_vals]
+  return [float(v) for v in tick_vals], tick_text
 
 
 def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ...]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -694,6 +745,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     xmin: float | None = None, xmax: float | None = None, xscale: float = 1.0, xshift: float = 0.0,
     ymin: float | None = None, ymax: float | None = None, yscale: float = 1.0, yshift: float = 0.0,
     zmin: float | None = None, zmax: float | None = None, zscale: float = 1.0, zshift: float = 0.0,
+    cmin: float | None = None, cmax: float | None = None, cscale: float = 1.0, cshift: float = 0.0,
+    clim: tuple[float, float] | None = None,
     relax: bool = False, style: str | None = None, rcParams: dict | None = None,
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
@@ -704,6 +757,9 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     color: str | None = None, markersize: float | None = None,
     linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = None,
     maximum_points_per_axis: int = 0,
+    surface_count: int = 32,
+    xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
+    zrange: tuple[float, float] | None = None,
     figsize: tuple | None = None,
     jet: bool = False, cmap: str | None = None,
     **kwargs):
@@ -849,7 +905,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all", tickformat=".2e")
+  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all")
 
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
@@ -861,30 +917,36 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
     nodal_grid = _get_nodal_grid(grid, cells)
     value = np.asarray(values[..., comp]) * zscale + zshift
+    color_value = value * cscale + cshift
     x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
     x = (np.asarray(x_grid) + xshift) * xscale
     y = (np.asarray(y_grid) + yshift) * yscale
     z = np.asarray(z_grid)
-    x_min, x_max = _finite_range(x)
-    y_min, y_max = _finite_range(y)
-    z_min_raw, z_max_raw = _finite_range(z)
-
-    finite_xyz = np.isfinite(x).sum() + np.isfinite(y).sum() + np.isfinite(z).sum()
-    finite_value = np.isfinite(value)
+    finite_value = np.isfinite(color_value)
     finite_count = int(finite_value.sum())
     if finite_count:
-      value_min = float(np.nanmin(value))
-      value_max = float(np.nanmax(value))
+      value_min = float(np.nanmin(color_value))
+      value_max = float(np.nanmax(color_value))
     else:
       value_min = float("nan")
       value_max = float("nan")
     # end
 
+    if clim is not None:
+      cmin_local, cmax_local = clim
+    else:
+      cmin_local = cmin if cmin is not None else zmin
+      cmax_local = cmax if cmax is not None else zmax
+    # end
+
     z_axis_label = _latex_to_html(zlabel) if zlabel else _latex_to_html(axes_labels[2])
+    x_axis_range = _axis_range(x, xrange, logx)
+    y_axis_range = _axis_range(y, yrange, logy)
+    z_axis_range = _axis_range(z, zrange, logz)
     scene = dict(
-        xaxis=dict(title=_latex_to_html(xlabel), showgrid=showgrid, type="log" if logx else "linear", exponentformat="e"),
-        yaxis=dict(title=_latex_to_html(ylabel), showgrid=showgrid, type="log" if logy else "linear", exponentformat="e"),
-        zaxis=dict(title=z_axis_label, showgrid=showgrid, type="log" if logz else "linear", exponentformat="e"),
+      xaxis=dict(title=_latex_to_html(xlabel), showgrid=showgrid, type="log" if logx else "linear", exponentformat="e", range=x_axis_range),
+      yaxis=dict(title=_latex_to_html(ylabel), showgrid=showgrid, type="log" if logy else "linear", exponentformat="e", range=y_axis_range),
+      zaxis=dict(title=z_axis_label, showgrid=showgrid, type="log" if logz else "linear", exponentformat="e", range=z_axis_range),
         aspectmode="manual" if fixaspect else "auto",
         aspectratio=dict(x=aspect, y=aspect, z=aspect) if fixaspect else None,
     )
@@ -897,8 +959,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           v=np.asarray(values[..., 1]).ravel(),
           w=np.asarray(values[..., 2]).ravel(),
           colorscale=scalar_colorscale,
-          cmin=zmin,
-          cmax=zmax,
+          cmin=cmin_local,
+          cmax=cmax_local,
           showscale=colorbar and comp_idx == 0 and not bool(color),
             colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           sizemode="scaled",
@@ -913,8 +975,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           v=np.asarray(values[..., 1]).ravel(),
           w=np.asarray(values[..., 2]).ravel(),
           colorscale=scalar_colorscale,
-          cmin=zmin,
-          cmax=zmax,
+          cmin=cmin_local,
+          cmax=cmax_local,
           showscale=colorbar and comp_idx == 0 and not bool(color),
             colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           name=label or f"c{comp}",
@@ -922,12 +984,13 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       )
     else:
       trace_colorscale = scalar_colorscale
+      trace_colorbar_kwargs = dict(colorbar_kwargs)
       if diverging:
-        zmax_local = np.nanmax(np.abs(value))
+        zmax_local = np.nanmax(np.abs(color_value))
         zmin_local = -zmax_local
       else:
-        zmin_local = zmin
-        zmax_local = zmax
+        zmin_local = cmin_local
+        zmax_local = cmax_local
       # end
       if zmin_local is None:
         zmin_local = value_min
@@ -936,8 +999,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
         zmax_local = value_max
       # end
       if logz:
-        positive = np.where(value > 0, value, np.nan)
-        value = np.log10(positive)
+        positive = np.where(color_value > 0, color_value, np.nan)
+        color_value = np.log10(positive)
         if zmin_local is not None:
           zmin_local = np.log10(max(zmin_local, np.finfo(float).tiny))
         # end
@@ -946,9 +1009,9 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
         # end
       # end
       if logc:
-        log_value = np.full(value.shape, np.nan, dtype=float)
-        valid_mask = value > 0
-        log_value[valid_mask] = np.log10(value[valid_mask])
+        log_value = np.full(color_value.shape, np.nan, dtype=float)
+        valid_mask = color_value > 0
+        log_value[valid_mask] = np.log10(color_value[valid_mask])
 
         if np.any(valid_mask):
           valid_min = float(np.nanmin(log_value[valid_mask]))
@@ -968,22 +1031,30 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           valid_max = valid_min + 1.0
         # end
 
-        value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
+        color_value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
         zmin_local = valid_min
         zmax_local = valid_max
         trace_colorscale = scalar_colorscale
+
+        tick_vals, tick_text = _log_colorbar_ticks(zmin_local, zmax_local)
+        if tick_vals:
+          trace_colorbar_kwargs["tickmode"] = "array"
+          trace_colorbar_kwargs["tickvals"] = tick_vals
+          trace_colorbar_kwargs["ticktext"] = tick_text
+        # end
       # end
 
-      x, y, z, value = _downsample_3d_volume(x, y, z, value, maximum_points_per_axis=maximum_points_per_axis)
+      x, y, z, color_value = _downsample_3d_volume(x, y, z, color_value, maximum_points_per_axis=maximum_points_per_axis)
       trace = go.Volume(
-          x=x.ravel(), y=y.ravel(), z=z.ravel(), value=value.ravel(),
+          x=x.ravel(), y=y.ravel(), z=z.ravel(), value=color_value.ravel(),
           colorscale=trace_colorscale,
           cmin=zmin_local,
           cmax=zmax_local,
           opacity=opacity if opacity is not None else 0.5,
           opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.8]],
+          surface_count=surface_count,
           showscale=colorbar and comp_idx == 0 and not bool(color),
-            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
+            colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )
