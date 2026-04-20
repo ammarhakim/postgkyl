@@ -2,6 +2,7 @@
 import os
 import matplotlib as mpl
 import numpy as np
+import plotly.graph_objects as go
 
 import postgkyl as pg
 
@@ -44,3 +45,10 @@ class TestPlot:
     np.testing.assert_array_almost_equal(data.get_grid()[0], x_plot)
     np.testing.assert_array_almost_equal(data.get_values()[...,0], y_plot)
     mpl.pyplot.close("all")
+
+  def test_plot_plotly_3d(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values))
+    assert isinstance(fig, go.Figure)

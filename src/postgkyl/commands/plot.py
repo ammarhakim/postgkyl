@@ -1,6 +1,7 @@
 import click
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path
 
 from postgkyl.utils import verb_print
 import postgkyl.output.plot
@@ -32,6 +33,7 @@ import postgkyl.output.plot
 @click.option("--linewidth", type=click.FLOAT, help="Set the linewidth.")
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
+@click.option("--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging color map.")
 @click.option("--arg", type=click.STRING, default="",
@@ -42,6 +44,7 @@ import postgkyl.output.plot
 @click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
 @click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
 @click.option("--logz", is_flag=True, help="Set values of 2D plot to log scale.")
+@click.option("--logc", is_flag=True, help="Set colorbar to log scale for 3D plots.")
 @click.option("--xshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the x-axis.")
 @click.option("--yshift", default=0.0, type=click.FLOAT, show_default=True,
@@ -78,6 +81,7 @@ import postgkyl.output.plot
 @click.option("--color", type=click.STRING, help="Set color when available.")
 @click.option("-x", "--xlabel", type=click.STRING, help="Specify a x-axis label.")
 @click.option("-y", "--ylabel", type=click.STRING, help="Specify a y-axis label.")
+@click.option("-z", "--zlabel", type=click.STRING, help="Specify a z-axis label.")
 @click.option("--clabel", type=click.STRING, help="Specify a label for colorbar.")
 @click.option("--title", type=click.STRING, help="Specify a title.")
 @click.option("--subplot-titles", type=click.STRING, help="Comma-separated titles for each subplot. e.g. --subplot-titles 'Title1,Title2,Title3'")
@@ -107,6 +111,16 @@ def plot(ctx, **kwargs):
   Plot labels can use a sub-set of LaTeX math commands placed between dollar ($) signs.
   """
   verb_print(ctx, "Starting plot")
+
+  def _save_output(fig, file_name):
+    if hasattr(fig, "write_html"):
+      if not os.path.splitext(file_name)[1]:
+        file_name = f"{file_name}.html"
+      # end
+      fig.write_html(file_name)
+    else:
+      plt.savefig(file_name, dpi=kwargs["dpi"])
+    # end
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
@@ -244,7 +258,7 @@ def plot(ctx, **kwargs):
     # end
 
     # ---- Plot ----
-    postgkyl.output.plot(dat, args, label_prefix=label, **kwargs)
+    fig = postgkyl.output.plot(dat, args, label_prefix=label, **kwargs)
 
     if kwargs["subplots"]:
       kwargs["start_axes"] = kwargs["start_axes"] + dat.get_num_comps()
@@ -263,35 +277,38 @@ def plot(ctx, **kwargs):
           file_name = file_name + "ev_" + ctx.obj["labels"][i].replace(" ", "_")
         # end
       # end
-    # end
-    if (kwargs["save"] or kwargs["saveas"]) and kwargs["figure"] is None:
-      file_name = str(file_name)
-      plt.savefig(file_name, dpi=kwargs["dpi"])
-      file_name = ""
+      if kwargs["figure"] is None:
+        _save_output(fig, file_name)
+        file_name = ""
+      # end
     # end
 
     if kwargs["saveframes"]:
-      file_name = f"{kwargs['saveframes']:s}_{i:d}.png"
-      plt.savefig(file_name, dpi=kwargs["dpi"])
+      file_name = f"{kwargs['saveframes']:s}_{i:d}.html" if hasattr(fig, "write_html") else f"{kwargs['saveframes']:s}_{i:d}.png"
+      _save_output(fig, file_name)
       kwargs["show"] = False
     # end
 
     if "batch_mode" in ctx.obj:
       if ctx.obj["batch_mode"]:
-        file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
-        plt.savefig(file_name, dpi=kwargs["dpi"])
+        file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.html" if hasattr(fig, "write_html") else f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
+        _save_output(fig, file_name)
         kwargs["show"] = False
       # end
     # end
 
 
   # end
-  if (kwargs["save"] or kwargs["saveas"]):
+  if (kwargs["save"] or kwargs["saveas"]) and file_name:
     file_name = str(file_name)
-    plt.savefig(file_name, dpi=kwargs["dpi"])
+    _save_output(fig, file_name)
   # end
 
   if kwargs["show"]:
-    plt.show()
+    if hasattr(fig, "show") and hasattr(fig, "to_html"):
+      fig.show()
+    else:
+      plt.show()
+    # end
   # end
   verb_print(ctx, "Finishing plot")
