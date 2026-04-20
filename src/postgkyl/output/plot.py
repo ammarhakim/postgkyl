@@ -70,11 +70,6 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
   return colorscale
 
 
-def _plot_debug(message: str) -> None:
-  print(f"[postgkyl.plot] {message}")
-  # end
-
-
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
   finite = np.isfinite(values)
   if np.any(finite):
@@ -827,6 +822,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
+  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all")
 
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
@@ -877,7 +873,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           cmin=zmin,
           cmax=zmax,
           showscale=colorbar and comp_idx == 0 and not bool(color),
-          colorbar=dict(title=clabel or "") if colorbar and comp_idx == 0 and not bool(color) else None,
+            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           sizemode="scaled",
           sizeref=linewidth or 1.0,
           name=label or f"c{comp}",
@@ -893,7 +889,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           cmin=zmin,
           cmax=zmax,
           showscale=colorbar and comp_idx == 0 and not bool(color),
-          colorbar=dict(title=clabel or "") if colorbar and comp_idx == 0 and not bool(color) else None,
+            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )
@@ -939,7 +935,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           opacity=opacity if opacity is not None else 0.5,
           opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.8]],
           showscale=colorbar and comp_idx == 0 and not bool(color),
-          colorbar=dict(title=clabel or "") if colorbar and comp_idx == 0 and not bool(color) else None,
+            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )

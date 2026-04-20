@@ -33,7 +33,7 @@ import postgkyl.output.plot
 @click.option("--linewidth", type=click.FLOAT, help="Set the linewidth.")
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
-@click.option("--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
+@click.option("-o","--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging color map.")
 @click.option("--arg", type=click.STRING, default="",
@@ -112,15 +112,15 @@ def plot(ctx, **kwargs):
   """
   verb_print(ctx, "Starting plot")
 
-  def _save_output(fig, file_name):
-    if hasattr(fig, "write_html"):
-      if not os.path.splitext(file_name)[1]:
-        file_name = f"{file_name}.html"
-      # end
-      fig.write_html(file_name)
-    else:
-      plt.savefig(file_name, dpi=kwargs["dpi"])
+  def _save_output(file_name):
+    plt.savefig(file_name, dpi=kwargs["dpi"])
+
+  def _save_output_3d(fig, file_name):
+    root, ext = os.path.splitext(file_name)
+    if ext.lower() != ".html":
+      file_name = f"{root}.html" if root else f"{file_name}.html"
     # end
+    fig.write_html(file_name)
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
@@ -278,30 +278,46 @@ def plot(ctx, **kwargs):
         # end
       # end
       if kwargs["figure"] is None:
-        _save_output(fig, file_name)
+        if hasattr(fig, "write_html"):
+          _save_output_3d(fig, file_name)
+        else:
+          _save_output(file_name)
+        # end
         file_name = ""
       # end
     # end
 
     if kwargs["saveframes"]:
-      file_name = f"{kwargs['saveframes']:s}_{i:d}.html" if hasattr(fig, "write_html") else f"{kwargs['saveframes']:s}_{i:d}.png"
-      _save_output(fig, file_name)
+      file_name = f"{kwargs['saveframes']:s}_{i:d}.png"
+      if hasattr(fig, "write_html"):
+        _save_output_3d(fig, file_name)
+      else:
+        _save_output(file_name)
+      # end
       kwargs["show"] = False
     # end
 
     if "batch_mode" in ctx.obj:
       if ctx.obj["batch_mode"]:
-        file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.html" if hasattr(fig, "write_html") else f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
-        _save_output(fig, file_name)
+        file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
+        if hasattr(fig, "write_html"):
+          _save_output_3d(fig, file_name)
+        else:
+          _save_output(file_name)
+        # end
         kwargs["show"] = False
       # end
     # end
 
 
   # end
-  if (kwargs["save"] or kwargs["saveas"]) and file_name:
+  if (kwargs["save"] or kwargs["saveas"]):
     file_name = str(file_name)
-    _save_output(fig, file_name)
+    if hasattr(fig, "write_html"):
+      _save_output_3d(fig, file_name)
+    else:
+      _save_output(file_name)
+    # end
   # end
 
   if kwargs["show"]:
