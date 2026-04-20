@@ -10,13 +10,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
-
-try:
-  import plotly.graph_objects as go
-  from plotly.subplots import make_subplots
-except ImportError:  # pragma: no cover - optional dependency
-  go = None
-  make_subplots = None
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from postgkyl.utils import input_parser
 from postgkyl.data.idx_parser import idx_parser as parse_idx
@@ -28,7 +23,8 @@ if TYPE_CHECKING:
 
 def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     cmap: str | None, xkcd: bool, background: str = "dark",
-    invert_cmap: bool = False) -> None:
+    invert_cmap: bool = False) -> dict:
+  """Apply plot styling to Matplotlib and return Plotly theme colors."""
   background_name = (background or "dark").strip().lower()
 
   if bool(style):
@@ -39,6 +35,7 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/postgkyl.mplstyle")
   # end
 
+  # Define Plotly theme colors for both light and dark backgrounds
   if background_name == "light":
     mpl.rcParams["figure.facecolor"] = "#ffffff"
     mpl.rcParams["axes.facecolor"] = "#ffffff"
@@ -49,6 +46,21 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     mpl.rcParams["ytick.color"] = "#111111"
     mpl.rcParams["axes.edgecolor"] = "#222222"
     mpl.rcParams["grid.color"] = "#b8b8b8"
+    theme_colors = dict(
+        paper_color="#ffffff",
+        scene_color="#ffffff",
+        text_color="#111111",
+        grid_color="#b8b8b8",
+        axis_line_color="#222222",
+    )
+  else:
+    theme_colors = dict(
+        paper_color="#000000",
+        scene_color="#000000",
+        text_color="#e6e6e6",
+        grid_color="#2a3242",
+        axis_line_color="#9aa3b2",
+    )
   # end
 
   if bool(rcParams):
@@ -82,6 +94,8 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
   if xkcd:
     plt.xkcd()
   # end
+
+  return theme_colors
 
 
 def _plotly_colorscale(cmap_name: str, n: int = 256):
@@ -217,12 +231,32 @@ def save_rotating_plotly_figure(fig, file_name: str,
       post_script = f"""
 const gd = document.getElementById('{{plot_id}}');
 const sceneName = '{scene_name}';
-const xyRadius = {float(xy_radius):.17g};
-const zEye = {float(z_eye):.17g};
-const theta0 = {float(theta0):.17g};
-const omega = {float(omega):.17g};
+const defaultAzimuthDeg = {float(starting_azimuthal_angle):.17g};
+const defaultPolarDeg = {float(polar_angle):.17g};
+const defaultPeriodSec = {float(rotation_period):.17g};
+const defaultRadius = {float(radius):.17g};
 let rafId = null;
 let startMs = null;
+
+let azimuthDeg = defaultAzimuthDeg;
+let polarDeg = defaultPolarDeg;
+let periodSec = defaultPeriodSec;
+let cameraRadius = defaultRadius;
+
+let theta0 = 0.0;
+let omega = 0.0;
+let xyRadius = 0.0;
+let zEye = 0.0;
+
+const clampPositive = (value, fallback) => (Number.isFinite(value) && value > 0.0 ? value : fallback);
+
+const recomputeRotationParams = () => {{
+  const polarRad = polarDeg * Math.PI / 180.0;
+  theta0 = azimuthDeg * Math.PI / 180.0;
+  xyRadius = cameraRadius * Math.sin(polarRad);
+  zEye = cameraRadius * Math.cos(polarRad);
+  omega = 2.0 * Math.PI / periodSec;
+}};
 
 const updateCamera = (theta) => {{
   const camera = {{
@@ -233,6 +267,12 @@ const updateCamera = (theta) => {{
   Plotly.relayout(gd, {{ [sceneName + '.camera']: camera }});
 }};
 
+const startRotation = () => {{
+  if (rafId === null) {{
+    rafId = requestAnimationFrame(animate);
+  }}
+}};
+
 const stopRotation = () => {{
   if (rafId !== null) {{
     cancelAnimationFrame(rafId);
@@ -240,9 +280,204 @@ const stopRotation = () => {{
   }}
 }};
 
-gd.addEventListener('mousedown', stopRotation, {{ once: true }});
-gd.addEventListener('wheel', stopRotation, {{ once: true }});
-gd.addEventListener('touchstart', stopRotation, {{ once: true }});
+const resetRotation = () => {{
+  startMs = null;
+  updateCamera(theta0);
+  startRotation();
+}};
+
+const parent = gd.parentNode;
+if (parent) {{
+  if (getComputedStyle(parent).position === 'static') {{
+    parent.style.position = 'relative';
+  }}
+
+  const controls = document.createElement('div');
+  controls.style.position = 'absolute';
+  controls.style.top = '12px';
+  controls.style.left = '12px';
+  controls.style.zIndex = '20';
+  controls.style.background = 'rgba(255, 255, 255, 0.92)';
+  controls.style.border = '1px solid #b7bec8';
+  controls.style.borderRadius = '8px';
+  controls.style.padding = '8px 10px';
+  controls.style.fontFamily = 'sans-serif';
+  controls.style.fontSize = '12px';
+  controls.style.color = '#1f2933';
+  controls.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.18)';
+  controls.style.display = 'grid';
+  controls.style.gridTemplateColumns = 'auto auto';
+  controls.style.gap = '6px 8px';
+  controls.style.alignItems = 'center';
+  controls.style.opacity = '0';
+  controls.style.pointerEvents = 'none';
+  controls.style.transition = 'opacity 120ms ease';
+
+  const showControlsButton = document.createElement('button');
+  showControlsButton.type = 'button';
+  showControlsButton.textContent = 'Show rotation controls';
+  showControlsButton.style.position = 'absolute';
+  showControlsButton.style.top = '12px';
+  showControlsButton.style.left = '12px';
+  showControlsButton.style.zIndex = '21';
+  showControlsButton.style.fontSize = '12px';
+  showControlsButton.style.padding = '4px 8px';
+  showControlsButton.style.cursor = 'pointer';
+  showControlsButton.style.opacity = '0';
+  showControlsButton.style.pointerEvents = 'none';
+  showControlsButton.style.transition = 'opacity 120ms ease';
+
+  const makeNumberInput = (value, min, step) => {{
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = String(value);
+    input.min = String(min);
+    input.step = String(step);
+    input.style.width = '86px';
+    input.style.fontSize = '12px';
+    return input;
+  }};
+
+  const addRow = (labelText, inputEl) => {{
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    controls.appendChild(label);
+    controls.appendChild(inputEl);
+  }};
+
+  const periodInput = makeNumberInput(defaultPeriodSec, 0.001, 0.1);
+  const azimuthInput = makeNumberInput(defaultAzimuthDeg, -3600, 1);
+  const polarInput = makeNumberInput(defaultPolarDeg, -3600, 1);
+  const radiusInput = makeNumberInput(defaultRadius, 0.001, 0.1);
+
+  addRow('Period (s)', periodInput);
+  addRow('Azimuth (deg)', azimuthInput);
+  addRow('Polar (deg)', polarInput);
+  addRow('Radius', radiusInput);
+
+  const buttonWrap = document.createElement('div');
+  buttonWrap.style.gridColumn = '1 / span 2';
+  buttonWrap.style.display = 'flex';
+  buttonWrap.style.gap = '8px';
+
+  const applyButton = document.createElement('button');
+  applyButton.type = 'button';
+  applyButton.textContent = 'Apply';
+
+  const stopButton = document.createElement('button');
+  stopButton.type = 'button';
+  stopButton.textContent = 'Stop rotation';
+
+  const hideButton = document.createElement('button');
+  hideButton.type = 'button';
+  hideButton.textContent = 'Hide controls';
+
+  for (const btn of [applyButton, stopButton, hideButton]) {{
+    btn.style.fontSize = '12px';
+    btn.style.padding = '3px 8px';
+    btn.style.cursor = 'pointer';
+  }}
+
+  let controlsCollapsed = true;
+  let hoverActive = false;
+  let hideTimer = null;
+
+  const setControlsVisible = (visible) => {{
+    controls.style.opacity = visible ? '1' : '0';
+    controls.style.pointerEvents = visible ? 'auto' : 'none';
+  }};
+
+  const setShowButtonVisible = (visible) => {{
+    showControlsButton.style.opacity = visible ? '1' : '0';
+    showControlsButton.style.pointerEvents = visible ? 'auto' : 'none';
+  }};
+
+  const refreshControlsVisibility = () => {{
+    if (!hoverActive) {{
+      setControlsVisible(false);
+      setShowButtonVisible(false);
+      return;
+    }}
+    if (controlsCollapsed) {{
+      setControlsVisible(false);
+      setShowButtonVisible(true);
+    }} else {{
+      setControlsVisible(true);
+      setShowButtonVisible(false);
+    }}
+  }};
+
+  const clearHideTimer = () => {{
+    if (hideTimer !== null) {{
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }}
+  }};
+
+  const scheduleHide = () => {{
+    clearHideTimer();
+    hideTimer = setTimeout(() => {{
+      hoverActive = false;
+      refreshControlsVisibility();
+    }}, 100);
+  }};
+
+  const applyInputs = () => {{
+    periodSec = clampPositive(parseFloat(periodInput.value), defaultPeriodSec);
+    cameraRadius = clampPositive(parseFloat(radiusInput.value), defaultRadius);
+    azimuthDeg = Number.isFinite(parseFloat(azimuthInput.value)) ? parseFloat(azimuthInput.value) : defaultAzimuthDeg;
+    polarDeg = Number.isFinite(parseFloat(polarInput.value)) ? parseFloat(polarInput.value) : defaultPolarDeg;
+
+    periodInput.value = String(periodSec);
+    radiusInput.value = String(cameraRadius);
+    azimuthInput.value = String(azimuthDeg);
+    polarInput.value = String(polarDeg);
+
+    recomputeRotationParams();
+    resetRotation();
+  }};
+
+  applyButton.addEventListener('click', () => {{
+    applyInputs();
+  }});
+
+  stopButton.addEventListener('click', () => {{
+    stopRotation();
+  }});
+
+  hideButton.addEventListener('click', () => {{
+    controlsCollapsed = true;
+    refreshControlsVisibility();
+  }});
+
+  showControlsButton.addEventListener('click', () => {{
+    controlsCollapsed = false;
+    hoverActive = true;
+    refreshControlsVisibility();
+  }});
+
+  parent.addEventListener('mouseenter', () => {{
+    hoverActive = true;
+    clearHideTimer();
+    refreshControlsVisibility();
+  }});
+
+  parent.addEventListener('mouseleave', () => {{
+    scheduleHide();
+  }});
+
+  buttonWrap.appendChild(applyButton);
+  buttonWrap.appendChild(stopButton);
+  buttonWrap.appendChild(hideButton);
+  controls.appendChild(buttonWrap);
+  parent.appendChild(controls);
+  parent.appendChild(showControlsButton);
+  refreshControlsVisibility();
+}}
+
+gd.addEventListener('mousedown', stopRotation);
+gd.addEventListener('wheel', stopRotation);
+gd.addEventListener('touchstart', stopRotation);
 
 const animate = (timestamp) => {{
   if (startMs === null) {{
@@ -254,7 +489,9 @@ const animate = (timestamp) => {{
   rafId = requestAnimationFrame(animate);
 }};
 
-rafId = requestAnimationFrame(animate);
+recomputeRotationParams();
+updateCamera(theta0);
+startRotation();
 """
       fig.write_html(file_name, include_plotlyjs="cdn", post_script=post_script)
     else:
@@ -529,8 +766,6 @@ def _get_nodal_grid(grid : list, cells: np.ndarray):
 def plot3d(data: GData | Tuple[list, np.ndarray],
     squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
-    streamline: bool = False,
-    quiver: bool = False,
     diverging: bool = False,
     xscale: float = 1.0, xshift: float = 0.0,
     yscale: float = 1.0, yshift: float = 0.0,
@@ -560,7 +795,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     raise ImportError("Plotly is required for 3D plots")
   # end
 
-  _apply_plot_style(style, rcParams, diverging, cmap, xkcd, background=background,
+  theme_colors = _apply_plot_style(style, rcParams, diverging, cmap, xkcd, background=background,
       invert_cmap=invert_cmap)
 
   grid_in, values = input_parser(data)
@@ -616,9 +851,8 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     # end
   # end
 
-  step = 2 if bool(streamline or quiver) else 1
   num_comps = values.shape[-1]
-  idx_comps = range(int(np.floor(num_comps / step)))
+  idx_comps = range(num_comps)
   if num_axes:
     num_comps = num_axes
   else:
@@ -688,20 +922,11 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  background_name = (background or "dark").strip().lower()
-  if background_name == "light":
-    paper_color = "#ffffff"
-    scene_color = "#ffffff"
-    text_color = "#111111"
-    grid_color = "#b8b8b8"
-    axis_line_color = "#222222"
-  else:
-    paper_color = "#000000"
-    scene_color = "#000000"
-    text_color = "#e6e6e6"
-    grid_color = "#2a3242"
-    axis_line_color = "#9aa3b2"
-  # end
+  paper_color = theme_colors["paper_color"]
+  scene_color = theme_colors["scene_color"]
+  text_color = theme_colors["text_color"]
+  grid_color = theme_colors["grid_color"]
+  axis_line_color = theme_colors["axis_line_color"]
 
   fig.update_layout(
     paper_bgcolor=paper_color,
@@ -743,8 +968,6 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     bgcolor=paper_color,
   )
 
-  opacity_value = 1.0 if opacity is None else float(opacity)
-
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
       break
@@ -776,13 +999,6 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     else:
       value_min = float("nan")
       value_max = float("nan")
-    # end
-
-    if clim is not None:
-      cmin_local, cmax_local = clim
-    else:
-      cmin_local = cmin if cmin is not None else zmin
-      cmax_local = cmax if cmax is not None else zmax
     # end
 
     z_axis_label = _latex_to_html(zlabel) if zlabel else _latex_to_html(axes_labels[2])
@@ -819,77 +1035,94 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     )
     fig.update_layout(**{scene_name: scene})
 
-    if slice_planes:
-      volume_color_value = np.array(color_value, copy=True)
-      volume_trace_colorscale = scalar_colorscale
-      if diverging:
-        shared_cmax = float(np.nanmax(np.abs(volume_color_value)))
-        shared_cmin = -shared_cmax
+    # Determine color range (same for both slice and volume rendering)
+    if diverging:
+      cmax_val = float(np.nanmax(np.abs(color_value)))
+      cmin_val = -cmax_val
+    else:
+      if clim is not None:
+        cmin_local, cmax_local = clim
       else:
-        shared_cmin = cmin if cmin is not None else zmin
-        shared_cmax = cmax if cmax is not None else zmax
+        cmin_local = cmin if cmin is not None else None
+        cmax_local = cmax if cmax is not None else None
       # end
-      if shared_cmin is None:
-        shared_cmin = value_min
-      # end
-      if shared_cmax is None:
-        shared_cmax = value_max
-      # end
+      cmin_val = cmin_local if cmin_local is not None else value_min
+      cmax_val = cmax_local if cmax_local is not None else value_max
+    # end
 
-      colorbar_range_min = shared_cmin
-      colorbar_range_max = shared_cmax
-      trace_colorbar_kwargs = dict(colorbar_kwargs)
+    trace_colorscale = scalar_colorscale
+    trace_colorbar_kwargs = dict(colorbar_kwargs)
 
-      if logc:
-        volume_log_value = np.full(volume_color_value.shape, np.nan, dtype=float)
-        volume_valid_mask = volume_color_value > 0
-        volume_log_value[volume_valid_mask] = np.log10(volume_color_value[volume_valid_mask])
-
-        if np.any(volume_valid_mask):
-          valid_min = float(np.nanmin(volume_log_value[volume_valid_mask]))
-          valid_max = float(np.nanmax(volume_log_value[volume_valid_mask]))
-        else:
-          valid_min = 0.0
-          valid_max = 1.0
+    if slice_planes:
+      render_color_value = np.array(color_value, copy=True)
+      render_x, render_y, render_z = x, y, z
+      volume_opacity_scale = [[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]]
+      show_volume_colorbar = False
+    else:
+      render_color_value = np.array(color_value, copy=True)
+      if logz:
+        positive = np.where(render_color_value > 0, render_color_value, np.nan)
+        render_color_value = np.log10(positive)
+        if cmin_val is not None:
+          cmin_val = np.log10(max(cmin_val, np.finfo(float).tiny))
         # end
-
-        if shared_cmin is not None and shared_cmin > 0:
-          valid_min = float(np.log10(shared_cmin))
-        # end
-        if shared_cmax is not None and shared_cmax > 0:
-          valid_max = float(np.log10(shared_cmax))
-        # end
-        if not np.isfinite(valid_max) or valid_max <= valid_min:
-          valid_max = valid_min + 1.0
-        # end
-
-        volume_color_value = np.nan_to_num(volume_log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
-        colorbar_range_min = valid_min
-        colorbar_range_max = valid_max
-
-        tick_vals, tick_text = _log_colorbar_ticks(colorbar_range_min, colorbar_range_max)
-        if tick_vals:
-          trace_colorbar_kwargs["tickmode"] = "array"
-          trace_colorbar_kwargs["tickvals"] = tick_vals
-          trace_colorbar_kwargs["ticktext"] = tick_text
+        if cmax_val is not None:
+          cmax_val = np.log10(cmax_val)
         # end
       # end
+      render_x, render_y, render_z = x, y, z
+      volume_opacity_scale = [[0.0, 0.0], [0.5, 0.2], [1.0, 0.8]]
+      show_volume_colorbar = colorbar and comp_idx == 0 and not bool(color)
+    # end
 
-      xv, yv, zv, volume_color_value = _downsample_3d_volume(
-          x,
-          y,
-          z,
-          volume_color_value,
+    if logc:
+      log_value = np.full(render_color_value.shape, np.nan, dtype=float)
+      valid_mask = render_color_value > 0
+      log_value[valid_mask] = np.log10(render_color_value[valid_mask])
+
+      if np.any(valid_mask):
+        valid_min = float(np.nanmin(log_value[valid_mask]))
+        valid_max = float(np.nanmax(log_value[valid_mask]))
+      else:
+        valid_min = 0.0
+        valid_max = 1.0
+      # end
+
+      if cmin_val is not None and cmin_val > 0:
+        valid_min = float(np.log10(cmin_val))
+      # end
+      if cmax_val is not None and cmax_val > 0:
+        valid_max = float(np.log10(cmax_val))
+      # end
+      if not np.isfinite(valid_max) or valid_max <= valid_min:
+        valid_max = valid_min + 1.0
+      # end
+
+      render_color_value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
+      cmin_val = valid_min
+      cmax_val = valid_max
+
+      tick_vals, tick_text = _log_colorbar_ticks(cmin_val, cmax_val)
+      if tick_vals:
+        trace_colorbar_kwargs["tickmode"] = "array"
+        trace_colorbar_kwargs["tickvals"] = tick_vals
+        trace_colorbar_kwargs["ticktext"] = tick_text
+      # end
+    # end
+
+    if slice_planes:
+      xv, yv, zv, render_color_value = _downsample_3d_volume(
+          render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,
       )
 
       volume_trace = go.Volume(
-          x=xv.ravel(), y=yv.ravel(), z=zv.ravel(), value=volume_color_value.ravel(),
-          colorscale=volume_trace_colorscale,
-          cmin=colorbar_range_min,
-          cmax=colorbar_range_max,
-          opacity=opacity_value,
-          opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]],
+          x=xv.ravel(), y=yv.ravel(), z=zv.ravel(), value=render_color_value.ravel(),
+          colorscale=trace_colorscale,
+          cmin=cmin_val,
+          cmax=cmax_val,
+          opacity=opacity,
+          opacityscale=volume_opacity_scale,
           surface_count=surface_count,
           showscale=False,
           name=(label or f"c{comp}") + "_volume",
@@ -907,9 +1140,9 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
           log_slice[valid_mask] = np.log10(slice_color_value[valid_mask])
           slice_color_value = np.nan_to_num(
               log_slice,
-              nan=colorbar_range_min,
-              posinf=colorbar_range_max,
-              neginf=colorbar_range_min,
+              nan=cmin_val,
+              posinf=cmax_val,
+              neginf=cmin_val,
           )
         # end
 
@@ -935,121 +1168,31 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
             z=sz,
             surfacecolor=sc,
             colorscale=scalar_colorscale,
-          cmin=colorbar_range_min,
-          cmax=colorbar_range_max,
+          cmin=cmin_val,
+          cmax=cmax_val,
             showscale=colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0,
           colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0 else None,
-            opacity=opacity_value,
+            opacity=opacity,
             name=(label or f"c{comp}") + f"_slice{plane_idx}",
             showlegend=legend and bool(label) and plane_idx == 0,
         )
         trace_list.append(surface_trace)
       # end
-    elif quiver and values.shape[-1] >= 3:
-      trace = go.Cone(
-          x=x.ravel(), y=y.ravel(), z=z.ravel(),
-          u=np.asarray(values[..., 0]).ravel(),
-          v=np.asarray(values[..., 1]).ravel(),
-          w=np.asarray(values[..., 2]).ravel(),
-          colorscale=scalar_colorscale,
-          cmin=cmin_local,
-          cmax=cmax_local,
-          showscale=colorbar and comp_idx == 0 and not bool(color),
-            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
-          sizemode="scaled",
-          sizeref=linewidth or 1.0,
-          name=label or f"c{comp}",
-          showlegend=legend and bool(label),
-      )
-      trace_list = [trace]
-    elif streamline and values.shape[-1] >= 3:
-      trace = go.Streamtube(
-          x=x.ravel(), y=y.ravel(), z=z.ravel(),
-          u=np.asarray(values[..., 0]).ravel(),
-          v=np.asarray(values[..., 1]).ravel(),
-          w=np.asarray(values[..., 2]).ravel(),
-          colorscale=scalar_colorscale,
-          cmin=cmin_local,
-          cmax=cmax_local,
-          showscale=colorbar and comp_idx == 0 and not bool(color),
-            colorbar=colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
-          name=label or f"c{comp}",
-          showlegend=legend and bool(label),
-      )
-      trace_list = [trace]
     else:
-      trace_colorscale = scalar_colorscale
-      trace_colorbar_kwargs = dict(colorbar_kwargs)
-      if diverging:
-        zmax_local = np.nanmax(np.abs(color_value))
-        zmin_local = -zmax_local
-      else:
-        zmin_local = cmin_local
-        zmax_local = cmax_local
-      # end
-      if zmin_local is None:
-        zmin_local = value_min
-      # end
-      if zmax_local is None:
-        zmax_local = value_max
-      # end
-      if logz:
-        positive = np.where(color_value > 0, color_value, np.nan)
-        color_value = np.log10(positive)
-        if zmin_local is not None:
-          zmin_local = np.log10(max(zmin_local, np.finfo(float).tiny))
-        # end
-        if zmax_local is not None:
-          zmax_local = np.log10(zmax_local)
-        # end
-      # end
-      if logc:
-        log_value = np.full(color_value.shape, np.nan, dtype=float)
-        valid_mask = color_value > 0
-        log_value[valid_mask] = np.log10(color_value[valid_mask])
-
-        if np.any(valid_mask):
-          valid_min = float(np.nanmin(log_value[valid_mask]))
-          valid_max = float(np.nanmax(log_value[valid_mask]))
-        else:
-          valid_min = 0.0
-          valid_max = 1.0
-        # end
-
-        if zmin_local is not None and zmin_local > 0:
-          valid_min = float(np.log10(zmin_local))
-        # end
-        if zmax_local is not None and zmax_local > 0:
-          valid_max = float(np.log10(zmax_local))
-        # end
-        if not np.isfinite(valid_max) or valid_max <= valid_min:
-          valid_max = valid_min + 1.0
-        # end
-
-        color_value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
-        zmin_local = valid_min
-        zmax_local = valid_max
-        trace_colorscale = scalar_colorscale
-
-        tick_vals, tick_text = _log_colorbar_ticks(zmin_local, zmax_local)
-        if tick_vals:
-          trace_colorbar_kwargs["tickmode"] = "array"
-          trace_colorbar_kwargs["tickvals"] = tick_vals
-          trace_colorbar_kwargs["ticktext"] = tick_text
-        # end
-      # end
-
-      x, y, z, color_value = _downsample_3d_volume(x, y, z, color_value, maximum_points_per_axis=maximum_points_per_axis)
+      render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
+          render_x, render_y, render_z, render_color_value,
+          maximum_points_per_axis=maximum_points_per_axis,
+      )
       trace = go.Volume(
-          x=x.ravel(), y=y.ravel(), z=z.ravel(), value=color_value.ravel(),
+          x=render_x.ravel(), y=render_y.ravel(), z=render_z.ravel(), value=render_color_value.ravel(),
           colorscale=trace_colorscale,
-          cmin=zmin_local,
-          cmax=zmax_local,
-          opacity=opacity_value,
-          opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.8]],
+          cmin=cmin_val,
+          cmax=cmax_val,
+          opacity=opacity,
+          opacityscale=volume_opacity_scale,
           surface_count=surface_count,
-          showscale=colorbar and comp_idx == 0 and not bool(color),
-            colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
+          showscale=show_volume_colorbar,
+          colorbar=trace_colorbar_kwargs if show_volume_colorbar else None,
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )

@@ -49,6 +49,7 @@ class PgkylCommandGroup(click.Group):
     aliases = {
         "pl": "plot",
         "pl3": "plot3d",
+        "pl3d": "plot3d",
         "anim3": "animate3d",
     }
     target = aliases.get(cmd_name)

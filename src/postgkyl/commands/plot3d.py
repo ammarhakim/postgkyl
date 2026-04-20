@@ -3,6 +3,7 @@ import importlib
 import numpy as np
 import os.path
 from pathlib import Path
+import tempfile
 import webbrowser
 
 from postgkyl.utils import verb_print
@@ -12,48 +13,22 @@ def _parse_range_option(_ctx, _param, value):
   if value is None:
     return None
   # end
-
+  # Convert "lower,upper" or "lower:upper" into a tuple of floats (lower, upper)
   parts = [part.strip() for part in str(value).replace(":", ",").split(",") if part.strip()]
-  if len(parts) != 2:
-    raise click.BadParameter("Expected two numbers in the form 'lower,upper' or 'lower:upper'.")
-  # end
-
-  try:
-    return (float(parts[0]), float(parts[1]))
-  except ValueError as exc:
-    raise click.BadParameter("Expected two numbers in the form 'lower,upper' or 'lower:upper'.") from exc
-  # end
-
+  return (float(parts[0]), float(parts[1]))
 
 def _parse_slice_option(_ctx, _param, value):
   if value is None:
     return None
   # end
-
   tokens = [token.strip() for token in str(value).split(",") if token.strip()]
-  if not tokens:
-    raise click.BadParameter("Expected a number or comma-separated list of numbers.")
-  # end
-
   selectors = []
   for token in tokens:
     token_lower = token.lower()
     if "." in token_lower or "e" in token_lower:
-      try:
-        selectors.append(float(token))
-      except ValueError as exc:
-        raise click.BadParameter(
-            f"Invalid selector '{token}'. Use int for index or float for coordinate value."
-        ) from exc
-      # end
+      selectors.append(float(token))
     else:
-      try:
-        selectors.append(int(token))
-      except ValueError as exc:
-        raise click.BadParameter(
-            f"Invalid selector '{token}'. Use int for index or float for coordinate value."
-        ) from exc
-      # end
+      selectors.append(int(token))
     # end
   # end
   return selectors
@@ -67,8 +42,6 @@ def _parse_slice_option(_ctx, _param, value):
     help="Number of subplot rows for multi-component 3D plots.")
 @click.option("--nsubplotcol", "num_subplot_col", type=click.INT,
     help="Number of subplot columns for multi-component 3D plots.")
-@click.option("-q", "--quiver", is_flag=True, help="Render vector data as 3D cones.")
-@click.option("-l", "--streamline", is_flag=True, help="Render vector data as 3D streamtubes.")
 @click.option("-o", "--opacity", type=click.FLOAT, default=1.0, show_default=True,
     help="Volume and slice opacity in [0, 1].")
 @click.option("--surface-count", type=click.INT, default=32, show_default=True,
@@ -168,7 +141,7 @@ def plot3d(ctx, **kwargs):
       if not safe_base:
         safe_base = "plot3d_preview"
       # end
-      file_name = os.path.join(os.getcwd(), f"{safe_base}_preview.html")
+      file_name = os.path.join(tempfile.gettempdir(), f"{safe_base}_preview.html")
     elif file_name is None:
       raise click.ClickException("Internal error: missing output file name for 3D save.")
     # end
@@ -305,7 +278,7 @@ def plot3d(ctx, **kwargs):
 
   render_kwarg_keys = {
       "squeeze", "num_axes", "num_subplot_row", "num_subplot_col",
-      "streamline", "quiver", "diverging",
+      "diverging",
       "xscale", "xshift", "yscale", "yshift", "zscale", "zshift",
       "cscale", "cshift", "cmin", "cmax", "clim",
       "background", "invert_cmap", "legend", "colorbar", "label_prefix",
