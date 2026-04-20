@@ -114,3 +114,19 @@ class TestPlot:
     assert fig.layout.scene.aspectratio.x == 2.0
     assert fig.layout.scene.aspectratio.y == 2.0
     assert fig.layout.scene.aspectratio.z == 2.0
+
+  def test_plot_plotly_3d_cylindrical_to_cartesian(self):
+    r = np.linspace(0.0, 1.0, 4)
+    theta = np.linspace(0.0, 2.0 * np.pi, 5)
+    z = np.linspace(-0.5, 0.5, 4)
+    rr, tt, zz = np.meshgrid(r, theta, z, indexing="ij")
+    values = (rr + zz)[..., np.newaxis]
+    fig = pg.output.plot3d(([
+        r,
+        theta,
+        z,
+    ], values), cylindrical_to_cartesian=True)
+    assert isinstance(fig, go.Figure)
+    np.testing.assert_allclose(fig.layout.scene.xaxis.range, (-1.0, 1.0), atol=1.0e-12)
+    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (-1.0, 1.0), atol=1.0e-12)
+    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (-0.5, 0.5), atol=1.0e-12)

@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
-    cmap: str | None, jet: bool, xkcd: bool, background: str = "dark",
+    cmap: str | None, xkcd: bool, background: str = "dark",
     invert_cmap: bool = False) -> None:
   background_name = (background or "dark").strip().lower()
 
@@ -35,10 +35,6 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     plt.style.use(style)
   elif background_name == "light":
     plt.style.use("default")
-  elif bool(rcParams):
-    for key in rcParams:
-      mpl.rcParams[key] = rcParams[key]
-    # end
   else:
     plt.style.use(f"{os.path.dirname(os.path.realpath(__file__)):s}/postgkyl.mplstyle")
   # end
@@ -68,10 +64,6 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     cmap_name = "RdBu_r"
   else:
     cmap_name = "inferno"
-  # end
-
-  if bool(jet):
-    cmap_name = "jet"
   # end
 
   if cmap_name is not None:
@@ -560,14 +552,15 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     zrange: tuple[float, float] | None = None,
     slice_plane: dict[str, int | float | list[int | float] | tuple[int | float, ...]] | None = None,
     figsize: tuple | None = None,
-    jet: bool = False, cmap: str | None = None):
+    cylindrical_to_cartesian: bool = False,
+    cmap: str | None = None):
   """Plots 3D Gkeyll data using Plotly."""
 
   if go is None or make_subplots is None:
     raise ImportError("Plotly is required for 3D plots")
   # end
 
-  _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd, background=background,
+  _apply_plot_style(style, rcParams, diverging, cmap, xkcd, background=background,
       invert_cmap=invert_cmap)
 
   grid_in, values = input_parser(data)
@@ -594,7 +587,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
   # end
 
   if num_dims != 3:
-    raise ValueError("Plotly backend only handles 3D data")
+    raise ValueError("Plot3d handles only 3D data")
   # end
 
   axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
@@ -633,7 +626,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
   # end
 
   if xlabel is None:
-    xlabel = axes_labels[0]
+    xlabel = "$x$" if cylindrical_to_cartesian else axes_labels[0]
     if xshift != 0.0 and xscale != 1.0:
       xlabel = rf"({xlabel:s} + {xshift:.2e}) $\times$ {xscale:.2e}"
     elif xshift != 0.0:
@@ -643,7 +636,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     # end
   # end
   if ylabel is None:
-    ylabel = axes_labels[1]
+    ylabel = "$y$" if cylindrical_to_cartesian else axes_labels[1]
     if yshift != 0.0 and yscale != 1.0:
       ylabel = rf"({ylabel:s} + {yshift:.2e}) $\times$ {yscale:.2e}"
     elif yshift != 0.0:
@@ -764,8 +757,16 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     value = np.asarray(values[..., comp]) * zscale + zshift
     color_value = value * cscale + cshift
     x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
-    x = (np.asarray(x_grid) + xshift) * xscale
-    y = (np.asarray(y_grid) + yshift) * yscale
+    x_coord = np.asarray(x_grid)
+    y_coord = np.asarray(y_grid)
+    if cylindrical_to_cartesian:
+      r = x_coord
+      theta = y_coord
+      x_coord = r * np.cos(theta)
+      y_coord = r * np.sin(theta)
+    # end
+    x = (x_coord + xshift) * xscale
+    y = (y_coord + yshift) * yscale
     z = np.asarray(z_grid)
     finite_value = np.isfinite(color_value)
     finite_count = int(finite_value.sum())

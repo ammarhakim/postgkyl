@@ -153,6 +153,8 @@ def _parse_slice_option(_ctx, _param, value):
     help="Set a matplotlib colormap name for Plotly colorscale conversion.")
 @click.option("--invert-cmap", is_flag=True,
     help="Invert the chosen colormap.")
+@click.option("--cylindrical-to-cartesian", is_flag=True,
+  help="Interpret (z0, z1, z2) as (r, theta, z), as mapc2p outputs cylindrical coordinates.")
 @click.pass_context
 def plot3d(ctx, **kwargs):
   """Plot active 3D datasets with Plotly and optional rotating export."""
@@ -312,7 +314,7 @@ def plot3d(ctx, **kwargs):
       "showgrid", "hashtag", "xkcd", "color", "linewidth", "opacity",
       "maximum_points_per_axis", "surface_count",
       "xrange", "yrange", "zrange", "slice_plane", "figsize",
-        "cmap", "style", "rcParams",
+        "cmap", "cylindrical_to_cartesian", "rcParams",
   }
 
   file_name = ""
