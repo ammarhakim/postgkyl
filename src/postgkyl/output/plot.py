@@ -70,6 +70,11 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
   return colorscale
 
 
+def _plot_debug(message: str) -> None:
+  print(f"[postgkyl.plot] {message}")
+  # end
+
+
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
   finite = np.isfinite(values)
   if np.any(finite):
@@ -92,6 +97,70 @@ def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
     return arrays[0], arrays[1], arrays[2]
   # end
   return arrays[0], arrays[1], arrays[2]
+
+
+def _latex_to_html(text: str) -> str:
+  """Convert LaTeX subscripts and Greek letters to HTML."""
+  if not text:
+    return text
+  text = text.strip()
+  # Remove outer $ signs if present
+  if text.startswith("$") and text.endswith("$"):
+    text = text[1:-1]
+  # Map common LaTeX commands to Unicode/HTML
+  latex_to_unicode = {
+      r'\mu': 'μ',
+      r'\nu': 'ν',
+      r'\pi': 'π',
+      r'\sigma': 'σ',
+      r'\Sigma': 'Σ',
+      r'\rho': 'ρ',
+      r'\tau': 'τ',
+      r'\chi': 'χ',
+      r'\phi': 'φ',
+      r'\psi': 'ψ',
+      r'\omega': 'ω',
+      r'\Omega': 'Ω',
+      r'\alpha': 'α',
+      r'\beta': 'β',
+      r'\gamma': 'γ',
+      r'\delta': 'δ',
+      r'\Delta': 'Δ',
+      r'\epsilon': 'ε',
+      r'\zeta': 'ζ',
+      r'\eta': 'η',
+      r'\theta': 'θ',
+      r'\Theta': 'Θ',
+      r'\iota': 'ι',
+      r'\kappa': 'κ',
+      r'\lambda': 'λ',
+      r'\Lambda': 'Λ',
+      r'\parallel': '∥',
+      r'\perp': '⊥',
+  }
+
+  def _replace_latex_commands(value: str) -> str:
+    for latex, unicode_char in latex_to_unicode.items():
+      value = value.replace(latex, unicode_char)
+    # end
+    return value
+
+  import re
+  # Convert braced subscripts: _{...} -> <sub>...</sub>
+  text = re.sub(
+      r'_\{([^{}]+)\}',
+      lambda match: f"<sub>{_replace_latex_commands(match.group(1))}</sub>",
+      text,
+  )
+  # Convert unbraced subscripts: _x or _\parallel -> <sub>x</sub>/<sub>∥</sub>
+  text = re.sub(
+      r'_(\\[A-Za-z]+|[A-Za-z0-9])',
+      lambda match: f"<sub>{_replace_latex_commands(match.group(1))}</sub>",
+      text,
+  )
+  # Convert remaining LaTeX commands outside subscripts.
+  text = _replace_latex_commands(text)
+  return text
 
 
 def _infer_num_dims(data: GData | Tuple[list, np.ndarray]) -> int:
@@ -658,8 +727,6 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     raise ValueError("Plotly backend only handles 3D data")
   # end
 
-
-
   axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
   if len(grid) > num_dims:
     idx = []
@@ -790,10 +857,10 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       value_max = float("nan")
     # end
 
-    z_axis_label = zlabel if zlabel else axes_labels[2]
+    z_axis_label = _latex_to_html(zlabel) if zlabel else _latex_to_html(axes_labels[2])
     scene = dict(
-      xaxis=dict(title=xlabel, showgrid=showgrid, type="log" if logx else "linear", exponentformat="e"),
-      yaxis=dict(title=ylabel, showgrid=showgrid, type="log" if logy else "linear", exponentformat="e"),
+        xaxis=dict(title=_latex_to_html(xlabel), showgrid=showgrid, type="log" if logx else "linear", exponentformat="e"),
+        yaxis=dict(title=_latex_to_html(ylabel), showgrid=showgrid, type="log" if logy else "linear", exponentformat="e"),
         zaxis=dict(title=z_axis_label, showgrid=showgrid, type="log" if logz else "linear", exponentformat="e"),
         aspectmode="manual" if fixaspect else "auto",
         aspectratio=dict(x=aspect, y=aspect, z=aspect) if fixaspect else None,
