@@ -4,8 +4,10 @@ import importlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
+from pathlib import Path
 import subprocess
 import tempfile
+import webbrowser
 
 from postgkyl.utils import verb_print, set_frame
 import postgkyl.output.plot
@@ -274,6 +276,8 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
   help="Polar angle in degrees for rotating 3D. 90 degrees is the x-y plane.")
 @click.option("--num-rotations-completed", type=click.FLOAT, default=1.0, show_default=True,
   help="Total number of rotations completed across the saved video; 0 keeps the view fixed.")
+@click.option("--rotation-period", type=click.FLOAT, default=20.0, show_default=True,
+  help="For HTML rotating output, period in seconds for one full rotation (e.g. 4.0).")
 @click.option("--fps", type=click.INT, default=5, show_default=True,
     help="Specify frames per second for saving.")
 @click.option("--dpi", type=click.INT, help="DPI (resolution) for output.")
@@ -310,8 +314,8 @@ def animate(ctx, **kwargs):
       ext = ".mp4"
       root = file_name
     # end
-    if ext not in (".mp4", ".gif"):
-      raise click.ClickException("Rotating 3D save expects --saveas ending with .mp4 or .gif")
+    if ext not in (".mp4", ".gif", ".html"):
+      raise click.ClickException("Rotating 3D save expects --saveas ending with .mp4, .gif, or .html")
     # end
 
     output_name = f"{root}_{idx}{ext}" if num_datasets > 1 else f"{root}{ext}"
@@ -322,20 +326,60 @@ def animate(ctx, **kwargs):
         starting_azimuthal_angle=kwargs["azimuthal_angle"],
         polar_angle=kwargs["polar_angle"],
         num_rotations_completed=kwargs["num_rotations_completed"],
-      fps=kwargs["fps"],
+        rotation_period=kwargs["rotation_period"],
+        fps=kwargs["fps"],
     )
+    return output_name
+
+  def _open_rotating_preview_3d(fig, output_name: str):
+    def _temporary_html_path() -> str:
+      fd, tmp_name = tempfile.mkstemp(prefix="pgkyl_preview_", suffix=".html")
+      os.close(fd)
+      return tmp_name
+
+    root, ext = os.path.splitext(output_name)
+    ext = ext.lower()
+    if ext == ".html" and os.path.exists(output_name):
+      html_name = output_name
+    else:
+      html_name = _temporary_html_path()
+      plot_output_module.save_rotating_plotly_figure(
+          fig,
+          html_name,
+          num_rotation_angles=kwargs["num_rotation_angles"],
+          starting_azimuthal_angle=kwargs["azimuthal_angle"],
+          polar_angle=kwargs["polar_angle"],
+          num_rotations_completed=kwargs["num_rotations_completed"],
+          rotation_period=kwargs["rotation_period"],
+          fps=kwargs["fps"],
+      )
+    # end
+
+    webbrowser.open(Path(html_name).resolve().as_uri())
 
   saveas_ext = ""
   if kwargs["saveas"]:
     saveas_ext = os.path.splitext(str(kwargs["saveas"]))[1].lower()
   # end
 
-  use_rotating_save = bool(kwargs["saveas"]) and saveas_ext in (".mp4", ".gif") and data.get_num_datasets() == 1
+  rotating_preview_only = kwargs["rotation_period"] is not None and not bool(kwargs["saveas"])
+  rotating_save_requested = bool(kwargs["saveas"]) and saveas_ext in (".mp4", ".gif", ".html")
+  use_rotating_save = rotating_preview_only or rotating_save_requested
   if use_rotating_save:
     datasets = list(data.iterator(kwargs["use"]))
     if not datasets:
       raise click.ClickException("No datasets available for rotating 3D save")
     # end
+
+    is_3d = all(dat.get_num_dims(squeeze=True) == 3 for dat in datasets)
+    if not is_3d:
+      if saveas_ext == ".html":
+        raise click.ClickException("--saveas .html rotating output is only supported for 3D datasets")
+      # end
+      use_rotating_save = False
+    # end
+
+  if use_rotating_save:
 
     for i, dat in enumerate(datasets):
       plot_kwargs = kwargs.copy()
@@ -349,9 +393,15 @@ def animate(ctx, **kwargs):
       else:
         fig = postgkyl.output.plot(dat, **plot_kwargs)
       # end
-      _save_rotating_output_3d(fig, kwargs["saveas"], i, len(datasets))
+      if kwargs["saveas"]:
+        output_name = _save_rotating_output_3d(fig, kwargs["saveas"], i, len(datasets))
+        if kwargs["show"]:
+          _open_rotating_preview_3d(fig, output_name)
+        # end
+      elif kwargs["show"]:
+        _open_rotating_preview_3d(fig, "")
+      # end
     # end
-    kwargs["show"] = False
     verb_print(ctx, "Finishing animate")
     return
   # end
@@ -385,9 +435,6 @@ def animate(ctx, **kwargs):
       if kwargs["zmax"] is None:
         kwargs["zmax"] = vmax
       # end
-
-      if kwargs["lineouts"]:
-        kwargs["lineouts"] = int(kwargs["lineouts"])
     # end
   # end
 

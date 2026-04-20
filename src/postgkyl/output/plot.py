@@ -190,8 +190,9 @@ def _resolve_plotly_aspect(aspect: str | float | None, fixaspect: bool) -> tuple
 
 
 def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
-  starting_azimuthal_angle: float, fps: int, polar_angle: float,
-  num_rotations_completed: float, radius: float = 2.0) -> None:
+    starting_azimuthal_angle: float, fps: int, polar_angle: float,
+  num_rotations_completed: float, rotation_period: float | None = None,
+  radius: float = 2.0) -> None:
   """Save a rotating Plotly 3D figure as GIF or MP4.
 
   Rotates the camera 360 degrees around the vertical axis, starting from
@@ -199,8 +200,8 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
   """
   root, ext = os.path.splitext(file_name)
   ext = ext.lower()
-  if ext not in (".gif", ".mp4"):
-    raise ValueError("--save-rotating expects an output ending with .gif or .mp4")
+  if ext not in (".gif", ".mp4", ".html"):
+    raise ValueError("--save-rotating expects an output ending with .gif, .mp4, or .html")
   # end
   if num_rotation_angles <= 0:
     raise ValueError("num_rotation_angles must be a positive integer")
@@ -208,15 +209,86 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
   if fps <= 0:
     raise ValueError("fps must be a positive integer")
   # end
+  if rotation_period is not None and rotation_period <= 0:
+    raise ValueError("rotation_period must be positive")
+  # end
 
   scene_names = [name for name in fig.layout.to_plotly_json().keys() if name == "scene" or name.startswith("scene")]
   if not scene_names:
     raise ValueError("Rotating export requires a Plotly 3D scene figure")
   # end
+  scene_name = scene_names[0]
 
   polar_rad = np.deg2rad(polar_angle)
   xy_radius = radius * np.sin(polar_rad)
   z_eye = radius * np.cos(polar_rad)
+
+  if ext == ".html":
+    theta0 = np.deg2rad(starting_azimuthal_angle)
+    initial_camera = dict(
+        eye=dict(x=float(xy_radius * np.cos(theta0)), y=float(xy_radius * np.sin(theta0)), z=float(z_eye)),
+        up=dict(x=0.0, y=0.0, z=1.0),
+        center=dict(x=0.0, y=0.0, z=0.0),
+    )
+    fig.update_layout(**{scene_name: dict(camera=initial_camera)})
+
+    if rotation_period is not None:
+      omega = 2.0 * np.pi / float(rotation_period)
+    elif num_rotations_completed > 0 and num_rotation_angles > 1:
+      omega = 2.0 * np.pi * num_rotations_completed * fps / max(1, num_rotation_angles - 1)
+    else:
+      omega = 0.0
+    # end
+
+    if omega > 0.0:
+      post_script = f"""
+const gd = document.getElementById('{{plot_id}}');
+const sceneName = '{scene_name}';
+const xyRadius = {float(xy_radius):.17g};
+const zEye = {float(z_eye):.17g};
+const theta0 = {float(theta0):.17g};
+const omega = {float(omega):.17g};
+let rafId = null;
+let startMs = null;
+
+const updateCamera = (theta) => {{
+  const camera = {{
+    eye: {{x: xyRadius * Math.cos(theta), y: xyRadius * Math.sin(theta), z: zEye}},
+    up: {{x: 0.0, y: 0.0, z: 1.0}},
+    center: {{x: 0.0, y: 0.0, z: 0.0}}
+  }};
+  Plotly.relayout(gd, {{ [sceneName + '.camera']: camera }});
+}};
+
+const stopRotation = () => {{
+  if (rafId !== null) {{
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }}
+}};
+
+gd.addEventListener('mousedown', stopRotation, {{ once: true }});
+gd.addEventListener('wheel', stopRotation, {{ once: true }});
+gd.addEventListener('touchstart', stopRotation, {{ once: true }});
+
+const animate = (timestamp) => {{
+  if (startMs === null) {{
+    startMs = timestamp;
+  }}
+  const elapsedSeconds = (timestamp - startMs) / 1000.0;
+  const theta = theta0 + omega * elapsedSeconds;
+  updateCamera(theta);
+  rafId = requestAnimationFrame(animate);
+}};
+
+rafId = requestAnimationFrame(animate);
+"""
+      fig.write_html(file_name, include_plotlyjs="cdn", post_script=post_script)
+    else:
+      fig.write_html(file_name)
+    # end
+    return
+  # end
 
   with tempfile.TemporaryDirectory(prefix="pgkyl_rotate_") as tmp_dir:
     frame_pattern = os.path.join(tmp_dir, "frame_%05d.png")
