@@ -272,7 +272,7 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
 @click.option("--starting-azimuthal-angle", "azimuthal_angle", "--azimuthal-angle",
     type=click.FLOAT, default=0.0, show_default=True,
     help="Starting azimuthal angle in degrees for 3D animation")
-@click.option("--polar-angle", type=click.FLOAT, default=90.0, show_default=True,
+@click.option("--polar-angle", type=click.FLOAT, default=85.0, show_default=True,
   help="Polar angle in degrees for rotating 3D. 90 degrees is the x-y plane.")
 @click.option("--num-rotations-completed", type=click.FLOAT, default=1.0, show_default=True,
   help="Total number of rotations completed across the saved video; 0 keeps the view fixed.")
@@ -332,17 +332,21 @@ def animate(ctx, **kwargs):
     return output_name
 
   def _open_rotating_preview_3d(fig, output_name: str):
-    def _temporary_html_path() -> str:
-      fd, tmp_name = tempfile.mkstemp(prefix="pgkyl_preview_", suffix=".html")
-      os.close(fd)
-      return tmp_name
+    def _preview_html_path(base_name: str) -> str:
+      safe_base = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in base_name).strip("_")
+      if not safe_base:
+        safe_base = "anim_preview"
+      # end
+      file_name = f"{safe_base}_preview.html"
+      return os.path.join(os.getcwd(), file_name)
 
     root, ext = os.path.splitext(output_name)
     ext = ext.lower()
     if ext == ".html" and os.path.exists(output_name):
       html_name = output_name
     else:
-      html_name = _temporary_html_path()
+      base_name = os.path.basename(root) if root else "anim"
+      html_name = _preview_html_path(base_name)
       plot_output_module.save_rotating_plotly_figure(
           fig,
           html_name,
