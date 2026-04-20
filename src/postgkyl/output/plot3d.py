@@ -630,6 +630,21 @@ def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
   return arrays[0], arrays[1], arrays[2]
 
 
+def _prepare_2d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ...]) -> tuple[np.ndarray, np.ndarray]:
+  arrays = tuple(np.asarray(coord) for coord in coords)
+  if len(arrays) != 2:
+    raise ValueError("Plotly surface plotting requires exactly two coordinate arrays")
+  # end
+  if all(array.ndim == 1 for array in arrays):
+    mesh = np.meshgrid(*arrays, indexing="ij")
+    return mesh[0], mesh[1]
+  # end
+  if all(array.shape == value_shape for array in arrays):
+    return arrays[0], arrays[1]
+  # end
+  return arrays[0], arrays[1]
+
+
 def _resolve_slice_plane_index(axis_grid: np.ndarray, selector: int | float, axis_cells: int) -> int:
   axis_values = np.asarray(axis_grid)
   if axis_values.ndim == 1:
@@ -825,7 +840,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     figsize: tuple | None = None,
     cylindrical_to_cartesian: bool = False,
     cmap: str | None = None):
-  """Plots 3D Gkeyll data using Plotly."""
+  """Plots 3D Gkeyll data, or 2D surface data, using Plotly."""
 
   if go is None or make_subplots is None:
     raise ImportError("Plotly is required for 3D plots")
@@ -857,8 +872,15 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     cells = data.get_num_cells()
   # end
 
-  if num_dims != 3:
-    raise ValueError("Plot3d handles only 3D data")
+  surface_mode = num_dims == 2
+  if num_dims not in (2, 3):
+    raise ValueError("Plot3d handles only 2D surface data or 3D volumetric data")
+  # end
+  if surface_mode and scatter:
+    raise ValueError("Surface plots do not support scatter mode")
+  # end
+  if surface_mode and slice_plane:
+    raise ValueError("Surface plots do not support slice overlays")
   # end
 
   axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
@@ -1015,25 +1037,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     nodal_grid = _get_nodal_grid(grid, cells)
     value = np.asarray(values[..., comp]) * zscale + zshift
     color_value = value * cscale + cshift
-    x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
-    x_coord = np.asarray(x_grid)
-    y_coord = np.asarray(y_grid)
-    if cylindrical_to_cartesian:
-      # mapc2p cylindrical ordering is (R, Z, phi)
-      r = x_coord
-      z_cyl = np.asarray(y_grid)
-      phi = np.asarray(z_grid)
-      x_coord = r * np.cos(phi)
-      y_coord = r * np.sin(phi)
-    # end
-    x = (x_coord + xshift) * xscale
-    y = (y_coord + yshift) * yscale
-    if cylindrical_to_cartesian:
-      y = z_cyl
-      z = (y_coord + yshift) * yscale
-    else:
-      z = np.asarray(z_grid)
-    # end
+    render_color_value = np.array(color_value, copy=True)
     finite_value = np.isfinite(color_value)
     finite_count = int(finite_value.sum())
     if finite_count:
@@ -1044,12 +1048,43 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       value_max = float("nan")
     # end
 
-    if zlabel is not None:
-      z_axis_label = _latex_to_html(zlabel)
-    elif cylindrical_to_cartesian:
-      z_axis_label = _latex_to_html("$z$")
+    if surface_mode:
+      x_grid, y_grid = _prepare_2d_coordinates(nodal_grid, value.shape)
+      x = (np.asarray(x_grid) + xshift) * xscale
+      y = (np.asarray(y_grid) + yshift) * yscale
+      z = np.asarray(value)
+      if zlabel is not None:
+        z_axis_label = _latex_to_html(zlabel)
+      else:
+        z_axis_label = _latex_to_html("$z$")
+      # end
     else:
-      z_axis_label = _latex_to_html(axes_labels[2])
+      x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
+      x_coord = np.asarray(x_grid)
+      y_coord = np.asarray(y_grid)
+      if cylindrical_to_cartesian:
+        # mapc2p cylindrical ordering is (R, Z, phi)
+        r = x_coord
+        z_cyl = np.asarray(y_grid)
+        phi = np.asarray(z_grid)
+        x_coord = r * np.cos(phi)
+        y_coord = r * np.sin(phi)
+      # end
+      x = (x_coord + xshift) * xscale
+      y = (y_coord + yshift) * yscale
+      if cylindrical_to_cartesian:
+        y = z_cyl
+        z = (y_coord + yshift) * yscale
+      else:
+        z = np.asarray(z_grid)
+      # end
+      if zlabel is not None:
+        z_axis_label = _latex_to_html(zlabel)
+      elif cylindrical_to_cartesian:
+        z_axis_label = _latex_to_html("$z$")
+      else:
+        z_axis_label = _latex_to_html(axes_labels[2])
+      # end
     # end
     x_axis_range = _axis_range(x, xrange, logx)
     y_axis_range = _axis_range(y, yrange, logy)
@@ -1102,7 +1137,58 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     trace_colorscale = scalar_colorscale
     trace_colorbar_kwargs = dict(colorbar_kwargs)
 
-    if slice_planes and not scatter:
+    if surface_mode:
+      if logc:
+        log_value = np.full(render_color_value.shape, np.nan, dtype=float)
+        valid_mask = render_color_value > 0
+        log_value[valid_mask] = np.log10(render_color_value[valid_mask])
+
+        if np.any(valid_mask):
+          valid_min = float(np.nanmin(log_value[valid_mask]))
+          valid_max = float(np.nanmax(log_value[valid_mask]))
+        else:
+          valid_min = 0.0
+          valid_max = 1.0
+        # end
+
+        if cmin_val is not None and cmin_val > 0:
+          valid_min = float(np.log10(cmin_val))
+        # end
+        if cmax_val is not None and cmax_val > 0:
+          valid_max = float(np.log10(cmax_val))
+        # end
+        if not np.isfinite(valid_max) or valid_max <= valid_min:
+          valid_max = valid_min + 1.0
+        # end
+
+        render_color_value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
+        cmin_val = valid_min
+        cmax_val = valid_max
+
+        tick_vals, tick_text = _log_colorbar_ticks(cmin_val, cmax_val)
+        if tick_vals:
+          trace_colorbar_kwargs["tickmode"] = "array"
+          trace_colorbar_kwargs["tickvals"] = tick_vals
+          trace_colorbar_kwargs["ticktext"] = tick_text
+        # end
+      # end
+
+      surface_trace = go.Surface(
+          x=x,
+          y=y,
+          z=z,
+          surfacecolor=render_color_value,
+          colorscale=trace_colorscale,
+          cmin=cmin_val,
+          cmax=cmax_val,
+          showscale=colorbar and comp_idx == 0 and not bool(color),
+          colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) else None,
+          opacity=opacity,
+          name=label or f"c{comp}",
+          showlegend=legend and bool(label),
+      )
+      trace_list = [surface_trace]
+    elif slice_planes and not scatter:
       render_color_value = np.array(color_value, copy=True)
       render_x, render_y, render_z = x, y, z
       volume_opacity_scale = [[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]]
@@ -1124,7 +1210,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       show_volume_colorbar = colorbar and comp_idx == 0 and not bool(color)
     # end
 
-    if logc:
+    if logc and not surface_mode:
       log_value = np.full(render_color_value.shape, np.nan, dtype=float)
       valid_mask = render_color_value > 0
       log_value[valid_mask] = np.log10(render_color_value[valid_mask])
@@ -1159,7 +1245,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       # end
     # end
 
-    if scatter:
+    if not surface_mode and scatter:
       render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
         render_x, render_y, render_z, render_color_value,
         maximum_points_per_axis=maximum_points_per_axis,
@@ -1198,7 +1284,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
         showlegend=legend and bool(label),
       )
       trace_list = [trace]
-    elif slice_planes:
+    elif not surface_mode and slice_planes:
       xv, yv, zv, render_color_value = _downsample_3d_volume(
           render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,
@@ -1266,7 +1352,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
         )
         trace_list.append(surface_trace)
       # end
-    else:
+    elif not surface_mode:
       render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
           render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,
@@ -1285,6 +1371,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
           showlegend=legend and bool(label),
       )
       trace_list = [trace]
+    # end
     # end
 
     for trace in trace_list:

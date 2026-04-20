@@ -57,6 +57,18 @@ class TestPlot:
     np.testing.assert_allclose(fig.layout.scene.zaxis.range, (0.0, 1.0))
     assert fig.data[0].surface.count == 32
 
+  def test_plot_plotly_2d_surface(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 5)]
+    x, y = np.meshgrid(grid[0], grid[1], indexing="ij")
+    values = (x + 2.0 * y)[..., np.newaxis]
+    fig = pg.output.plot3d((grid, values))
+    assert isinstance(fig, go.Figure)
+    assert isinstance(fig.data[0], go.Surface)
+    np.testing.assert_allclose(fig.data[0].z, x + 2.0 * y)
+    np.testing.assert_allclose(fig.layout.scene.xaxis.range, (0.0, 1.0))
+    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.0, 1.0))
+    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (0.0, 3.0))
+
   def test_plot_plotly_3d_ranges_override(self):
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")

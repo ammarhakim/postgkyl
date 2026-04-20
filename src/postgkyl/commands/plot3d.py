@@ -142,7 +142,7 @@ def _parse_slice_option(_ctx, _param, value):
   help="Interpret (z0, z1, z2) as (R, Z, phi) and convert to Cartesian (x, y, z).")
 @click.pass_context
 def plot3d(ctx, **kwargs):
-  """Plot active 3D datasets with Plotly and optional rotating export."""
+  """Plot active 3D datasets, or 2D datasets as 3D surfaces, with Plotly."""
   verb_print(ctx, "Starting plot3d")
   plot_output_module = importlib.import_module("postgkyl.output.plot3d")
 
@@ -190,6 +190,8 @@ def plot3d(ctx, **kwargs):
   if kwargs["aspect"]:
     kwargs["fixaspect"] = True
   # end
+
+  supported_dims = (2, 3)
 
   slice_kwargs = {}
   for d in range(3):
@@ -249,7 +251,7 @@ def plot3d(ctx, **kwargs):
     vmax = float("-inf")
     v_extrema = np.array([])
     for dat in ctx.obj["data"].iterator(kwargs["use"]):
-      if dat.get_num_dims() != 3:
+      if dat.get_num_dims() not in supported_dims:
         continue
       # end
       val = dat.get_values() * kwargs["zscale"]
@@ -307,9 +309,9 @@ def plot3d(ctx, **kwargs):
   last_saved_output = None
 
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
-    if dat.get_num_dims() != 3:
+    if dat.get_num_dims() not in supported_dims:
       raise click.ClickException(
-          f"plot3d only supports 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
+          f"plot3d only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
       )
     # end
 
