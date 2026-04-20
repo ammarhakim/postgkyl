@@ -50,7 +50,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values))
+    fig = pg.output.plot3d((grid, values))
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.layout.scene.xaxis.range, (0.0, 1.0))
     np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.0, 1.0))
@@ -61,7 +61,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), xrange=(0.2, 0.8), yrange=(0.1, 0.9), zrange=(0.3, 0.7), surface_count=12)
+    fig = pg.output.plot3d((grid, values), xrange=(0.2, 0.8), yrange=(0.1, 0.9), zrange=(0.3, 0.7), surface_count=12)
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.layout.scene.xaxis.range, (0.2, 0.8))
     np.testing.assert_allclose(fig.layout.scene.yaxis.range, (0.1, 0.9))
@@ -72,7 +72,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), cscale=2.0, cshift=1.0, clim=(1.5, 5.5))
+    fig = pg.output.plot3d((grid, values), cscale=2.0, cshift=1.0, clim=(1.5, 5.5))
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.data[0].cmin, 1.5)
     np.testing.assert_allclose(fig.data[0].cmax, 5.5)
@@ -83,7 +83,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (1.0e-2 + x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), logc=True, cmin=1.0e-20, cmax=1.0e-2)
+    fig = pg.output.plot3d((grid, values), logc=True, cmin=1.0e-20, cmax=1.0e-2)
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.data[0].cmin, -20.0)
     np.testing.assert_allclose(fig.data[0].cmax, -2.0)
@@ -92,7 +92,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), fixaspect=True)
+    fig = pg.output.plot3d((grid, values), fixaspect=True)
     assert isinstance(fig, go.Figure)
     assert fig.layout.scene.aspectmode == "cube"
 
@@ -100,7 +100,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), aspect="data")
+    fig = pg.output.plot3d((grid, values), aspect="data")
     assert isinstance(fig, go.Figure)
     assert fig.layout.scene.aspectmode == "data"
 
@@ -108,7 +108,7 @@ class TestPlot:
     grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
     x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
     values = (x + y + z)[..., np.newaxis]
-    fig = pg.output.plot((grid, values), aspect=2.0)
+    fig = pg.output.plot3d((grid, values), aspect=2.0)
     assert isinstance(fig, go.Figure)
     assert fig.layout.scene.aspectmode == "manual"
     assert fig.layout.scene.aspectratio.x == 2.0

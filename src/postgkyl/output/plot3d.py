@@ -534,38 +534,33 @@ def _get_nodal_grid(grid : list, cells: np.ndarray):
   return grid_out
 
 
-def plot3d(data: GData | Tuple[list, np.ndarray], args: list = (),
-    figure: int | str | None = None,
-    squeeze: bool = False, num_axes: int = None, start_axes: int = 0,
+def plot3d(data: GData | Tuple[list, np.ndarray],
+    squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
-    streamline: bool = False, sdensity: int = 1,
+    streamline: bool = False,
     quiver: bool = False,
-    contour: bool = False, clevels: list | None = None, cnlevels: int | None = None, cont_label: bool = False,
     diverging: bool = False,
-    lineouts: int | None = None,
-    xmin: float | None = None, xmax: float | None = None, xscale: float = 1.0, xshift: float = 0.0,
-    ymin: float | None = None, ymax: float | None = None, yscale: float = 1.0, yshift: float = 0.0,
+    xscale: float = 1.0, xshift: float = 0.0,
+    yscale: float = 1.0, yshift: float = 0.0,
     zmin: float | None = None, zmax: float | None = None, zscale: float = 1.0, zshift: float = 0.0,
     cmin: float | None = None, cmax: float | None = None, cscale: float = 1.0, cshift: float = 0.0,
     clim: tuple[float, float] | None = None,
-    relax: bool = False, style: str | None = None, rcParams: dict | None = None,
+    style: str | None = None, rcParams: dict | None = None,
     background: str = "dark", invert_cmap: bool = False,
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
-    subplot_titles: str | None = None, subplot_xlabels: str | None = None, subplot_ylabels: str | None = None,
     logx: bool = False, logy: bool = False, logz: bool = False, logc: bool = False,
     fixaspect: bool = False, aspect: str | float | None = None,
-    edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
-    color: str | None = None, markersize: float | None = None,
-    linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = 1.0,
+    showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
+    color: str | None = None,
+    linewidth: float | None = None, opacity: float | None = 1.0,
     maximum_points_per_axis: int = 0,
     surface_count: int = 32,
     xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
     zrange: tuple[float, float] | None = None,
     slice_plane: dict[str, int | float | list[int | float] | tuple[int | float, ...]] | None = None,
     figsize: tuple | None = None,
-    jet: bool = False, cmap: str | None = None,
-    **kwargs):
+    jet: bool = False, cmap: str | None = None):
   """Plots 3D Gkeyll data using Plotly."""
 
   if go is None or make_subplots is None:
@@ -585,10 +580,8 @@ def plot3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       num_dims = len(values[..., 0].squeeze().shape)
     # end
     lg = len(grid)
-    lower, upper, cells = np.zeros(lg), np.zeros(lg), np.zeros(lg)
+    cells = np.zeros(lg)
     for d in range(lg):
-      lower[d] = np.min(grid[d])
-      upper[d] = np.max(grid[d])
       if len(grid[d].shape) == 1:
         cells[d] = len(grid[d])
       else:
@@ -597,7 +590,6 @@ def plot3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     # end
   else:
     num_dims = data.get_num_dims(squeeze=True)
-    lower, upper = data.get_bounds()
     cells = data.get_num_cells()
   # end
 
@@ -618,8 +610,6 @@ def plot3d(data: GData | Tuple[list, np.ndarray], args: list = (),
       for i in reversed(idx):
         grid.pop(i)
       # end
-      lower = np.delete(lower, idx)
-      upper = np.delete(upper, idx)
       cells = np.delete(cells, idx)
       axes_labels = np.delete(axes_labels, idx)
       values = np.squeeze(values, tuple(idx))

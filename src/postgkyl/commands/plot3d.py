@@ -60,124 +60,99 @@ def _parse_slice_option(_ctx, _param, value):
 
 
 @click.command(name="plot3d")
-@click.option("--use", "-u", default=None, help="Specify the tag to plot.")
-@click.option("--figure", "-f", default=None,
-    help="Specify figure to plot in; either number or 'dataset'.")
-@click.option("--squeeze", is_flag=True, help="Squeeze the components into one panel.")
-@click.option("--subplots", "-b", is_flag=True, help="Make subplots from multiple datasets.")
+@click.option("--use", "-u", default=None, help="Tag to plot from the active dataset stack.")
+@click.option("--squeeze", is_flag=True, help="Draw all components in a single 3D scene.")
+@click.option("--subplots", "-b", is_flag=True, help="Draw components in separate 3D subplots.")
 @click.option("--nsubplotrow", "num_subplot_row", type=click.INT,
-    help="Manually set the number of rows for subplots.")
+    help="Number of subplot rows for multi-component 3D plots.")
 @click.option("--nsubplotcol", "num_subplot_col", type=click.INT,
-    help="Manually set the number of columns for subplots.")
-@click.option("-q", "--quiver", is_flag=True, help="Make quiver plot.")
-@click.option("-l", "--streamline", is_flag=True, help="Make streamline plot.")
-@click.option("--sdensity", type=click.INT, default=1, help="Control density of the streamlines.")
+    help="Number of subplot columns for multi-component 3D plots.")
+@click.option("-q", "--quiver", is_flag=True, help="Render vector data as 3D cones.")
+@click.option("-l", "--streamline", is_flag=True, help="Render vector data as 3D streamtubes.")
 @click.option("-o", "--opacity", type=click.FLOAT, default=1.0, show_default=True,
-    help="Set opacity for 3D volume plots (0.0-1.0).")
+    help="Volume and slice opacity in [0, 1].")
 @click.option("--surface-count", type=click.INT, default=32, show_default=True,
-    help="Number of Plotly volume isosurfaces to render for 3D plots.")
+    help="Number of Plotly volume isosurfaces.")
 @click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
-    help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
-@click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
+    help="Maximum points per axis for 3D downsampling; 0 disables downsampling.")
 @click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
-    help="Background mode for plots (dark/light).")
-@click.option("-d", "--diverging", is_flag=True, help="Switch to diverging color map.")
+    help="3D scene background theme.")
+@click.option("-d", "--diverging", is_flag=True, help="Use a diverging colorscale.")
 @click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
-    help="Enforce the same scaling on all 3D axes.")
+    help="Use equal scaling on x/y/z axes.")
 @click.option("--aspect", default=None,
-    help="Specify aspect behavior: auto,data,cube, or numeric ratio.")
-@click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
-@click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
-@click.option("--logz", is_flag=True, help="Set z-axis to log scale.")
-@click.option("--logc", is_flag=True, help="Set colorbar to log scale.")
+    help="Aspect mode: auto, data, cube, or a numeric uniform ratio.")
+@click.option("--logx", is_flag=True, help="Use log scaling on x axis.")
+@click.option("--logy", is_flag=True, help="Use log scaling on y axis.")
+@click.option("--logz", is_flag=True, help="Use log scaling on z axis.")
+@click.option("--logc", is_flag=True, help="Use log scaling for scalar coloring.")
 @click.option("--xshift", default=0.0, type=click.FLOAT, show_default=True,
-    help="Value to shift the x-axis.")
+    help="Additive shift for x coordinates.")
 @click.option("--yshift", default=0.0, type=click.FLOAT, show_default=True,
-    help="Value to shift the y-axis.")
+    help="Additive shift for y coordinates.")
 @click.option("--zshift", default=0.0, type=click.FLOAT, show_default=True,
-    help="Value to shift the z-axis.")
+    help="Additive shift for scalar values before coloring.")
 @click.option("--cshift", default=0.0, type=click.FLOAT, show_default=True,
-    help="Value to shift the color values.")
+    help="Additive shift for color-mapped values.")
 @click.option("--xscale", default=1.0, type=click.FLOAT, show_default=True,
-    help="Value to scale the x-axis.")
+    help="Multiplicative scale for x coordinates.")
 @click.option("--yscale", default=1.0, type=click.FLOAT, show_default=True,
-    help="Value to scale the y-axis.")
+    help="Multiplicative scale for y coordinates.")
 @click.option("--zscale", default=1.0, type=click.FLOAT, show_default=True,
-    help="Value to scale the z-axis.")
+    help="Multiplicative scale for scalar values before coloring.")
 @click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
-    help="Value to scale the color values.")
+    help="Multiplicative scale for color-mapped values.")
 @click.option("--slice-at-z0", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z0 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+    help="Slice selectors along z0: comma-separated, ints=index, floats=coordinate.")
 @click.option("--slice-at-z1", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z1 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+    help="Slice selectors along z1: comma-separated, ints=index, floats=coordinate.")
 @click.option("--slice-at-z2", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z2 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
-@click.option("--slice-at-z3", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z3 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
-@click.option("--slice-at-z4", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z4 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
-@click.option("--slice-at-z5", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Select z5 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
-@click.option("--xmax", default=None, type=click.FLOAT, help="Set maximal x-value.")
-@click.option("--xmin", default=None, type=click.FLOAT, help="Set minimal x-value.")
-@click.option("--ymax", default=None, type=click.FLOAT, help="Set maximal y-value.")
-@click.option("--ymin", default=None, type=click.FLOAT, help="Set minimal y-value.")
-@click.option("--zmax", default=None, type=click.FLOAT, help="Set maximal z-value.")
-@click.option("--zmin", default=None, type=click.FLOAT, help="Set minimal z-value.")
-@click.option("--cmax", default=None, type=click.FLOAT, help="Set maximal color value.")
-@click.option("--cmin", default=None, type=click.FLOAT, help="Set minimal color value.")
+    help="Slice selectors along z2: comma-separated, ints=index, floats=coordinate.")
 @click.option("--xlim", default=None, type=click.STRING, callback=_parse_range_option,
-    help="Set limits for the x-coordinate (lower,upper).")
+    help="x-axis limits as 'lower,upper' (or 'lower:upper').")
 @click.option("--ylim", default=None, type=click.STRING, callback=_parse_range_option,
-    help="Set limits for the y-coordinate (lower,upper).")
+    help="y-axis limits as 'lower,upper' (or 'lower:upper').")
 @click.option("--zlim", default=None, type=click.STRING, callback=_parse_range_option,
-    help="Set limits for the z-coordinate (lower,upper).")
+    help="z-axis limits as 'lower,upper' (or 'lower:upper').")
 @click.option("--clim", default=None, type=click.STRING, callback=_parse_range_option,
-    help="Set limits for the color scale (lower,upper).")
-@click.option("--globalrange", "-r", is_flag=True, help="Make uniform extents across datasets.")
+    help="Color limits as 'lower,upper' (or 'lower:upper').")
+@click.option("--cmax", default=None, type=click.FLOAT, help="Maximum color value.")
+@click.option("--cmin", default=None, type=click.FLOAT, help="Minimum color value.")
+@click.option("--globalrange", "-r", is_flag=True,
+    help="Compute a shared color range across selected 3D datasets.")
 @click.option("--cutoffglobalrange", "-cogr", default=None, type=click.FLOAT,
-    help="Set custom percentile cutoff for uniform ranges.")
+    help="Percentile cutoff for shared color range (e.g. 0.98).")
 @click.option("--legend", default=None, type=click.STRING,
-    help="If specified, comma-separated legend labels (e.g., 'a,b,c').")
-@click.option("--no-legend", is_flag=True, help="Hide legend.")
+    help="Comma-separated legend labels for datasets.")
+@click.option("--no-legend", is_flag=True, help="Hide legend labels.")
 @click.option("--force-legend", "forcelegend", is_flag=True,
-    help="Force legend even when plotting a single dataset.")
-@click.option("--color", type=click.STRING, help="Set color when available.")
-@click.option("-x", "--xlabel", type=click.STRING, help="Specify an x-axis label.")
-@click.option("-y", "--ylabel", type=click.STRING, help="Specify a y-axis label.")
-@click.option("-z", "--zlabel", type=click.STRING, help="Specify a z-axis label.")
-@click.option("--clabel", type=click.STRING, help="Specify a label for colorbar.")
-@click.option("--title", type=click.STRING, help="Specify a title.")
-@click.option("--subplot-titles", type=click.STRING,
-    help="Comma-separated titles for each subplot.")
-@click.option("--subplot-xlabels", type=click.STRING,
-    help="Comma-separated x-axis labels for each subplot.")
-@click.option("--subplot-ylabels", type=click.STRING,
-    help="Comma-separated y-axis labels for each subplot.")
-@click.option("--save", is_flag=True, help="Save plot output.")
-@click.option("--saveas", type=click.STRING, default=None, help="Output file name.")
+    help="Force legend labels even for single dataset plots.")
+@click.option("--color", type=click.STRING, help="Use a fixed color (bypasses colorscale).")
+@click.option("-x", "--xlabel", type=click.STRING, help="x-axis label.")
+@click.option("-y", "--ylabel", type=click.STRING, help="y-axis label.")
+@click.option("-z", "--zlabel", type=click.STRING, help="z-axis label.")
+@click.option("--clabel", type=click.STRING, help="Colorbar label.")
+@click.option("--title", type=click.STRING, help="Figure title.")
+@click.option("--save", is_flag=True, help="Save output instead of opening preview only.")
+@click.option("--saveas", type=click.STRING, default=None, help="Output path for saved figure.")
 @click.option("--starting-azimuthal-angle", "azimuthal_angle", "--azimuthal-angle",
     type=click.FLOAT, default=0.0, show_default=True,
-    help="Starting azimuthal angle in degrees for rotating 3D save.")
+    help="Starting azimuthal camera angle in degrees for rotating exports.")
 @click.option("--polar-angle", type=click.FLOAT, default=85.0, show_default=True,
-    help="Polar angle in degrees for rotating 3D camera. 90 degrees is the x-y plane.")
+    help="Polar camera angle in degrees for rotating exports.")
 @click.option("--rotation-period", type=click.FLOAT, default=20.0, show_default=True,
-    help="Rotation period in seconds for one full rotation (for rotating html/mp4/gif output).")
+    help="Seconds per full camera rotation for rotating exports.")
 @click.option("--fps", type=click.INT, default=1, show_default=True,
-    help="FPS used for rotating mp4/gif save output.")
-@click.option("--showgrid/--no-showgrid", default=True, help="Show grid-lines.")
-@click.option("--hashtag", is_flag=True, help="Turns on the pgkyl hashtag!")
+    help="Frames-per-second for rotating mp4/gif output.")
+@click.option("--showgrid/--no-showgrid", default=True, help="Show 3D axis grid planes.")
+@click.option("--hashtag", is_flag=True, help="Add '#pgkyl' annotation to the figure.")
 @click.option("--show/--no-show", default=True,
-    help="Turn showing of the plot ON and OFF.")
-@click.option("--figsize", help="Comma-separated values for x and y size.")
-@click.option("--saveframes", type=click.STRING,
-    help="Save one output per dataset with this prefix.")
-@click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
+    help="Open the output preview in a browser.")
+@click.option("--figsize", help="Figure size as 'width,height' (scaled to pixels for Plotly).")
 @click.option("--cmap", type=click.STRING, default=None,
-    help="Override default colormap with a valid matplotlib cmap.")
+    help="Set a matplotlib colormap name for Plotly colorscale conversion.")
 @click.option("--invert-cmap", is_flag=True,
-    help="Invert the selected colormap (or the default colormap for the chosen background mode).")
-@click.option("-m", "--multiblock", is_flag=True, default=False)
+    help="Invert the chosen colormap.")
 @click.pass_context
 def plot3d(ctx, **kwargs):
   """Plot active 3D datasets with Plotly and optional rotating export."""
@@ -225,19 +200,12 @@ def plot3d(ctx, **kwargs):
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
-  if kwargs["jet"]:
-    click.echo(
-        click.style("WARNING: The 'jet' colormap has been selected. This colormap is not perceptually uniform and seemingly creates features which do not exist in the data!",
-            fg="yellow")
-    )
-  # end
-
   if kwargs["aspect"]:
     kwargs["fixaspect"] = True
   # end
 
   slice_kwargs = {}
-  for d in range(6):
+  for d in range(3):
     slice_selectors = kwargs.pop(f"slice_at_z{d}")
     if slice_selectors is not None:
       slice_kwargs[f"z{d}"] = slice_selectors
@@ -271,35 +239,22 @@ def plot3d(ctx, **kwargs):
   kwargs["num_axes"] = None
   if kwargs["subplots"]:
     kwargs["num_axes"] = 0
-    kwargs["start_axes"] = 0
     for dat in ctx.obj["data"].iterator(kwargs["use"]):
       kwargs["num_axes"] = kwargs["num_axes"] + dat.get_num_comps()
-    # end
-    if kwargs["figure"] is None:
-      kwargs["figure"] = 0
     # end
   # end
 
   if kwargs["xlim"]:
-    kwargs["xmin"], kwargs["xmax"] = kwargs["xlim"]
     kwargs["xrange"] = kwargs["xlim"]
   # end
   if kwargs["ylim"]:
-    kwargs["ymin"], kwargs["ymax"] = kwargs["ylim"]
     kwargs["yrange"] = kwargs["ylim"]
   # end
   if kwargs["zlim"]:
-    kwargs["zmin"], kwargs["zmax"] = kwargs["zlim"]
     kwargs["zrange"] = kwargs["zlim"]
   # end
   if kwargs["clim"]:
     kwargs["cmin"], kwargs["cmax"] = kwargs["clim"]
-  # end
-
-  dataset_fignum = kwargs["figure"] in ("dataset", "set", "s")
-
-  if kwargs["multiblock"] and kwargs["cutoffglobalrange"] is None:
-    kwargs["globalrange"] = True
   # end
 
   if kwargs["globalrange"] or kwargs["cutoffglobalrange"]:
@@ -329,17 +284,11 @@ def plot3d(ctx, **kwargs):
         vmin = np.percentile(v_extrema, boundary)
       # end
 
-      if kwargs["zmin"] is None:
-        kwargs["zmin"] = vmin
-      # end
-      if kwargs["zmax"] is None:
-        kwargs["zmax"] = vmax
-      # end
       if kwargs["cmin"] is None:
-        kwargs["cmin"] = kwargs["zmin"]
+        kwargs["cmin"] = vmin
       # end
       if kwargs["cmax"] is None:
-        kwargs["cmax"] = kwargs["zmax"]
+        kwargs["cmax"] = vmax
       # end
     # end
   # end
@@ -352,6 +301,20 @@ def plot3d(ctx, **kwargs):
   kwargs["legend"] = not kwargs.get("no_legend", False)
   del kwargs["no_legend"]
 
+  render_kwarg_keys = {
+      "squeeze", "num_axes", "num_subplot_row", "num_subplot_col",
+      "streamline", "quiver", "diverging",
+      "xscale", "xshift", "yscale", "yshift", "zscale", "zshift",
+      "cscale", "cshift", "cmin", "cmax", "clim",
+      "background", "invert_cmap", "legend", "colorbar", "label_prefix",
+      "xlabel", "ylabel", "zlabel", "clabel", "title",
+      "logx", "logy", "logz", "logc", "fixaspect", "aspect",
+      "showgrid", "hashtag", "xkcd", "color", "linewidth", "opacity",
+      "maximum_points_per_axis", "surface_count",
+      "xrange", "yrange", "zrange", "slice_plane", "figsize",
+        "cmap", "style", "rcParams",
+  }
+
   file_name = ""
   last_saved_output = None
 
@@ -362,13 +325,6 @@ def plot3d(ctx, **kwargs):
       )
     # end
 
-    if dataset_fignum:
-      kwargs["figure"] = int(i)
-    # end
-    if kwargs["multiblock"]:
-      kwargs["figure"] = 0
-    # end
-
     if legend_labels is not None and i < len(legend_labels):
       label = legend_labels[i]
     elif ctx.obj["data"].get_num_datasets() > 1 or kwargs["forcelegend"]:
@@ -377,16 +333,13 @@ def plot3d(ctx, **kwargs):
       label = ""
     # end
 
-    plot_kwargs = dict(kwargs)
+    plot_kwargs = {key: kwargs[key] for key in render_kwarg_keys if key in kwargs}
     if slice_kwargs:
       plot_kwargs["slice_plane"] = _get_slice_kwargs_for_data(dat)
     # end
+    plot_kwargs["label_prefix"] = label
 
-    fig = plot_output_module.plot3d(dat, label_prefix=label, **plot_kwargs)
-
-    if kwargs["subplots"]:
-      kwargs["start_axes"] = kwargs["start_axes"] + dat.get_num_comps()
-    # end
+    fig = plot_output_module.plot3d(dat, **plot_kwargs)
 
     if kwargs["save"] or kwargs["saveas"]:
       if kwargs["saveas"]:
@@ -401,17 +354,8 @@ def plot3d(ctx, **kwargs):
           file_name = file_name + f"dataset_{i:d}"
         # end
       # end
-      if kwargs["figure"] is None:
-        file_name = _save_output_3d(fig, file_name)
-        last_saved_output = file_name
-        file_name = ""
-      # end
-    # end
-
-    if kwargs["saveframes"]:
-      file_name = f"{kwargs['saveframes']:s}_{i:d}.html"
       last_saved_output = _save_output_3d(fig, file_name)
-      kwargs["show"] = False
+      file_name = ""
     # end
 
     if "batch_mode" in ctx.obj and ctx.obj["batch_mode"]:
@@ -430,11 +374,6 @@ def plot3d(ctx, **kwargs):
       _open_html_preview(html_name)
       kwargs["show"] = False
     # end
-  # end
-
-  if (kwargs["save"] or kwargs["saveas"]) and file_name != "":
-    file_name = str(file_name)
-    last_saved_output = _save_output_3d(fig, file_name)
   # end
 
   if kwargs["show"] and last_saved_output and os.path.exists(last_saved_output):

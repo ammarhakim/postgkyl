@@ -56,7 +56,7 @@ def select(data: GData, comp: int | str | None = None,
       idx = idx_parser.idx_parser(z, grid[d], is_matching)
       if isinstance(idx, int):
         axis_cells = values.shape[d]
-        if idx < 0:
+        if idx < 0: # Wrap negative index around
           idx = axis_cells + idx
         # end
         # when 'slice' is used instead of an integer
