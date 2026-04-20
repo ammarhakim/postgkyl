@@ -420,7 +420,15 @@ def plot(ctx, **kwargs):
 
   if kwargs["show"]:
     if hasattr(fig, "show") and hasattr(fig, "to_html"):
-      fig.show()
+      if kwargs.get("saveas"):
+        preview_base = os.path.splitext(os.path.basename(str(kwargs["saveas"])))[0]
+      elif 'dat' in locals() and getattr(dat, "_file_name", None):
+        preview_base = dat._file_name.split(".")[0]
+      else:
+        preview_base = "plot"
+      # end
+      html_name = _save_output_3d(fig, base_name=preview_base, force_rotating_preview=True)
+      _open_html_preview(html_name)
     else:
       plt.show()
     # end

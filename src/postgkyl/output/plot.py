@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
+import time
 from itertools import product
 from matplotlib import colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -281,8 +282,37 @@ rafId = requestAnimationFrame(animate);
   # end
 
   with tempfile.TemporaryDirectory(prefix="pgkyl_rotate_") as tmp_dir:
+    output_label = os.path.basename(file_name) or file_name
+
+    def _format_duration(seconds: float) -> str:
+      total = max(0, int(round(seconds)))
+      hrs, rem = divmod(total, 3600)
+      mins, secs = divmod(rem, 60)
+      if hrs > 0:
+        return f"{hrs:d}:{mins:02d}:{secs:02d}"
+      # end
+      return f"{mins:02d}:{secs:02d}"
+
+    def _print_progress(current: int, total: int, start_time: float) -> None:
+      progress = current / max(1, total)
+      elapsed = time.perf_counter() - start_time
+      rate = current / elapsed if elapsed > 0 else 0.0
+      remaining = (total - current) / rate if rate > 0 else float("inf")
+      bar_width = 28
+      filled = int(round(progress * bar_width))
+      filled = min(bar_width, max(0, filled))
+      bar = "#" * filled + "-" * (bar_width - filled)
+      etr_text = _format_duration(remaining) if np.isfinite(remaining) else "--:--"
+      print(
+          f"\rRendering {output_label} [{bar}] {100.0 * progress:3.0f}% | {current:d} / {total:d} | ETR {etr_text}",
+          end="",
+          flush=True,
+      )
+
     frame_pattern = os.path.join(tmp_dir, "frame_%05d.png")
     num_frames = max(2, int(round(float(fps) * float(rotation_period))))
+    render_start = time.perf_counter()
+    _print_progress(0, num_frames, render_start)
     for idx in range(num_frames):
       theta = np.deg2rad(
           starting_azimuthal_angle + 360.0 * idx / num_frames
@@ -299,7 +329,9 @@ rafId = requestAnimationFrame(animate);
       with open(frame_path, "wb") as frame_file:
         frame_file.write(png_bytes)
       # end
+      _print_progress(idx + 1, num_frames, render_start)
     # end
+    print()
 
     if ext == ".mp4":
       ffmpeg_cmd = [
