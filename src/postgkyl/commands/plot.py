@@ -323,6 +323,7 @@ def plot(ctx, **kwargs):
   del kwargs["no_legend"]
 
   file_name = ""
+  last_saved_output: str | None = None
 
   # ---- Loop over all the datasets ----
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
@@ -378,8 +379,10 @@ def plot(ctx, **kwargs):
       if kwargs["figure"] is None:
         if hasattr(fig, "write_html"):
           file_name = _save_output_3d(fig, file_name)
+          last_saved_output = file_name
         else:
           _save_output(file_name)
+          last_saved_output = file_name
         # end
         file_name = ""
       # end
@@ -388,9 +391,10 @@ def plot(ctx, **kwargs):
     if kwargs["saveframes"]:
       file_name = f"{kwargs['saveframes']:s}_{i:d}.png"
       if hasattr(fig, "write_html"):
-        _save_output_3d(fig, file_name)
+        last_saved_output = _save_output_3d(fig, file_name)
       else:
         _save_output(file_name)
+        last_saved_output = file_name
       # end
       kwargs["show"] = False
     # end
@@ -399,9 +403,10 @@ def plot(ctx, **kwargs):
       if ctx.obj["batch_mode"]:
         file_name = f"{ctx.obj['saveframes_prefix']:s}_{i:d}.png"
         if hasattr(fig, "write_html"):
-          _save_output_3d(fig, file_name)
+          last_saved_output = _save_output_3d(fig, file_name)
         else:
           _save_output(file_name)
+          last_saved_output = file_name
         # end
         kwargs["show"] = False
       # end
@@ -409,26 +414,30 @@ def plot(ctx, **kwargs):
 
 
   # end
-  if (kwargs["save"] or kwargs["saveas"]):
+  if (kwargs["save"] or kwargs["saveas"]) and file_name != "":
     file_name = str(file_name)
     if hasattr(fig, "write_html"):
-      _save_output_3d(fig, file_name)
+      last_saved_output = _save_output_3d(fig, file_name)
     else:
       _save_output(file_name)
+      last_saved_output = file_name
     # end
   # end
 
   if kwargs["show"]:
     if hasattr(fig, "show") and hasattr(fig, "to_html"):
-      if kwargs.get("saveas"):
-        preview_base = os.path.splitext(os.path.basename(str(kwargs["saveas"])))[0]
+      # If a save target already exists, open it directly and avoid creating extra preview files.
+      if kwargs.get("saveas") and last_saved_output and os.path.exists(last_saved_output):
+        _open_html_preview(last_saved_output)
       elif 'dat' in locals() and getattr(dat, "_file_name", None):
         preview_base = dat._file_name.split(".")[0]
+        html_name = _save_output_3d(fig, base_name=preview_base, force_rotating_preview=True)
+        _open_html_preview(html_name)
       else:
         preview_base = "plot"
+        html_name = _save_output_3d(fig, base_name=preview_base, force_rotating_preview=True)
+        _open_html_preview(html_name)
       # end
-      html_name = _save_output_3d(fig, base_name=preview_base, force_rotating_preview=True)
-      _open_html_preview(html_name)
     else:
       plt.show()
     # end
