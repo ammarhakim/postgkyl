@@ -60,7 +60,8 @@ def _parse_range_option(_ctx, _param, value):
     help="Additional plotting arguments, e.g., '*--'.")
 @click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
     help="Enforce the same scaling on both axes.")
-@click.option("--aspect", default=None, help="Specify the scaling ratio.")
+@click.option("--aspect", default=None,
+  help="Specify aspect behavior. For Plotly 3D use one of: auto,data,cube (or a numeric ratio).")
 @click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
 @click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
 @click.option("--logz", is_flag=True, help="Set z-axis (in 2D, values of the plot) to log scale.")

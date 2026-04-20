@@ -130,6 +130,24 @@ def _log_colorbar_ticks(log_min: float, log_max: float, max_ticks: int = 8) -> t
   return [float(v) for v in tick_vals], tick_text
 
 
+def _resolve_plotly_aspect(aspect: str | float | None, fixaspect: bool) -> tuple[str, dict | None]:
+  if aspect is None:
+    return ("cube", None) if fixaspect else ("auto", None)
+  # end
+
+  if isinstance(aspect, str):
+    aspect_value = aspect.strip().lower()
+    if aspect_value in ("auto", "data", "cube"):
+      return aspect_value, None
+    # end
+    ratio = float(aspect)
+    return "manual", dict(x=ratio, y=ratio, z=ratio)
+  # end
+
+  ratio = float(aspect)
+  return "manual", dict(x=ratio, y=ratio, z=ratio)
+
+
 def _prepare_3d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ...]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
   arrays = tuple(np.asarray(coord) for coord in coords)
   if len(arrays) != 3:
@@ -752,7 +770,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
     subplot_titles: str | None = None, subplot_xlabels: str | None = None, subplot_ylabels: str | None = None,
     logx: bool = False, logy: bool = False, logz: bool = False, logc: bool = False,
-    fixaspect: bool = False, aspect: float | None = None,
+    fixaspect: bool = False, aspect: str | float | None = None,
     edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None, markersize: float | None = None,
     linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = None,
@@ -770,10 +788,6 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
   # end
 
   _apply_plot_style(style, rcParams, diverging, cmap, jet, xkcd)
-
-  if not bool(aspect):
-    aspect = 1.0
-  # end
 
   grid_in, values = input_parser(data)
   grid = grid_in.copy()
@@ -905,8 +919,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  dark_paper = "#0f1115"
-  dark_scene = "#161a22"
+  dark_paper = "#000000"
+  dark_scene = "#000000"
   text_color = "#e6e6e6"
   grid_color = "#2a3242"
   axis_line_color = "#9aa3b2"
@@ -961,6 +975,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     x_axis_range = _axis_range(x, xrange, logx)
     y_axis_range = _axis_range(y, yrange, logy)
     z_axis_range = _axis_range(z, zrange, logz)
+    scene_aspectmode, scene_aspectratio = _resolve_plotly_aspect(aspect, fixaspect)
+
     scene = dict(
       xaxis=dict(
         title=dict(text=_latex_to_html(xlabel), font=dict(color=text_color)), showgrid=showgrid,
@@ -984,8 +1000,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
         zerolinecolor=grid_color,
       ),
       bgcolor=dark_scene,
-        aspectmode="manual" if fixaspect else "auto",
-        aspectratio=dict(x=aspect, y=aspect, z=aspect) if fixaspect else None,
+      aspectmode=scene_aspectmode,
+      aspectratio=scene_aspectratio,
     )
     fig.update_layout(**{scene_name: scene})
 

@@ -87,3 +87,30 @@ class TestPlot:
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.data[0].cmin, -20.0)
     np.testing.assert_allclose(fig.data[0].cmax, -2.0)
+
+  def test_plot_plotly_3d_fix_aspect_uses_cube_mode(self):
+    grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), fixaspect=True)
+    assert isinstance(fig, go.Figure)
+    assert fig.layout.scene.aspectmode == "cube"
+
+  def test_plot_plotly_3d_aspect_string_sets_mode(self):
+    grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), aspect="data")
+    assert isinstance(fig, go.Figure)
+    assert fig.layout.scene.aspectmode == "data"
+
+  def test_plot_plotly_3d_aspect_numeric_sets_manual_ratio(self):
+    grid = [np.linspace(0.0, 2.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 0.5, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot((grid, values), aspect=2.0)
+    assert isinstance(fig, go.Figure)
+    assert fig.layout.scene.aspectmode == "manual"
+    assert fig.layout.scene.aspectratio.x == 2.0
+    assert fig.layout.scene.aspectratio.y == 2.0
+    assert fig.layout.scene.aspectratio.z == 2.0
