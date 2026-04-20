@@ -905,7 +905,25 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   colorscale = _plotly_colorscale(mpl.rcParams["image.cmap"])
   scalar_colorscale = [[0.0, color], [1.0, color]] if bool(color) else colorscale
-  colorbar_kwargs = dict(title=clabel or "", exponentformat="e", showexponent="all")
+  dark_paper = "#0f1115"
+  dark_scene = "#161a22"
+  text_color = "#e6e6e6"
+  grid_color = "#2a3242"
+  axis_line_color = "#9aa3b2"
+
+  fig.update_layout(
+    paper_bgcolor=dark_paper,
+    plot_bgcolor=dark_paper,
+    font=dict(color=text_color),
+  )
+
+  colorbar_kwargs = dict(
+    title=dict(text=clabel or "", font=dict(color=text_color)),
+    exponentformat="e",
+    showexponent="all",
+    tickfont=dict(color=text_color),
+    bgcolor=dark_paper,
+  )
 
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
@@ -944,9 +962,28 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     y_axis_range = _axis_range(y, yrange, logy)
     z_axis_range = _axis_range(z, zrange, logz)
     scene = dict(
-      xaxis=dict(title=_latex_to_html(xlabel), showgrid=showgrid, type="log" if logx else "linear", exponentformat="e", range=x_axis_range),
-      yaxis=dict(title=_latex_to_html(ylabel), showgrid=showgrid, type="log" if logy else "linear", exponentformat="e", range=y_axis_range),
-      zaxis=dict(title=z_axis_label, showgrid=showgrid, type="log" if logz else "linear", exponentformat="e", range=z_axis_range),
+      xaxis=dict(
+        title=dict(text=_latex_to_html(xlabel), font=dict(color=text_color)), showgrid=showgrid,
+        type="log" if logx else "linear", exponentformat="e", range=x_axis_range,
+        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        linecolor=axis_line_color, tickfont=dict(color=text_color),
+        zerolinecolor=grid_color,
+      ),
+      yaxis=dict(
+        title=dict(text=_latex_to_html(ylabel), font=dict(color=text_color)), showgrid=showgrid,
+        type="log" if logy else "linear", exponentformat="e", range=y_axis_range,
+        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        linecolor=axis_line_color, tickfont=dict(color=text_color),
+        zerolinecolor=grid_color,
+      ),
+      zaxis=dict(
+        title=dict(text=z_axis_label, font=dict(color=text_color)), showgrid=showgrid,
+        type="log" if logz else "linear", exponentformat="e", range=z_axis_range,
+        showbackground=True, backgroundcolor=dark_scene, gridcolor=grid_color,
+        linecolor=axis_line_color, tickfont=dict(color=text_color),
+        zerolinecolor=grid_color,
+      ),
+      bgcolor=dark_scene,
         aspectmode="manual" if fixaspect else "auto",
         aspectratio=dict(x=aspect, y=aspect, z=aspect) if fixaspect else None,
     )
