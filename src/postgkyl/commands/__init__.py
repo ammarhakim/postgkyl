@@ -5,6 +5,7 @@ from postgkyl.commands import ev_cmd
 from postgkyl.commands.agyro import agyro
 from postgkyl.commands.agyro import mom_agyro
 from postgkyl.commands.animate import animate
+from postgkyl.commands.animate3d import animate3d
 from postgkyl.commands.bparrotate import bparrotate
 from postgkyl.commands.bperprotate import bperprotate
 from postgkyl.commands.collect import collect
@@ -35,6 +36,7 @@ from postgkyl.commands.gk_distf import gk_distf
 from postgkyl.commands.gk_particle_balance import gk_particle_balance
 from postgkyl.commands.perprotate import perprotate
 from postgkyl.commands.plot import plot
+from postgkyl.commands.plot3d import plot3d
 from postgkyl.commands.pr import pr
 from postgkyl.commands.relchange import relchange
 from postgkyl.commands.select import select

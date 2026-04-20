@@ -2,6 +2,7 @@ from matplotlib.animation import FuncAnimation
 import click
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path
 
 from postgkyl.utils import verb_print, set_frame
 import postgkyl.output.plot
@@ -87,7 +88,7 @@ def globalrange(data,kwargs):
 # end
 
 
-@click.command()
+@click.command(name="animate3d")
 @click.option("--use", "-u", default=None, help="Specify a tag to plot.")
 @click.option("--grouptags", is_flag=True, help="Group coresponding tagged frames.")
 @click.option("--squeeze", is_flag=True, help="Squeeze the components into one panel.")
@@ -100,6 +101,8 @@ def globalrange(data,kwargs):
 @click.option("-c", "--contour", is_flag=True, help="Make contour plot.")
 @click.option("--clevels", type=click.STRING,
     help="Specify levels for contours: either integer or start:end:nlevels")
+@click.option("--cnlevels", type=click.INT, help="Specify the number of levels for contours.")
+@click.option("--contlabel", "cont_label", is_flag=True, help="Add labels to contours")
 @click.option("-q", "--quiver", is_flag=True, help="Make quiver plot.")
 @click.option("-l", "--streamline", is_flag=True, help="Make streamline plot.")
 @click.option("--sdensity", type=click.FLOAT, help="Control density of the streamlines.")
@@ -110,27 +113,37 @@ def globalrange(data,kwargs):
 @click.option("--linewidth", type=click.FLOAT, help="Set the linewidth.")
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
+@click.option("-o", "--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
 @click.option("--color", type=click.STRING, help="Set color when available.")
 @click.option("--style", help="Specify Matplotlib style file (default: Postgkyl).")
+@click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
+  help="Background mode for plots.")
 @click.option("-d", "--diverging", is_flag=True, help="Switch to diverging colormesh mode.")
 @click.option("--arg", type=click.STRING, help="Additional plotting arguments, e.g., '*--'.")
 @click.option("-a", "--fix-aspect", "fixaspect", is_flag=True,
     help="Enforce the same scaling on both axes.")
+@click.option("--aspect", default=None,
+  help="Specify aspect behavior. For Plotly 3D use one of: auto,data,cube (or a numeric ratio).")
 @click.option("--logx", is_flag=True, help="Set x-axis to log scale.")
 @click.option("--logy", is_flag=True, help="Set y-axis to log scale.")
 @click.option("--logz", is_flag=True, help="Set values of 2D plot to log scale.")
+@click.option("--logc", is_flag=True, help="Set colorbar to log scale for 3D plots.")
 @click.option("--xshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the x-axis.")
 @click.option("--yshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the y-axis.")
 @click.option("--zshift", default=0.0, type=click.FLOAT, show_default=True,
     help="Value to shift the z-axis.")
+@click.option("--cshift", default=0.0, type=click.FLOAT, show_default=True,
+  help="Value to shift the color values for 3D plots.")
 @click.option("--xscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the x-axis.")
 @click.option("--yscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the y-axis.")
 @click.option("--zscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the z-axis.")
+@click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
+  help="Value to scale the color values for 3D plots.")
 @click.option("--float", is_flag=True,
     help="Choose min/max levels based on current frame (i.e., each frame uses a different color range).")
 @click.option("--xmax", default=None, type=click.FLOAT, help="Set maximal x-value.")
@@ -139,6 +152,12 @@ def globalrange(data,kwargs):
 @click.option("--ymin", default=None, type=click.FLOAT, help="Set minimal y-values.")
 @click.option("--zmax", default=None, type=click.FLOAT, help="Set maximal z-value.")
 @click.option("--zmin", default=None, type=click.FLOAT, help="Set minimal z-values.")
+@click.option("--cmax", default=None, type=click.FLOAT, help="Set maximal color value for 3D plots.")
+@click.option("--cmin", default=None, type=click.FLOAT, help="Set minimal color value for 3D plots.")
+@click.option("--surface-count", type=click.INT, default=32, show_default=True,
+  help="Number of Plotly volume isosurfaces to render for 3D plots.")
+@click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
+  help="Maximum number of points along any 3D volume axis; 0 disables downsampling.")
 @click.option("--xlim", default=None, type=click.STRING,
     help="Set limits for the x-coordinate (lower,upper).")
 @click.option("--ylim", default=None, type=click.STRING,
@@ -154,13 +173,15 @@ def globalrange(data,kwargs):
     help="Force legend even when plotting a single dataset.")
 @click.option("-x", "--xlabel", type=click.STRING, help="Specify a x-axis label.")
 @click.option("-y", "--ylabel", type=click.STRING, help="Specify a y-axis label.")
+@click.option("-z", "--zlabel", type=click.STRING, help="Specify a z-axis label.")
 @click.option("--clabel", type=click.STRING, help="Specify a label for colorbar.")
 @click.option("--title", type=click.STRING, help="Specify a title.")
 @click.option("--notitle", is_flag=True, help="Do not show title.")
 @click.option("-i", "--interval", default=100, help="Specify the animation interval.")
 @click.option("--save", is_flag=True, help="Save figure as PNG.")
 @click.option("--saveas", type=click.STRING, default=None, help="Name to save the plot as.")
-@click.option("--fps", type=click.INT, help="Specify frames per second for saving.")
+@click.option("--fps", type=click.INT, default=5, show_default=True,
+    help="Specify frames per second for saving.")
 @click.option("--dpi", type=click.INT, help="DPI (resolution) for output.")
 @click.option("-e", "--edgecolors", type=click.STRING, help="Set color for cell edges.")
 @click.option("--showgrid/--no-showgrid", default=True, help="Show grid-lines.")
@@ -171,15 +192,20 @@ def globalrange(data,kwargs):
 @click.option("--saveframes", type=click.STRING,
     help="Save individual frames as PNGS instead of an animation")
 @click.option("--figsize", help="Comma-separated values for x and y size.")
+@click.option("--jet", is_flag=True, help="Turn colormap to jet for comparison with literature.")
+@click.option("--cmap", type=click.STRING, default=None,
+  help="Override default colormap with a valid matplotlib cmap.")
+@click.option("--invert-cmap", is_flag=True,
+  help="Invert the selected colormap (or the default colormap for the chosen background mode).")
 @click.option("-m", "--multiblock", is_flag=True, help="Plots blocks from each frame together")
 @click.pass_context
-def animate(ctx, **kwargs):
+def animate3d(ctx, **kwargs):
   """Animate the actively loaded dataset and show resulting plots in a loop.
 
   Typically, the datasets are loaded using wildcard/regex feature of the -f option to
   the main pgkyl executable. To save the animation ffmpeg needs to be installed.
   """
-  verb_print(ctx, "Starting animate")
+  verb_print(ctx, "Starting animate3d")
   data = ctx.obj["data"]
 
   if kwargs["xlim"]:
@@ -369,4 +395,4 @@ def animate(ctx, **kwargs):
   if kwargs["show"]:
     plt.show()
   # end
-  verb_print(ctx, "Finishing animate")
+  verb_print(ctx, "Finishing animate3d")
