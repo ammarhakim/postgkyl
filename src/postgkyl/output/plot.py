@@ -189,10 +189,9 @@ def _resolve_plotly_aspect(aspect: str | float | None, fixaspect: bool) -> tuple
   return "manual", dict(x=ratio, y=ratio, z=ratio)
 
 
-def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
+def save_rotating_plotly_figure(fig, file_name: str,
     starting_azimuthal_angle: float, fps: int, polar_angle: float,
-  num_rotations_completed: float, rotation_period: float | None = None,
-  radius: float = 2.0) -> None:
+    rotation_period: float, radius: float = 2.0) -> None:
   """Save a rotating Plotly 3D figure as GIF or MP4.
 
   Rotates the camera 360 degrees around the vertical axis, starting from
@@ -203,13 +202,10 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
   if ext not in (".gif", ".mp4", ".html"):
     raise ValueError("--save-rotating expects an output ending with .gif, .mp4, or .html")
   # end
-  if num_rotation_angles <= 0:
-    raise ValueError("num_rotation_angles must be a positive integer")
-  # end
   if fps <= 0:
     raise ValueError("fps must be a positive integer")
   # end
-  if rotation_period is not None and rotation_period <= 0:
+  if rotation_period <= 0:
     raise ValueError("rotation_period must be positive")
   # end
 
@@ -232,13 +228,7 @@ def save_rotating_plotly_figure(fig, file_name: str, num_rotation_angles: int,
     )
     fig.update_layout(**{scene_name: dict(camera=initial_camera)})
 
-    if rotation_period is not None:
-      omega = 2.0 * np.pi / float(rotation_period)
-    elif num_rotations_completed > 0 and num_rotation_angles > 1:
-      omega = 2.0 * np.pi * num_rotations_completed * fps / max(1, num_rotation_angles - 1)
-    else:
-      omega = 0.0
-    # end
+    omega = 2.0 * np.pi / float(rotation_period)
 
     if omega > 0.0:
       post_script = f"""
@@ -292,10 +282,10 @@ rafId = requestAnimationFrame(animate);
 
   with tempfile.TemporaryDirectory(prefix="pgkyl_rotate_") as tmp_dir:
     frame_pattern = os.path.join(tmp_dir, "frame_%05d.png")
-    angle_denominator = max(1, num_rotation_angles - 1)
-    for idx in range(num_rotation_angles):
+    num_frames = max(2, int(round(float(fps) * float(rotation_period))))
+    for idx in range(num_frames):
       theta = np.deg2rad(
-          starting_azimuthal_angle + 360.0 * num_rotations_completed * idx / angle_denominator
+          starting_azimuthal_angle + 360.0 * idx / num_frames
       )
       camera = dict(
           eye=dict(x=float(xy_radius * np.cos(theta)), y=float(xy_radius * np.sin(theta)), z=float(z_eye)),
@@ -303,7 +293,6 @@ rafId = requestAnimationFrame(animate);
           center=dict(x=0.0, y=0.0, z=0.0),
       )
       fig.update_layout(**{scene_name: dict(camera=camera) for scene_name in scene_names})
-
       png_bytes = fig.to_image(format="png")
 
       frame_path = os.path.join(tmp_dir, f"frame_{idx:05d}.png")

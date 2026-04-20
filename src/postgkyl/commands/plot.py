@@ -1,10 +1,12 @@
 import click
+import importlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
+from pathlib import Path
+import webbrowser
 
 from postgkyl.utils import verb_print
-import postgkyl.output.plot
 
 
 def _parse_range_option(_ctx, _param, value):
@@ -120,6 +122,15 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--subplot-ylabels", type=click.STRING, help="Comma-separated y-axis labels for each subplot. e.g. --subplot-ylabels 'Y1,Y2,Y3'")
 @click.option("--save", is_flag=True, help="Save figure as PNG file.")
 @click.option("--saveas", type=click.STRING, default=None, help="Name of figure file.")
+@click.option("--starting-azimuthal-angle", "azimuthal_angle", "--azimuthal-angle",
+  type=click.FLOAT, default=0.0, show_default=True,
+  help="Starting azimuthal angle in degrees for rotating 3D save.")
+@click.option("--polar-angle", type=click.FLOAT, default=85.0, show_default=True,
+  help="Polar angle in degrees for rotating 3D camera. 90 degrees is the x-y plane.")
+@click.option("--rotation-period", type=click.FLOAT, default=20.0, show_default=True,
+  help="Rotation period in seconds for one full rotation (used for rotating html/mp4/gif output).")
+@click.option("--fps", type=click.INT, default=1, show_default=True,
+  help="FPS used for rotating mp4/gif save output.")
 @click.option("--dpi", type=click.INT, default=200, help="DPI (resolution) for output.")
 @click.option("-e", "--edgecolors", type=click.STRING,
     help="Set color for cell edges to show grid outline.")
@@ -144,16 +155,49 @@ def plot(ctx, **kwargs):
   Plot labels can use a sub-set of LaTeX math commands placed between dollar ($) signs.
   """
   verb_print(ctx, "Starting plot")
+  plot_output_module = importlib.import_module("postgkyl.output.plot")
 
   def _save_output(file_name):
     plt.savefig(file_name, dpi=kwargs["dpi"])
 
-  def _save_output_3d(fig, file_name):
+  def _save_output_3d(fig, file_name: str | None = None, base_name: str | None = None,
+      force_rotating_preview: bool = False) -> str:
+    if force_rotating_preview:
+      safe_base = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in (base_name or "")).strip("_")
+      if not safe_base:
+        safe_base = "plot_preview"
+      # end
+      file_name = os.path.join(os.getcwd(), f"{safe_base}_preview.html")
+    elif file_name is None:
+      raise click.ClickException("Internal error: missing output file name for 3D save.")
+    # end
+
     root, ext = os.path.splitext(file_name)
-    if ext.lower() != ".html":
+    ext = ext.lower()
+    rotating_target = force_rotating_preview or ext in (".mp4", ".gif", ".html")
+    if rotating_target:
+      if ext == "":
+        file_name = f"{file_name}.mp4"
+      # end
+      plot_output_module.save_rotating_plotly_figure(
+          fig,
+          file_name,
+          starting_azimuthal_angle=kwargs["azimuthal_angle"],
+          polar_angle=kwargs["polar_angle"],
+          rotation_period=kwargs["rotation_period"],
+          fps=kwargs["fps"],
+      )
+      return file_name
+    # end
+
+    if ext != ".html":
       file_name = f"{root}.html" if root else f"{file_name}.html"
     # end
     fig.write_html(file_name)
+    return file_name
+
+  def _open_html_preview(html_name: str):
+    webbrowser.open(Path(html_name).resolve().as_uri())
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
@@ -300,7 +344,19 @@ def plot(ctx, **kwargs):
     # end
 
     # ---- Plot ----
-    fig = postgkyl.output.plot(dat, args, label_prefix=label, **kwargs)
+    fig = plot_output_module.plot(dat, args, label_prefix=label, **kwargs)
+
+    if hasattr(fig, "write_html") and not (kwargs["save"] or kwargs["saveas"]):
+      if dat._file_name:
+        base_name = dat._file_name.split(".")[0]
+      else:
+        base_name = f"plot_{i}"
+      # end
+      html_name = _save_output_3d(fig, base_name=base_name, force_rotating_preview=True)
+      _open_html_preview(html_name)
+      kwargs["show"] = False
+      continue
+    # end
 
     if kwargs["subplots"]:
       kwargs["start_axes"] = kwargs["start_axes"] + dat.get_num_comps()
@@ -321,7 +377,7 @@ def plot(ctx, **kwargs):
       # end
       if kwargs["figure"] is None:
         if hasattr(fig, "write_html"):
-          _save_output_3d(fig, file_name)
+          file_name = _save_output_3d(fig, file_name)
         else:
           _save_output(file_name)
         # end
