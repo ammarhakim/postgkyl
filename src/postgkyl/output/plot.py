@@ -894,6 +894,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           showlegend=legend and bool(label),
       )
     else:
+      trace_colorscale = scalar_colorscale
       if diverging:
         zmax_local = np.nanmax(np.abs(value))
         zmin_local = -zmax_local
@@ -918,18 +919,36 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
         # end
       # end
       if logc:
-        positive_value = np.where(value > 0, value, np.nan)
-        value = np.log10(positive_value)
+        log_value = np.full(value.shape, np.nan, dtype=float)
+        valid_mask = value > 0
+        log_value[valid_mask] = np.log10(value[valid_mask])
+
+        if np.any(valid_mask):
+          valid_min = float(np.nanmin(log_value[valid_mask]))
+          valid_max = float(np.nanmax(log_value[valid_mask]))
+        else:
+          valid_min = 0.0
+          valid_max = 1.0
+        # end
+
         if zmin_local is not None and zmin_local > 0:
-          zmin_local = np.log10(zmin_local)
+          valid_min = float(np.log10(zmin_local))
         # end
         if zmax_local is not None and zmax_local > 0:
-          zmax_local = np.log10(zmax_local)
+          valid_max = float(np.log10(zmax_local))
         # end
+        if not np.isfinite(valid_max) or valid_max <= valid_min:
+          valid_max = valid_min + 1.0
+        # end
+
+        value = np.nan_to_num(log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
+        zmin_local = valid_min
+        zmax_local = valid_max
+        trace_colorscale = scalar_colorscale
       # end
       trace = go.Volume(
           x=x.ravel(), y=y.ravel(), z=z.ravel(), value=value.ravel(),
-          colorscale=scalar_colorscale,
+          colorscale=trace_colorscale,
           cmin=zmin_local,
           cmax=zmax_local,
           opacity=opacity if opacity is not None else 0.5,
