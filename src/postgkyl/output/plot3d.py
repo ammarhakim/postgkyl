@@ -109,6 +109,39 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
   return colorscale
 
 
+def _scatter_opacity_colorscale(colorscale, min_alpha: float, max_alpha: float,
+    log_scale: bool = False):
+  min_a = float(np.clip(min_alpha, 0.0, 1.0))
+  max_a = float(np.clip(max_alpha, 0.0, 1.0))
+  if max_a < min_a:
+    min_a, max_a = max_a, min_a
+  # end
+
+  out = []
+  for stop, color in colorscale:
+    stop_value = float(stop)
+    if log_scale:
+      # Concave mapping: emphasize alpha changes near low values and flatten near high values.
+      mapped_stop = np.log10(1.0 + 99.0 * stop_value) / np.log10(100.0)
+    else:
+      mapped_stop = stop_value
+    # end
+    if isinstance(color, str) and color.startswith("rgba(") and color.endswith(")"):
+      parts = [part.strip() for part in color[5:-1].split(",")]
+      if len(parts) == 4:
+        r, g, b = parts[0], parts[1], parts[2]
+        alpha = min_a + (max_a - min_a) * mapped_stop
+        out.append([stop_value, f"rgba({r}, {g}, {b}, {alpha:.3f})"])
+      else:
+        out.append([stop_value, color])
+      # end
+    else:
+      out.append([stop_value, color])
+    # end
+  # end
+  return out
+
+
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
   finite = np.isfinite(values)
   if np.any(finite):
@@ -766,6 +799,7 @@ def _get_nodal_grid(grid : list, cells: np.ndarray):
 def plot3d(data: GData | Tuple[list, np.ndarray],
     squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
+    scatter: bool = False, marker_radius: float = 4.0, markerstyle: str = "circle",
     diverging: bool = False,
     xscale: float = 1.0, xshift: float = 0.0,
     yscale: float = 1.0, yshift: float = 0.0,
@@ -781,6 +815,8 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None,
     linewidth: float | None = None, opacity: float | None = 1.0,
+    scatter_opacity_range: tuple[float, float] | None = None,
+    scatter_opacity_log: bool = False,
     maximum_points_per_axis: int = 0,
     surface_count: int = 32,
     xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
@@ -983,14 +1019,21 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     x_coord = np.asarray(x_grid)
     y_coord = np.asarray(y_grid)
     if cylindrical_to_cartesian:
+      # mapc2p cylindrical ordering is (R, Z, phi)
       r = x_coord
-      theta = y_coord
-      x_coord = r * np.cos(theta)
-      y_coord = r * np.sin(theta)
+      z_cyl = np.asarray(y_grid)
+      phi = np.asarray(z_grid)
+      x_coord = r * np.cos(phi)
+      y_coord = r * np.sin(phi)
     # end
     x = (x_coord + xshift) * xscale
     y = (y_coord + yshift) * yscale
-    z = np.asarray(z_grid)
+    if cylindrical_to_cartesian:
+      y = z_cyl
+      z = (y_coord + yshift) * yscale
+    else:
+      z = np.asarray(z_grid)
+    # end
     finite_value = np.isfinite(color_value)
     finite_count = int(finite_value.sum())
     if finite_count:
@@ -1001,7 +1044,13 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       value_max = float("nan")
     # end
 
-    z_axis_label = _latex_to_html(zlabel) if zlabel else _latex_to_html(axes_labels[2])
+    if zlabel is not None:
+      z_axis_label = _latex_to_html(zlabel)
+    elif cylindrical_to_cartesian:
+      z_axis_label = _latex_to_html("$z$")
+    else:
+      z_axis_label = _latex_to_html(axes_labels[2])
+    # end
     x_axis_range = _axis_range(x, xrange, logx)
     y_axis_range = _axis_range(y, yrange, logy)
     z_axis_range = _axis_range(z, zrange, logz)
@@ -1053,7 +1102,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     trace_colorscale = scalar_colorscale
     trace_colorbar_kwargs = dict(colorbar_kwargs)
 
-    if slice_planes:
+    if slice_planes and not scatter:
       render_color_value = np.array(color_value, copy=True)
       render_x, render_y, render_z = x, y, z
       volume_opacity_scale = [[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]]
@@ -1110,7 +1159,46 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       # end
     # end
 
-    if slice_planes:
+    if scatter:
+      render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
+        render_x, render_y, render_z, render_color_value,
+        maximum_points_per_axis=maximum_points_per_axis,
+      )
+      marker_size = max(1.0, 2.0 * float(marker_radius))
+      scatter_colorscale = trace_colorscale
+      scatter_opacity = opacity
+      if not bool(color) and scatter_opacity_range is not None:
+        min_alpha, max_alpha = scatter_opacity_range
+        scatter_colorscale = _scatter_opacity_colorscale(
+            trace_colorscale,
+            min_alpha=min_alpha,
+            max_alpha=max_alpha,
+            log_scale=scatter_opacity_log,
+        )
+        # Colorscale already encodes alpha gradient; keep trace opacity neutral.
+        scatter_opacity = 1.0
+      # end
+      trace = go.Scatter3d(
+        x=render_x.ravel(),
+        y=render_y.ravel(),
+        z=render_z.ravel(),
+        mode="markers",
+        marker=dict(
+          size=marker_size,
+          symbol=markerstyle,
+          color=render_color_value.ravel(),
+          colorscale=scatter_colorscale,
+          cmin=cmin_val,
+          cmax=cmax_val,
+          opacity=scatter_opacity,
+          showscale=show_volume_colorbar,
+          colorbar=trace_colorbar_kwargs if show_volume_colorbar else None,
+        ),
+        name=label or f"c{comp}",
+        showlegend=legend and bool(label),
+      )
+      trace_list = [trace]
+    elif slice_planes:
       xv, yv, zv, render_color_value = _downsample_3d_volume(
           render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,

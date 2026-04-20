@@ -117,16 +117,92 @@ class TestPlot:
 
   def test_plot_plotly_3d_cylindrical_to_cartesian(self):
     r = np.linspace(0.0, 1.0, 4)
-    theta = np.linspace(0.0, 2.0 * np.pi, 5)
     z = np.linspace(-0.5, 0.5, 4)
-    rr, tt, zz = np.meshgrid(r, theta, z, indexing="ij")
+    phi = np.linspace(0.0, 2.0 * np.pi, 5)
+    rr, zz, pp = np.meshgrid(r, z, phi, indexing="ij")
     values = (rr + zz)[..., np.newaxis]
     fig = pg.output.plot3d(([
         r,
-        theta,
         z,
+      phi,
     ], values), cylindrical_to_cartesian=True)
     assert isinstance(fig, go.Figure)
     np.testing.assert_allclose(fig.layout.scene.xaxis.range, (-1.0, 1.0), atol=1.0e-12)
-    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (-1.0, 1.0), atol=1.0e-12)
-    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (-0.5, 0.5), atol=1.0e-12)
+    np.testing.assert_allclose(fig.layout.scene.yaxis.range, (-0.5, 0.5), atol=1.0e-12)
+    np.testing.assert_allclose(fig.layout.scene.zaxis.range, (-1.0, 1.0), atol=1.0e-12)
+
+  def test_plot_plotly_3d_scatter_trace(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot3d((grid, values), scatter=True, marker_radius=3.0, markerstyle="square", cmin=0.2, cmax=2.8)
+    assert isinstance(fig, go.Figure)
+    assert isinstance(fig.data[0], go.Scatter3d)
+    assert fig.data[0].mode == "markers"
+    np.testing.assert_allclose(fig.data[0].marker.size, 6.0)
+    assert fig.data[0].marker.symbol == "square"
+    np.testing.assert_allclose(fig.data[0].marker.cmin, 0.2)
+    np.testing.assert_allclose(fig.data[0].marker.cmax, 2.8)
+
+  def test_plot_plotly_3d_scatter_downsampling(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot3d((grid, values), scatter=True, maximum_points_per_axis=2)
+    assert isinstance(fig, go.Figure)
+    # For each axis: size 4 downsampled to indices [0, 2, 3] => 3 points per axis.
+    assert len(fig.data[0].x) == 27
+    assert len(fig.data[0].y) == 27
+    assert len(fig.data[0].z) == 27
+
+  def test_plot_plotly_3d_scatter_uses_opacity_gradient_when_requested(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot3d((grid, values), scatter=True, opacity=0.5, scatter_opacity_range=(0.01, 1.0))
+    assert isinstance(fig, go.Figure)
+    colorscale = fig.data[0].marker.colorscale
+    low_color = colorscale[0][1]
+    high_color = colorscale[-1][1]
+    low_alpha = float(low_color.split(",")[-1].rstrip(")"))
+    high_alpha = float(high_color.split(",")[-1].rstrip(")"))
+    assert low_alpha < high_alpha
+
+  def test_plot_plotly_3d_scatter_keeps_uniform_opacity_by_default(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot3d((grid, values), scatter=True, opacity=0.5)
+    assert isinstance(fig, go.Figure)
+    colorscale = fig.data[0].marker.colorscale
+    low_color = colorscale[0][1]
+    high_color = colorscale[-1][1]
+    low_alpha = float(low_color.split(",")[-1].rstrip(")"))
+    high_alpha = float(high_color.split(",")[-1].rstrip(")"))
+    np.testing.assert_allclose(low_alpha, high_alpha)
+    np.testing.assert_allclose(fig.data[0].marker.opacity, 0.5)
+
+  def test_plot_plotly_3d_scatter_uses_log_opacity_ramp_when_requested(self):
+    grid = [np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4), np.linspace(0.0, 1.0, 4)]
+    x, y, z = np.meshgrid(grid[0], grid[1], grid[2], indexing="ij")
+    values = (x + y + z)[..., np.newaxis]
+    fig = pg.output.plot3d(
+        (grid, values),
+        scatter=True,
+        scatter_opacity_range=(0.01, 1.0),
+        scatter_opacity_log=True,
+    )
+    assert isinstance(fig, go.Figure)
+    colorscale = fig.data[0].marker.colorscale
+
+    alphas = np.array([
+        float(color.split(",")[-1].rstrip(")"))
+        for _, color in colorscale
+    ])
+
+    q1 = int(0.25 * (len(alphas) - 1))
+    q2 = int(0.50 * (len(alphas) - 1))
+    q3 = int(0.75 * (len(alphas) - 1))
+    low_span = alphas[q1] - alphas[0]
+    high_span = alphas[-1] - alphas[q3]
+    assert low_span > high_span

@@ -42,8 +42,20 @@ def _parse_slice_option(_ctx, _param, value):
     help="Number of subplot rows for multi-component 3D plots.")
 @click.option("--nsubplotcol", "num_subplot_col", type=click.INT,
     help="Number of subplot columns for multi-component 3D plots.")
+@click.option("-s", "--scatter", is_flag=True,
+  help="Render point samples as sphere-like colored markers.")
+@click.option("--marker-radius", type=click.FLOAT, default=4.0, show_default=True,
+  help="Scatter marker radius in pixels.")
+@click.option("--markerstyle", type=click.Choice([
+    "circle", "square", "diamond", "cross", "x",
+]), default="circle", show_default=True,
+  help="Marker shape for scatter points.")
 @click.option("-o", "--opacity", type=click.FLOAT, default=1.0, show_default=True,
     help="Volume and slice opacity in [0, 1].")
+@click.option("--scatter-opacity-range", type=click.STRING, callback=_parse_range_option, default=None,
+  help="Scatter alpha range as 'min,max' (or 'min:max'); enables opacity-gradient colorscale only when set.")
+@click.option("--scatter-opacity-log/--no-scatter-opacity-log", default=False, show_default=True,
+  help="Use logarithmic mapping for scatter opacity ramp (rapid low-end change, flatter high-end).")
 @click.option("--surface-count", type=click.INT, default=32, show_default=True,
     help="Number of Plotly volume isosurfaces.")
 @click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
@@ -127,7 +139,7 @@ def _parse_slice_option(_ctx, _param, value):
 @click.option("--invert-cmap", is_flag=True,
     help="Invert the chosen colormap.")
 @click.option("--cylindrical-to-cartesian", is_flag=True,
-  help="Interpret (z0, z1, z2) as (r, theta, z), as mapc2p outputs cylindrical coordinates.")
+  help="Interpret (z0, z1, z2) as (R, Z, phi) and convert to Cartesian (x, y, z).")
 @click.pass_context
 def plot3d(ctx, **kwargs):
   """Plot active 3D datasets with Plotly and optional rotating export."""
@@ -278,13 +290,14 @@ def plot3d(ctx, **kwargs):
 
   render_kwarg_keys = {
       "squeeze", "num_axes", "num_subplot_row", "num_subplot_col",
-      "diverging",
+      "scatter", "marker_radius", "markerstyle", "diverging",
       "xscale", "xshift", "yscale", "yshift", "zscale", "zshift",
       "cscale", "cshift", "cmin", "cmax", "clim",
       "background", "invert_cmap", "legend", "colorbar", "label_prefix",
       "xlabel", "ylabel", "zlabel", "clabel", "title",
       "logx", "logy", "logz", "logc", "fixaspect", "aspect",
       "showgrid", "hashtag", "xkcd", "color", "linewidth", "opacity",
+      "scatter_opacity_range", "scatter_opacity_log",
       "maximum_points_per_axis", "surface_count",
       "xrange", "yrange", "zrange", "slice_plane", "figsize",
         "cmap", "cylindrical_to_cartesian", "rcParams",
