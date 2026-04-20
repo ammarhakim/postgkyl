@@ -5,6 +5,8 @@ import numpy as np
 import os.path
 from pathlib import Path
 import webbrowser
+from postgkyl.data import GData
+from postgkyl.data.select import select as data_select
 
 from postgkyl.utils import verb_print
 
@@ -13,6 +15,41 @@ def _parse_range_option(_ctx, _param, value):
   if value is None:
     return None
   # end
+
+
+def _parse_slice_option(_ctx, _param, value):
+  if value is None:
+    return None
+  # end
+
+  tokens = [token.strip() for token in str(value).split(",") if token.strip()]
+  if not tokens:
+    raise click.BadParameter("Expected a number or comma-separated list of numbers.")
+  # end
+
+  selectors = []
+  for token in tokens:
+    token_lower = token.lower()
+    # Int tokens are interpreted as indices, float tokens as coordinates.
+    if "." in token_lower or "e" in token_lower:
+      try:
+        selectors.append(float(token))
+      except ValueError as exc:
+        raise click.BadParameter(
+            f"Invalid selector '{token}'. Use int for index or float for coordinate value."
+        ) from exc
+      # end
+    else:
+      try:
+        selectors.append(int(token))
+      except ValueError as exc:
+        raise click.BadParameter(
+            f"Invalid selector '{token}'. Use int for index or float for coordinate value."
+        ) from exc
+      # end
+    # end
+  # end
+  return selectors
 
   parts = [part.strip() for part in value.replace(":", ",").split(",") if part.strip()]
   if len(parts) != 2:
@@ -51,7 +88,7 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--linewidth", type=click.FLOAT, help="Set the linewidth.")
 @click.option("--linestyle", type=click.Choice(["solid", "dashed", "dotted", "dashdot"]),
     help="Set the linestyle.")
-@click.option("-o","--opacity", type=click.FLOAT, help="Set opacity for 3D volume plots (0.0-1.0).")
+@click.option("-o","--opacity", type=click.FLOAT, default=1.0, help="Set opacity for 3D volume plots (0.0-1.0).")
 @click.option("--surface-count", type=click.INT, default=32, show_default=True,
   help="Number of Plotly volume isosurfaces to render for 3D plots.")
 @click.option("--maximum-points-per-axis", "--mppa", "maximum_points_per_axis", type=click.INT, default=0, show_default=True,
@@ -84,6 +121,18 @@ def _parse_range_option(_ctx, _param, value):
     help="Value to scale the y-axis.")
 @click.option("--zscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the z-axis (default: 1.0).")
+@click.option("--slice-at-z0", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z0 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+@click.option("--slice-at-z1", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z1 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+@click.option("--slice-at-z2", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z2 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+@click.option("--slice-at-z3", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z3 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+@click.option("--slice-at-z4", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z4 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
+@click.option("--slice-at-z5", type=click.STRING, callback=_parse_slice_option, default=None,
+  help="Select z5 slices. Comma-separated selectors; ints are indices, floats are coordinate values.")
 @click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Value to scale the color values for 3D plots.")
 @click.option("--xmax", default=None, type=click.FLOAT, help="Set maximal x-value.")
@@ -222,6 +271,62 @@ def plot(ctx, **kwargs):
     kwargs["lineouts"] = int(kwargs["lineouts"])
   # end
 
+  slice_kwargs = {}
+  for d in range(6):
+    slice_selectors = kwargs.pop(f"slice_at_z{d}")
+    if slice_selectors is not None:
+      slice_kwargs[f"z{d}"] = slice_selectors
+    # end
+  # end
+
+  def _get_slice_kwargs_for_data(dat, allow_multiple_per_axis: bool):
+    if not slice_kwargs:
+      return {}
+    # end
+
+    num_dims = dat.get_num_dims()
+    resolved = {}
+    for key, selectors in slice_kwargs.items():
+      axis = int(key[1:])
+      if axis >= num_dims:
+        raise click.ClickException(
+            f"Cannot use --slice-at-{key} on a {num_dims:d}D dataset."
+        )
+      # end
+      if not selectors:
+        continue
+      # end
+      if allow_multiple_per_axis:
+        resolved[key] = selectors
+      else:
+        if len(selectors) != 1:
+          raise click.ClickException(
+              f"--slice-at-{key} accepts multiple selectors only for 3D plane overlay plots."
+          )
+        # end
+        resolved[key] = selectors[0]
+      # end
+    # end
+    return resolved
+
+  def _get_plot_data(dat):
+    resolved_slice_kwargs = _get_slice_kwargs_for_data(dat, allow_multiple_per_axis=False)
+    if not resolved_slice_kwargs:
+      return dat
+    # end
+
+    selected_grid, selected_values = data_select(dat, comp=None, **resolved_slice_kwargs)
+    selected_dat = GData(
+      file_name=dat._file_name,
+      tag=dat.get_tag(),
+      label=dat.get_custom_label(),
+      ctx=dat.ctx,
+      comp_grid=ctx.obj["compgrid"],
+      load=False,
+    )
+    selected_dat.push(selected_grid, selected_values)
+    return selected_dat
+
   kwargs["num_axes"] = None
   if kwargs["subplots"]:
     kwargs["num_axes"] = 0
@@ -276,7 +381,8 @@ def plot(ctx, **kwargs):
     vmax = float("-inf")
     v_extrema = np.array([])
     for dat in ctx.obj["data"].iterator(kwargs["use"]):
-      val = dat.get_values() * kwargs["zscale"]
+      plot_data = _get_plot_data(dat)
+      val = plot_data.get_values() * kwargs["zscale"]
       if vmin > np.nanmin(val):
         vmin = np.nanmin(val)
       # end
@@ -345,7 +451,15 @@ def plot(ctx, **kwargs):
     # end
 
     # ---- Plot ----
-    fig = plot_output_module.plot(dat, args, label_prefix=label, **kwargs)
+    plot_kwargs = dict(kwargs)
+    if slice_kwargs and dat.get_num_dims() == 3:
+      plot_data = dat
+      plot_kwargs["slice_plane"] = _get_slice_kwargs_for_data(dat, allow_multiple_per_axis=True)
+    else:
+      plot_data = _get_plot_data(dat)
+    # end
+
+    fig = plot_output_module.plot(plot_data, args, label_prefix=label, **plot_kwargs)
 
     if hasattr(fig, "write_html") and not (kwargs["save"] or kwargs["saveas"]):
       if dat._file_name:

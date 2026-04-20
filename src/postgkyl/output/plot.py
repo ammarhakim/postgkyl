@@ -24,6 +24,7 @@ except ImportError:  # pragma: no cover - optional dependency
   make_subplots = None
 
 from postgkyl.utils import input_parser
+from postgkyl.data.select import select as data_select
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
@@ -111,6 +112,48 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
     colorscale.append([float(x), f"rgba({int(r * 255)}, {int(g * 255)}, {int(b * 255)}, {float(a):.3f})"])
   # end
   return colorscale
+
+
+def _transparent_black_colorscale(colorscale: list[list[float | str]]) -> list[list[float | str]]:
+  transparent_colorscale = []
+  for position, color_value in colorscale:
+    rgba = None
+    if isinstance(color_value, str):
+      value = color_value.strip().lower()
+      if value.startswith("rgba(") and value.endswith(")"):
+        parts = [part.strip() for part in value[5:-1].split(",")]
+        if len(parts) == 4:
+          try:
+            red, green, blue = (float(parts[0]), float(parts[1]), float(parts[2]))
+            alpha = float(parts[3])
+            if red == 0.0 and green == 0.0 and blue == 0.0:
+              rgba = f"rgba(0, 0, 0, 0.000)"
+            else:
+              rgba = f"rgba({int(red)}, {int(green)}, {int(blue)}, {alpha:.3f})"
+          except ValueError:
+            rgba = None
+          # end
+        # end
+      # end
+      if rgba is None:
+        try:
+          red, green, blue, alpha = colors.to_rgba(color_value)
+        except ValueError:
+          rgba = color_value
+        else:
+          if red == 0.0 and green == 0.0 and blue == 0.0:
+            rgba = "rgba(0, 0, 0, 0.000)"
+          else:
+            rgba = f"rgba({int(red * 255)}, {int(green * 255)}, {int(blue * 255)}, {alpha:.3f})"
+          # end
+        # end
+      # end
+    else:
+      rgba = color_value
+    # end
+    transparent_colorscale.append([position, rgba])
+  # end
+  return transparent_colorscale
 
 
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
@@ -399,8 +442,24 @@ def _downsample_3d_volume(
     return x, y, z, value
   # end
 
-  slicer = tuple(slice(None, None, step) for step in steps)
-  return x[slicer], y[slicer], z[slicer], value[slicer]
+  def _axis_indices(size: int, step: int) -> np.ndarray:
+    idx = np.arange(0, size, step, dtype=int)
+    if idx[-1] != size - 1:
+      idx = np.append(idx, size - 1)
+    # end
+    return idx
+
+  idx0 = _axis_indices(value.shape[0], steps[0])
+  idx1 = _axis_indices(value.shape[1], steps[1])
+  idx2 = _axis_indices(value.shape[2], steps[2])
+
+  def _take_indices(arr: np.ndarray) -> np.ndarray:
+    out = np.take(arr, idx0, axis=0)
+    out = np.take(out, idx1, axis=1)
+    out = np.take(out, idx2, axis=2)
+    return out
+
+  return _take_indices(x), _take_indices(y), _take_indices(z), _take_indices(value)
 
 
 def _latex_to_html(text: str) -> str:
@@ -991,11 +1050,12 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     fixaspect: bool = False, aspect: str | float | None = None,
     edgecolors: str | None = None, showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None, markersize: float | None = None,
-    linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = None,
+    linewidth: float | None = None, linestyle: float | None = None, opacity: float | None = 1.0,
     maximum_points_per_axis: int = 0,
     surface_count: int = 32,
     xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
     zrange: tuple[float, float] | None = None,
+    slice_plane: dict[str, int | float | list[int | float] | tuple[int | float, ...]] | None = None,
     figsize: tuple | None = None,
     jet: bool = False, cmap: str | None = None,
     **kwargs):
@@ -1159,6 +1219,32 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     font=dict(color=text_color),
   )
 
+  slice_planes: list[tuple[int, list[np.ndarray], np.ndarray]] = []
+  if slice_plane:
+    if isinstance(data, tuple):
+      raise ValueError("slice_plane rendering requires GData input")
+    # end
+    for axis_key in ("z0", "z1", "z2"):
+      if axis_key not in slice_plane:
+        continue
+      # end
+      slice_axis = int(axis_key[1:])
+      axis_values = slice_plane[axis_key]
+      if isinstance(axis_values, (list, tuple, np.ndarray)):
+        selector_values = list(axis_values)
+      else:
+        selector_values = [axis_values]
+      # end
+      for axis_value in selector_values:
+        slice_grid, slice_values = data_select(data, **{axis_key: axis_value})
+        slice_planes.append((slice_axis, slice_grid, slice_values))
+      # end
+    # end
+    if not slice_planes:
+      raise ValueError("3D slicing only supports z0, z1, or z2")
+    # end
+  # end
+
   colorbar_kwargs = dict(
     title=dict(text=clabel or "", font=dict(color=text_color)),
     exponentformat="e",
@@ -1166,6 +1252,8 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     tickfont=dict(color=text_color),
     bgcolor=paper_color,
   )
+
+  opacity_value = 1.0 if opacity is None else float(opacity)
 
   for comp_idx, comp in enumerate(idx_comps):
     if comp_idx >= len(scene_names):
@@ -1233,7 +1321,126 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
     )
     fig.update_layout(**{scene_name: scene})
 
-    if quiver and values.shape[-1] >= 3:
+    if slice_planes:
+      volume_color_value = np.array(color_value, copy=True)
+      volume_trace_colorscale = scalar_colorscale
+      if diverging:
+        shared_cmax = float(np.nanmax(np.abs(volume_color_value)))
+        shared_cmin = -shared_cmax
+      else:
+        shared_cmin = cmin if cmin is not None else zmin
+        shared_cmax = cmax if cmax is not None else zmax
+      # end
+      if shared_cmin is None:
+        shared_cmin = value_min
+      # end
+      if shared_cmax is None:
+        shared_cmax = value_max
+      # end
+
+      colorbar_range_min = shared_cmin
+      colorbar_range_max = shared_cmax
+      trace_colorbar_kwargs = dict(colorbar_kwargs)
+
+      if logc:
+        volume_log_value = np.full(volume_color_value.shape, np.nan, dtype=float)
+        volume_valid_mask = volume_color_value > 0
+        volume_log_value[volume_valid_mask] = np.log10(volume_color_value[volume_valid_mask])
+
+        if np.any(volume_valid_mask):
+          valid_min = float(np.nanmin(volume_log_value[volume_valid_mask]))
+          valid_max = float(np.nanmax(volume_log_value[volume_valid_mask]))
+        else:
+          valid_min = 0.0
+          valid_max = 1.0
+        # end
+
+        if shared_cmin is not None and shared_cmin > 0:
+          valid_min = float(np.log10(shared_cmin))
+        # end
+        if shared_cmax is not None and shared_cmax > 0:
+          valid_max = float(np.log10(shared_cmax))
+        # end
+        if not np.isfinite(valid_max) or valid_max <= valid_min:
+          valid_max = valid_min + 1.0
+        # end
+
+        volume_color_value = np.nan_to_num(volume_log_value, nan=valid_min, posinf=valid_max, neginf=valid_min)
+        colorbar_range_min = valid_min
+        colorbar_range_max = valid_max
+
+        tick_vals, tick_text = _log_colorbar_ticks(colorbar_range_min, colorbar_range_max)
+        if tick_vals:
+          trace_colorbar_kwargs["tickmode"] = "array"
+          trace_colorbar_kwargs["tickvals"] = tick_vals
+          trace_colorbar_kwargs["ticktext"] = tick_text
+        # end
+      # end
+
+      xv, yv, zv, volume_color_value = _downsample_3d_volume(
+          x,
+          y,
+          z,
+          volume_color_value,
+          maximum_points_per_axis=maximum_points_per_axis,
+      )
+
+      volume_trace = go.Volume(
+          x=xv.ravel(), y=yv.ravel(), z=zv.ravel(), value=volume_color_value.ravel(),
+          colorscale=volume_trace_colorscale,
+          cmin=colorbar_range_min,
+          cmax=colorbar_range_max,
+          opacity=opacity_value,
+          opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]],
+          surface_count=surface_count,
+          showscale=False,
+          name=(label or f"c{comp}") + "_volume",
+          showlegend=False,
+      )
+      trace_list = [volume_trace]
+
+      for plane_idx, (slice_axis, slice_grid, slice_values) in enumerate(slice_planes):
+        slice_value = np.asarray(slice_values[..., comp]) * zscale + zshift
+        slice_color_value = slice_value * cscale + cshift
+
+        if logc:
+          log_slice = np.full(slice_color_value.shape, np.nan, dtype=float)
+          valid_mask = slice_color_value > 0
+          log_slice[valid_mask] = np.log10(slice_color_value[valid_mask])
+          slice_color_value = np.nan_to_num(
+              log_slice,
+              nan=colorbar_range_min,
+              posinf=colorbar_range_max,
+              neginf=colorbar_range_min,
+          )
+        # end
+
+        slice_cells = np.asarray(slice_values.shape[:-1], dtype=int)
+        slice_nodal_grid = _get_nodal_grid(slice_grid, slice_cells)
+        sx_3d, sy_3d, sz_3d = _prepare_3d_coordinates(slice_nodal_grid, slice_value.shape)
+
+        sx = np.squeeze(np.asarray(sx_3d), axis=slice_axis)
+        sy = np.squeeze(np.asarray(sy_3d), axis=slice_axis)
+        sz = np.squeeze(np.asarray(sz_3d), axis=slice_axis)
+        sc = np.squeeze(np.asarray(slice_color_value), axis=slice_axis)
+
+        surface_trace = go.Surface(
+            x=sx,
+            y=sy,
+            z=sz,
+            surfacecolor=sc,
+            colorscale=scalar_colorscale,
+          cmin=colorbar_range_min,
+          cmax=colorbar_range_max,
+            showscale=colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0,
+          colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0 else None,
+            opacity=opacity_value,
+            name=(label or f"c{comp}") + f"_slice{plane_idx}",
+            showlegend=legend and bool(label) and plane_idx == 0,
+        )
+        trace_list.append(surface_trace)
+      # end
+    elif quiver and values.shape[-1] >= 3:
       trace = go.Cone(
           x=x.ravel(), y=y.ravel(), z=z.ravel(),
           u=np.asarray(values[..., 0]).ravel(),
@@ -1249,6 +1456,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )
+      trace_list = [trace]
     elif streamline and values.shape[-1] >= 3:
       trace = go.Streamtube(
           x=x.ravel(), y=y.ravel(), z=z.ravel(),
@@ -1263,6 +1471,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )
+      trace_list = [trace]
     else:
       trace_colorscale = scalar_colorscale
       trace_colorbar_kwargs = dict(colorbar_kwargs)
@@ -1331,7 +1540,7 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           colorscale=trace_colorscale,
           cmin=zmin_local,
           cmax=zmax_local,
-          opacity=opacity if opacity is not None else 0.5,
+          opacity=opacity_value,
           opacityscale=[[0.0, 0.0], [0.5, 0.2], [1.0, 0.8]],
           surface_count=surface_count,
           showscale=colorbar and comp_idx == 0 and not bool(color),
@@ -1339,12 +1548,15 @@ def _plot_plotly_3d(data: GData | Tuple[list, np.ndarray], args: list = (),
           name=label or f"c{comp}",
           showlegend=legend and bool(label),
       )
+      trace_list = [trace]
     # end
 
-    if grid_shape == (1, 1):
-      fig.add_trace(trace)
-    else:
-      fig.add_trace(trace, row=row, col=col)
+    for trace in trace_list:
+      if grid_shape == (1, 1):
+        fig.add_trace(trace)
+      else:
+        fig.add_trace(trace, row=row, col=col)
+    # end
   # end
 
   if bool(title):
