@@ -1073,8 +1073,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       x = (x_coord + xshift) * xscale
       y = (y_coord + yshift) * yscale
       if cylindrical_to_cartesian:
-        y = z_cyl
-        z = (y_coord + yshift) * yscale
+        z = (z_cyl + zshift) * zscale
       else:
         z = np.asarray(z_grid)
       # end
