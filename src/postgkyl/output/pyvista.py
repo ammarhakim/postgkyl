@@ -80,7 +80,6 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   x_range = xmax - xmin
   y_range = ymax - ymin
   z_range = zmax - zmin
-  bounds = ((xmin+xshift)*xscale, (xmax+xshift)*xscale, (ymin+yshift)*yscale, (ymax+yshift)*yscale, (zmin+zshift)*zscale, (zmax+zshift)*zscale)
 
   # Normalize the data to fall -1 to 1, then scale by the aspect ratio. Pyvista struggles with non-integer axes limits
   x = (x - xmin) / x_range * aspect_ratio[0] * 2 - aspect_ratio[0]
@@ -166,6 +165,16 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   if hide_axes:
     pl.hide_axes()
   else:
+    pv_bounds = pl.bounds
+    bounds = (-(xmin+xshift)*xscale*pv_bounds.x_min,
+              (xmax+xshift)*xscale*pv_bounds.x_max, 
+              -(ymin+yshift)*yscale*pv_bounds.y_min, 
+              (ymax+yshift)*yscale*pv_bounds.y_max, 
+              -(zmin+zshift)*zscale*pv_bounds.z_min, 
+              (zmax+zshift)*zscale*pv_bounds.z_max)
+    
+    print(f"Bounds: {bounds}")
+
     pl.show_bounds(
       xtitle=xlabel,
       ytitle=ylabel,
