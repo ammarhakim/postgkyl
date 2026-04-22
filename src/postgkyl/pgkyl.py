@@ -48,11 +48,11 @@ class PgkylCommandGroup(click.Group):
     # Explicit aliases that should not appear in --help output.
     aliases = {
         "pl": "plot",
-        "pl3": "plot3d",
-        "pl3d": "plot3d",
+        "plly": "plotly",
         "anim": "animate",
         "anim3": "animate3d",
         "anim3d": "animate3d",
+        "pv": "pyvista",
     }
     target = aliases.get(cmd_name)
     if target is not None:
@@ -181,7 +181,8 @@ cli.add_command(cmd.mask)
 cli.add_command(cmd.gk_energy_balance)
 cli.add_command(cmd.gk_particle_balance)
 cli.add_command(cmd.plot)
-cli.add_command(cmd.plot3d)
+cli.add_command(cmd.plotly)
+cli.add_command(cmd.pyvista)
 cli.add_command(cmd.pr)
 cli.add_command(cmd.relchange)
 cli.add_command(cmd.select)

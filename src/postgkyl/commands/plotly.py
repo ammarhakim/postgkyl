@@ -34,7 +34,7 @@ def _parse_slice_option(_ctx, _param, value):
   return selectors
 
 
-@click.command(name="plot3d")
+@click.command(name="plotly")
 @click.option("--use", "-u", default=None, help="Tag to plot from the active dataset stack.")
 @click.option("--squeeze", is_flag=True, help="Draw all components in a single 3D scene.")
 @click.option("--subplots", "-b", is_flag=True, help="Draw components in separate 3D subplots.")
@@ -141,17 +141,17 @@ def _parse_slice_option(_ctx, _param, value):
 @click.option("--cylindrical-to-cartesian", is_flag=True,
   help="Interpret (z0, z1, z2) as (R, Z, phi) and convert to Cartesian (x, y, z).")
 @click.pass_context
-def plot3d(ctx, **kwargs):
+def plotly(ctx, **kwargs):
   """Plot active 3D datasets, or 2D datasets as 3D surfaces, with Plotly."""
-  verb_print(ctx, "Starting plot3d")
-  plot_output_module = importlib.import_module("postgkyl.output.plot3d")
+  verb_print(ctx, "Starting plotly")
+  plot_output_module = importlib.import_module("postgkyl.output.plotly")
 
   def _save_output_3d(fig, file_name: str | None = None, base_name: str | None = None,
       force_rotating_preview: bool = False) -> str:
     if force_rotating_preview:
       safe_base = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in (base_name or "")).strip("_")
       if not safe_base:
-        safe_base = "plot3d_preview"
+        safe_base = "plotly_preview"
       # end
       file_name = os.path.join(tempfile.gettempdir(), f"{safe_base}_preview.html")
     elif file_name is None:
@@ -208,7 +208,7 @@ def plot3d(ctx, **kwargs):
 
     num_dims = dat.get_num_dims()
     if num_dims != 3:
-      raise click.ClickException("Slice overlays are only supported for 3D datasets in plot3d.")
+      raise click.ClickException("Slice overlays are only supported for 3D datasets in plotly.")
     # end
 
     resolved = {}
@@ -311,7 +311,7 @@ def plot3d(ctx, **kwargs):
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     if dat.get_num_dims() not in supported_dims:
       raise click.ClickException(
-          f"plot3d only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
+          f"plotly only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
       )
     # end
 
@@ -329,7 +329,7 @@ def plot3d(ctx, **kwargs):
     # end
     plot_kwargs["label_prefix"] = label
 
-    fig = plot_output_module.plot3d(dat, **plot_kwargs)
+    fig = plot_output_module.plotly(dat, **plot_kwargs)
 
     if kwargs["save"] or kwargs["saveas"]:
       if kwargs["saveas"]:
@@ -358,7 +358,7 @@ def plot3d(ctx, **kwargs):
       if dat._file_name:
         preview_base = dat._file_name.split(".")[0]
       else:
-        preview_base = f"plot3d_{i:d}"
+        preview_base = f"plotly_{i:d}"
       # end
       html_name = _save_output_3d(fig, base_name=preview_base, force_rotating_preview=True)
       _open_html_preview(html_name)
@@ -370,4 +370,4 @@ def plot3d(ctx, **kwargs):
     _open_html_preview(last_saved_output)
   # end
 
-  verb_print(ctx, "Finishing plot3d")
+  verb_print(ctx, "Finishing plotly")

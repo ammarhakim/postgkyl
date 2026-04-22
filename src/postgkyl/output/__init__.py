@@ -1,5 +1,6 @@
 # Import plot
 from .plot import plot
-from .plot3d import animate3d, plot3d
+from .plotly import animate3d, plotly
+from .pyvista import pyvista
 
 from .plot import pgkyl_colorbar

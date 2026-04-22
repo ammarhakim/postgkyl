@@ -811,14 +811,14 @@ def _get_nodal_grid(grid : list, cells: np.ndarray):
   return grid_out
 
 
-def plot3d(data: GData | Tuple[list, np.ndarray],
+def plotly(data: GData | Tuple[list, np.ndarray],
     squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
     scatter: bool = False, marker_radius: float = 4.0, markerstyle: str = "circle",
     diverging: bool = False,
     xscale: float = 1.0, xshift: float = 0.0,
     yscale: float = 1.0, yshift: float = 0.0,
-    zmin: float | None = None, zmax: float | None = None, zscale: float = 1.0, zshift: float = 0.0,
+    zscale: float = 1.0, zshift: float = 0.0,
     cmin: float | None = None, cmax: float | None = None, cscale: float = 1.0, cshift: float = 0.0,
     clim: tuple[float, float] | None = None,
     style: str | None = None, rcParams: dict | None = None,
@@ -829,7 +829,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     fixaspect: bool = False, aspect: str | float | None = None,
     showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None,
-    linewidth: float | None = None, opacity: float | None = 1.0,
+    opacity: float | None = 1.0,
     scatter_opacity_range: tuple[float, float] | None = None,
     scatter_opacity_log: bool = False,
     maximum_points_per_axis: int = 0,
@@ -874,7 +874,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
 
   surface_mode = num_dims == 2
   if num_dims not in (2, 3):
-    raise ValueError("Plot3d handles only 2D surface data or 3D volumetric data")
+    raise ValueError("plotly handles only 2D surface data or 3D volumetric data")
   # end
   if surface_mode and scatter:
     raise ValueError("Surface plots do not support scatter mode")
@@ -915,34 +915,6 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     num_comps = num_axes
   else:
     num_comps = len(idx_comps)
-  # end
-
-  if xlabel is None:
-    xlabel = "$x$" if cylindrical_to_cartesian else axes_labels[0]
-    if xshift != 0.0 and xscale != 1.0:
-      xlabel = rf"({xlabel:s} + {xshift:.2e}) $\times$ {xscale:.2e}"
-    elif xshift != 0.0:
-      xlabel = rf"{xlabel:s} + {xshift:.2e}"
-    elif xscale != 1.0:
-      xlabel = rf"{xlabel:s} $\times$ {xscale:.2e}"
-    # end
-  # end
-  if ylabel is None:
-    ylabel = "$y$" if cylindrical_to_cartesian else axes_labels[1]
-    if yshift != 0.0 and yscale != 1.0:
-      ylabel = rf"({ylabel:s} + {yshift:.2e}) $\times$ {yscale:.2e}"
-    elif yshift != 0.0:
-      ylabel = rf"{ylabel:s} + {yshift:.2e}"
-    elif yscale != 1.0:
-      ylabel = rf"{ylabel:s} $\times$ {yscale:.2e}"
-    # end
-  # end
-  if zscale != 1.0:
-    if clabel:
-      clabel = rf"{clabel:s} $\times$ {zscale:.3e}"
-    else:
-      clabel = rf"$\times$ {zscale:.3e}"
-    # end
   # end
 
   if bool(figsize):
@@ -1040,6 +1012,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
     render_color_value = np.array(color_value, copy=True)
     finite_value = np.isfinite(color_value)
     finite_count = int(finite_value.sum())
+
     if finite_count:
       value_min = float(np.nanmin(color_value))
       value_max = float(np.nanmax(color_value))
@@ -1053,41 +1026,28 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
       x = (np.asarray(x_grid) + xshift) * xscale
       y = (np.asarray(y_grid) + yshift) * yscale
       z = np.asarray(value)
-      if zlabel is not None:
-        z_axis_label = _latex_to_html(zlabel)
-      else:
-        z_axis_label = _latex_to_html("$z$")
-      # end
     else:
       x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
       x_coord = np.asarray(x_grid)
       y_coord = np.asarray(y_grid)
+      z_coord = np.asarray(z_grid)
       if cylindrical_to_cartesian:
         # mapc2p cylindrical ordering is (R, Z, phi)
         r = x_coord
-        z_cyl = np.asarray(y_grid)
+        z_cyl = y_coord
         phi = np.asarray(z_grid)
         x_coord = r * np.cos(phi)
         y_coord = r * np.sin(phi)
+        z_coord = z_cyl
       # end
       x = (x_coord + xshift) * xscale
       y = (y_coord + yshift) * yscale
-      if cylindrical_to_cartesian:
-        z = (z_cyl + zshift) * zscale
-      else:
-        z = np.asarray(z_grid)
-      # end
-      if zlabel is not None:
-        z_axis_label = _latex_to_html(zlabel)
-      elif cylindrical_to_cartesian:
-        z_axis_label = _latex_to_html("$z$")
-      else:
-        z_axis_label = _latex_to_html(axes_labels[2])
-      # end
+      z = (z_coord + zshift) * zscale
     # end
     x_axis_range = _axis_range(x, xrange, logx)
     y_axis_range = _axis_range(y, yrange, logy)
     z_axis_range = _axis_range(z, zrange, logz)
+    
     scene_aspectmode, scene_aspectratio = _resolve_plotly_aspect(aspect, fixaspect)
 
     scene = dict(
@@ -1106,7 +1066,7 @@ def plot3d(data: GData | Tuple[list, np.ndarray],
         zerolinecolor=grid_color,
       ),
       zaxis=dict(
-        title=dict(text=z_axis_label, font=dict(color=text_color)), showgrid=showgrid,
+        title=dict(text=_latex_to_html(zlabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logz else "linear", exponentformat="e", range=z_axis_range,
         showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
@@ -1409,7 +1369,7 @@ def animate3d(
     raise ValueError("animate3d requires at least one dataset")
   # end
 
-  base_fig = plot3d(data_sequence[0], **plot_kwargs)
+  base_fig = plotly(data_sequence[0], **plot_kwargs)
   num_traces = len(base_fig.data)
 
   if frame_labels is None:
@@ -1425,7 +1385,7 @@ def animate3d(
     if idx == 0:
       continue
     # end
-    frame_fig = plot3d(dat, **plot_kwargs)
+    frame_fig = plotly(dat, **plot_kwargs)
     if len(frame_fig.data) != num_traces:
       raise ValueError(
           "All animation frames must produce the same number of traces; "
@@ -1498,4 +1458,4 @@ def animate3d(
   return base_fig
 
 
-__all__ = ["plot3d", "animate3d", "save_rotating_plotly_figure"]
+__all__ = ["plotly", "animate3d", "save_rotating_plotly_figure"]

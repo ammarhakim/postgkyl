@@ -120,7 +120,7 @@ def _parse_range_option(_ctx, _param, value):
 def animate3d(ctx, **kwargs):
   """Animate active 2D/3D datasets with Plotly frames and playback controls."""
   verb_print(ctx, "Starting animate3d")
-  plot_output_module = importlib.import_module("postgkyl.output.plot3d")
+  plot_output_module = importlib.import_module("postgkyl.output.plotly")
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
