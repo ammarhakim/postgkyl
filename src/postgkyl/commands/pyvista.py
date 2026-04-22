@@ -56,9 +56,8 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--arg", "-a", multiple=True, help="Additional arguments to pass to the plotting function (can be specified multiple times).")
 @click.option("--use", "-u", default=None, help="Specify the tag to plot.")
 @click.option("--diverging", "-d", default=False, is_flag=True, help="Whether to use a diverging colormap (e.g., for data with both positive and negative values).")
-@click.option("--remove-zeros", default=False, is_flag=True, help="Whether to remove zero values from the data.")
 @click.option("--cylindrical-to-cartesian", default=False, is_flag=True, help="Whether to convert cylindrical coordinates (r, z, theta) to Cartesian coordinates (x, y, z) for plotting.")
-@click.option("--theme", default="", help="PyVista theme to use for the plot (e.g., 'document', 'dark', 'light', etc.).")
+@click.option("--theme", default="default", help="PyVista theme to use for the plot (e.g., 'document', 'dark', 'light', etc.).")
 @click.option("--saveas", default="", help="Filename to save the plot (supports .html, .pdf, .svg, png, .jpg, .jpeg).")
 
 @click.pass_context
@@ -99,7 +98,6 @@ def pyvista(ctx, **kwargs):
   kwargs["clabel"] = kwargs["clabel"]
   kwargs["title"] = kwargs["title"]
   kwargs["diverging"] = kwargs["diverging"]
-  kwargs["remove_zeros"] = kwargs["remove_zeros"]
   kwargs["cylindrical_to_cartesian"] = kwargs["cylindrical_to_cartesian"]
   kwargs["theme"] = kwargs["theme"]
   kwargs["saveas"] = kwargs["saveas"]

@@ -45,8 +45,8 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
     cmin: float | None = None, cmax: float | None = None, aspect_ratio: Tuple[float, float, float] = (1, 1, 1), 
     camera_azimuth: float = 0.0, camera_elevation: float = -30.0, background: str = "black", axes_color: str = "white", 
     opacity: str | float = 'sigmoid_4', cmap: str = 'inferno', xlabel: str = 'X', ylabel: str = "Y", zlabel: str = "Z", 
-    clabel: str = "", title: str | None = "", diverging: bool = False, remove_zeros: bool = False, 
-    cylindrical_to_cartesian: bool = False, theme: str = "", saveas: str = "",
+    clabel: str = "", title: str | None = "", diverging: bool = False,
+    cylindrical_to_cartesian: bool = False, theme: str = "default", saveas: str = "",
     xscale: float = 1.0, yscale: float = 1.0, zscale: float = 1.0, xshift: float = 0.0, yshift: float = 0.0, zshift: float = 0.0,
     **kwargs):
   """ Description
@@ -91,29 +91,19 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   x, y, z, scalar = _downsample_3d_volume(x,y,z,
       scalar, maximum_points_per_axis=max_points_per_axis)
 
-  if remove_zeros:
-    mask = scalar != 0
-    x = x[mask]
-    y = y[mask]
-    z = z[mask]
-    scalar = scalar[mask]
-  # end
-
   if opacity == "diverging":
-    scalar_min = np.min(scalar)
-    scalar_max = np.max(scalar)
-    scalar_mid = 0.5 * (scalar_min + scalar_max)
     # Liner opacity. 1 on either end, 0 in the middle
-    opacity = np.where(scalar < scalar_mid, (scalar - scalar_min) / (scalar_mid - scalar_min), (scalar_max - scalar) / (scalar_max - scalar_mid))
+    cx = np.linspace(0, 1, num=255)
+    opacity = np.abs(cx - 0.5) * 2
+    
   # end
 
-  pl = pv.Plotter(window_size=(1400, 900))
+  off_screen = saveas.endswith((".png", ".jpg", ".jpeg"))
+  pl = pv.Plotter(window_size=(1400, 900), off_screen=off_screen)
   grid3d = pv.StructuredGrid(x, y, z)
 
-  if theme != "":
-    pl.set_theme(theme)
-    axes_color = pl.get_theme().axes_grid.color
-    background = pl.get_theme().background
+  if theme != "default":
+    pv.set_plot_theme(theme)
   # end
 
   grid3d["f_raw"] = scalar.ravel(order="F")
@@ -128,17 +118,17 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   grid3d["f_plot"] = data
 
   clim = (cmin if cmin is not None else datamin, cmax if cmax is not None else datamax) 
-  scalar_bar_args = {"title": clabel, "color": axes_color, "fmt": colorbarformat}
+  scalar_bar_args = {"title": clabel, "fmt": colorbarformat}
 
   if is_contour:
     contours = grid3d.contour(isosurfaces=contour_levels, scalars="f_plot")
     if mesh_clip_plane:
       pl.add_mesh_clip_plane(contours, cmap=cmap, clim=clim,
-        normal='-x',opacity=opacity, widget_color=axes_color,
+        normal='-x',opacity=opacity,
         scalar_bar_args=scalar_bar_args)
     elif mesh_slice_plane:
       pl.add_mesh_slice(contours, cmap=cmap, clim=clim,
-        normal='-x',opacity=opacity, widget_color=axes_color,
+        normal='-x',opacity=opacity,
         scalar_bar_args=scalar_bar_args)
     else:
       pl.add_mesh( contours, cmap=cmap, clim=clim,
@@ -149,14 +139,14 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
       pl.add_mesh_clip_plane(
         grid3d, scalars="f_plot", cmap=cmap, clim=clim,
         opacity=opacity,
-        normal='-x', widget_color=axes_color,
+        normal='-x',
         scalar_bar_args=scalar_bar_args,
       )
     elif mesh_slice_plane:
       pl.add_mesh_slice(
         grid3d, scalars="f_plot", cmap=cmap, clim=clim,
         opacity=opacity,
-        normal='-x', widget_color=axes_color,
+        normal='-x',
         scalar_bar_args=scalar_bar_args,
       )
     else:
@@ -167,13 +157,11 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
       )
       if volume_clip_plane:
         pl.add_volume_clip_plane(
-          vol, normal='-x', widget_color=axes_color,
+          vol, normal='-x',
         )
 
-  pl.set_background(background)
-
   if title is not None:
-    pl.add_text(f"{title}", position="upper_edge", font_size=12, color=axes_color)
+    pl.add_text(f"{title}", position="upper_edge", font_size=12)
 
   if hide_axes:
     pl.hide_axes()
@@ -189,14 +177,13 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
       grid='back',
       location='origin',
       all_edges=True,
-      color=axes_color,
       fmt="%.2e",
     )
 
   # Camera rotates upon opening, breaking upon interaction
+  pl.camera.azimuth = camera_azimuth
+  pl.camera.elevation = camera_elevation
   if spin:
-    pl.camera.azimuth = camera_azimuth
-    pl.camera.elevation = camera_elevation
     angle = camera_azimuth
     interacting = False
     def rotate_callback(step):
@@ -213,15 +200,15 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
     pl.add_timer_event(max_steps=99999999, duration=50, callback=rotate_callback)  # 20 FPS
     pl.iren.add_observer('LeftButtonPressEvent', on_mouse_move)
 
-  if show:
-    pl.show()
-
   if saveas != "":
     if saveas.endswith(".html"):
       pl.export_html(saveas)
     elif saveas.endswith(".pdf") or saveas.endswith(".svg"):
       pl.save_graphic(saveas)
     elif saveas.endswith(".png") or saveas.endswith(".jpg") or saveas.endswith(".jpeg"):
-      pl.screenshot(saveas, transparent_background=True)
+      pl.screenshot(saveas) #, transparent_background=True)
     else:
       raise ValueError("Unsupported file format for saving. Supported formats are: .html, .png, .jpg, .jpeg, .pdf, .svg")
+
+  if show:
+    pl.show()
