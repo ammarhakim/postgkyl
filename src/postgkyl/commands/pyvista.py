@@ -26,7 +26,7 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--no-spin", default=False, is_flag=True, help="Whether to continuously rotate the plot for a dynamic view.")
 @click.option("--max-points-per-axis", "--mppa", default=-1, type=int, help="Maximum number of points to plot along each axis (default: -1 for no downsampling).")
 @click.option("--logc", default=False, is_flag=True, help="Whether to use logarithmic scaling for the color mapping.")
-@click.option("--contour","-c", default=False, is_flag=True, help="Whether to display contour lines on the plot.")
+@click.option("--no-contour","-c", default=False, is_flag=True, help="Enables full volume rendering (expensive).")
 @click.option("--contour-levels", default=10, type=int, help="Number of contour levels to display (default: 10).")
 @click.option("--shaded", default=False, is_flag=True, help="Whether to use shaded rendering for the plot.")
 @click.option("--hide-axes", default=False, is_flag=True, help="Whether to hide the axes in the plot.")
@@ -71,7 +71,7 @@ def pyvista(ctx, **kwargs):
   kwargs["max_points_per_axis"] = kwargs["max_points_per_axis"]
   kwargs["contour_levels"] = kwargs["contour_levels"]
   kwargs["is_log"] = kwargs["logc"]
-  kwargs["is_contour"] = kwargs["contour"]
+  kwargs["is_contour"] = not kwargs["no_contour"]
   kwargs["is_shaded"] = kwargs["shaded"]
   kwargs["hide_axes"] = kwargs["hide_axes"]
   kwargs["mesh_clip_plane"] = kwargs["mesh_clip_plane"]
