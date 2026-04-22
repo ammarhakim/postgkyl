@@ -14,4 +14,5 @@ dependencies:
   - sympy>=1.12
   - plotly>=6.6.0
   - python-kaleido>=1.2.0
+  - pyvista>=0.47.3 # Must update when my bug gets patched: Also must fix this "Factor" and set to 1
   - h5py
