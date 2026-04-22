@@ -101,6 +101,8 @@ def pyvista(ctx, **kwargs):
   kwargs["diverging"] = kwargs["diverging"]
   kwargs["remove_zeros"] = kwargs["remove_zeros"]
   kwargs["cylindrical_to_cartesian"] = kwargs["cylindrical_to_cartesian"]
+  kwargs["theme"] = kwargs["theme"]
+  kwargs["saveas"] = kwargs["saveas"]
 
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     postgkyl.output.pyvista(dat, args, **kwargs)
