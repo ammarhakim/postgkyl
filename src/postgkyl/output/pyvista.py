@@ -39,7 +39,14 @@ def _centered_grid_3d(grid: list[np.ndarray], value_shape: tuple[int, int, int])
 
 
 def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
-    show: bool = True, spin: bool = True, max_points_per_axis: int = -1, contour_levels: int = 10, is_log: bool = False, is_contour: bool = True, is_shaded: bool = False, hide_axes: bool = False, mesh_clip_plane: bool = False, mesh_slice_plane: bool = False, volume_clip_plane: bool = False, cmin: float | None = None, cmax: float | None = None, aspect_ratio: Tuple[float, float, float] = (1, 1, 1), camera_azimuth: float = 0.0, camera_elevation: float = -30.0, background: str = "black", axes_color: str = "white", opacity: str | float = 'sigmoid_4', cmap: str = 'inferno', xlabel: str = 'X', ylabel: str = "Y", zlabel: str = "Z", clabel: str = "", title: str | None = "", diverging: bool = False, remove_zeros: bool = False, cylindrical_to_cartesian: bool = False, theme: str = "", saveas: str = "",
+    show: bool = True, spin: bool = True, max_points_per_axis: int = -1, contour_levels: int = 10,
+    is_log: bool = False, is_contour: bool = True, is_shaded: bool = False, hide_axes: bool = False, 
+    mesh_clip_plane: bool = False, mesh_slice_plane: bool = False, volume_clip_plane: bool = False, 
+    cmin: float | None = None, cmax: float | None = None, aspect_ratio: Tuple[float, float, float] = (1, 1, 1), 
+    camera_azimuth: float = 0.0, camera_elevation: float = -30.0, background: str = "black", axes_color: str = "white", 
+    opacity: str | float = 'sigmoid_4', cmap: str = 'inferno', xlabel: str = 'X', ylabel: str = "Y", zlabel: str = "Z", 
+    clabel: str = "", title: str | None = "", diverging: bool = False, remove_zeros: bool = False, 
+    cylindrical_to_cartesian: bool = False, theme: str = "", saveas: str = "",
     xscale: float = 1.0, yscale: float = 1.0, zscale: float = 1.0, xshift: float = 0.0, yshift: float = 0.0, zshift: float = 0.0,
     **kwargs):
   """ Description
@@ -54,7 +61,7 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   scalar = np.asarray(values[..., 0])
   x, y, z = _centered_grid_3d(grid, scalar.shape)
 
-  if diverging: #
+  if diverging:
     cmap = "RdBu_r"
 
   if cylindrical_to_cartesian:
