@@ -172,9 +172,6 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
               (ymax+yshift)*yscale*pv_bounds.y_max, 
               -(zmin+zshift)*zscale*pv_bounds.z_min, 
               (zmax+zshift)*zscale*pv_bounds.z_max)
-    
-    print(f"Bounds: {bounds}")
-
     pl.show_bounds(
       xtitle=xlabel,
       ytitle=ylabel,
