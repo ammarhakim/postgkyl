@@ -40,7 +40,7 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--camera-elevation", default=-30.0, type=float, help="Camera elevation angle in degrees (default: -30.0).")
 @click.option("--background", default="black", help="Background color for the plot (default: 'black').")
 @click.option("--axes-color", default="white", help="Color for the axes and labels (default: 'white').")
-@click.option("--opacity", default="sigmoid_4", callback=parse_opacity, help="Opacity for the volume rendering (string or float).") # pyvista also supports array inputs
+@click.option("--opacity", "-o", default="sigmoid_4", callback=parse_opacity, help="Opacity for the volume rendering (string or float).") # pyvista also supports array inputs
 @click.option("--cmap", default='inferno', help="Colormap to use for the plot (default: 'inferno').")
 @click.option("--xscale", default=1.0, type=float, help="Scaling factor for the X axis (default: 1.0).")
 @click.option("--yscale", default=1.0, type=float, help="Scaling factor for the Y axis (default: 1.0).")
@@ -58,7 +58,7 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--diverging", "-d", default=False, is_flag=True, help="Whether to use a diverging colormap (e.g., for data with both positive and negative values).")
 @click.option("--cylindrical-to-cartesian", default=False, is_flag=True, help="Whether to convert cylindrical coordinates (r, z, theta) to Cartesian coordinates (x, y, z) for plotting.")
 @click.option("--theme", default="default", help="PyVista theme to use for the plot (e.g., 'document', 'dark', 'light', etc.).")
-@click.option("--saveas", default="", help="Filename to save the plot (supports .html, .pdf, .svg, png, .jpg, .jpeg).")
+@click.option("--saveas", default="", help="Filename to save the plot (supports .html, .pdf, .svg, png, .jpg, .jpeg, .gltf).")
 
 @click.pass_context
 def pyvista(ctx, **kwargs):

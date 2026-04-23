@@ -38,7 +38,7 @@ def _centered_grid_3d(grid: list[np.ndarray], value_shape: tuple[int, int, int])
   return np.meshgrid(x_axis, y_axis, z_axis, indexing="ij")
 
 
-def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
+def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     show: bool = True, spin: bool = True, max_points_per_axis: int = -1, contour_levels: int = 10,
     is_log: bool = False, is_contour: bool = True, is_shaded: bool = False, hide_axes: bool = False, 
     mesh_clip_plane: bool = False, mesh_slice_plane: bool = False, volume_clip_plane: bool = False, 
@@ -72,6 +72,7 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
     y = r * np.sin(theta)
     z = z_cyl
 
+
   # Setting the aspect ratio. (1,1,1) is a cube
   xmax, xmin = np.max(x), np.min(x)
   ymax, ymin = np.max(y), np.min(y)
@@ -97,7 +98,7 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
     
   # end
 
-  off_screen = saveas.endswith((".png", ".jpg", ".jpeg"))
+  off_screen = saveas.endswith((".png", ".jpg", ".jpeg")) or not show
   pl = pv.Plotter(window_size=(1400, 900), off_screen=off_screen)
   grid3d = pv.StructuredGrid(x, y, z)
 
@@ -109,14 +110,14 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
   data = np.asarray(grid3d["f_raw"])
 
   colorbarformat = "%.2e"
+  clim = (cmin if cmin is not None else datamin, cmax if cmax is not None else datamax) 
   if is_log:
     data = np.log10(data)
     colorbarformat = "10^%.1f"
-    cmin, cmax = (np.log10(cmin) if cmin is not None else None, np.log10(cmax) if cmax is not None else None)
+    clim = (np.log10(np.min(np.abs(scalar))), np.log10(np.max(np.abs(scalar))))
   # end
   grid3d["f_plot"] = data
 
-  clim = (cmin if cmin is not None else datamin, cmax if cmax is not None else datamax) 
   scalar_bar_args = {"title": clabel, "fmt": colorbarformat}
 
   if is_contour:
@@ -215,6 +216,10 @@ def pyvista(data: GData | Tuple[list, np.ndarray], args: list = (),
       pl.screenshot(saveas) #, transparent_background=True)
     elif saveas.endswith(".gltf"):
       pl.export_gltf(saveas)
+    elif saveas.endswith(".vtksz"):
+      pl.export_vtksz(saveas)
+    elif saveas.endswith(".vts"):
+      grid3d.save(saveas)
     else:
       raise ValueError("Unsupported file format for saving. Supported formats are: .html, .png, .jpg, .jpeg, .pdf, .svg")
 
