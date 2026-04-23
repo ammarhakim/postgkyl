@@ -1244,4 +1244,4 @@ def plotly_animate(
   return base_fig
 
 
-__all__ = ["plotly", "plotly_animate"]
+__all__ = ["plotly", "plotly_animate", "save_rotating_plotly_figure"]
