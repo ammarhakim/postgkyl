@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 
-from postgkyl.utils import input_parser
+from postgkyl.utils import input_parser, get_cell_centered_grid
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
@@ -23,39 +23,6 @@ def pgkyl_colorbar(obj, fig : matplotlib.figure.Figure, cax : matplotlib.axes.Ax
   divider = make_axes_locatable(cax)
   cax2 = divider.append_axes("right", size="3%", pad=0.05)
   return fig.colorbar(obj, cax=cax2, label=label or "", extend=extend)
-
-
-def _get_nodal_grid(grid : list, cells: np.ndarray):
-  num_dims = len(grid)
-  grid_out = []
-  if num_dims != len(cells):  # sanity check
-    raise ValueError("Number dimensions for 'grid' and 'values' doesn't match")
-  # end
-  for d in range(num_dims):
-    if len(grid[d].shape) == 1:
-      if grid[d].shape[0] == cells[d]:
-        grid_out.append(grid[d])
-      elif grid[d].shape[0] == cells[d] + 1:
-        grid_out.append(0.5 * (grid[d][:-1] + grid[d][1:]))
-      else:
-        raise ValueError("Something is terribly wrong...")
-      # end
-    else:
-      if grid[d].shape[d] == cells[d]:
-        grid_out.append(grid[d])
-      elif grid[d].shape[d] == cells[d] + 1:
-        if num_dims == 1:
-          grid_out.append(0.5 * (grid[d][:-1] + grid[d][1:]))
-        else:
-          grid_out.append(0.5 * (grid[d][:-1, :-1] + grid[d][1:, 1:]))
-        # end
-      else:
-        raise ValueError("Something is terribly wrong...")
-      # end
-    # end
-  # end
-  return grid_out
-
 
 def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
     figure: int | matplotlib.figure.Figure | str | None = None,
@@ -340,7 +307,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
     label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
 
     if num_dims == 1:
-      nodal_grid = _get_nodal_grid(grid, cells)
+      nodal_grid = get_cell_centered_grid(grid, cells)
       x = (nodal_grid[0] + xshift)*xscale
       y = (values[..., comp] + yshift)*yscale
       im = cax.plot(x, y, *args, color=color, label=label, markersize=markersize)
@@ -365,7 +332,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         if isinstance(levels, np.ndarray) and len(levels) == 1:
           colorbar = False
         # end
-        nodal_grid = _get_nodal_grid(grid, cells)
+        nodal_grid = get_cell_centered_grid(grid, cells)
         x = (nodal_grid[0] + xshift) * xscale
         y = (nodal_grid[1] + yshift) * yscale
         z = (values[..., comp].transpose() + zshift) * zscale
@@ -377,7 +344,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
       elif quiver:  # ----------------------------------------------------
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
-        nodal_grid = _get_nodal_grid(grid, cells)
+        nodal_grid = get_cell_centered_grid(grid, cells)
         if len(nodal_grid[0].shape) == 1:
           x = (nodal_grid[0][skip2::skip] + xshift)*xscale
           y = (nodal_grid[1][skip2::skip] + yshift)*yscale
@@ -398,7 +365,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
               values[..., 2 * comp]**2 + values[..., 2 * comp + 1]**2
           ).transpose()
         # end
-        nodal_grid = _get_nodal_grid(grid, cells)
+        nodal_grid = get_cell_centered_grid(grid, cells)
         x = (nodal_grid[0] + xshift)*xscale
         y = (nodal_grid[1] + yshift)*yscale
         z1 = (values[..., 2 * comp].transpose() + zshift)*zscale
@@ -408,7 +375,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
 
       elif lineouts is not None:  # -------------------------------------
         num_lines = values.shape[1] if lineouts == 0 else values.shape[0]
-        nodal_grid = _get_nodal_grid(grid, cells)
+        nodal_grid = get_cell_centered_grid(grid, cells)
 
         if lineouts == 0:
           x = (nodal_grid[0] + xshift)*xscale
@@ -452,7 +419,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         y = (grid[1] + yshift)*yscale
         z = (values[..., comp].transpose() + zshift)*zscale
         if len(x) == z.shape[1] or len(y) == z.shape[0]:
-          nodal_grid = _get_nodal_grid(grid, cells)
+          nodal_grid = get_cell_centered_grid(grid, cells)
           x = (nodal_grid[0] + xshift)*xscale
           y = (nodal_grid[1] + yshift)*yscale
         # end

@@ -13,7 +13,7 @@ import os.path
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from postgkyl.utils import input_parser
+from postgkyl.utils import input_parser, downsample_3d_data, get_cell_centered_grid
 from postgkyl.data.idx_parser import idx_parser as parse_idx
 from postgkyl.data.select import select as data_select
 if TYPE_CHECKING:
@@ -69,18 +69,13 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
     # end
   # end
 
-  cmap_name = None
-  if bool(cmap):
+  cmap_name = "inferno"
+  if cmap is not None:
     cmap_name = cmap
   elif bool(diverging):
     cmap_name = "RdBu_r"
-  else:
-    cmap_name = "inferno"
   # end
-
-  if cmap_name is not None:
-    mpl.rcParams["image.cmap"] = cmap_name
-  # end
+  mpl.rcParams["image.cmap"] = cmap_name
 
   if invert_cmap:
     current_cmap = mpl.rcParams["image.cmap"]
@@ -97,8 +92,8 @@ def _apply_plot_style(style: str | None, rcParams: dict | None, diverging: bool,
 
   return theme_colors
 
-
 def _plotly_colorscale(cmap_name: str, n: int = 256):
+  """Convert a Matplotlib colormap to a Plotly colorscale."""
   cmap = mpl.colormaps.get_cmap(cmap_name).resampled(n)
   xs = np.linspace(0.0, 1.0, n)
   colorscale = []
@@ -109,8 +104,18 @@ def _plotly_colorscale(cmap_name: str, n: int = 256):
   return colorscale
 
 
-def _scatter_opacity_colorscale(colorscale, min_alpha: float, max_alpha: float,
+def _opacity_mapping(colorscale, min_alpha: float, max_alpha: float,
     log_scale: bool = False):
+  """Modify a Plotly colorscale to apply a custom opacity mapping.
+  
+  This applies a linear mapping of opacity over the range [min_alpha, max_alpha].
+
+  Args:
+    colorscale: A Plotly colorscale (list of [stop, color] pairs)
+    min_alpha: Minimum opacity (0.0 to 1.0)
+    max_alpha: Maximum opacity (0.0 to 1.0)
+    log_scale: Applies the opacity mapping in log space if True
+  """
   min_a = float(np.clip(min_alpha, 0.0, 1.0))
   max_a = float(np.clip(max_alpha, 0.0, 1.0))
   if max_a < min_a:
@@ -121,7 +126,6 @@ def _scatter_opacity_colorscale(colorscale, min_alpha: float, max_alpha: float,
   for stop, color in colorscale:
     stop_value = float(stop)
     if log_scale:
-      # Concave mapping: emphasize alpha changes near low values and flatten near high values.
       mapped_stop = np.log10(1.0 + 99.0 * stop_value) / np.log10(100.0)
     else:
       mapped_stop = stop_value
@@ -143,6 +147,7 @@ def _scatter_opacity_colorscale(colorscale, min_alpha: float, max_alpha: float,
 
 
 def _finite_range(values: np.ndarray) -> tuple[float, float]:
+  """Return the finite minimum and maximum of a NumPy array, ignoring NaNs and infinities."""
   finite = np.isfinite(values)
   if np.any(finite):
     finite_values = values[finite]
@@ -153,31 +158,22 @@ def _finite_range(values: np.ndarray) -> tuple[float, float]:
 
 def _axis_range(values: np.ndarray, axis_range: tuple[float, float] | None,
     log_axis: bool = False) -> list[float] | None:
+  """Determine the axis range for a colorbar or z-axis based on the data and user input."""
   if axis_range is None:
     lower, upper = _finite_range(values)
   else:
     lower, upper = axis_range
   # end
 
-  if not np.isfinite(lower) or not np.isfinite(upper):
-    return None
-  # end
-
   if log_axis:
-    lower = np.log10(max(lower, np.finfo(float).tiny))
-    upper = np.log10(max(upper, np.finfo(float).tiny))
+    lower = np.log10(lower)
+    upper = np.log10(upper)
   # end
-
-  if lower == upper:
-    padding = 1.0 if lower == 0.0 else abs(lower) * 0.05
-    lower -= padding
-    upper += padding
-  # end
-
   return [lower, upper]
 
 
-def _log_colorbar_ticks(log_min: float, log_max: float, max_ticks: int = 8) -> tuple[list[float], list[str]]:
+def _log_colorbar_ticks(log_min: float, log_max: float, max_ticks: int = 7) -> tuple[list[float], list[str]]:
+  """Generate tick values and text for a logarithmic colorbar."""
   if not np.isfinite(log_min) or not np.isfinite(log_max):
     return [], []
   # end
@@ -192,18 +188,25 @@ def _log_colorbar_ticks(log_min: float, log_max: float, max_ticks: int = 8) -> t
   step = max(1, int(np.ceil(count / max_ticks)))
   tick_vals = list(range(lo, hi + 1, step))
 
-  # Ensure the upper bound appears as a tick label.
+  # Ensure the upper and lower bound appears as a tick label.
   if tick_vals[-1] != hi:
     tick_vals.append(hi)
   # end
-
+  if tick_vals[0] != lo:
+    tick_vals.insert(0, lo)
+  #
   tick_text = [f"10<sup>{val:d}</sup>" for val in tick_vals]
   return [float(v) for v in tick_vals], tick_text
 
 
-def _resolve_plotly_aspect(aspect: str | float | None, fixaspect: bool) -> tuple[str, dict | None]:
+def _resolve_plotly_aspect(aspect: str | float | None) -> tuple[str, dict | None]:
+  """Resolve the aspect ratio setting for Plotly 3D scenes.
+  
+  Plotly's aspectmode can be "auto", "data", "cube", or "manual". This function translates user-friendly aspect settings into the appropriate Plotly configuration.
+  When aspect is a float, it is treated as a uniform scaling factor for all axes in "manual" mode.
+  """
   if aspect is None:
-    return ("cube", None) if fixaspect else ("auto", None)
+    return ("auto", None)
   # end
 
   if isinstance(aspect, str):
@@ -586,26 +589,12 @@ startRotation();
     print()
 
     if ext == ".mp4":
-      ffmpeg_cmd = [
-          "ffmpeg",
-          "-y",
-          "-framerate",
-          str(fps),
-          "-i",
-          frame_pattern,
-          "-pix_fmt",
-          "yuv420p",
-          file_name,
+      ffmpeg_cmd = ["ffmpeg","-y","-framerate",str(fps),"-i",
+          frame_pattern,"-pix_fmt","yuv420p",file_name,
       ]
     else:
-      ffmpeg_cmd = [
-          "ffmpeg",
-          "-y",
-          "-framerate",
-          str(fps),
-          "-i",
-          frame_pattern,
-          "-vf",
+      ffmpeg_cmd = ["ffmpeg","-y","-framerate",str(fps),
+          "-i",frame_pattern,"-vf",
           "split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
           file_name,
       ]
@@ -644,73 +633,11 @@ def _prepare_2d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
   # end
   return arrays[0], arrays[1]
 
-
-def _resolve_slice_plane_index(axis_grid: np.ndarray, selector: int | float, axis_cells: int) -> int:
-  axis_values = np.asarray(axis_grid)
-  if axis_values.ndim == 1:
-    len_grid = axis_values.shape[0]
-  else:
-    len_grid = axis_cells
-  # end
-
-  is_matching = axis_cells == len_grid
-  axis_index = parse_idx(selector, axis_values, is_matching)
-  if not isinstance(axis_index, int):
-    raise TypeError("Slice selectors must resolve to a single axis index")
-  # end
-
-  if axis_index < 0:
-    axis_index = axis_cells + axis_index
-  # end
-  if axis_index < 0 or axis_index >= axis_cells:
-    raise IndexError(f"Slice selector index {axis_index:d} is out of range for axis size {axis_cells:d}")
-  # end
-  return axis_index
-
-
-def _downsample_3d_volume(
-    x: np.ndarray,
-    y: np.ndarray,
-    z: np.ndarray,
-    value: np.ndarray,
-    maximum_points_per_axis: int = 0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-  """Downsample 3D arrays so no axis exceeds the configured maximum."""
-  if value.ndim != 3:
-    return x, y, z, value
-  # end
-
-  if maximum_points_per_axis is None or maximum_points_per_axis <= 0:
-    return x, y, z, value
-  # end
-
-  steps = [max(1, int(np.ceil(size / maximum_points_per_axis))) for size in value.shape]
-  if max(steps) == 1:
-    return x, y, z, value
-  # end
-
-  def _axis_indices(size: int, step: int) -> np.ndarray:
-    idx = np.arange(0, size, step, dtype=int)
-    if idx[-1] != size - 1:
-      idx = np.append(idx, size - 1)
-    # end
-    return idx
-
-  idx0 = _axis_indices(value.shape[0], steps[0])
-  idx1 = _axis_indices(value.shape[1], steps[1])
-  idx2 = _axis_indices(value.shape[2], steps[2])
-
-  def _take_indices(arr: np.ndarray) -> np.ndarray:
-    out = np.take(arr, idx0, axis=0)
-    out = np.take(out, idx1, axis=1)
-    out = np.take(out, idx2, axis=2)
-    return out
-
-  return _take_indices(x), _take_indices(y), _take_indices(z), _take_indices(value)
-
-
 def _latex_to_html(text: str) -> str:
-  """Convert LaTeX subscripts and Greek letters to HTML."""
+  """Convert LaTeX subscripts and Greek letters to HTML.
+  
+  Plotly does not support LaTeX, but does support HTML, so this function converts common LaTeX syntax to HTML equivalents.
+  """
   if not text:
     return text
   text = text.strip()
@@ -773,44 +700,6 @@ def _latex_to_html(text: str) -> str:
   return text
 
 
-def _get_nodal_grid(grid : list, cells: np.ndarray):
-  num_dims = len(grid)
-  grid_out = []
-  if num_dims != len(cells):  # sanity check
-    raise ValueError("Number dimensions for 'grid' and 'values' doesn't match")
-  # end
-  for d in range(num_dims):
-    if len(grid[d].shape) == 1:
-      if grid[d].shape[0] == cells[d]:
-        grid_out.append(grid[d])
-      elif grid[d].shape[0] == cells[d] + 1:
-        grid_out.append(0.5 * (grid[d][:-1] + grid[d][1:]))
-      else:
-        raise ValueError("Something is terribly wrong...")
-      # end
-    else:
-      if grid[d].shape[d] == cells[d]:
-        grid_out.append(grid[d])
-      elif grid[d].shape[d] == cells[d] + 1:
-        if num_dims == 1:
-          grid_out.append(0.5 * (grid[d][:-1] + grid[d][1:]))
-        else:
-          cell_shape = tuple(int(s - 1) for s in grid[d].shape)
-          grid_avg = np.zeros(cell_shape, dtype=np.result_type(grid[d], float))
-          for offset in product((0, 1), repeat=num_dims):
-            sl = tuple(slice(o, o + cell_shape[i]) for i, o in enumerate(offset))
-            grid_avg += grid[d][sl]
-          # end
-          grid_out.append(grid_avg / (2 ** num_dims))
-        # end
-      else:
-        raise ValueError("Something is terribly wrong...")
-      # end
-    # end
-  # end
-  return grid_out
-
-
 def plotly(data: GData | Tuple[list, np.ndarray],
     squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
@@ -826,7 +715,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     legend: bool = True, label_prefix: str = "", colorbar: bool = True,
     xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None, clabel: str | None = None, title: str | None = None,
     logx: bool = False, logy: bool = False, logz: bool = False, logc: bool = False,
-    fixaspect: bool = False, aspect: str | float | None = None,
+    aspect: str | float | None = None,
     showgrid: bool = True, hashtag: bool = False, xkcd: bool = False,
     color: str | None = None,
     opacity: float | None = 1.0,
@@ -836,7 +725,6 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     surface_count: int = 32,
     xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
     zrange: tuple[float, float] | None = None,
-    slice_plane: dict[str, int | float | list[int | float] | tuple[int | float, ...]] | None = None,
     figsize: tuple | None = None,
     cylindrical_to_cartesian: bool = False,
     cmap: str | None = None):
@@ -872,15 +760,12 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     cells = data.get_num_cells()
   # end
 
-  surface_mode = num_dims == 2
+  surface_mode = (num_dims == 2)
   if num_dims not in (2, 3):
     raise ValueError("plotly handles only 2D surface data or 3D volumetric data")
   # end
   if surface_mode and scatter:
     raise ValueError("Surface plots do not support scatter mode")
-  # end
-  if surface_mode and slice_plane:
-    raise ValueError("Surface plots do not support slice overlays")
   # end
 
   axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
@@ -964,32 +849,6 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     font=dict(color=text_color),
   )
 
-  slice_planes: list[tuple[int, int | float, list[np.ndarray], np.ndarray]] = []
-  if slice_plane:
-    if isinstance(data, tuple):
-      raise ValueError("slice_plane rendering requires GData input")
-    # end
-    for axis_key in ("z0", "z1", "z2"):
-      if axis_key not in slice_plane:
-        continue
-      # end
-      slice_axis = int(axis_key[1:])
-      axis_values = slice_plane[axis_key]
-      if isinstance(axis_values, (list, tuple, np.ndarray)):
-        selector_values = list(axis_values)
-      else:
-        selector_values = [axis_values]
-      # end
-      for axis_value in selector_values:
-        slice_grid, slice_values = data_select(data, **{axis_key: axis_value})
-        slice_planes.append((slice_axis, axis_value, slice_grid, slice_values))
-      # end
-    # end
-    if not slice_planes:
-      raise ValueError("3D slicing only supports z0, z1, or z2")
-    # end
-  # end
-
   colorbar_kwargs = dict(
     title=dict(text=clabel or "", font=dict(color=text_color)),
     exponentformat="e",
@@ -1006,7 +865,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     row = 1 if grid_shape == (1, 1) else int(comp_idx / grid_shape[1]) + 1
     col = 1 if grid_shape == (1, 1) else int(comp_idx % grid_shape[1]) + 1
     label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
-    nodal_grid = _get_nodal_grid(grid, cells)
+    cc_grid = get_cell_centered_grid(grid, cells)
     value = np.asarray(values[..., comp]) * zscale + zshift
     color_value = value * cscale + cshift
     render_color_value = np.array(color_value, copy=True)
@@ -1022,12 +881,12 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     # end
 
     if surface_mode:
-      x_grid, y_grid = _prepare_2d_coordinates(nodal_grid, value.shape)
+      x_grid, y_grid = _prepare_2d_coordinates(cc_grid, value.shape)
       x = (np.asarray(x_grid) + xshift) * xscale
       y = (np.asarray(y_grid) + yshift) * yscale
       z = np.asarray(value)
     else:
-      x_grid, y_grid, z_grid = _prepare_3d_coordinates(nodal_grid, value.shape)
+      x_grid, y_grid, z_grid = _prepare_3d_coordinates(cc_grid, value.shape)
       x_coord = np.asarray(x_grid)
       y_coord = np.asarray(y_grid)
       z_coord = np.asarray(z_grid)
@@ -1048,7 +907,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     y_axis_range = _axis_range(y, yrange, logy)
     z_axis_range = _axis_range(z, zrange, logz)
     
-    scene_aspectmode, scene_aspectratio = _resolve_plotly_aspect(aspect, fixaspect)
+    scene_aspectmode, scene_aspectratio = _resolve_plotly_aspect(aspect)
 
     scene = dict(
       xaxis=dict(
@@ -1078,7 +937,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     )
     fig.update_layout(**{scene_name: scene})
 
-    # Determine color range (same for both slice and volume rendering)
+    # Determine color range
     if diverging:
       cmax_val = float(np.nanmax(np.abs(color_value)))
       cmin_val = -cmax_val
@@ -1147,11 +1006,6 @@ def plotly(data: GData | Tuple[list, np.ndarray],
           showlegend=legend and bool(label),
       )
       trace_list = [surface_trace]
-    elif slice_planes and not scatter:
-      render_color_value = np.array(color_value, copy=True)
-      render_x, render_y, render_z = x, y, z
-      volume_opacity_scale = [[0.0, 0.0], [0.5, 0.2], [1.0, 0.75]]
-      show_volume_colorbar = False
     else:
       render_color_value = np.array(color_value, copy=True)
       if logz:
@@ -1205,7 +1059,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     # end
 
     if not surface_mode and scatter:
-      render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
+      render_x, render_y, render_z, render_color_value = downsample_3d_data(
         render_x, render_y, render_z, render_color_value,
         maximum_points_per_axis=maximum_points_per_axis,
       )
@@ -1214,7 +1068,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
       scatter_opacity = opacity
       if not bool(color) and scatter_opacity_range is not None:
         min_alpha, max_alpha = scatter_opacity_range
-        scatter_colorscale = _scatter_opacity_colorscale(
+        scatter_colorscale = _opacity_mapping(
             trace_colorscale,
             min_alpha=min_alpha,
             max_alpha=max_alpha,
@@ -1243,76 +1097,8 @@ def plotly(data: GData | Tuple[list, np.ndarray],
         showlegend=legend and bool(label),
       )
       trace_list = [trace]
-    elif not surface_mode and slice_planes:
-      xv, yv, zv, render_color_value = _downsample_3d_volume(
-          render_x, render_y, render_z, render_color_value,
-          maximum_points_per_axis=maximum_points_per_axis,
-      )
-
-      volume_trace = go.Volume(
-          x=xv.ravel(), y=yv.ravel(), z=zv.ravel(), value=render_color_value.ravel(),
-          colorscale=trace_colorscale,
-          cmin=cmin_val,
-          cmax=cmax_val,
-          opacity=opacity,
-          opacityscale=volume_opacity_scale,
-          surface_count=surface_count,
-          showscale=False,
-          name=(label or f"c{comp}") + "_volume",
-          showlegend=False,
-      )
-      trace_list = [volume_trace]
-
-      for plane_idx, (slice_axis, slice_selector, slice_grid, slice_values) in enumerate(slice_planes):
-        slice_value = np.squeeze(np.asarray(slice_values[..., comp])) * zscale + zshift
-        slice_color_value = slice_value * cscale + cshift
-
-        if logc:
-          log_slice = np.full(slice_color_value.shape, np.nan, dtype=float)
-          valid_mask = slice_color_value > 0
-          log_slice[valid_mask] = np.log10(slice_color_value[valid_mask])
-          slice_color_value = np.nan_to_num(
-              log_slice,
-              nan=cmin_val,
-              posinf=cmax_val,
-              neginf=cmin_val,
-          )
-        # end
-
-        plane_index = _resolve_slice_plane_index(grid[slice_axis], slice_selector, value.shape[slice_axis])
-        if slice_axis == 0:
-          sx = x[plane_index, :, :]
-          sy = y[plane_index, :, :]
-          sz = z[plane_index, :, :]
-        elif slice_axis == 1:
-          sx = x[:, plane_index, :]
-          sy = y[:, plane_index, :]
-          sz = z[:, plane_index, :]
-        else:
-          sx = x[:, :, plane_index]
-          sy = y[:, :, plane_index]
-          sz = z[:, :, plane_index]
-        # end
-        sc = np.asarray(slice_color_value)
-
-        surface_trace = go.Surface(
-            x=sx,
-            y=sy,
-            z=sz,
-            surfacecolor=sc,
-            colorscale=scalar_colorscale,
-          cmin=cmin_val,
-          cmax=cmax_val,
-            showscale=colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0,
-          colorbar=trace_colorbar_kwargs if colorbar and comp_idx == 0 and not bool(color) and plane_idx == 0 else None,
-            opacity=opacity,
-            name=(label or f"c{comp}") + f"_slice{plane_idx}",
-            showlegend=legend and bool(label) and plane_idx == 0,
-        )
-        trace_list.append(surface_trace)
-      # end
     elif not surface_mode:
-      render_x, render_y, render_z, render_color_value = _downsample_3d_volume(
+      render_x, render_y, render_z, render_color_value = downsample_3d_data(
           render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,
       )
@@ -1355,7 +1141,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
   return fig
 
 
-def animate3d(
+def plotly_animate(
     data_sequence: list[GData | Tuple[list, np.ndarray]],
     frame_labels: list[str] | None = None,
     frame_duration: int = 50,
@@ -1366,7 +1152,7 @@ def animate3d(
 ):
   """Build a Plotly 3D animation figure from a sequence of datasets."""
   if not data_sequence:
-    raise ValueError("animate3d requires at least one dataset")
+    raise ValueError("plotly-animate requires at least one dataset")
   # end
 
   base_fig = plotly(data_sequence[0], **plot_kwargs)
@@ -1458,4 +1244,4 @@ def animate3d(
   return base_fig
 
 
-__all__ = ["plotly", "animate3d", "save_rotating_plotly_figure"]
+__all__ = ["plotly", "plotly_animate"]

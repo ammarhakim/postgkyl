@@ -17,7 +17,7 @@ def _parse_range_option(_ctx, _param, value):
   return (float(parts[0]), float(parts[1]))
 
 
-@click.command(name="animate3d")
+@click.command(name="plotly-animate")
 @click.option("--use", "-u", default=None, help="Tag to animate from the active dataset stack.")
 @click.option("--squeeze", is_flag=True, help="Draw all components in a single 3D scene.")
 @click.option("--subplots", "-b", is_flag=True, help="Draw components in separate 3D subplots.")
@@ -46,8 +46,6 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
     help="3D scene background theme.")
 @click.option("-d", "--diverging", is_flag=True, help="Use a diverging colorscale.")
-@click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
-    help="Use equal scaling on x/y/z axes.")
 @click.option("--aspect", default=None,
     help="Aspect mode: auto, data, cube, or a numeric uniform ratio.")
 @click.option("--logx", is_flag=True, help="Use log scaling on x axis.")
@@ -117,16 +115,12 @@ def _parse_range_option(_ctx, _param, value):
 @click.option("--cylindrical-to-cartesian", is_flag=True,
   help="Interpret (z0, z1, z2) as (R, Z, phi) and convert to Cartesian (x, y, z).")
 @click.pass_context
-def animate3d(ctx, **kwargs):
+def plotly_animate(ctx, **kwargs):
   """Animate active 2D/3D datasets with Plotly frames and playback controls."""
-  verb_print(ctx, "Starting animate3d")
+  verb_print(ctx, "Starting plotly-animate")
   plot_output_module = importlib.import_module("postgkyl.output.plotly")
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
-
-  if kwargs["aspect"]:
-    kwargs["fixaspect"] = True
-  # end
 
   supported_dims = (2, 3)
 
@@ -199,7 +193,7 @@ def animate3d(ctx, **kwargs):
       "cscale", "cshift", "cmin", "cmax", "clim",
       "background", "invert_cmap", "legend", "colorbar", "label_prefix",
       "xlabel", "ylabel", "zlabel", "clabel", "title",
-      "logx", "logy", "logz", "logc", "fixaspect", "aspect",
+      "logx", "logy", "logz", "logc", "aspect",
       "showgrid", "hashtag", "xkcd", "color", "linewidth", "opacity",
       "scatter_opacity_range", "scatter_opacity_log",
       "maximum_points_per_axis", "surface_count",
@@ -212,7 +206,7 @@ def animate3d(ctx, **kwargs):
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     if dat.get_num_dims() not in supported_dims:
       raise click.ClickException(
-          f"animate3d only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
+          f"plotly-animate only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
       )
     # end
     data_sequence.append(dat)
@@ -226,7 +220,7 @@ def animate3d(ctx, **kwargs):
   # end
 
   if not data_sequence:
-    raise click.ClickException("No datasets found for animate3d.")
+    raise click.ClickException("No datasets found for plotly-animate.")
   # end
 
   plot_kwargs = {key: kwargs[key] for key in render_kwarg_keys if key in kwargs}
@@ -239,7 +233,7 @@ def animate3d(ctx, **kwargs):
     plot_kwargs["label_prefix"] = ""
   # end
 
-  fig = plot_output_module.animate3d(
+  fig = plot_output_module.plotly_animate(
       data_sequence,
       frame_labels=frame_labels,
       frame_duration=frame_duration,
@@ -252,9 +246,9 @@ def animate3d(ctx, **kwargs):
   if kwargs["saveas"]:
     out_name = kwargs["saveas"]
   elif kwargs["save"]:
-    out_name = "animate3d.html"
+    out_name = "plotly-animate.html"
   else:
-    out_name = os.path.join(tempfile.gettempdir(), "animate3d_preview.html")
+    out_name = os.path.join(tempfile.gettempdir(), "plotly-animate_preview.html")
   # end
 
   if not str(out_name).lower().endswith(".html"):
@@ -267,4 +261,4 @@ def animate3d(ctx, **kwargs):
     webbrowser.open(Path(out_name).resolve().as_uri())
   # end
 
-  verb_print(ctx, "Finishing animate3d")
+  verb_print(ctx, "Finishing plotly-animate")

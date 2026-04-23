@@ -17,23 +17,6 @@ def _parse_range_option(_ctx, _param, value):
   parts = [part.strip() for part in str(value).replace(":", ",").split(",") if part.strip()]
   return (float(parts[0]), float(parts[1]))
 
-def _parse_slice_option(_ctx, _param, value):
-  if value is None:
-    return None
-  # end
-  tokens = [token.strip() for token in str(value).split(",") if token.strip()]
-  selectors = []
-  for token in tokens:
-    token_lower = token.lower()
-    if "." in token_lower or "e" in token_lower:
-      selectors.append(float(token))
-    else:
-      selectors.append(int(token))
-    # end
-  # end
-  return selectors
-
-
 @click.command(name="plotly")
 @click.option("--use", "-u", default=None, help="Tag to plot from the active dataset stack.")
 @click.option("--squeeze", is_flag=True, help="Draw all components in a single 3D scene.")
@@ -51,7 +34,7 @@ def _parse_slice_option(_ctx, _param, value):
 ]), default="circle", show_default=True,
   help="Marker shape for scatter points.")
 @click.option("-o", "--opacity", type=click.FLOAT, default=1.0, show_default=True,
-    help="Volume and slice opacity in [0, 1].")
+    help="Volume and contour opacity in [0, 1].")
 @click.option("--scatter-opacity-range", type=click.STRING, callback=_parse_range_option, default=None,
   help="Scatter alpha range as 'min,max' (or 'min:max'); enables opacity-gradient colorscale only when set.")
 @click.option("--scatter-opacity-log/--no-scatter-opacity-log", default=False, show_default=True,
@@ -63,8 +46,6 @@ def _parse_slice_option(_ctx, _param, value):
 @click.option("--background", type=click.Choice(["dark", "light"]), default="dark", show_default=True,
     help="3D scene background theme.")
 @click.option("-d", "--diverging", is_flag=True, help="Use a diverging colorscale.")
-@click.option("--fix-aspect", "-a", "fixaspect", is_flag=True,
-    help="Use equal scaling on x/y/z axes.")
 @click.option("--aspect", default=None,
     help="Aspect mode: auto, data, cube, or a numeric uniform ratio.")
 @click.option("--logx", is_flag=True, help="Use log scaling on x axis.")
@@ -87,12 +68,6 @@ def _parse_slice_option(_ctx, _param, value):
     help="Multiplicative scale for scalar values before coloring.")
 @click.option("--cscale", default=1.0, type=click.FLOAT, show_default=True,
     help="Multiplicative scale for color-mapped values.")
-@click.option("--slice-at-z0", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Slice selectors along z0: comma-separated, ints=index, floats=coordinate.")
-@click.option("--slice-at-z1", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Slice selectors along z1: comma-separated, ints=index, floats=coordinate.")
-@click.option("--slice-at-z2", type=click.STRING, callback=_parse_slice_option, default=None,
-    help="Slice selectors along z2: comma-separated, ints=index, floats=coordinate.")
 @click.option("--xlim", default=None, type=click.STRING, callback=_parse_range_option,
     help="x-axis limits as 'lower,upper' (or 'lower:upper').")
 @click.option("--ylim", default=None, type=click.STRING, callback=_parse_range_option,
@@ -187,43 +162,7 @@ def plotly(ctx, **kwargs):
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
-  if kwargs["aspect"]:
-    kwargs["fixaspect"] = True
-  # end
-
   supported_dims = (2, 3)
-
-  slice_kwargs = {}
-  for d in range(3):
-    slice_selectors = kwargs.pop(f"slice_at_z{d}")
-    if slice_selectors is not None:
-      slice_kwargs[f"z{d}"] = slice_selectors
-    # end
-  # end
-
-  def _get_slice_kwargs_for_data(dat):
-    if not slice_kwargs:
-      return {}
-    # end
-
-    num_dims = dat.get_num_dims()
-    if num_dims != 3:
-      raise click.ClickException("Slice overlays are only supported for 3D datasets in plotly.")
-    # end
-
-    resolved = {}
-    for key, selectors in slice_kwargs.items():
-      axis = int(key[1:])
-      if axis >= num_dims:
-        raise click.ClickException(
-            f"Cannot use --slice-at-{key} on a {num_dims:d}D dataset."
-        )
-      # end
-      if selectors:
-        resolved[key] = selectors
-      # end
-    # end
-    return resolved
 
   kwargs["num_axes"] = None
   if kwargs["subplots"]:
@@ -297,11 +236,11 @@ def plotly(ctx, **kwargs):
       "cscale", "cshift", "cmin", "cmax", "clim",
       "background", "invert_cmap", "legend", "colorbar", "label_prefix",
       "xlabel", "ylabel", "zlabel", "clabel", "title",
-      "logx", "logy", "logz", "logc", "fixaspect", "aspect",
+      "logx", "logy", "logz", "logc", "aspect",
       "showgrid", "hashtag", "xkcd", "color", "linewidth", "opacity",
       "scatter_opacity_range", "scatter_opacity_log",
       "maximum_points_per_axis", "surface_count",
-      "xrange", "yrange", "zrange", "slice_plane", "figsize",
+      "xrange", "yrange", "zrange", "figsize",
         "cmap", "cylindrical_to_cartesian", "rcParams",
   }
 
@@ -324,9 +263,6 @@ def plotly(ctx, **kwargs):
     # end
 
     plot_kwargs = {key: kwargs[key] for key in render_kwarg_keys if key in kwargs}
-    if slice_kwargs:
-      plot_kwargs["slice_plane"] = _get_slice_kwargs_for_data(dat)
-    # end
     plot_kwargs["label_prefix"] = label
 
     fig = plot_output_module.plotly(dat, **plot_kwargs)

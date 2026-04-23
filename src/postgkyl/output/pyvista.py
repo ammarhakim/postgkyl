@@ -9,8 +9,7 @@ from click import Tuple
 import numpy as np
 import postgkyl as pg
 import pyvista as pv
-from postgkyl.output.plotly import _downsample_3d_volume
-from postgkyl.utils import input_parser
+from postgkyl.utils import input_parser, downsample_3d_data
 
 def _cell_centered_axis(axis_values: np.ndarray, n_cells: int) -> np.ndarray:
   """Return a cell-centered axis from nodal or centered coordinates."""
@@ -88,7 +87,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
   z = (z - zmin) / z_range * aspect_ratio[2] * 2 - aspect_ratio[2]
 
   # Downsampling can speed up rendering
-  x, y, z, scalar = _downsample_3d_volume(x,y,z,
+  x, y, z, scalar = downsample_3d_data(x,y,z,
       scalar, maximum_points_per_axis=max_points_per_axis)
 
   if opacity == "diverging":

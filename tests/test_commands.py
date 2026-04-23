@@ -165,11 +165,11 @@ class TestCommands:
     assert fn.exists()
 
 
-  def test_animate3d_save(self, tmp_path):
+  def test_plotly_animate_save(self, tmp_path):
     self.ctx.invoke(cmd.load)
     self.ctx.invoke(cmd.load)
     fn = tmp_path / "test_anim3d.html"
-    self.ctx.invoke(cmd.animate3d, show=False, saveas=fn)
+    self.ctx.invoke(cmd.plotly_animate, show=False, saveas=fn)
     self.ctx.obj['data'].clean()
     self.ctx.obj["in_data_strings_loaded"] = 0
     assert fn.exists()
