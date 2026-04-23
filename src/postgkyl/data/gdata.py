@@ -461,7 +461,7 @@ class GData(object):
   def write(self, out_name: str = "",
       extension: Literal["gkyl", "bp", "txt", "npy"] = "gkyl",
       mode: str = "", var_name: str = "", append: bool = False,
-      cleaning: bool = True) -> None:
+      cleaning: bool = True, norm_axes: bool = False) -> None:
     """Writes data in a file.
 
     The available formats are Gkeyll .gkyl (default), ADIOS .bp file, ASCII .txt file,
@@ -478,6 +478,8 @@ class GData(object):
         Allows for writing multiple datasets into one file.
       cleaning: bool = True
         Remove temporary files after writing.
+      norm_axes: bool = False
+        Normalize axes to [-1, 1] for VTK output.
 
     Returns:
       None
@@ -623,14 +625,22 @@ class GData(object):
         Z = fval
       elif num_dims == 2:
         fval = values.squeeze()
-        X = n_grid[0]
-        Y = n_grid[1]
+        x = n_grid[0]
+        y = n_grid[1]
+        X, Y = np.meshgrid(x, y, indexing="ij")
         Z = fval
       elif num_dims == 3:
         fval = values.squeeze()
-        X = n_grid[0]
-        Y = n_grid[1]
-        Z = n_grid[2]
+        x = n_grid[0]
+        y = n_grid[1]
+        z = n_grid[2]
+        X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+
+      if norm_axes: # Normalize to [-1, 1]
+        X = 2 * (X - X.min()) / (X.max() - X.min()) - 1
+        Y = 2 * (Y - Y.min()) / (Y.max() - Y.min()) - 1
+        Z = 2 * (Z - Z.min()) / (Z.max() - Z.min()) - 1
+
       grid3d = pv.StructuredGrid(X, Y, Z)
       grid3d["f_raw"] = fval.ravel(order="F")
       grid3d.save(out_name)

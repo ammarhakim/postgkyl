@@ -10,6 +10,7 @@ from postgkyl.utils import verb_print
 @click.option("-m", "--mode", type=click.Choice(["gkyl", "bp", "txt", "npy"]), default="gkyl",
     help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file).")
 @click.option("-s", "--single", is_flag=True, help="Write all dataset into one file")
+@click.option("--normalize-axes","-n", is_flag=True, help="Normalize VTK axes to [-1, 1] range before writing.")
 @click.pass_context
 def write(ctx, **kwargs):
   """Write active dataset to a file.
@@ -43,7 +44,7 @@ def write(ctx, **kwargs):
       # end
     # end
 
-    dat.write(out_name=out_name, mode=mode, append=append, var_name=var_name, cleaning=cleaning)
+    dat.write(out_name=out_name, mode=mode, append=append, var_name=var_name, cleaning=cleaning, norm_axes=kwargs["normalize_axes"])
 
     if kwargs["single"]:
       append = True
