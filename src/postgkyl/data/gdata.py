@@ -612,8 +612,30 @@ class GData(object):
     elif extension == "npy":
       np.save(out_name, values.squeeze())
     # end
+    elif extension == "vts":
+      import pyvista as pv
+      from postgkyl.output.plot import _get_nodal_grid
+      n_grid = _get_nodal_grid(self.get_grid(), num_cells)
+      if num_dims == 1:
+        fval = values.squeeze()
+        X = n_grid[0]
+        Y = np.zeros_like(X)
+        Z = fval
+      elif num_dims == 2:
+        fval = values.squeeze()
+        X = n_grid[0]
+        Y = n_grid[1]
+        Z = fval
+      elif num_dims == 3:
+        fval = values.squeeze()
+        X = n_grid[0]
+        Y = n_grid[1]
+        Z = n_grid[2]
+      grid3d = pv.StructuredGrid(X, Y, Z)
+      grid3d["f_raw"] = fval.ravel(order="F")
+      grid3d.save(out_name)
+
 
   # ---- Context (metadata) ----
   def get_ctx(self) -> dict:
     return self.ctx
-

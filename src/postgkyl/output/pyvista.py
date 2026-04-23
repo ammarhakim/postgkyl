@@ -218,8 +218,6 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
       pl.export_gltf(saveas)
     elif saveas.endswith(".vtksz"):
       pl.export_vtksz(saveas)
-    elif saveas.endswith(".vts"):
-      grid3d.save(saveas)
     else:
       raise ValueError("Unsupported file format for saving. Supported formats are: .html, .png, .jpg, .jpeg, .pdf, .svg")
 
