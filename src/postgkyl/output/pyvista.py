@@ -175,6 +175,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
       xtitle=latex_to_unicode(xlabel), ytitle=latex_to_unicode(ylabel), ztitle=latex_to_unicode(zlabel),
       axes_ranges=bounds, n_xlabels=3, n_ylabels=3, n_zlabels=3,
       grid='back', location='origin', all_edges=True,
+      use_3d_text=False,
       fmt="%.2e",
     )
 
