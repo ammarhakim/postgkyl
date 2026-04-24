@@ -8,6 +8,7 @@ import numpy as np
 import postgkyl as pg
 from postgkyl.output.axis_and_grid_prep import axis_and_grid_prep
 from postgkyl.output.downsample import downsample
+from postgkyl.output.latex_conversion import latex_to_html, latex_to_unicode
 from postgkyl.output.load_plot_data import load_plot_data
 from postgkyl.output.nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 
@@ -206,3 +207,13 @@ def test_axis_and_grid_prep_quiver_component_stride_and_lineout_xlabel():
 def test_output_module_exports_helpers():
   assert pg.output.downsample is downsample
   assert pg.output.nodal_to_cell_centered_grid is nodal_to_cell_centered_grid
+
+
+def test_latex_to_unicode_converts_common_commands():
+  assert latex_to_unicode(r"$\mu_{\parallel}$") == "μ_{∥}"
+  assert latex_to_unicode(r"E_{\perp}") == "E_{⊥}"
+
+
+def test_latex_to_html_converts_subscripts_and_unicode():
+  assert latex_to_html(r"$\mu_{\parallel}$") == "μ<sub>∥</sub>"
+  assert latex_to_html(r"E_{\perp}") == "E<sub>⊥</sub>"

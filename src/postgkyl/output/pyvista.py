@@ -9,6 +9,7 @@ from click import Tuple
 import numpy as np
 import postgkyl as pg
 import pyvista as pv
+from .latex_conversion import latex_to_unicode
 from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 from .axis_and_grid_prep import axis_and_grid_prep
 from .load_plot_data import load_plot_data
@@ -115,7 +116,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
   # end
   grid3d["f_plot"] = data
 
-  scalar_bar_args = {"title": clabel, "fmt": colorbarformat}
+  scalar_bar_args = {"title": latex_to_unicode(clabel), "fmt": colorbarformat}
 
   if is_contour:
     contours = grid3d.contour(isosurfaces=contour_levels, scalars="f_plot")
@@ -158,7 +159,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
         )
 
   if title is not None:
-    pl.add_text(f"{title}", position="upper_edge", font_size=12)
+    pl.add_text(latex_to_unicode(f"{title}"), position="upper_edge", font_size=12)
 
   if hide_axes:
     pl.hide_axes()
@@ -171,7 +172,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
               -(zmin+zshift)*zscale*pv_bounds.z_min, 
               (zmax+zshift)*zscale*pv_bounds.z_max)
     pl.show_bounds(
-      xtitle=xlabel, ytitle=ylabel, ztitle=zlabel,
+      xtitle=latex_to_unicode(xlabel), ytitle=latex_to_unicode(ylabel), ztitle=latex_to_unicode(zlabel),
       axes_ranges=bounds, n_xlabels=3, n_ylabels=3, n_zlabels=3,
       grid='back', location='origin', all_edges=True,
       fmt="%.2e",

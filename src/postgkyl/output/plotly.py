@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from .axis_and_grid_prep import axis_and_grid_prep
+from .latex_conversion import latex_to_html
 from .load_plot_data import load_plot_data
 from .downsample import downsample
 from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
@@ -636,73 +637,6 @@ def _prepare_2d_coordinates(coords: list[np.ndarray], value_shape: tuple[int, ..
   # end
   return arrays[0], arrays[1]
 
-def _latex_to_html(text: str) -> str:
-  """Convert LaTeX subscripts and Greek letters to HTML.
-  
-  Plotly does not support LaTeX, but does support HTML, so this function converts common LaTeX syntax to HTML equivalents.
-  """
-  if not text:
-    return text
-  text = text.strip()
-  # Remove outer $ signs if present
-  if text.startswith("$") and text.endswith("$"):
-    text = text[1:-1]
-  # Map common LaTeX commands to Unicode/HTML
-  latex_to_unicode = {
-      r'\mu': 'μ',
-      r'\nu': 'ν',
-      r'\pi': 'π',
-      r'\sigma': 'σ',
-      r'\Sigma': 'Σ',
-      r'\rho': 'ρ',
-      r'\tau': 'τ',
-      r'\chi': 'χ',
-      r'\phi': 'φ',
-      r'\psi': 'ψ',
-      r'\omega': 'ω',
-      r'\Omega': 'Ω',
-      r'\alpha': 'α',
-      r'\beta': 'β',
-      r'\gamma': 'γ',
-      r'\delta': 'δ',
-      r'\Delta': 'Δ',
-      r'\epsilon': 'ε',
-      r'\zeta': 'ζ',
-      r'\eta': 'η',
-      r'\theta': 'θ',
-      r'\Theta': 'Θ',
-      r'\iota': 'ι',
-      r'\kappa': 'κ',
-      r'\lambda': 'λ',
-      r'\Lambda': 'Λ',
-      r'\parallel': '∥',
-      r'\perp': '⊥',
-  }
-
-  def _replace_latex_commands(value: str) -> str:
-    for latex, unicode_char in latex_to_unicode.items():
-      value = value.replace(latex, unicode_char)
-    # end
-    return value
-
-  import re
-  # Convert braced subscripts: _{...} -> <sub>...</sub>
-  text = re.sub(
-      r'_\{([^{}]+)\}',
-      lambda match: f"<sub>{_replace_latex_commands(match.group(1))}</sub>",
-      text,
-  )
-  # Convert unbraced subscripts: _x or _\parallel -> <sub>x</sub>/<sub>∥</sub>
-  text = re.sub(
-      r'_(\\[A-Za-z]+|[A-Za-z0-9])',
-      lambda match: f"<sub>{_replace_latex_commands(match.group(1))}</sub>",
-      text,
-  )
-  # Convert remaining LaTeX commands outside subscripts.
-  text = _replace_latex_commands(text)
-  return text
-
-
 def plotly(data: GData | Tuple[list, np.ndarray],
     squeeze: bool = False, num_axes: int = None,
     num_subplot_row: int | None = None, num_subplot_col: int | None = None,
@@ -867,21 +801,21 @@ def plotly(data: GData | Tuple[list, np.ndarray],
 
     scene = dict(
       xaxis=dict(
-        title=dict(text=_latex_to_html(xlabel), font=dict(color=text_color)), showgrid=showgrid,
+        title=dict(text=latex_to_html(xlabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logx else "linear", exponentformat="e", range=x_axis_range,
         showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
         zerolinecolor=grid_color,
       ),
       yaxis=dict(
-        title=dict(text=_latex_to_html(ylabel), font=dict(color=text_color)), showgrid=showgrid,
+        title=dict(text=latex_to_html(ylabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logy else "linear", exponentformat="e", range=y_axis_range,
         showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
         zerolinecolor=grid_color,
       ),
       zaxis=dict(
-        title=dict(text=_latex_to_html(zlabel), font=dict(color=text_color)), showgrid=showgrid,
+        title=dict(text=latex_to_html(zlabel), font=dict(color=text_color)), showgrid=showgrid,
         type="log" if logz else "linear", exponentformat="e", range=z_axis_range,
         showbackground=True, backgroundcolor=scene_color, gridcolor=grid_color,
         linecolor=axis_line_color, tickfont=dict(color=text_color),
