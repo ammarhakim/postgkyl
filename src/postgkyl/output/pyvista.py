@@ -12,7 +12,7 @@ import pyvista as pv
 from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 from .axis_and_grid_prep import axis_and_grid_prep
 from .load_plot_data import load_plot_data
-from .downsample_3d_data import downsample_3d_data
+from .downsample import downsample
 
 def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     show: bool = True, spin: bool = True, max_points_per_axis: int = -1, contour_levels: int = 10,
@@ -73,7 +73,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
   z = (z - zmin) / z_range * aspect_ratio[2] * 2 - aspect_ratio[2]
 
   # Downsampling can speed up rendering
-  x, y, z, scalar = downsample_3d_data(x,y,z,
+  x, y, z, scalar = downsample(x,y,z,
       scalar, maximum_points_per_axis=max_points_per_axis)
 
   if opacity == "diverging":

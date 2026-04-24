@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from .load_plot_data import load_plot_data
-from .downsample_3d_data import downsample_3d_data
+from .downsample import downsample
 from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 from postgkyl.data.idx_parser import idx_parser as parse_idx
 from postgkyl.data.select import select as data_select
@@ -1040,7 +1040,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     # end
 
     if not surface_mode and scatter:
-      render_x, render_y, render_z, render_color_value = downsample_3d_data(
+      render_x, render_y, render_z, render_color_value = downsample(
         render_x, render_y, render_z, render_color_value,
         maximum_points_per_axis=maximum_points_per_axis,
       )
@@ -1079,7 +1079,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
       )
       trace_list = [trace]
     elif not surface_mode:
-      render_x, render_y, render_z, render_color_value = downsample_3d_data(
+      render_x, render_y, render_z, render_color_value = downsample(
           render_x, render_y, render_z, render_color_value,
           maximum_points_per_axis=maximum_points_per_axis,
       )
