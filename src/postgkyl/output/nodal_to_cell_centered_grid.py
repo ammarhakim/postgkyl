@@ -1,13 +1,13 @@
 
 
 import numpy as np
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
 
-def get_cell_centered_grid(grid : list, cells: np.ndarray):
+def nodal_to_cell_centered_grid(grid: list, cells: np.ndarray, meshgrid: bool = False):
   """Return cell-centered grid from nodal grid.
   
   Args:
@@ -16,6 +16,9 @@ def get_cell_centered_grid(grid : list, cells: np.ndarray):
 
   Returns:
     list of NumPy arrays representing the cell-centered grid coordinates
+
+  Args:
+    meshgrid: if True and the coordinates are 1D, return an ij-indexed meshgrid.
 
   Example:
   grid_in, values = input_parser(GDataObject)
@@ -50,4 +53,9 @@ def get_cell_centered_grid(grid : list, cells: np.ndarray):
       # end
     # end
   # end
+
+  if meshgrid and num_dims > 1 and all(axis.ndim == 1 for axis in grid_out):
+    return list(np.meshgrid(*grid_out, indexing="ij"))
+  # end
+
   return grid_out

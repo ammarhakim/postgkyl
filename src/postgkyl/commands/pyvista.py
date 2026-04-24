@@ -48,9 +48,9 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--xshift", default=0.0, type=float, help="Shift to apply to the X axis (default: 0.0).")
 @click.option("--yshift", default=0.0, type=float, help="Shift to apply to the Y axis (default: 0.0).")
 @click.option("--zshift", default=0.0, type=float, help="Shift to apply to the Z axis (default: 0.0).")
-@click.option("--xlabel", default='X', help="Label for the X axis.")
-@click.option("--ylabel", default='Y', help="Label for the Y axis.")
-@click.option("--zlabel", default='Z', help="Label for the Z axis.")
+@click.option("--xlabel", default=None, help="Label for the X axis (default: inferred, e.g. '$z_0$').")
+@click.option("--ylabel", default=None, help="Label for the Y axis (default: inferred, e.g. '$z_1$').")
+@click.option("--zlabel", default=None, help="Label for the Z axis (default: inferred, e.g. '$z_2$').")
 @click.option("--clabel", default='', help="Label for the color bar (default: '').")
 @click.option("--title", default='', help="Title for the plot .")
 @click.option("--arg", "-a", multiple=True, help="Additional arguments to pass to the plotting function (can be specified multiple times).")
@@ -59,48 +59,20 @@ def parse_aspect_ratio(ctx, param, value):
 @click.option("--cylindrical-to-cartesian", default=False, is_flag=True, help="Whether to convert cylindrical coordinates (r, z, theta) to Cartesian coordinates (x, y, z) for plotting.")
 @click.option("--theme", default="default", help="PyVista theme to use for the plot (e.g., 'document', 'dark', 'light', etc.).")
 @click.option("--saveas", default="", help="Filename to save the plot (supports .html, .pdf, .svg, png, .jpg, .jpeg, .gltf).")
+@click.option("--hide-zeros", default=False, is_flag=True, help="Whether to hide zero values in the plot.")
 
 @click.pass_context
 def pyvista(ctx, **kwargs):
   """Plot a 3D scalar field using PyVista with various customization options."""
   args = kwargs["arg"]
-  # print(kwargs)
-  kwargs["show"] = not kwargs["no_show"]
-  kwargs["screenshot"] = kwargs["screenshot"]
-  kwargs["spin"] = not kwargs["no_spin"]
-  kwargs["max_points_per_axis"] = kwargs["max_points_per_axis"]
-  kwargs["contour_levels"] = kwargs["contour_levels"]
-  kwargs["is_log"] = kwargs["logc"]
-  kwargs["is_contour"] = not kwargs["no_contour"]
-  kwargs["is_shaded"] = kwargs["shaded"]
-  kwargs["hide_axes"] = kwargs["hide_axes"]
-  kwargs["mesh_clip_plane"] = kwargs["mesh_clip_plane"]
-  kwargs["mesh_slice_plane"] = kwargs["mesh_slice_plane"]
-  kwargs["volume_clip_plane"] = kwargs["volume_clip_plane"]
-  kwargs["cmin"] = kwargs["cmin"]
-  kwargs["cmax"] = kwargs["cmax"]
-  kwargs["aspect_ratio"] = tuple(kwargs["aspect_ratio"])
-  kwargs["camera_azimuth"] = kwargs["camera_azimuth"]
-  kwargs["camera_elevation"] = kwargs["camera_elevation"]
-  kwargs["background"] = kwargs["background"]
-  kwargs["axes_color"] = kwargs["axes_color"]
-  kwargs["opacity"] = kwargs["opacity"]
-  kwargs["cmap"] =kwargs["cmap"]
-  kwargs["xscale"] = kwargs["xscale"]
-  kwargs["yscale"] = kwargs["yscale"]
-  kwargs["zscale"] = kwargs["zscale"]
-  kwargs["xshift"] = kwargs["xshift"]
-  kwargs["yshift"] = kwargs["yshift"]
-  kwargs["zshift"] = kwargs["zshift"]
-  kwargs["xlabel"] = kwargs["xlabel"]
-  kwargs["ylabel"] = kwargs["ylabel"]
-  kwargs["zlabel"] = kwargs["zlabel"]
-  kwargs["clabel"] = kwargs["clabel"]
-  kwargs["title"] = kwargs["title"]
-  kwargs["diverging"] = kwargs["diverging"]
-  kwargs["cylindrical_to_cartesian"] = kwargs["cylindrical_to_cartesian"]
-  kwargs["theme"] = kwargs["theme"]
-  kwargs["saveas"] = kwargs["saveas"]
-
+  kwargs.update(
+    show=not kwargs["no_show"],
+    spin=not kwargs["no_spin"],
+    is_log=kwargs["logc"],
+    is_contour=not kwargs["no_contour"],
+    is_shaded=kwargs["shaded"],
+    aspect_ratio=tuple(kwargs["aspect_ratio"]),
+    cylindrical_to_cartesian=kwargs["cylindrical_to_cartesian"],
+  )
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
     postgkyl.output.pyvista(dat, args, **kwargs)

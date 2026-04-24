@@ -11,8 +11,10 @@ import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
+from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
+from .axis_and_grid_prep import axis_and_grid_prep
+from .load_plot_data import load_plot_data
 
-from postgkyl.utils import input_parser, get_cell_centered_grid
 if TYPE_CHECKING:
   from postgkyl import GData
 # end
@@ -103,105 +105,21 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
   # end
 
   # ---- Data Loading ----
-  # Get the handles on the grid and values
-  grid_in, values = input_parser(data)
-  grid = grid_in.copy()
+  grid, values, num_dims, lower, upper, cells = load_plot_data(data)
 
-  if isinstance(data, tuple):
-    if len(grid) == len(values.shape):
-      num_dims = len(values.squeeze().shape)
-    else:
-      num_dims = len(values[..., 0].squeeze().shape)
-    # end
-    lg = len(grid)
-    lower, upper, cells = np.zeros(lg), np.zeros(lg), np.zeros(lg)
-    for d in range(lg):
-      lower[d] = np.min(grid[d])
-      upper[d] = np.max(grid[d])
-      if len(grid[d].shape) == 1:
-        cells[d] = len(grid[d])
-      else:
-        cells[d] = len(grid[d][d])
-      # end
-    # end
-  else: # GData
-    num_dims = data.get_num_dims(squeeze=True)
-    lower, upper = data.get_bounds()
-    cells = data.get_num_cells()
-  # end
+  
   if num_dims > 2:
     raise ValueError("Only 1D and 2D plots are currently supported. Please use plotly for 3D data.")
   # end
 
-  # Squeeze the data (get rid of "collapsed" dimensions)
-  axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
-  if len(grid) > num_dims:
-    idx = []
-    for dim, g in enumerate(grid):
-      if cells[dim] <= 1:
-        idx.append(dim)
-      # end
-      grid[dim] = g.squeeze()
-    # end
-    if bool(idx):
-      for i in reversed(idx):
-        grid.pop(i)
-      # end
-      lower = np.delete(lower, idx)
-      upper = np.delete(upper, idx)
-      cells = np.delete(cells, idx)
-      axes_labels = np.delete(axes_labels, idx)
-      values = np.squeeze(values, tuple(idx))
-
-      # c2p grids
-      if len(grid[0].shape) > 1:
-        for d in range(num_dims):
-          for i in reversed(idx):
-            grid[d] = np.mean(grid[d], axis=i)
-          # end
-        # end
-      # end
-    # end
-  # end
-
-  # Get the number of components and an indexer
-  step = 2 if bool(streamline or quiver) else 1
-  num_comps = values.shape[-1]
-  idx_comps = range(int(np.floor(num_comps / step)))
-  if num_axes:
-    num_comps = num_axes
-  else:
-    num_comps = len(idx_comps)
-  # end
-
-  # Create axis labels
-  if xlabel is None:
-    xlabel = axes_labels[0] if lineouts != 1 else axes_labels[1]
-    if xshift != 0.0 and xscale != 1.0:
-      xlabel = rf"({xlabel:s} + {xshift:.2e}) $\times$ {xscale:.2e}"
-    elif xshift != 0.0:
-      xlabel = rf"{xlabel:s} + {xshift:.2e}"
-    elif xscale != 1.0:
-      xlabel = rf"{xlabel:s} $\times$ {xscale:.2e}"
-    # end
-  # end
-  if ylabel is None and num_dims == 2 and lineouts is None:
-    ylabel = axes_labels[1]
-    if yshift != 0.0 and yscale != 1.0:
-      ylabel = rf"({ylabel:s} + {yshift:.2e}) $\times$ {yscale:.2e}"
-    elif xshift != 0.0:
-      ylabel = rf"{ylabel:s} + {yshift:.2e}"
-    elif xscale != 1.0:
-      ylabel = rf"{ylabel:s} $\times$ {yscale:.2e}"
-    # end
-  # end
-  if zscale != 1.0:
-    if clabel:
-      clabel = rf"{clabel:s} $\times$ {zscale:.3e}"
-    else:
-      clabel = rf"$\times$ {zscale:.3e}"
-    # end
-  # end
+  # Squeeze/prune collapsed dimensions, compute components, and resolve labels.
+  grid, values, lower, upper, cells, axes_labels, num_comps, idx_comps, xlabel, ylabel, _, clabel = axis_and_grid_prep(
+    grid=grid, values=values, lower=lower, upper=upper,
+    cells=cells, num_dims=num_dims, streamline=streamline,
+    quiver=quiver, num_axes=num_axes, lineouts=lineouts,
+    xlabel=xlabel, ylabel=ylabel, zlabel=None, clabel=clabel, xshift=xshift,
+    yshift=yshift, zshift=zshift, xscale=xscale, yscale=yscale,
+    zscale=zscale,  )
 
   # ---- Prepare Figure and Axes ----------------------------------------
   if bool(figsize):
@@ -307,7 +225,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
     label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
 
     if num_dims == 1:
-      nodal_grid = get_cell_centered_grid(grid, cells)
+      nodal_grid = nodal_to_cell_centered_grid(grid, cells)
       x = (nodal_grid[0] + xshift)*xscale
       y = (values[..., comp] + yshift)*yscale
       im = cax.plot(x, y, *args, color=color, label=label, markersize=markersize)
@@ -332,7 +250,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         if isinstance(levels, np.ndarray) and len(levels) == 1:
           colorbar = False
         # end
-        nodal_grid = get_cell_centered_grid(grid, cells)
+        nodal_grid = nodal_to_cell_centered_grid(grid, cells)
         x = (nodal_grid[0] + xshift) * xscale
         y = (nodal_grid[1] + yshift) * yscale
         z = (values[..., comp].transpose() + zshift) * zscale
@@ -344,7 +262,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
       elif quiver:  # ----------------------------------------------------
         skip = int(np.max((len(grid[0]), len(grid[1])))//15)
         skip2 = int(skip//2)
-        nodal_grid = get_cell_centered_grid(grid, cells)
+        nodal_grid = nodal_to_cell_centered_grid(grid, cells)
         if len(nodal_grid[0].shape) == 1:
           x = (nodal_grid[0][skip2::skip] + xshift)*xscale
           y = (nodal_grid[1][skip2::skip] + yshift)*yscale
@@ -365,7 +283,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
               values[..., 2 * comp]**2 + values[..., 2 * comp + 1]**2
           ).transpose()
         # end
-        nodal_grid = get_cell_centered_grid(grid, cells)
+        nodal_grid = nodal_to_cell_centered_grid(grid, cells)
         x = (nodal_grid[0] + xshift)*xscale
         y = (nodal_grid[1] + yshift)*yscale
         z1 = (values[..., 2 * comp].transpose() + zshift)*zscale
@@ -375,7 +293,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
 
       elif lineouts is not None:  # -------------------------------------
         num_lines = values.shape[1] if lineouts == 0 else values.shape[0]
-        nodal_grid = get_cell_centered_grid(grid, cells)
+        nodal_grid = nodal_to_cell_centered_grid(grid, cells)
 
         if lineouts == 0:
           x = (nodal_grid[0] + xshift)*xscale
@@ -419,7 +337,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
         y = (grid[1] + yshift)*yscale
         z = (values[..., comp].transpose() + zshift)*zscale
         if len(x) == z.shape[1] or len(y) == z.shape[0]:
-          nodal_grid = get_cell_centered_grid(grid, cells)
+          nodal_grid = nodal_to_cell_centered_grid(grid, cells)
           x = (nodal_grid[0] + xshift)*xscale
           y = (nodal_grid[1] + yshift)*yscale
         # end

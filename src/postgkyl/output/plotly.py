@@ -13,7 +13,9 @@ import os.path
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from postgkyl.utils import input_parser, downsample_3d_data, get_cell_centered_grid
+from .load_plot_data import load_plot_data
+from .downsample_3d_data import downsample_3d_data
+from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 from postgkyl.data.idx_parser import idx_parser as parse_idx
 from postgkyl.data.select import select as data_select
 if TYPE_CHECKING:
@@ -737,28 +739,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
   theme_colors = _apply_plot_style(style, rcParams, diverging, cmap, xkcd, background=background,
       invert_cmap=invert_cmap)
 
-  grid_in, values = input_parser(data)
-  grid = grid_in.copy()
-
-  if isinstance(data, tuple):
-    if len(grid) == len(values.shape):
-      num_dims = len(values.squeeze().shape)
-    else:
-      num_dims = len(values[..., 0].squeeze().shape)
-    # end
-    lg = len(grid)
-    cells = np.zeros(lg)
-    for d in range(lg):
-      if len(grid[d].shape) == 1:
-        cells[d] = len(grid[d])
-      else:
-        cells[d] = len(grid[d][d])
-      # end
-    # end
-  else:
-    num_dims = data.get_num_dims(squeeze=True)
-    cells = data.get_num_cells()
-  # end
+  grid, values, num_dims, _, _, cells = load_plot_data(data)
 
   surface_mode = (num_dims == 2)
   if num_dims not in (2, 3):
@@ -865,7 +846,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     row = 1 if grid_shape == (1, 1) else int(comp_idx / grid_shape[1]) + 1
     col = 1 if grid_shape == (1, 1) else int(comp_idx % grid_shape[1]) + 1
     label = f"{label_prefix:s}_c{comp:d}".strip("_") if len(idx_comps) > 1 else label_prefix
-    cc_grid = get_cell_centered_grid(grid, cells)
+    cc_grid = nodal_to_cell_centered_grid(grid, cells)
     value = np.asarray(values[..., comp]) * zscale + zshift
     color_value = value * cscale + cshift
     render_color_value = np.array(color_value, copy=True)

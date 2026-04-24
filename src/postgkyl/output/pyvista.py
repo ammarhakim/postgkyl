@@ -9,33 +9,10 @@ from click import Tuple
 import numpy as np
 import postgkyl as pg
 import pyvista as pv
-from postgkyl.utils import input_parser, downsample_3d_data
-
-def _cell_centered_axis(axis_values: np.ndarray, n_cells: int) -> np.ndarray:
-  """Return a cell-centered axis from nodal or centered coordinates."""
-  arr = np.asarray(axis_values)
-  if arr.ndim != 1:
-    raise ValueError("Expected 1D coordinate axis")
-  # end
-  if arr.size == n_cells:
-    return arr
-  # end
-  if arr.size == n_cells + 1:
-    return 0.5 * (arr[:-1] + arr[1:])
-  # end
-  raise ValueError("Axis size does not match value shape")
-
-
-def _centered_grid_3d(grid: list[np.ndarray], value_shape: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-  """Return centered 3D coordinates (x, y, z) for a 3D scalar field."""
-  if len(grid) < 3:
-    raise ValueError("Need at least 3 grid axes for a 3D plot")
-  # end
-  x_axis = _cell_centered_axis(np.asarray(grid[0]), value_shape[0])
-  y_axis = _cell_centered_axis(np.asarray(grid[1]), value_shape[1])
-  z_axis = _cell_centered_axis(np.asarray(grid[2]), value_shape[2])
-  return np.meshgrid(x_axis, y_axis, z_axis, indexing="ij")
-
+from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
+from .axis_and_grid_prep import axis_and_grid_prep
+from .load_plot_data import load_plot_data
+from .downsample_3d_data import downsample_3d_data
 
 def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     show: bool = True, spin: bool = True, max_points_per_axis: int = -1, contour_levels: int = 10,
@@ -43,10 +20,10 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     mesh_clip_plane: bool = False, mesh_slice_plane: bool = False, volume_clip_plane: bool = False, 
     cmin: float | None = None, cmax: float | None = None, aspect_ratio: Tuple[float, float, float] = (1, 1, 1), 
     camera_azimuth: float = 0.0, camera_elevation: float = -30.0,
-    opacity: str | float = 'sigmoid_4', cmap: str = 'inferno', xlabel: str = 'X', ylabel: str = "Y", zlabel: str = "Z", 
+    opacity: str | float = 'sigmoid_4', cmap: str = 'inferno', xlabel: str | None = None, ylabel: str | None = None, zlabel: str | None = None,
     clabel: str = "", title: str | None = "", diverging: bool = False,
     cylindrical_to_cartesian: bool = False, theme: str = "default", saveas: str = "",
-    xscale: float = 1.0, yscale: float = 1.0, zscale: float = 1.0, xshift: float = 0.0, yshift: float = 0.0, zshift: float = 0.0,
+    xscale: float = 1.0, yscale: float = 1.0, zscale: float = 1.0, xshift: float = 0.0, yshift: float = 0.0, zshift: float = 0.0, hide_zeros: bool = False,
     **kwargs):
   """ Description
   Creates a 3D plot of a scalar field using PyVista with various customization options.
@@ -55,10 +32,19 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
   Support for animations
   """
 
-  grid, values = input_parser(data)
+  grid, values, num_dims, lower, upper, cells = load_plot_data(data)
+
+  grid, values, lower, upper, cells, _, _, _, xlabel, ylabel, zlabel, clabel = axis_and_grid_prep(
+      grid=grid, values=values, lower=lower, upper=upper,
+      cells=cells, num_dims=num_dims, streamline=False,
+      quiver=False, num_axes=None, lineouts=None,
+      xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, clabel=clabel,
+      xshift=xshift, yshift=yshift, zshift=zshift,
+      xscale=xscale, yscale=yscale, zscale=zscale,
+  )
 
   scalar = np.asarray(values[..., 0])
-  x, y, z = _centered_grid_3d(grid, scalar.shape)
+  x, y, z = nodal_to_cell_centered_grid(grid, scalar.shape, meshgrid=True)
 
   if diverging:
     cmap = "RdBu_r"
@@ -105,15 +91,30 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     pv.set_plot_theme(theme)
   # end
 
+  if hide_zeros:
+    x_ind_zeros, y_ind_zeros, z_ind_zeros = np.where(scalar == 0)
+    zero_point_indices = np.ravel_multi_index(
+      (x_ind_zeros, y_ind_zeros, z_ind_zeros),
+      dims=scalar.shape, order="F")
+    if zero_point_indices.size:
+      grid3d.hide_points(zero_point_indices)
+
   grid3d["f_raw"] = scalar.ravel(order="F")
-  data = np.asarray(grid3d["f_raw"])
+  data = np.asarray(grid3d["f_raw"], dtype=float)
 
   colorbarformat = "%.2e"
   clim = (cmin if cmin is not None else datamin, cmax if cmax is not None else datamax) 
   if is_log:
-    data = np.log10(data)
+    data = np.full(data.shape, np.nan, dtype=float)
+    positive_mask = np.asarray(grid3d["f_raw"]) > 0.0
+    data[positive_mask] = np.log10(np.asarray(grid3d["f_raw"])[positive_mask])
+    data[~positive_mask] = np.nan
+    finite_data = data[np.isfinite(data)]
     colorbarformat = "10^%.1f"
-    clim = (np.log10(np.min(np.abs(scalar))), np.log10(np.max(np.abs(scalar))))
+    clim = (
+      cmin if cmin is not None else float(np.min(finite_data)),
+      cmax if cmax is not None else float(np.max(finite_data)),
+    )
   # end
   grid3d["f_plot"] = data
 
