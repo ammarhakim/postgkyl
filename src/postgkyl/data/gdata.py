@@ -616,8 +616,8 @@ class GData(object):
     # end
     elif extension == "vts":
       import pyvista as pv
-      from postgkyl.output.plot import _get_nodal_grid
-      n_grid = _get_nodal_grid(self.get_grid(), num_cells)
+      from postgkyl.output.nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
+      n_grid = nodal_to_cell_centered_grid(self.get_grid(), num_cells, meshgrid=True)
       if num_dims == 1:
         fval = values.squeeze()
         X = n_grid[0]
@@ -625,16 +625,11 @@ class GData(object):
         Z = fval
       elif num_dims == 2:
         fval = values.squeeze()
-        x = n_grid[0]
-        y = n_grid[1]
-        X, Y = np.meshgrid(x, y, indexing="ij")
+        X, Y = n_grid
         Z = fval
       elif num_dims == 3:
         fval = values.squeeze()
-        x = n_grid[0]
-        y = n_grid[1]
-        z = n_grid[2]
-        X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+        X, Y, Z = n_grid
 
       if norm_axes: # Normalize to [-1, 1]
         X = 2 * (X - X.min()) / (X.max() - X.min()) - 1
