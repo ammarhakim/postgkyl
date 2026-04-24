@@ -48,7 +48,7 @@ class PgkylCommandGroup(click.Group):
     # Explicit aliases that should not appear in --help output.
     aliases = {
         "pl": "plot",
-        "plly": "plotly",
+        "ply": "plotly",
         "pv": "pyvista",
     }
     target = aliases.get(cmd_name)
