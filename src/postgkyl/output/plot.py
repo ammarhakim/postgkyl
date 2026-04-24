@@ -109,7 +109,7 @@ def plot(data: GData | Tuple[list, np.ndarray], args: list = (),
 
   
   if num_dims > 2:
-    raise ValueError("Only 1D and 2D plots are currently supported. Please use plotly for 3D data.")
+    raise ValueError("Only 1D and 2D plots are currently supported. Please use 'plotly' or 'pyvista' for 3D data.")
   # end
 
   # Squeeze/prune collapsed dimensions, compute components, and resolve labels.
