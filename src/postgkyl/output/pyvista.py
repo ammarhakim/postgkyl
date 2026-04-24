@@ -45,10 +45,6 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
 
   scalar = np.asarray(values[..., 0])
   x, y, z = nodal_to_cell_centered_grid(grid, scalar.shape, meshgrid=True)
-
-  if diverging:
-    cmap = "RdBu_r"
-
   if cylindrical_to_cartesian:
     r = x
     z_cyl = y
@@ -56,7 +52,6 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     x = r * np.cos(theta)
     y = r * np.sin(theta)
     z = z_cyl
-
 
   # Setting the aspect ratio. (1,1,1) is a cube
   xmax, xmin = np.max(x), np.min(x)
@@ -76,6 +71,8 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
   x, y, z, scalar = downsample(x,y,z,
       scalar, maximum_points_per_axis=max_points_per_axis)
 
+  if diverging:
+    cmap = "RdBu_r"
   if opacity == "diverging":
     # Liner opacity. 1 on either end, 0 in the middle
     cx = np.linspace(0, 1, num=255)
@@ -124,11 +121,11 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     contours = grid3d.contour(isosurfaces=contour_levels, scalars="f_plot")
     if mesh_clip_plane:
       pl.add_mesh_clip_plane(contours, cmap=cmap, clim=clim,
-        normal='-x',opacity=opacity,
+        normal='-x', opacity=opacity,
         scalar_bar_args=scalar_bar_args)
     elif mesh_slice_plane:
       pl.add_mesh_slice(contours, cmap=cmap, clim=clim,
-        normal='-x',opacity=opacity,
+        normal='-x', opacity=opacity,
         scalar_bar_args=scalar_bar_args)
     else:
       pl.add_mesh( contours, cmap=cmap, clim=clim,
@@ -174,16 +171,9 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
               -(zmin+zshift)*zscale*pv_bounds.z_min, 
               (zmax+zshift)*zscale*pv_bounds.z_max)
     pl.show_bounds(
-      xtitle=xlabel,
-      ytitle=ylabel,
-      ztitle=zlabel,
-      axes_ranges=bounds,
-      n_xlabels=3,
-      n_ylabels=3,
-      n_zlabels=3,
-      grid='back',
-      location='origin',
-      all_edges=True,
+      xtitle=xlabel, ytitle=ylabel, ztitle=zlabel,
+      axes_ranges=bounds, n_xlabels=3, n_ylabels=3, n_zlabels=3,
+      grid='back', location='origin', all_edges=True,
       fmt="%.2e",
     )
 
@@ -200,12 +190,12 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
         angle += 0.5 
         pl.camera.azimuth = angle % 360
 
-    def on_mouse_move(*args):
+    def on_click(*args):
         nonlocal interacting
         interacting = True
 
     pl.add_timer_event(max_steps=99999999, duration=50, callback=rotate_callback)  # 20 FPS
-    pl.iren.add_observer('LeftButtonPressEvent', on_mouse_move)
+    pl.iren.add_observer('LeftButtonPressEvent', on_click)
 
   if saveas != "":
     if saveas.endswith(".html"):
@@ -219,7 +209,10 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     elif saveas.endswith(".vtksz"):
       pl.export_vtksz(saveas)
     else:
-      raise ValueError("Unsupported file format for saving. Supported formats are: .html, .png, .jpg, .jpeg, .pdf, .svg")
+      raise ValueError("Unsupported file format for saving. Supported formats are: .html, .png, .jpg, .jpeg, .pdf, .svg, .gltf, .vtksz")
+  # end
 
   if show:
     pl.show()
+  # end
+# end

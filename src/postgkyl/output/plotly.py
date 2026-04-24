@@ -13,6 +13,7 @@ import os.path
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from .axis_and_grid_prep import axis_and_grid_prep
 from .load_plot_data import load_plot_data
 from .downsample import downsample
 from .nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
@@ -739,7 +740,7 @@ def plotly(data: GData | Tuple[list, np.ndarray],
   theme_colors = _apply_plot_style(style, rcParams, diverging, cmap, xkcd, background=background,
       invert_cmap=invert_cmap)
 
-  grid, values, num_dims, _, _, cells = load_plot_data(data)
+  grid, values, num_dims, lower, upper, cells = load_plot_data(data)
 
   surface_mode = (num_dims == 2)
   if num_dims not in (2, 3):
@@ -749,39 +750,13 @@ def plotly(data: GData | Tuple[list, np.ndarray],
     raise ValueError("Surface plots do not support scatter mode")
   # end
 
-  axes_labels = ["$z_0$", "$z_1$", "$z_2$", "$z_3$", "$z_4$", "$z_5$"]
-  if len(grid) > num_dims:
-    idx = []
-    for dim, g in enumerate(grid):
-      if cells[dim] <= 1:
-        idx.append(dim)
-      # end
-      grid[dim] = g.squeeze()
-    # end
-    if bool(idx):
-      for i in reversed(idx):
-        grid.pop(i)
-      # end
-      cells = np.delete(cells, idx)
-      axes_labels = np.delete(axes_labels, idx)
-      values = np.squeeze(values, tuple(idx))
-      if len(grid[0].shape) > 1:
-        for d in range(num_dims):
-          for i in reversed(idx):
-            grid[d] = np.mean(grid[d], axis=i)
-          # end
-        # end
-      # end
-    # end
-  # end
-
-  num_comps = values.shape[-1]
-  idx_comps = range(num_comps)
-  if num_axes:
-    num_comps = num_axes
-  else:
-    num_comps = len(idx_comps)
-  # end
+  grid, values, _, _, cells, _, num_comps, idx_comps, xlabel, ylabel, zlabel, clabel = axis_and_grid_prep(
+      grid=grid, values=values, lower=lower, upper=upper, cells=cells,
+      num_dims=num_dims, streamline=False, quiver=False, num_axes=num_axes,
+      lineouts=None, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, clabel=clabel,
+      xshift=xshift, yshift=yshift, zshift=zshift, xscale=xscale, yscale=yscale,
+      zscale=zscale,
+  )
 
   if bool(figsize):
     figsize = (int(figsize.split(",")[0]), int(figsize.split(",")[1]))
