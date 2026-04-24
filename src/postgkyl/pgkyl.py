@@ -49,6 +49,7 @@ class PgkylCommandGroup(click.Group):
     aliases = {
         "pl": "plot",
         "ply": "plotly",
+        "ply-anim": "plotly_animate",
         "pv": "pyvista",
     }
     target = aliases.get(cmd_name)
