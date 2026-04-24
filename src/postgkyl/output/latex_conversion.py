@@ -1,8 +1,6 @@
 
 from __future__ import annotations
-
 import re
-
 
 _LATEX_TO_UNICODE = {
     r"\mu": "μ",

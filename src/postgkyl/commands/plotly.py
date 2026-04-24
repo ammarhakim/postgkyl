@@ -100,7 +100,7 @@ def _parse_range_option(_ctx, _param, value):
     help="Starting azimuthal camera angle in degrees for rotating exports.")
 @click.option("--polar-angle", type=click.FLOAT, default=85.0, show_default=True,
     help="Polar camera angle in degrees for rotating exports.")
-@click.option("--rotation-period", type=click.FLOAT, default=20.0, show_default=True,
+@click.option("--rotation-period", type=click.FLOAT, default=40.0, show_default=True,
     help="Seconds per full camera rotation for rotating exports.")
 @click.option("--fps", type=click.INT, default=1, show_default=True,
     help="Frames-per-second for rotating mp4/gif output.")
