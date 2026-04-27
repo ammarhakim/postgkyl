@@ -34,6 +34,7 @@ from postgkyl.commands.gk_distf import load_gk_distf
 from postgkyl.commands.gk_distf import gk_distf
 from postgkyl.commands.gk_particle_balance import gk_particle_balance
 from postgkyl.commands.perprotate import perprotate
+from postgkyl.commands.gridplot import gridplot
 from postgkyl.commands.plot import plot
 from postgkyl.commands.pr import pr
 from postgkyl.commands.relchange import relchange
