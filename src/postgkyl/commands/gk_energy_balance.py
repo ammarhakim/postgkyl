@@ -439,7 +439,7 @@ def gk_energy_balance(ctx, **kwargs):
     # Plot.
     hpl1a.append(ax1a.plot(time_dt, absy_func(mom_err_norm)))
 
-    ylabel_string = r'$|E_{\dot{\mathcal{E}}}~\Delta t/\mathcal{E}|$'
+    ylabel_string = r'$E_{\dot{\mathcal{E}}}~\Delta t/\mathcal{E}$'
     if kwargs["ylabel"]:
       ylabel_string = kwargs["ylabel"]
   
@@ -453,6 +453,9 @@ def gk_energy_balance(ctx, **kwargs):
 
   if kwargs["logy"]:
     ax1a.set_yscale("log")
+
+  if kwargs["absy"] and ylabel_string != '':
+    ylabel_string = r'|'+ylabel_string+r'|'
 
   ax1a.set_xlabel(kwargs["xlabel"],fontsize=xy_label_font_size)
   ax1a.set_ylabel(ylabel_string,fontsize=xy_label_font_size)

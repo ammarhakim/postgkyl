@@ -388,6 +388,9 @@ def gk_particle_balance(ctx, **kwargs):
   if kwargs["logy"]:
     ax1a.set_yscale("log")
 
+  if kwargs["absy"] and ylabel_string != '':
+    ylabel_string = r'|'+ylabel_string+r'|'
+
   ax1a.set_xlabel(kwargs["xlabel"],fontsize=xy_label_font_size)
   ax1a.set_ylabel(ylabel_string,fontsize=xy_label_font_size)
   ax1a.set_title(title_string,fontsize=title_font_size)
