@@ -520,7 +520,8 @@ def gk_energy_balance(ctx, **kwargs):
   ax1a.set_title(title_string,fontsize=title_font_size)
   ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
   set_tick_font_size(ax1a,tick_font_size)
-
+  
+  plt.tight_layout()
   if kwargs["saveas"]:
     plt.savefig(kwargs["saveas"])
   else:
