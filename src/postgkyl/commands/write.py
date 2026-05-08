@@ -7,8 +7,8 @@ from postgkyl.utils import verb_print
 @click.command()
 @click.option("--use", "-u", help="Specify a 'tag' to apply to (default all tags).")
 @click.option("-f", "--filename", type=click.STRING, prompt=True, help="Output file name.")
-@click.option("-m", "--mode", type=click.Choice(["gkyl", "bp", "txt", "npy"]), default="gkyl",
-    help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), or `npy` (NumPy binary file).")
+@click.option("-m", "--mode", type=click.Choice(["gkyl", "bp", "txt", "npy", "vts"]), default="gkyl",
+  help="Output file mode. One of `gkyl` (binary, default), `bp` (ADIOS BP file), `txt` (ASCII text file), `npy` (NumPy binary file), or `vts` (VTK structured grid with ParaView time-series sidecar).")
 @click.option("-s", "--single", is_flag=True, help="Write all dataset into one file")
 @click.option("--normalize-axes","-n", is_flag=True, help="Normalize VTK axes to [-1, 1] range before writing.")
 @click.pass_context
