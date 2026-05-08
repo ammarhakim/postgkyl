@@ -162,8 +162,6 @@ def plotly(ctx, **kwargs):
 
   kwargs["rcParams"] = ctx.obj["rcParams"]
 
-  supported_dims = (2, 3)
-
   kwargs["num_axes"] = None
   if kwargs["subplots"]:
     kwargs["num_axes"] = 0
@@ -248,11 +246,6 @@ def plotly(ctx, **kwargs):
   last_saved_output = None
 
   for i, dat in ctx.obj["data"].iterator(kwargs["use"], enum=True):
-    if dat.get_num_dims() not in supported_dims:
-      raise click.ClickException(
-          f"plotly only supports 2D or 3D datasets. Dataset {i:d} has {dat.get_num_dims():d} dimensions."
-      )
-    # end
 
     if legend_labels is not None and i < len(legend_labels):
       label = legend_labels[i]
