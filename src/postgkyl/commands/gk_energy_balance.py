@@ -74,10 +74,14 @@ def gk_energy_balance(ctx, **kwargs):
     ..._bflux_<direction><side>_integrated_HamiltonianMoments.gkyl
   where ... means <simulation_name>-<species_name>, and we need these
   files for each species. The last two files above are only needed if
-  the simulation had sources or non-periodic boundaries. If the
-  relative error is requested, these are also needed:
+  the simulation had sources or non-periodic boundaries.
+  For electromagnetic simulations, the following file is also used
+  (if present):
+    <simulation_name>-apar_energy_dot.gkyl
+  If the relative error is requested, these are also needed:
     ..._integrated_moms.gkyl
     <simulation_name>-field_energy.gkyl
+    <simulation_name>-apar_energy.gkyl  (electromagnetic only)
     <simulation_name>-dt.gkyl
 
   \b
