@@ -352,8 +352,7 @@ def gk_energy_balance(ctx, **kwargs):
       mom_err = src - bflux_tot - (fdot - field_dot)
     
     # Plot.
-    hpl1a.append(ax1a.plot(time_fdot, absy_func(fdot), linestyle=line_styles[0]))
-    legend_strings = [r'$\dot{f}$']
+    legend_strings = list()
 
     if has_src:
       hpl1a.append(ax1a.plot(time_src, absy_func(src), linestyle=line_styles[2]))
@@ -364,22 +363,26 @@ def gk_energy_balance(ctx, **kwargs):
       legend_strings.append(r'$-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f$')
 
     if has_field_dot:
-      hpl1a.append(ax1a.plot(time_field_dot, absy_func(field_dot), linestyle=':', marker='+',markevery=8))
+      hpl1a.append(ax1a.plot(time_field_dot, absy_func(-field_dot), linestyle=':', marker='+',markevery=8))
       if has_apar_dot:
-        legend_strings.append(r'$\dot{\phi}+\dot{A_{\parallel}}$')
+        legend_strings.append(r'$-\dot{\phi}-\dot{A_{\parallel}}$')
       else:
-        legend_strings.append(r'$\dot{\phi}$')
+        legend_strings.append(r'$-\dot{\phi}$')
 
     if has_apar_dot and not has_field_dot:
       # Plot apar_dot separately only if field_dot doesn't exist
-      hpl1a.append(ax1a.plot(time_apar_dot, absy_func(apar_dot), linestyle=':', marker='+',markevery=8))
-      legend_strings.append(r'$\dot{A_{\parallel}}$')
+      hpl1a.append(ax1a.plot(time_apar_dot, absy_func(-apar_dot), linestyle=':', marker='+',markevery=8))
+      legend_strings.append(r'$-\dot{A_{\parallel}}$')
+
+    hpl1a.append(ax1a.plot(time_fdot, absy_func(-fdot), linestyle=line_styles[0]))
+    legend_strings.append(r'$-\dot{f}$')
 
     hpl1a.append(ax1a.plot(time_fdot, absy_func(mom_err), linestyle=line_styles[3]))
-    if has_apar_dot:
-      legend_strings.append(r'$E_{\dot{\mathcal{E}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-(\dot{f}-\dot{\phi}-\dot{A_{\parallel}})$')
-    else:
-      legend_strings.append(r'$E_{\dot{\mathcal{E}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-(\dot{f}-\dot{\phi})$')
+    err_str = r'$E_{\dot{\mathcal{E}}}=$'
+    for i in range(len(legend_strings)):
+      err_str = err_str + legend_strings[i]
+    # end
+    legend_strings.append(err_str)
 
     ylabel_string = ""
     if kwargs["ylabel"]:
