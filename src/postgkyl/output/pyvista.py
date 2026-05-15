@@ -123,11 +123,11 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     if mesh_clip_plane:
       pl.add_mesh_clip_plane(contours, cmap=cmap, clim=clim,
         normal='-x', opacity=opacity,
-        scalar_bar_args=scalar_bar_args)
+        scalar_bar_args=scalar_bar_args, factor=1.0)
     elif mesh_slice_plane:
       pl.add_mesh_slice(contours, cmap=cmap, clim=clim,
         normal='-x', opacity=opacity,
-        scalar_bar_args=scalar_bar_args)
+        scalar_bar_args=scalar_bar_args, factor=1.0)
     else:
       pl.add_mesh( contours, cmap=cmap, clim=clim,
         opacity=opacity,
@@ -139,6 +139,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
         opacity=opacity,
         normal='-x',
         scalar_bar_args=scalar_bar_args,
+        factor=1.0,
       )
     elif mesh_slice_plane:
       pl.add_mesh_slice(
@@ -146,6 +147,7 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
         opacity=opacity,
         normal='-x',
         scalar_bar_args=scalar_bar_args,
+        factor=1.0,
       )
     else:
       vol = pl.add_volume(
