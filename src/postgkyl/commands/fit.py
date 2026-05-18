@@ -6,8 +6,27 @@ from postgkyl.utils import verb_print
 import postgkyl.tools as tools
 
 
+class FitTypeParam(click.ParamType):
+  """Click parameter type that resolves unambiguous prefixes of fit type names."""
+  name = "fit_type"
+
+  def convert(self, value, param, ctx):
+    choices = list(tools.FIT_FUNCTIONS.keys())
+    matches = [c for c in choices if c.startswith(value)]
+    if len(matches) == 1:
+      return matches[0]
+    if len(matches) > 1:
+      self.fail(f"'{value}' is ambiguous: matches {', '.join(sorted(matches))}", param, ctx)
+    self.fail(
+        f"'{value}' does not match any fit type. Available: {', '.join(choices)}", param, ctx
+    )
+
+  def get_metavar(self, param, **_):
+    return "{" + "|".join(tools.FIT_FUNCTIONS.keys()) + "}"
+
+
 @click.command()
-@click.argument("fit_type", type=click.Choice(["linear", "quadratic"]))
+@click.argument("fit_type", type=FitTypeParam())
 @click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to. [default: all]")
 @click.option("--guess", "-g", help="Comma-separated initial parameter guess.")
 @click.option("--component", "-c", type=click.INT, default=0, show_default=True,
