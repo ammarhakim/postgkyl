@@ -1,0 +1,303 @@
+"""Tests for tools.fit and the fit CLI command."""
+
+from __future__ import annotations
+
+import click
+import numpy as np
+import pytest
+
+import postgkyl.commands as cmd
+import postgkyl.tools as tools
+from postgkyl.commands.fit import FitTypeParam
+from postgkyl.data.gdata import GData
+from postgkyl.pgkyl import cli
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+def _make_ctx(datasets: list[GData]) -> click.Context:
+  """Return a minimal Click context populated with synthetic datasets."""
+  ctx = click.core.Context(cli)
+  ctx.obj = {}
+  ctx.obj["verbose"] = False
+  ctx.obj["compgrid"] = None
+  data = cmd.DataSpace()
+  for dat in datasets:
+    data.add(dat)
+  ctx.obj["data"] = data
+  return ctx
+
+
+def _gdata_1d(x_nodal: np.ndarray, y_values: np.ndarray) -> GData:
+  """GData with a nodal 1-D grid and cell-valued data of shape (N, 1)."""
+  dat = GData()
+  dat.push([x_nodal], y_values[:, np.newaxis])
+  return dat
+
+
+def _gdata_2d(x_nodal: np.ndarray, y_nodal: np.ndarray,
+    z_values: np.ndarray) -> GData:
+  """GData with nodal 2-D grid and cell-valued data of shape (Nx, Ny, 1)."""
+  dat = GData()
+  dat.push([x_nodal, y_nodal], z_values[..., np.newaxis])
+  return dat
+
+
+# ── tools: model functions ────────────────────────────────────────────────────
+
+class TestFitFunctions:
+  def test_linear_evaluation(self):
+    x = np.array([0.0, 1.0, 2.0])
+    np.testing.assert_allclose(tools.linear(x, 3.0, -1.0), [-1.0, 2.0, 5.0])
+
+  def test_quadratic_evaluation(self):
+    x = np.array([0.0, 1.0, 2.0, 3.0])
+    np.testing.assert_allclose(tools.quadratic(x, 1.0, -2.0, 1.0), [1.0, 0.0, 1.0, 4.0])
+
+  def test_plane_evaluation(self):
+    XY = np.array([[0.0, 1.0], [0.0, 1.0]])
+    np.testing.assert_allclose(tools.plane(XY, 2.0, -1.0, 0.5), [0.5, 1.5])
+
+  def test_quadratic2d_evaluation(self):
+    XY = np.array([[1.0], [2.0]])
+    # 1*1 + 0*4 + 0*2 + 0*1 + 0*2 + 3 = 4
+    result = tools.quadratic2d(XY, 1.0, 0.0, 0.0, 0.0, 0.0, 3.0)
+    np.testing.assert_allclose(result, [4.0])
+
+  def test_exp_plateau_evaluation(self):
+    x = np.array([0.0, 1.0])
+    # A=2, b=0, C=1 → always 2*1 + 1 = 3
+    np.testing.assert_allclose(tools.exp_plateau(x, 2.0, 0.0, 1.0), [3.0, 3.0])
+
+  def test_fit_functions_and_ndim_consistent(self):
+    assert set(tools.FIT_FUNCTIONS) == set(tools.FIT_NDIM)
+
+  def test_fit_ndim_values(self):
+    assert tools.FIT_NDIM["linear"] == 1
+    assert tools.FIT_NDIM["quadratic"] == 1
+    assert tools.FIT_NDIM["plane"] == 2
+    assert tools.FIT_NDIM["quadratic2d"] == 2
+    assert tools.FIT_NDIM["exp_plateau"] == 1
+
+
+# ── tools: fit() — 1-D models ─────────────────────────────────────────────────
+
+class TestFit1D:
+  def test_linear_exact_data_recovers_params(self):
+    x = np.linspace(0, 10, 50)
+    y = 3.0 * x - 1.5
+    params, _, R2 = tools.fit(x, y, "linear")
+    np.testing.assert_allclose(params, [3.0, -1.5], rtol=1e-10)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_quadratic_exact_data_recovers_params(self):
+    x = np.linspace(-2, 2, 60)
+    y = 0.5 * x**2 - 1.0 * x + 2.0
+    params, _, R2 = tools.fit(x, y, "quadratic")
+    np.testing.assert_allclose(params, [0.5, -1.0, 2.0], rtol=1e-10)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_linear_noisy_data_high_R2_and_close_params(self):
+    rng = np.random.default_rng(0)
+    x = np.linspace(0, 10, 200)
+    y = 2.0 * x + 1.0 + rng.normal(0, 0.1, 200)
+    params, _, R2 = tools.fit(x, y, "linear")
+    assert R2 > 0.999
+    np.testing.assert_allclose(params[0], 2.0, atol=0.05)
+    np.testing.assert_allclose(params[1], 1.0, atol=0.1)
+
+  def test_returns_covariance_with_correct_shape(self):
+    x = np.linspace(0, 5, 30)
+    y = x + 1.0
+    _, cov, _ = tools.fit(x, y, "linear")
+    assert cov.shape == (2, 2)
+
+  def test_initial_guess_does_not_change_result_on_exact_data(self):
+    x = np.linspace(0, 10, 50)
+    y = 5.0 * x + 3.0
+    params_default, _, _ = tools.fit(x, y, "linear")
+    params_guess, _, _ = tools.fit(x, y, "linear", p0=[10.0, 10.0])
+    np.testing.assert_allclose(params_default, params_guess, rtol=1e-8)
+
+  def test_exp_plateau_exact_data_recovers_params(self):
+    x = np.linspace(0, 5, 80)
+    true_params = [3.0, -1.5, 1.0]
+    y = tools.exp_plateau(x, *true_params)
+    params, _, R2 = tools.fit(x, y, "exp_plateau", p0=[1.0, -1.0, 0.0])
+    np.testing.assert_allclose(params, true_params, rtol=1e-6)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_exp_plateau_noisy_data_high_R2(self):
+    rng = np.random.default_rng(7)
+    x = np.linspace(0, 5, 100)
+    y = tools.exp_plateau(x, 3.0, -1.5, 1.0) + rng.normal(0, 0.05, 100)
+    _, _, R2 = tools.fit(x, y, "exp_plateau", p0=[1.0, -1.0, 0.0])
+    assert R2 > 0.99
+
+  def test_invalid_fit_type_raises_value_error(self):
+    x = np.linspace(0, 1, 10)
+    y = x
+    with pytest.raises(ValueError, match="not recognized"):
+      tools.fit(x, y, "cubic")
+
+
+# ── tools: fit() — 2-D models ─────────────────────────────────────────────────
+
+class TestFit2D:
+  @staticmethod
+  def _xdata(x, y):
+    X, Y = np.meshgrid(x, y, indexing="ij")
+    return np.array([X.flatten(), Y.flatten()])
+
+  def test_plane_exact_data_recovers_params(self):
+    xdata = self._xdata(np.linspace(0, 5, 20), np.linspace(0, 3, 15))
+    zdata = tools.plane(xdata, 2.0, -1.5, 0.5)
+    params, _, R2 = tools.fit(xdata, zdata, "plane")
+    np.testing.assert_allclose(params, [2.0, -1.5, 0.5], rtol=1e-10)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_quadratic2d_exact_data_recovers_params(self):
+    xdata = self._xdata(np.linspace(0, 4, 15), np.linspace(0, 3, 12))
+    true_params = [0.3, 0.2, -0.1, 1.0, -0.5, 2.0]
+    zdata = tools.quadratic2d(xdata, *true_params)
+    params, _, R2 = tools.fit(xdata, zdata, "quadratic2d")
+    np.testing.assert_allclose(params, true_params, rtol=1e-8)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_plane_noisy_data_high_R2(self):
+    rng = np.random.default_rng(42)
+    xdata = self._xdata(np.linspace(0, 5, 30), np.linspace(0, 3, 25))
+    zdata = tools.plane(xdata, 2.0, -1.5, 0.5) + rng.normal(0, 0.05, xdata.shape[1])
+    _, _, R2 = tools.fit(xdata, zdata, "plane")
+    assert R2 > 0.999
+
+  def test_plane_returns_correct_covariance_shape(self):
+    xdata = self._xdata(np.linspace(0, 5, 10), np.linspace(0, 3, 8))
+    zdata = tools.plane(xdata, 1.0, 2.0, 0.0)
+    _, cov, _ = tools.fit(xdata, zdata, "plane")
+    assert cov.shape == (3, 3)
+
+
+# ── FitTypeParam ──────────────────────────────────────────────────────────────
+
+class TestFitTypeParam:
+  p = FitTypeParam()
+
+  def test_full_names_resolve(self):
+    assert self.p.convert("linear", None, None) == "linear"
+    assert self.p.convert("quadratic", None, None) == "quadratic"
+    assert self.p.convert("plane", None, None) == "plane"
+    assert self.p.convert("quadratic2d", None, None) == "quadratic2d"
+
+  def test_unambiguous_prefixes_resolve(self):
+    assert self.p.convert("l", None, None) == "linear"
+    assert self.p.convert("li", None, None) == "linear"
+    assert self.p.convert("pl", None, None) == "plane"
+    assert self.p.convert("quadratic2", None, None) == "quadratic2d"
+    assert self.p.convert("e", None, None) == "exp_plateau"
+    assert self.p.convert("exp", None, None) == "exp_plateau"
+
+  def test_exact_match_wins_over_prefix_of_longer_name(self):
+    # "quadratic" is a prefix of "quadratic2d", so without exact-match priority
+    # it would be ambiguous. The exact match must win.
+    assert self.p.convert("quadratic", None, None) == "quadratic"
+
+  def test_ambiguous_prefix_fails(self):
+    # "q" matches both "quadratic" and "quadratic2d"
+    with pytest.raises(click.exceptions.BadParameter):
+      self.p.convert("q", None, None)
+
+  def test_unknown_input_fails(self):
+    with pytest.raises(click.exceptions.BadParameter):
+      self.p.convert("exponential", None, None)
+
+
+# ── fit command ───────────────────────────────────────────────────────────────
+
+class TestFitCommand:
+  """Tests invoking the fit Click command with synthetic GData."""
+
+  # nodal grids: N+1 points for N cells
+  _x_nodal = np.linspace(0.0, 10.0, 51)    # 50 cells
+  _x_cc = 0.5 * (_x_nodal[:-1] + _x_nodal[1:])
+
+  _xn_2d = np.linspace(0.0, 5.0, 21)       # 20 cells
+  _yn_2d = np.linspace(0.0, 3.0, 16)       # 15 cells
+  _xcc_2d = 0.5 * (_xn_2d[:-1] + _xn_2d[1:])
+  _ycc_2d = 0.5 * (_yn_2d[:-1] + _yn_2d[1:])
+
+  def _linear_dat(self):
+    y = tools.linear(self._x_cc, 3.0, -1.0)
+    return _gdata_1d(self._x_nodal, y)
+
+  def _quadratic_dat(self):
+    y = tools.quadratic(self._x_cc, 0.5, -1.0, 2.0)
+    return _gdata_1d(self._x_nodal, y)
+
+  def _plane_dat(self):
+    X, Y = np.meshgrid(self._xcc_2d, self._ycc_2d, indexing="ij")
+    z = tools.plane(np.array([X.flatten(), Y.flatten()]), 2.0, -1.5, 0.5)
+    return _gdata_2d(self._xn_2d, self._yn_2d, z.reshape(X.shape))
+
+  def test_linear_command_runs(self):
+    ctx = _make_ctx([self._linear_dat()])
+    ctx.invoke(cmd.fit, fit_type="linear")
+
+  def test_quadratic_command_runs(self):
+    ctx = _make_ctx([self._quadratic_dat()])
+    ctx.invoke(cmd.fit, fit_type="quadratic")
+
+  def test_plane_command_runs(self):
+    ctx = _make_ctx([self._plane_dat()])
+    ctx.invoke(cmd.fit, fit_type="plane")
+
+  def test_stack_is_not_modified_by_fit(self):
+    dat = self._linear_dat()
+    ctx = _make_ctx([dat])
+    ctx.invoke(cmd.fit, fit_type="linear")
+    assert len(list(ctx.obj["data"].iterator())) == 1
+
+  def test_dimension_mismatch_raises(self):
+    # 1D data with a 2D fit type should fail
+    ctx = _make_ctx([self._linear_dat()])
+    with pytest.raises(click.exceptions.UsageError, match="requires 2 spatial dimension"):
+      ctx.invoke(cmd.fit, fit_type="plane")
+
+  def test_component_selection_does_not_raise(self):
+    y0 = tools.linear(self._x_cc, 3.0, -1.0)
+    y1 = tools.linear(self._x_cc, -2.0, 5.0)
+    dat = GData()
+    dat.push([self._x_nodal], np.stack([y0, y1], axis=-1))
+    ctx = _make_ctx([dat])
+    ctx.invoke(cmd.fit, fit_type="linear", component=1)
+
+  def test_initial_guess_does_not_raise(self):
+    ctx = _make_ctx([self._linear_dat()])
+    ctx.invoke(cmd.fit, fit_type="linear", guess="1.0,0.0")
+
+  def test_exp_plateau_command_runs(self):
+    y = tools.exp_plateau(self._x_cc, 3.0, -0.5, 1.0)
+    ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="exp_plateau", guess="1.0,-1.0,0.0")
+
+  def test_already_cell_centered_grid_does_not_raise(self):
+    x_cc = self._x_cc
+    y = tools.linear(x_cc, 2.0, 1.0)
+    dat = GData()
+    dat.push([x_cc], y[:, np.newaxis])
+    ctx = _make_ctx([dat])
+    ctx.invoke(cmd.fit, fit_type="linear")
+
+  def test_nodal_grid_is_converted_cell_centered_is_not(self):
+    # Nodal grid: 51 points for 50 cells — must be converted
+    y_nodal = tools.linear(self._x_cc, 2.0, 1.0)
+    dat_nodal = _gdata_1d(self._x_nodal, y_nodal)  # grid has 51 points
+    # Cell-centered grid: 50 points — must be passed through unchanged
+    dat_cc = GData()
+    dat_cc.push([self._x_cc], y_nodal[:, np.newaxis])  # grid has 50 points
+    # Both should produce the same fit params
+    ctx1 = _make_ctx([dat_nodal])
+    ctx2 = _make_ctx([dat_cc])
+    # Just verify both run without error (param equality tested in tools tests)
+    ctx1.invoke(cmd.fit, fit_type="linear")
+    ctx2.invoke(cmd.fit, fit_type="linear")

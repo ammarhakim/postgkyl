@@ -1,9 +1,9 @@
 import click
 import numpy as np
 
-from postgkyl.data import GData
 from postgkyl.utils import verb_print
 import postgkyl.tools as tools
+from postgkyl.output.nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
 
 
 class FitTypeParam(click.ParamType):
@@ -12,6 +12,8 @@ class FitTypeParam(click.ParamType):
 
   def convert(self, value, param, ctx):
     choices = list(tools.FIT_FUNCTIONS.keys())
+    if value in choices:  # exact match takes priority over prefix search
+      return value
     matches = [c for c in choices if c.startswith(value)]
     if len(matches) == 1:
       return matches[0]
@@ -25,22 +27,67 @@ class FitTypeParam(click.ParamType):
     return "{" + "|".join(tools.FIT_FUNCTIONS.keys()) + "}"
 
 
+def _print_result(fit_type, params, std, R2):
+  p = params
+  s = std
+  if fit_type == "linear":
+    click.echo(
+        f"Linear:      y = ({p[0]:.6e} ± {s[0]:.2e})*x"
+        f" + ({p[1]:.6e} ± {s[1]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "quadratic":
+    click.echo(
+        f"Quadratic:   y = ({p[0]:.6e} ± {s[0]:.2e})*x²"
+        f" + ({p[1]:.6e} ± {s[1]:.2e})*x"
+        f" + ({p[2]:.6e} ± {s[2]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "plane":
+    click.echo(
+        f"Plane:       z = ({p[0]:.6e} ± {s[0]:.2e})*x"
+        f" + ({p[1]:.6e} ± {s[1]:.2e})*y"
+        f" + ({p[2]:.6e} ± {s[2]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "quadratic2d":
+    click.echo(
+        f"2D quadratic: z = ({p[0]:.6e} ± {s[0]:.2e})*x²"
+        f" + ({p[1]:.6e} ± {s[1]:.2e})*y²"
+        f" + ({p[2]:.6e} ± {s[2]:.2e})*x*y"
+        f" + ({p[3]:.6e} ± {s[3]:.2e})*x"
+        f" + ({p[4]:.6e} ± {s[4]:.2e})*y"
+        f" + ({p[5]:.6e} ± {s[5]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "exp_plateau":
+    click.echo(
+        f"Exp plateau: y = ({p[0]:.6e} ± {s[0]:.2e})*exp(({p[1]:.6e} ± {s[1]:.2e})*x)"
+        f" + ({p[2]:.6e} ± {s[2]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+
+
 @click.command()
 @click.argument("fit_type", type=FitTypeParam())
 @click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to. [default: all]")
 @click.option("--guess", "-g", help="Comma-separated initial parameter guess.")
 @click.option("--component", "-c", type=click.INT, default=0, show_default=True,
     help="Component index of the values array to fit.")
-@click.option("--tag", "-t", help="Tag for a new dataset containing the fit curve.")
-@click.option("--label", "-l", help="Custom label for the resulting dataset.")
 @click.pass_context
 def fit(ctx, **kwargs):
-  """Fit data with a polynomial model.
+  """Fit data with a polynomial model and print the result.
 
-  FIT_TYPE is one of: linear (y = a*x + b) or quadratic (y = a*x^2 + b*x + c).
+  Available models (prefix-matched):
+    linear      -- y = a*x + b
+    quadratic   -- y = a*x² + b*x + c
+    plane       -- z = a*x + b*y + c
+    quadratic2d -- z = a*x² + b*y² + c*x*y + d*x + e*y + f
 
-  Prints the fit parameters and R² to stdout. With --tag, also creates a new
-  dataset containing the fitted curve evaluated on the same grid.
+  1D models require 1D data; 2D models require 2D data. Use 'select' or
+  'integrate' to reduce dimensionality first if needed.
+
+  Does not modify the dataset stack.
   """
   verb_print(ctx, "Starting fit")
   data = ctx.obj["data"]
@@ -48,37 +95,34 @@ def fit(ctx, **kwargs):
   for dat in data.iterator(kwargs["use"]):
     grid = dat.get_grid()
     values = dat.get_values()
+    fit_type = kwargs["fit_type"]
+    ndim_fit = tools.FIT_NDIM[fit_type]
 
-    x = grid[0]
-    y = values[..., kwargs["component"]].squeeze()
+    spatial_shape = values.shape[:-1]
+    if any(grid[d].shape[0] == spatial_shape[d] + 1 for d in range(len(grid))):
+      cc_grid = nodal_to_cell_centered_grid(grid, spatial_shape)
+    else:
+      cc_grid = list(grid)
+    n_spatial = len(cc_grid)
+
+    if n_spatial != ndim_fit:
+      ctx.fail(
+          f"fit '{fit_type}' requires {ndim_fit} spatial dimension(s), "
+          f"but data has {n_spatial}. Use 'select' or 'integrate' to reduce first."
+      )
+
+    ydata = values[..., kwargs["component"]].flatten()
+
+    if ndim_fit == 1:
+      xdata = cc_grid[0]
+    else:
+      X, Y = np.meshgrid(cc_grid[0], cc_grid[1], indexing="ij")
+      xdata = np.array([X.flatten(), Y.flatten()])
 
     p0 = None
     if kwargs["guess"]:
       p0 = [float(v) for v in kwargs["guess"].split(",")]
 
-    params, cov, R2 = tools.fit(x, y, kwargs["fit_type"], p0=p0)
+    params, cov, R2 = tools.fit(xdata, ydata, fit_type, p0=p0)
     std = np.sqrt(np.diag(cov))
-
-    fit_type = kwargs["fit_type"]
-    if fit_type == "linear":
-      click.echo(
-          f"Linear fit:    y = ({params[0]:.6e} ± {std[0]:.2e})*x"
-          f" + ({params[1]:.6e} ± {std[1]:.2e})"
-          f"    R² = {R2:.6f}"
-      )
-    elif fit_type == "quadratic":
-      click.echo(
-          f"Quadratic fit: y = ({params[0]:.6e} ± {std[0]:.2e})*x²"
-          f" + ({params[1]:.6e} ± {std[1]:.2e})*x"
-          f" + ({params[2]:.6e} ± {std[2]:.2e})"
-          f"    R² = {R2:.6f}"
-      )
-
-    if kwargs["tag"]:
-      y_fit = tools.FIT_FUNCTIONS[fit_type](x, *params)
-      out = GData(tag=kwargs["tag"], label=kwargs["label"],
-          comp_grid=ctx.obj["compgrid"], ctx=dat.ctx)
-      out.push([x], y_fit[..., np.newaxis])
-      data.add(out)
-
-  verb_print(ctx, "Finishing fit")
+    _print_result(fit_type, params, std, R2)

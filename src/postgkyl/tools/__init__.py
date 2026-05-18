@@ -53,8 +53,12 @@ from .energetics import energetics
 from .fft import fft
 from .fit import fit
 from .fit import FIT_FUNCTIONS
+from .fit import FIT_NDIM
 from .fit import linear
 from .fit import quadratic
+from .fit import plane
+from .fit import quadratic2d
+from .fit import exp_plateau
 from .growth import exp2
 from .growth import fit_growth
 from .init_polar import init_polar
