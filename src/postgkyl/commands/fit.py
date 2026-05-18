@@ -103,6 +103,15 @@ def fit(ctx, **kwargs):
       cc_grid = nodal_to_cell_centered_grid(grid, spatial_shape)
     else:
       cc_grid = list(grid)
+
+    # Drop dimensions collapsed to a single cell (e.g. after integrate / select)
+    active = [d for d in range(len(cc_grid)) if cc_grid[d].shape[0] > 1]
+    if len(active) < len(cc_grid):
+      idx = tuple(slice(None) if d in active else 0
+          for d in range(len(spatial_shape))) + (slice(None),)
+      cc_grid = [cc_grid[d] for d in active]
+      values = values[idx]
+
     n_spatial = len(cc_grid)
 
     if n_spatial != ndim_fit:

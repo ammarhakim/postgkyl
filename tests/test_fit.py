@@ -288,6 +288,15 @@ class TestFitCommand:
     ctx = _make_ctx([dat])
     ctx.invoke(cmd.fit, fit_type="linear")
 
+  def test_collapsed_dimension_is_ignored(self):
+    # Simulates data after "integ 1": shape (Nx, 1, 1) with a size-1 dim 1
+    y = tools.linear(self._x_cc, 2.0, 1.0)
+    dat = GData()
+    # values shape (50, 1, 1): 50 real cells, 1 collapsed cell, 1 component
+    dat.push([self._x_nodal, np.array([0.0, 1.0])], y[:, np.newaxis, np.newaxis])
+    ctx = _make_ctx([dat])
+    ctx.invoke(cmd.fit, fit_type="linear")
+
   def test_nodal_grid_is_converted_cell_centered_is_not(self):
     # Nodal grid: 51 points for 50 cells — must be converted
     y_nodal = tools.linear(self._x_cc, 2.0, 1.0)
