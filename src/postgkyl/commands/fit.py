@@ -63,6 +63,32 @@ def _print_result(fit_type, params, std, R2):
         f" + ({p[2]:.6e} ± {s[2]:.2e})"
         f"    R² = {R2:.6f}"
     )
+  elif fit_type == "gaussian":
+    click.echo(
+        f"Gaussian:    y = ({p[0]:.6e} ± {s[0]:.2e})"
+        f"*exp(-0.5*((x - ({p[1]:.6e} ± {s[1]:.2e}))/({p[2]:.6e} ± {s[2]:.2e}))²)"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "power":
+    click.echo(
+        f"Power law:   y = ({p[0]:.6e} ± {s[0]:.2e})*x^({p[1]:.6e} ± {s[1]:.2e})"
+        f" + ({p[2]:.6e} ± {s[2]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "sinusoid":
+    click.echo(
+        f"Sinusoid:    y = ({p[0]:.6e} ± {s[0]:.2e})"
+        f"*sin(({p[1]:.6e} ± {s[1]:.2e})*x + ({p[2]:.6e} ± {s[2]:.2e}))"
+        f" + ({p[3]:.6e} ± {s[3]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
+  elif fit_type == "tanh_transition":
+    click.echo(
+        f"Tanh:        y = ({p[0]:.6e} ± {s[0]:.2e})"
+        f"*tanh((x - ({p[1]:.6e} ± {s[1]:.2e}))/({p[2]:.6e} ± {s[2]:.2e}))"
+        f" + ({p[3]:.6e} ± {s[3]:.2e})"
+        f"    R² = {R2:.6f}"
+    )
 
 
 @click.command()
@@ -76,11 +102,15 @@ def fit(ctx, **kwargs):
   """Fit data with a model and print parameters + R².
 
   Model types (prefix-matched, same mechanism as pgkyl commands):
-    linear      -- y = a*x + b
-    quadratic   -- y = a*x² + b*x + c
-    plane       -- z = a*x + b*y + c
-    quadratic2d -- z = a*x² + b*y² + c*x*y + d*x + e*y + f
-    exp_plateau -- y = A*exp(b*x) + C
+    linear          -- y = a*x + b
+    quadratic       -- y = a*x² + b*x + c
+    plane           -- z = a*x + b*y + c  [2D]
+    quadratic2d     -- z = a*x² + b*y² + c*x*y + d*x + e*y + f  [2D]
+    exp_plateau     -- y = A*exp(b*x) + C
+    gaussian        -- y = A*exp(-0.5*((x-mu)/sigma)²)
+    power           -- y = a*x^n + b
+    sinusoid        -- y = A*sin(omega*x + phi) + C
+    tanh_transition -- y = A*tanh((x-x0)/w) + C
 
   1D models require 1D data; 2D models require 2D data. Collapsed dimensions
   (e.g. after integrate) are automatically ignored. Does not modify the stack.

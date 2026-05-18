@@ -59,6 +59,10 @@ from .fit import quadratic
 from .fit import plane
 from .fit import quadratic2d
 from .fit import exp_plateau
+from .fit import gaussian
+from .fit import power
+from .fit import sinusoid
+from .fit import tanh_transition
 from .growth import exp2
 from .growth import fit_growth
 from .init_polar import init_polar

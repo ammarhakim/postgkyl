@@ -93,6 +93,22 @@ class TestFitFunctions:
     x = np.array([0.0, 1.0])
     np.testing.assert_allclose(tools.exp_plateau(x, 2.0, 0.0, 1.0), [3.0, 3.0])
 
+  def test_gaussian_evaluation(self):
+    x = np.array([0.0])
+    np.testing.assert_allclose(tools.gaussian(x, 3.0, 0.0, 1.0), [3.0])
+
+  def test_power_evaluation(self):
+    x = np.array([1.0, 2.0, 4.0])
+    np.testing.assert_allclose(tools.power(x, 2.0, 3.0, 1.0), [3.0, 17.0, 129.0])
+
+  def test_sinusoid_evaluation(self):
+    x = np.array([0.0, np.pi / 2])
+    np.testing.assert_allclose(tools.sinusoid(x, 1.0, 1.0, 0.0, 0.5), [0.5, 1.5], atol=1e-14)
+
+  def test_tanh_transition_evaluation(self):
+    x = np.array([0.0])
+    np.testing.assert_allclose(tools.tanh_transition(x, 2.0, 0.0, 1.0, -1.0), [-1.0])
+
   def test_fit_functions_and_ndim_consistent(self):
     assert set(tools.FIT_FUNCTIONS) == set(tools.FIT_NDIM)
 
@@ -102,6 +118,10 @@ class TestFitFunctions:
     assert tools.FIT_NDIM["plane"] == 2
     assert tools.FIT_NDIM["quadratic2d"] == 2
     assert tools.FIT_NDIM["exp_plateau"] == 1
+    assert tools.FIT_NDIM["gaussian"] == 1
+    assert tools.FIT_NDIM["power"] == 1
+    assert tools.FIT_NDIM["sinusoid"] == 1
+    assert tools.FIT_NDIM["tanh_transition"] == 1
 
 
 # ── tools: fit() — 1-D models ─────────────────────────────────────────────────
@@ -163,6 +183,38 @@ class TestFit1D:
     y = x
     with pytest.raises(ValueError, match="not recognized"):
       tools.fit(x, y, "cubic")
+
+  def test_gaussian_exact_data_recovers_params(self):
+    x = np.linspace(-3, 3, 100)
+    true_params = [2.0, 0.5, 0.8]
+    y = tools.gaussian(x, *true_params)
+    params, _, R2 = tools.fit(x, y, "gaussian", p0=[1.0, 0.0, 1.0])
+    np.testing.assert_allclose(params, true_params, rtol=1e-6)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_power_exact_data_recovers_params(self):
+    x = np.linspace(1, 5, 60)
+    true_params = [3.0, 2.0, -1.0]
+    y = tools.power(x, *true_params)
+    params, _, R2 = tools.fit(x, y, "power", p0=[1.0, 1.5, 0.0])
+    np.testing.assert_allclose(params, true_params, rtol=1e-6)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_sinusoid_exact_data_recovers_params(self):
+    x = np.linspace(0, 4 * np.pi, 200)
+    true_params = [2.0, 1.0, 0.3, 0.5]
+    y = tools.sinusoid(x, *true_params)
+    params, _, R2 = tools.fit(x, y, "sinusoid", p0=[1.5, 1.0, 0.0, 0.0])
+    np.testing.assert_allclose(params, true_params, rtol=1e-5)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_tanh_transition_exact_data_recovers_params(self):
+    x = np.linspace(-5, 5, 100)
+    true_params = [3.0, 1.0, 0.5, 2.0]
+    y = tools.tanh_transition(x, *true_params)
+    params, _, R2 = tools.fit(x, y, "tanh_transition", p0=[1.0, 0.0, 1.0, 0.0])
+    np.testing.assert_allclose(params, true_params, rtol=1e-6)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
 
 
 # ── tools: fit() — 2-D models ─────────────────────────────────────────────────
@@ -266,6 +318,27 @@ class TestFitCommand:
     y = tools.exp_plateau(self._x_cc, 3.0, -0.5, 1.0)
     ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
     ctx.invoke(cmd.fit, fit_type="exp_plateau", guess="1.0,-1.0,0.0")
+
+  def test_gaussian_command_runs(self):
+    y = tools.gaussian(self._x_cc, 2.0, 5.0, 1.5)
+    ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="gaussian", guess="1.0,5.0,1.0")
+
+  def test_power_command_runs(self):
+    y = tools.power(self._x_cc + 1.0, 1.0, 2.0, 0.0)
+    ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="power", guess="1.0,1.5,0.0")
+
+  def test_sinusoid_command_runs(self):
+    y = tools.sinusoid(self._x_cc, 1.0, 1.0, 0.0, 0.0)
+    ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="sinusoid", guess="1.0,1.0,0.0,0.0")
+
+  def test_tanh_transition_command_runs(self):
+    rng = np.random.default_rng(3)
+    y = tools.tanh_transition(self._x_cc, 2.0, 5.0, 1.0, 0.0) + rng.normal(0, 0.05, len(self._x_cc))
+    ctx = _make_ctx([_gdata_1d(self._x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="tanh_transition", guess="1.0,5.0,1.0,0.0")
 
   def test_already_cell_centered_grid_does_not_raise(self):
     dat = GData()

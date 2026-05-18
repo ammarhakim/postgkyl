@@ -30,12 +30,36 @@ def exp_plateau(x: np.ndarray, A: float, b: float, C: float) -> np.ndarray:
   return A * np.exp(b * x) + C
 
 
+def gaussian(x: np.ndarray, A: float, mu: float, sigma: float) -> np.ndarray:
+  """A * exp(-0.5 * ((x - mu) / sigma)²)"""
+  return A * np.exp(-0.5 * ((x - mu) / sigma)**2)
+
+
+def power(x: np.ndarray, a: float, n: float, b: float) -> np.ndarray:
+  """a * x^n + b"""
+  return a * x**n + b
+
+
+def sinusoid(x: np.ndarray, A: float, omega: float, phi: float, C: float) -> np.ndarray:
+  """A * sin(omega * x + phi) + C"""
+  return A * np.sin(omega * x + phi) + C
+
+
+def tanh_transition(x: np.ndarray, A: float, x0: float, w: float, C: float) -> np.ndarray:
+  """A * tanh((x - x0) / w) + C"""
+  return A * np.tanh((x - x0) / w) + C
+
+
 FIT_FUNCTIONS: dict[str, Callable] = {
     "linear": linear,
     "quadratic": quadratic,
     "plane": plane,
     "quadratic2d": quadratic2d,
     "exp_plateau": exp_plateau,
+    "gaussian": gaussian,
+    "power": power,
+    "sinusoid": sinusoid,
+    "tanh_transition": tanh_transition,
 }
 
 # Number of spatial dimensions each fit type operates on
@@ -45,6 +69,10 @@ FIT_NDIM: dict[str, int] = {
     "plane": 2,
     "quadratic2d": 2,
     "exp_plateau": 1,
+    "gaussian": 1,
+    "power": 1,
+    "sinusoid": 1,
+    "tanh_transition": 1,
 }
 
 
