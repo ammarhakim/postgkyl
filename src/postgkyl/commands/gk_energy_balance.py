@@ -364,13 +364,9 @@ def gk_energy_balance(ctx, **kwargs):
 
     if has_field_dot:
       hpl1a.append(ax1a.plot(time_field_dot, absy_func(-field_dot), linestyle=':', marker='+',markevery=8))
-      if has_apar_dot:
-        legend_strings.append(r'$-\dot{\phi}-\dot{A_{\parallel}}$')
-      else:
-        legend_strings.append(r'$-\dot{\phi}$')
+      legend_strings.append(r'$-\dot{\phi}$')
 
-    if has_apar_dot and not has_field_dot:
-      # Plot apar_dot separately only if field_dot doesn't exist
+    if has_apar_dot:
       hpl1a.append(ax1a.plot(time_apar_dot, absy_func(-apar_dot), linestyle=':', marker='+',markevery=8))
       legend_strings.append(r'$-\dot{A_{\parallel}}$')
 
@@ -407,15 +403,10 @@ def gk_energy_balance(ctx, **kwargs):
       data.add(gdat_bflux)
 
     if has_field_dot:
-      if has_apar_dot:
-        # Combine field_dot and apar_dot for plotting
-        combined_field_dot = field_dot + apar_dot
-        gdat_field_dot.push(time_field_dot, combined_field_dot)
-      else:
-        gdat_field_dot.push(time_field_dot, field_dot)
+      gdat_field_dot.push(time_field_dot, field_dot)
       data.add(gdat_field_dot)
-
-    if has_apar_dot and not has_field_dot:
+      
+    if has_apar_dot:
       gdat_apar_dot.push(time_apar_dot, apar_dot)
       data.add(gdat_apar_dot)
 
