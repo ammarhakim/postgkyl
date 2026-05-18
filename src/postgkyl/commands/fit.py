@@ -7,21 +7,18 @@ from postgkyl.output.nodal_to_cell_centered_grid import nodal_to_cell_centered_g
 
 
 class FitTypeParam(click.ParamType):
-  """Click parameter type that resolves unambiguous prefixes of fit type names."""
   name = "fit_type"
 
   def convert(self, value, param, ctx):
     choices = list(tools.FIT_FUNCTIONS.keys())
-    if value in choices:  # exact match takes priority over prefix search
+    if value in choices:
       return value
     matches = [c for c in choices if c.startswith(value)]
     if len(matches) == 1:
       return matches[0]
     if len(matches) > 1:
       self.fail(f"'{value}' is ambiguous: matches {', '.join(sorted(matches))}", param, ctx)
-    self.fail(
-        f"'{value}' does not match any fit type. Available: {', '.join(choices)}", param, ctx
-    )
+    self.fail(f"'{value}' does not match any of: {', '.join(choices)}", param, ctx)
 
   def get_metavar(self, param, **_):
     return "{" + "|".join(tools.FIT_FUNCTIONS.keys()) + "}"
@@ -71,32 +68,35 @@ def _print_result(fit_type, params, std, R2):
 @click.command()
 @click.argument("fit_type", type=FitTypeParam())
 @click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to. [default: all]")
-@click.option("--guess", "-g", help="Comma-separated initial parameter guess.")
+@click.option("--guess", "-g", default=None, help="Comma-separated initial parameter guess.")
 @click.option("--component", "-c", type=click.INT, default=0, show_default=True,
     help="Component index of the values array to fit.")
 @click.pass_context
 def fit(ctx, **kwargs):
-  """Fit data with a polynomial model and print the result.
+  """Fit data with a model and print parameters + R².
 
-  Available models (prefix-matched):
+  Model types (prefix-matched, same mechanism as pgkyl commands):
     linear      -- y = a*x + b
     quadratic   -- y = a*x² + b*x + c
     plane       -- z = a*x + b*y + c
     quadratic2d -- z = a*x² + b*y² + c*x*y + d*x + e*y + f
+    exp_plateau -- y = A*exp(b*x) + C
 
-  1D models require 1D data; 2D models require 2D data. Use 'select' or
-  'integrate' to reduce dimensionality first if needed.
-
-  Does not modify the dataset stack.
+  1D models require 1D data; 2D models require 2D data. Collapsed dimensions
+  (e.g. after integrate) are automatically ignored. Does not modify the stack.
   """
   verb_print(ctx, "Starting fit")
   data = ctx.obj["data"]
+  fit_type = FitTypeParam().convert(kwargs["fit_type"], None, None)
+  ndim_fit = tools.FIT_NDIM[fit_type]
 
   for dat in data.iterator(kwargs["use"]):
+    label = dat.get_label()
+    tag = dat.get_tag()
+    click.echo(click.style(f"{label} ({tag})" if label else tag, bold=True))
+
     grid = dat.get_grid()
     values = dat.get_values()
-    fit_type = kwargs["fit_type"]
-    ndim_fit = tools.FIT_NDIM[fit_type]
 
     spatial_shape = values.shape[:-1]
     if any(grid[d].shape[0] == spatial_shape[d] + 1 for d in range(len(grid))):
