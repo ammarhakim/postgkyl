@@ -20,6 +20,8 @@ from postgkyl.utils import verb_print
   help="Multiblock. Optional: pass block indices as comma-separated list or slice (start:stop:step). If no indices are given, all blocks are used.")
 @click.option("--field_dot_file", type=click.STRING, default=None, multiple=True,
   help="Integrated field energy rate of change.")
+@click.option("--apar_dot_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated apar energy rate of change.")
 @click.option("--fdot_file", type=click.STRING, default=None, multiple=True,
   help="Integrated moments of change in f over a time step.")
 @click.option("--source_file", type=click.STRING, default=None, multiple=True,
@@ -40,6 +42,8 @@ from postgkyl.utils import verb_print
   help="Integrated moments of f.")
 @click.option("--field_file", type=click.STRING, default=None, multiple=True,
   help="Integrated field energy.")
+@click.option("--apar_file", type=click.STRING, default=None, multiple=True,
+  help="Integrated apar energy.")
 @click.option("--dt_file", type=click.STRING, default=None,
   help="Time step.")
 @click.option("--logy", is_flag=True, default=False,
@@ -70,10 +74,14 @@ def gk_energy_balance(ctx, **kwargs):
     ..._bflux_<direction><side>_integrated_HamiltonianMoments.gkyl
   where ... means <simulation_name>-<species_name>, and we need these
   files for each species. The last two files above are only needed if
-  the simulation had sources or non-periodic boundaries. If the
-  relative error is requested, these are also needed:
+  the simulation had sources or non-periodic boundaries.
+  For electromagnetic simulations, the following file is also used
+  (if present):
+    <simulation_name>-apar_energy_dot.gkyl
+  If the relative error is requested, these are also needed:
     ..._integrated_moms.gkyl
     <simulation_name>-field_energy.gkyl
+    <simulation_name>-apar_energy.gkyl  (electromagnetic only)
     <simulation_name>-dt.gkyl
 
   \b
@@ -219,6 +227,7 @@ def gk_energy_balance(ctx, **kwargs):
   block_path_prefix = file_path_prefix
 
   field_dot = None
+  apar_dot = None
   fdot = None
   src = None
   bflux_tot = None
@@ -236,6 +245,16 @@ def gk_energy_balance(ctx, **kwargs):
     if not has_field_dot or gdat is None:
       raise FileNotFoundError(f"Required file not found: {field_dot_file}")
     gdat_field_dot = GData(tag="field_dot", label="field_dot", ctx=gdat.ctx)
+
+    # Load apar energy rate of change data (optional, may not exist in electrostatic simulations).
+    if kwargs["apar_dot_file"]:
+      apar_dot_file = kwargs["path"] + kwargs["apar_dot_file"].replace("*",str(bI))
+    else:
+      apar_dot_file = block_path_prefix + 'apar_energy_dot.gkyl'
+
+    has_apar_dot, time_apar_dot, apar_dot_pb, gdat = read_gfile_if_present(apar_dot_file)
+    if has_apar_dot:
+      gdat_apar_dot = GData(tag="apar_dot", label="apar_dot", ctx=gdat.ctx)
  
     fdot_pb = None
     src_pb = None
@@ -310,6 +329,8 @@ def gk_energy_balance(ctx, **kwargs):
 
     # Add over blocks.
     field_dot = accumulate_or_assign(field_dot, field_dot_pb)
+    if has_apar_dot:
+      apar_dot = accumulate_or_assign(apar_dot, apar_dot_pb)
     fdot = accumulate_or_assign(fdot, fdot_pb)
     src = accumulate_or_assign(src, src_pb)
     bflux_tot = accumulate_or_assign(bflux_tot, bflux_tot_pb)
@@ -325,11 +346,13 @@ def gk_energy_balance(ctx, **kwargs):
     src[0] = 0.0 # Set source=0 at t=0 since we don't have fdot and bflux then.
 
     # Compute the error.
-    mom_err = src - bflux_tot - (fdot - field_dot)
+    if has_apar_dot:
+      mom_err = src - bflux_tot - (fdot - field_dot - apar_dot)
+    else:
+      mom_err = src - bflux_tot - (fdot - field_dot)
     
     # Plot.
-    hpl1a.append(ax1a.plot(time_fdot, absy_func(fdot), linestyle=line_styles[0]))
-    legend_strings = [r'$\dot{f}$']
+    legend_strings = list()
 
     if has_src:
       hpl1a.append(ax1a.plot(time_src, absy_func(src), linestyle=line_styles[2]))
@@ -340,11 +363,22 @@ def gk_energy_balance(ctx, **kwargs):
       legend_strings.append(r'$-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f$')
 
     if has_field_dot:
-      hpl1a.append(ax1a.plot(time_field_dot, absy_func(field_dot), linestyle=':', marker='+',markevery=8))
-      legend_strings.append(r'$\dot{\phi}$')
+      hpl1a.append(ax1a.plot(time_field_dot, absy_func(-field_dot), linestyle=':', marker='+',markevery=8))
+      legend_strings.append(r'$-\dot{\phi}$')
+
+    if has_apar_dot:
+      hpl1a.append(ax1a.plot(time_apar_dot, absy_func(-apar_dot), linestyle=':', marker='+',markevery=8))
+      legend_strings.append(r'$-\dot{A}_{\parallel}$')
+
+    hpl1a.append(ax1a.plot(time_fdot, absy_func(-fdot), linestyle=line_styles[0]))
+    legend_strings.append(r'$-\dot{f}$')
 
     hpl1a.append(ax1a.plot(time_fdot, absy_func(mom_err), linestyle=line_styles[3]))
-    legend_strings.append(r'$E_{\dot{\mathcal{E}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-(\dot{f}-\dot{\phi})$')
+    err_str = r'$E_{\dot{\mathcal{E}}}=$'
+    for i in range(len(legend_strings)):
+      err_str = err_str + legend_strings[i]
+    # end
+    legend_strings.append(err_str)
 
     ylabel_string = ""
     if kwargs["ylabel"]:
@@ -371,6 +405,10 @@ def gk_energy_balance(ctx, **kwargs):
     if has_field_dot:
       gdat_field_dot.push(time_field_dot, field_dot)
       data.add(gdat_field_dot)
+      
+    if has_apar_dot:
+      gdat_apar_dot.push(time_apar_dot, apar_dot)
+      data.add(gdat_apar_dot)
 
     gdat_err = GData(tag="err", label="err", ctx=gdat_fdot.ctx)
     gdat_err.push(time_fdot, mom_err)
@@ -389,6 +427,7 @@ def gk_energy_balance(ctx, **kwargs):
     gdat_rel_err = GData(tag="rel_err", label="rel_err", ctx=gdat.ctx)
     
     field = None
+    apar = None
     distf = None
     for bI in range(num_blocks):
 
@@ -401,6 +440,14 @@ def gk_energy_balance(ctx, **kwargs):
         field_file = block_path_prefix + 'field_energy.gkyl'
 
       has_field, time_field, field_pb, gdat = read_gfile_if_present(field_file)
+
+      # Load apar energy data (optional, may not exist in electrostatic simulations).
+      if kwargs["apar_file"]:
+        apar_file = kwargs["path"] + kwargs["apar_file"].replace("*",str(bI))
+      else:
+        apar_file = block_path_prefix + 'apar_energy.gkyl'
+
+      has_apar, time_apar, apar_pb, gdat = read_gfile_if_present(apar_file)
  
       distf_pb = None
       for sI in range(len(species_names)):
@@ -422,19 +469,28 @@ def gk_energy_balance(ctx, **kwargs):
 
       #[ Add over blocks.
       field = accumulate_or_assign(field, field_pb)
+      if has_apar:
+        apar = accumulate_or_assign(apar, apar_pb)
       distf = accumulate_or_assign(distf, distf_pb)
     
     # Remove the t=0 data point.
     field = field[1:]
     field_dot = field_dot[1:]
+    if has_apar:
+      apar = apar[1:]
+      apar_dot = apar_dot[1:]
     fdot = fdot[1:]
     src = src[1:]
     bflux_tot = bflux_tot[1:]
     distf = distf[1:]
 
     # Compute the relative error.
-    mom_err = src - bflux_tot - (fdot - field_dot)
-    mom_err_norm = mom_err*dt/(distf-field)
+    if has_apar:
+      mom_err = src - bflux_tot - (fdot - field_dot - apar_dot)
+      mom_err_norm = mom_err*dt/(distf-field-apar)
+    else:
+      mom_err = src - bflux_tot - (fdot - field_dot)
+      mom_err_norm = mom_err*dt/(distf-field)
 
     # Plot.
     hpl1a.append(ax1a.plot(time_dt, absy_func(mom_err_norm)))
@@ -462,7 +518,7 @@ def gk_energy_balance(ctx, **kwargs):
   ax1a.set_title(title_string,fontsize=title_font_size)
   ax1a.set_xlim( time_fdot[0], time_fdot[-1] )
   set_tick_font_size(ax1a,tick_font_size)
-
+  
   if kwargs["saveas"]:
     plt.savefig(kwargs["saveas"])
   else:

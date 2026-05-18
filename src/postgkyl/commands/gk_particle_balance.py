@@ -291,8 +291,7 @@ def gk_particle_balance(ctx, **kwargs):
     mom_err = src - bflux_tot - fdot
     
     # Plot.
-    hpl1a.append(ax1a.plot(time_fdot, absy_func(fdot), linestyle=line_styles[0]))
-    legend_strings = [r'$\dot{f}$']
+    legend_strings = list()
     if has_src:
       hpl1a.append(ax1a.plot(time_src, absy_func(src), linestyle=line_styles[2]))
       legend_strings.append(r'$\mathcal{S}$')
@@ -301,8 +300,15 @@ def gk_particle_balance(ctx, **kwargs):
       hpl1a.append(ax1a.plot(time_bflux_tot, absy_func(-bflux_tot), linestyle=line_styles[1]))
       legend_strings.append(r'$-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f$')
 
+    hpl1a.append(ax1a.plot(time_fdot, absy_func(-fdot), linestyle=line_styles[0]))
+    legend_strings.append(r'$-\dot{f}$')
+
     hpl1a.append(ax1a.plot(time_fdot, absy_func(mom_err), linestyle=line_styles[3]))
-    legend_strings.append(r'$E_{\dot{\mathcal{N}}}=\mathcal{S}-\int_{\partial \Omega}\mathrm{d}\mathbf{S}\cdot\mathbf{\dot{R}}f-\dot{f}$')
+    err_str = r'$E_{\dot{\mathcal{N}}}=$'
+    for i in range(len(legend_strings)):
+      err_str = err_str + legend_strings[i]
+    # end
+    legend_strings.append(err_str)
 
     ylabel_string = ""
     if kwargs["ylabel"]:
@@ -354,10 +360,10 @@ def gk_particle_balance(ctx, **kwargs):
 
       _, time_distf, distf_pb, _ = read_gfile_if_present(f_file)
 
-      #[ Select the M0 moment.
+      # Select the M0 moment.
       distf_pb = distf_pb[:,0]
 
-      #[ Add over blocks.
+      # Add over blocks.
       distf = accumulate_or_assign(distf, distf_pb)
     
     # Remove the t=0 data point.
