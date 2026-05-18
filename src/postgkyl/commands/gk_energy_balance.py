@@ -368,7 +368,7 @@ def gk_energy_balance(ctx, **kwargs):
 
     if has_apar_dot:
       hpl1a.append(ax1a.plot(time_apar_dot, absy_func(-apar_dot), linestyle=':', marker='+',markevery=8))
-      legend_strings.append(r'$-\dot{A_{\parallel}}$')
+      legend_strings.append(r'$-\dot{A}_{\parallel}$')
 
     hpl1a.append(ax1a.plot(time_fdot, absy_func(-fdot), linestyle=line_styles[0]))
     legend_strings.append(r'$-\dot{f}$')
