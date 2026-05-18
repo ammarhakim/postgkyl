@@ -217,6 +217,90 @@ class TestFit1D:
     assert R2 == pytest.approx(1.0, abs=1e-8)
 
 
+# ── RPN expression support ────────────────────────────────────────────────────
+
+class TestRPN:
+  def test_param_names_basic(self):
+    assert tools.rpn_param_names("a x * b +") == ["a", "b"]
+
+  def test_param_names_excludes_spatial_vars(self):
+    assert "x" not in tools.rpn_param_names("a x * b +")
+    assert "y" not in tools.rpn_param_names("a x * b y * + c +")
+
+  def test_param_names_excludes_operators(self):
+    assert "+" not in tools.rpn_param_names("a x * b +")
+    assert "*" not in tools.rpn_param_names("a x * b +")
+
+  def test_param_names_excludes_functions(self):
+    assert "exp" not in tools.rpn_param_names("A b x * exp *")
+
+  def test_param_names_excludes_numeric_literals(self):
+    assert tools.rpn_param_names("2 x * 1 +") == []
+
+  def test_param_names_preserves_order(self):
+    # A*(exp(b*x)) + C  →  params in order of first appearance
+    assert tools.rpn_param_names("A b x * exp * C +") == ["A", "b", "C"]
+
+  def test_ndim_1d(self):
+    assert tools.rpn_ndim("a x * b +") == 1
+
+  def test_ndim_2d(self):
+    assert tools.rpn_ndim("a x * b y * + c +") == 2
+
+  def test_rpn_linear_recovers_params(self):
+    x = np.linspace(0, 10, 50)
+    y = 3.0 * x - 1.5
+    params, _, R2 = tools.fit(x, y, "a x * b +", p0=[1.0, 0.0])
+    np.testing.assert_allclose(params, [3.0, -1.5], rtol=1e-8)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_rpn_exp_recovers_params(self):
+    x = np.linspace(0, 3, 80)
+    true_A, true_b = 2.0, -0.5
+    y = true_A * np.exp(true_b * x)
+    params, _, R2 = tools.fit(x, y, "A b x * exp *", p0=[1.0, -1.0])
+    np.testing.assert_allclose(params, [true_A, true_b], rtol=1e-6)
+    assert R2 == pytest.approx(1.0, abs=1e-8)
+
+  def test_rpn_plane_2d_recovers_params(self):
+    X, Y = np.meshgrid(np.linspace(0, 5, 15), np.linspace(0, 3, 10), indexing="ij")
+    xdata = np.array([X.flatten(), Y.flatten()])
+    y = 2.0 * X.flatten() - 1.5 * Y.flatten() + 0.5
+    params, _, R2 = tools.fit(xdata, y, "a x * b y * + c +", p0=[1.0, 1.0, 0.0])
+    np.testing.assert_allclose(params, [2.0, -1.5, 0.5], rtol=1e-8)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_rpn_literal_coefficients(self):
+    x = np.linspace(1, 5, 40)
+    y = 2.0 * x**2
+    params, _, R2 = tools.fit(x, y, "a x 2 ** *", p0=[1.0])
+    np.testing.assert_allclose(params, [2.0], rtol=1e-8)
+    assert R2 == pytest.approx(1.0, abs=1e-10)
+
+  def test_rpn_malformed_stack_raises(self):
+    # Leading operator with empty stack causes IndexError inside curve_fit
+    x = np.linspace(0, 1, 10)
+    y = x
+    with pytest.raises((IndexError, Exception)):
+      tools.fit(x, y, "* x a +", p0=[1.0])
+
+  def test_fittype_param_accepts_rpn(self):
+    p = FitTypeParam()
+    assert p.convert("a x * b +", None, None) == "a x * b +"
+
+  def test_fittype_param_rejects_bare_unknown(self):
+    p = FitTypeParam()
+    with pytest.raises(click.exceptions.BadParameter):
+      p.convert("cubic", None, None)
+
+  def test_rpn_command_runs(self):
+    x_nodal = np.linspace(0.0, 10.0, 51)
+    x_cc = 0.5 * (x_nodal[:-1] + x_nodal[1:])
+    y = 3.0 * x_cc - 1.5
+    ctx = _make_ctx([_gdata_1d(x_nodal, y)])
+    ctx.invoke(cmd.fit, fit_type="a x * b +", guess="1.0,0.0")
+
+
 # ── tools: fit() — 2-D models ─────────────────────────────────────────────────
 
 class TestFit2D:

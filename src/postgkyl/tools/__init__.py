@@ -54,6 +54,10 @@ from .fft import fft
 from .fit import fit
 from .fit import FIT_FUNCTIONS
 from .fit import FIT_NDIM
+from .fit import RPN_OPERATORS
+from .fit import RPN_FUNCTIONS
+from .fit import rpn_param_names
+from .fit import rpn_ndim
 from .fit import linear
 from .fit import quadratic
 from .fit import plane

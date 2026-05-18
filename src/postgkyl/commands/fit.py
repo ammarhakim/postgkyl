@@ -18,13 +18,21 @@ class FitTypeParam(click.ParamType):
       return matches[0]
     if len(matches) > 1:
       self.fail(f"'{value}' is ambiguous: matches {', '.join(sorted(matches))}", param, ctx)
-    self.fail(f"'{value}' does not match any of: {', '.join(choices)}", param, ctx)
+    # not a known type — accept if it looks like an RPN expression
+    toks = set(value.split())
+    if toks & (tools.RPN_OPERATORS | set(tools.RPN_FUNCTIONS)):
+      return value
+    self.fail(
+        f"'{value}' does not match any known fit type ({', '.join(choices)}) "
+        f"and is not a valid RPN expression (must contain at least one operator or function).",
+        param, ctx,
+    )
 
   def get_metavar(self, param, **_):
-    return "{" + "|".join(tools.FIT_FUNCTIONS.keys()) + "}"
+    return "{" + "|".join(tools.FIT_FUNCTIONS.keys()) + "|<rpn-expr>}"
 
 
-def _print_result(fit_type, params, std, R2):
+def _print_result(fit_type, params, std, R2, param_names=None):
   p = params
   s = std
   if fit_type == "linear":
@@ -89,6 +97,10 @@ def _print_result(fit_type, params, std, R2):
         f" + ({p[3]:.6e} ± {s[3]:.2e})"
         f"    R² = {R2:.6f}"
     )
+  else:
+    names = param_names or tools.rpn_param_names(fit_type)
+    parts = "  ".join(f"{n} = {p[i]:.6e} ± {s[i]:.2e}" for i, n in enumerate(names))
+    click.echo(f"Custom ({fit_type}):  {parts}    R² = {R2:.6f}")
 
 
 @click.command()
@@ -112,13 +124,20 @@ def fit(ctx, **kwargs):
     sinusoid        -- y = A*sin(omega*x + phi) + C
     tanh_transition -- y = A*tanh((x-x0)/w) + C
 
+  A custom model can also be given as a Reverse Polish Notation expression.
+  x (and y for 2D) are the spatial variables; all other identifiers are free
+  parameters.  Supported operators: + - * / ** ^.  Supported functions:
+  exp log ln log10 sin cos tan sqrt abs tanh.
+
+  Example:  fit 'a x * b +'   fits y = a*x + b
+
   1D models require 1D data; 2D models require 2D data. Collapsed dimensions
   (e.g. after integrate) are automatically ignored. Does not modify the stack.
   """
   verb_print(ctx, "Starting fit")
   data = ctx.obj["data"]
   fit_type = FitTypeParam().convert(kwargs["fit_type"], None, None)
-  ndim_fit = tools.FIT_NDIM[fit_type]
+  ndim_fit = tools.FIT_NDIM.get(fit_type, tools.rpn_ndim(fit_type))
 
   for dat in data.iterator(kwargs["use"]):
     label = dat.get_label()

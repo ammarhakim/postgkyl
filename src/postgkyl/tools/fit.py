@@ -50,6 +50,82 @@ def tanh_transition(x: np.ndarray, A: float, x0: float, w: float, C: float) -> n
   return A * np.tanh((x - x0) / w) + C
 
 
+RPN_OPERATORS: frozenset = frozenset({'+', '-', '*', '/', '**', '^'})
+
+RPN_FUNCTIONS: dict[str, Callable] = {
+    'exp':   np.exp,
+    'log':   np.log,
+    'ln':    np.log,
+    'log10': np.log10,
+    'sin':   np.sin,
+    'cos':   np.cos,
+    'tan':   np.tan,
+    'sqrt':  np.sqrt,
+    'abs':   np.abs,
+    'tanh':  np.tanh,
+}
+
+_SPATIAL_VARS: frozenset = frozenset({'x', 'y', 'z'})
+
+
+def rpn_param_names(expression: str) -> list[str]:
+  """Return the free parameter names from an RPN expression, in order of first appearance."""
+  names = []
+  for tok in expression.split():
+    if tok in _SPATIAL_VARS or tok in RPN_OPERATORS or tok in RPN_FUNCTIONS:
+      continue
+    try:
+      float(tok)
+    except ValueError:
+      if tok not in names:
+        names.append(tok)
+  return names
+
+
+def rpn_ndim(expression: str) -> int:
+  """Return 1 or 2 depending on whether 'y' appears as a spatial variable."""
+  return 2 if 'y' in expression.split() else 1
+
+
+def _rpn_make_func(expression: str) -> Callable:
+  """Build a curve_fit-compatible callable from an RPN expression string."""
+  tokens = expression.split()
+  param_names = rpn_param_names(expression)
+  ndim = rpn_ndim(expression)
+
+  def _func(xdata, *param_values):
+    ns: dict = dict(zip(param_names, param_values))
+    if ndim == 1:
+      ns['x'] = np.asarray(xdata, dtype=float)
+    else:
+      ns['x'] = np.asarray(xdata[0], dtype=float)
+      ns['y'] = np.asarray(xdata[1], dtype=float)
+
+    stack = []
+    for tok in tokens:
+      if tok in RPN_OPERATORS:
+        b, a = stack.pop(), stack.pop()
+        if   tok == '+':        stack.append(a + b)
+        elif tok == '-':        stack.append(a - b)
+        elif tok == '*':        stack.append(a * b)
+        elif tok == '/':        stack.append(a / b)
+        else:                   stack.append(a ** b)  # ** or ^
+      elif tok in RPN_FUNCTIONS:
+        stack.append(RPN_FUNCTIONS[tok](stack.pop()))
+      elif tok in ns:
+        stack.append(ns[tok])
+      else:
+        stack.append(float(tok))
+
+    result = stack[0]
+    ref = ns.get('x', ns.get('y'))
+    if np.ndim(result) == 0 and ref is not None:
+      result = np.full_like(ref, float(result))
+    return np.asarray(result, dtype=float)
+
+  return _func
+
+
 FIT_FUNCTIONS: dict[str, Callable] = {
     "linear": linear,
     "quadratic": quadratic,
@@ -102,11 +178,16 @@ def fit(
   cov : ndarray
   R2 : float
   """
-  if fit_type not in FIT_FUNCTIONS:
-    raise ValueError(f"fit_type '{fit_type}' not recognized. Choose from: {list(FIT_FUNCTIONS)}")
+  if fit_type in FIT_FUNCTIONS:
+    func = FIT_FUNCTIONS[fit_type]
+    n_params = func.__code__.co_argcount - 1
+  else:
+    toks = set(fit_type.split())
+    if not (toks & (RPN_OPERATORS | set(RPN_FUNCTIONS))):
+      raise ValueError(f"fit_type '{fit_type}' not recognized. Choose from: {list(FIT_FUNCTIONS)}")
+    func = _rpn_make_func(fit_type)
+    n_params = len(rpn_param_names(fit_type))
 
-  func = FIT_FUNCTIONS[fit_type]
-  n_params = func.__code__.co_argcount - 1
   if p0 is None:
     p0 = np.ones(n_params)
 
