@@ -15,6 +15,7 @@ from postgkyl.commands.euler import euler
 from postgkyl.commands.ev import ev
 from postgkyl.commands.extractinput import extractinput
 from postgkyl.commands.fft import fft
+from postgkyl.commands.fit import fit
 from postgkyl.commands.gkyl_pkpm import pkpm
 from postgkyl.commands.gk_nodes import gk_nodes
 from postgkyl.commands.grid import grid
