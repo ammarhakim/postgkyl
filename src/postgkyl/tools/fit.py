@@ -152,6 +152,13 @@ FIT_NDIM: dict[str, int] = {
 }
 
 
+def fit_evaluate(xdata: np.ndarray, fit_type: str, params: np.ndarray) -> np.ndarray:
+  """Evaluate a fitted model at xdata given the optimized parameters."""
+  if fit_type in FIT_FUNCTIONS:
+    return FIT_FUNCTIONS[fit_type](xdata, *params)
+  return _rpn_make_func(fit_type)(xdata, *params)
+
+
 def fit(
     xdata: np.ndarray,
     ydata: np.ndarray,

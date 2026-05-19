@@ -1,6 +1,7 @@
 import click
 import numpy as np
 
+from postgkyl.data.gdata import GData
 from postgkyl.utils import verb_print
 import postgkyl.tools as tools
 from postgkyl.output.nodal_to_cell_centered_grid import nodal_to_cell_centered_grid
@@ -132,7 +133,8 @@ def fit(ctx, **kwargs):
   Example:  fit 'a x * b +'   fits y = a*x + b
 
   1D models require 1D data; 2D models require 2D data. Collapsed dimensions
-  (e.g. after integrate) are automatically ignored. Does not modify the stack.
+  (e.g. after integrate) are automatically ignored. Adds the fitted curve as a
+  new dataset on the stack (same tag, same nodal grid, values at cell centers).
   """
   verb_print(ctx, "Starting fit")
   data = ctx.obj["data"]
@@ -184,3 +186,11 @@ def fit(ctx, **kwargs):
     params, cov, R2 = tools.fit(xdata, ydata, fit_type, p0=p0)
     std = np.sqrt(np.diag(cov))
     _print_result(fit_type, params, std, R2)
+
+    y_fit = tools.fit_evaluate(xdata, fit_type, params)
+    active_spatial_shape = tuple(cg.shape[0] for cg in cc_grid)
+    fit_values = y_fit.reshape(active_spatial_shape + (1,))
+    fit_grid = [grid[d] for d in active]
+    out = GData(tag=dat.get_tag())
+    out.push(fit_grid, fit_values)
+    data.add(out)

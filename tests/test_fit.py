@@ -376,10 +376,26 @@ class TestFitCommand:
     ctx = _make_ctx([self._linear_dat()])
     ctx.invoke(cmd.fit, fit_type="linear")
 
-  def test_stack_is_not_modified_by_fit(self):
+  def test_fit_adds_dataset_to_stack(self):
     ctx = _make_ctx([self._linear_dat()])
     ctx.invoke(cmd.fit, fit_type="linear")
-    assert len(list(ctx.obj["data"].iterator())) == 1
+    assert len(list(ctx.obj["data"].iterator())) == 2
+
+  def test_fit_output_matches_input_grid_structure(self):
+    dat = self._linear_dat()
+    ctx = _make_ctx([dat])
+    ctx.invoke(cmd.fit, fit_type="linear")
+    datasets = list(ctx.obj["data"].iterator())
+    original, fitted = datasets[0], datasets[1]
+    assert fitted.get_grid()[0].shape == original.get_grid()[0].shape
+    assert fitted.get_values().shape == (*original.get_values().shape[:-1], 1)
+
+  def test_fit_output_values_are_accurate(self):
+    ctx = _make_ctx([self._linear_dat()])
+    ctx.invoke(cmd.fit, fit_type="linear")
+    fitted = list(ctx.obj["data"].iterator())[1]
+    expected = tools.linear(self._x_cc, 3.0, -1.0)
+    np.testing.assert_allclose(fitted.get_values()[..., 0], expected, rtol=1e-6)
 
   def test_dimension_mismatch_raises(self):
     ctx = _make_ctx([self._linear_dat()])
