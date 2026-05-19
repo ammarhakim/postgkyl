@@ -104,6 +104,95 @@ def _print_result(fit_type, params, std, R2, param_names=None):
     click.echo(f"Custom ({fit_type}):  {parts}    R² = {R2:.6f}")
 
 
+def _auto_guess(fit_type, xdata, ydata):
+  """Return data-driven initial parameter guesses for known fit types."""
+  y = np.asarray(ydata, dtype=float)
+  finite = np.isfinite(y)
+  if not np.any(finite):
+    return None
+  y_fin = y[finite]
+  y_min, y_max = y_fin.min(), y_fin.max()
+  y_mean = y_fin.mean()
+  y_range = y_max - y_min
+
+  if fit_type == "linear":
+    x = np.asarray(xdata)
+    dx = x.max() - x.min()
+    a = y_range / dx if dx != 0 else 1.0
+    b = y_mean - a * x.mean()
+    return [a, b]
+
+  if fit_type == "quadratic":
+    x = np.asarray(xdata)
+    try:
+      return list(np.polyfit(x, y, 2))
+    except Exception:
+      return [0.0, 1.0, y_mean]
+
+  if fit_type == "plane":
+    x, yc = xdata[0], xdata[1]
+    A = np.column_stack([x, yc, np.ones_like(x)])
+    result, *_ = np.linalg.lstsq(A, y, rcond=None)
+    return list(result)
+
+  if fit_type == "quadratic2d":
+    x, yc = xdata[0], xdata[1]
+    A = np.column_stack([x**2, yc**2, x * yc, x, yc, np.ones_like(x)])
+    result, *_ = np.linalg.lstsq(A, y, rcond=None)
+    return list(result)
+
+  if fit_type == "exp_plateau":
+    x = np.asarray(xdata)
+    n_tail = max(1, len(x) // 10)
+    C = float(y[np.argsort(x)[-n_tail:]].mean())
+    A = float(y_max - C) or 1.0
+    x_span = x.max() - x.min()
+    b = -1.0 / x_span if x_span > 0 else -1.0
+    return [A, b, C]
+
+  if fit_type == "gaussian":
+    x = np.asarray(xdata)
+    A = float(y_max)
+    mu = float(x[np.argmax(y)])
+    above = x[y >= A / 2] if A != 0 else x
+    if len(above) >= 2:
+      sigma = float((above[-1] - above[0]) / (2 * np.sqrt(2 * np.log(2))))
+    else:
+      sigma = float((x.max() - x.min()) / 4)
+    return [A, mu, max(abs(sigma), 1e-10)]
+
+  if fit_type == "power":
+    b_off = float(y_min)
+    a = float(y_max - b_off) or 1.0
+    return [a, 1.0, b_off]
+
+  if fit_type == "sinusoid":
+    x = np.asarray(xdata)
+    A = float(y_range / 2) or 1.0
+    C = float((y_max + y_min) / 2)
+    sort_idx = np.argsort(x)
+    x_s, y_s = x[sort_idx], y[sort_idx]
+    if len(x_s) > 1:
+      dx = np.mean(np.diff(x_s))
+      freqs = np.fft.rfftfreq(len(y_s), d=dx)
+      fft_amp = np.abs(np.fft.rfft(y_s - C))
+      i_peak = np.argmax(fft_amp[1:]) + 1 if len(fft_amp) > 1 else 1
+      omega = float(2 * np.pi * freqs[i_peak])
+    else:
+      omega = 1.0
+    return [A, omega, 0.0, C]
+
+  if fit_type == "tanh_transition":
+    x = np.asarray(xdata)
+    A = float(y_range / 2) or 1.0
+    C = float((y_max + y_min) / 2)
+    x0 = float(x[np.argmax(np.abs(np.gradient(y)))])
+    w = float((x.max() - x.min()) / 4) or 1.0
+    return [A, x0, w, C]
+
+  return None
+
+
 @click.command()
 @click.argument("fit_type", type=FitTypeParam())
 @click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to. [default: all]")
@@ -175,9 +264,9 @@ def fit(ctx, **kwargs):
       X, Y = np.meshgrid(cc_grid[0], cc_grid[1], indexing="ij")
       xdata = np.array([X.flatten(), Y.flatten()])
 
-    p0 = None
+    user_p0 = None
     if kwargs["guess"]:
-      p0 = [float(v) for v in kwargs["guess"].split(",")]
+      user_p0 = [float(v) for v in kwargs["guess"].split(",")]
 
     n_components = values.shape[-1]
     active_spatial_shape = tuple(cg.shape[0] for cg in cc_grid)
@@ -186,6 +275,7 @@ def fit(ctx, **kwargs):
       if n_components > 1:
         click.echo(f"  Component {comp}:")
       ydata = values[..., comp].flatten()
+      p0 = user_p0 if user_p0 is not None else _auto_guess(fit_type, xdata, ydata)
       params, cov, R2 = tools.fit(xdata, ydata, fit_type, p0=p0)
       std = np.sqrt(np.diag(cov))
       _print_result(fit_type, params, std, R2)
