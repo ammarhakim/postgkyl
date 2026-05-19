@@ -284,6 +284,6 @@ def fit(ctx, **kwargs):
 
     fit_values = np.concatenate(fit_values_list, axis=-1)
     fit_grid = [grid[d] for d in active]
-    out = GData(tag=dat.get_tag())
+    out = GData(tag=dat.get_tag() + "_fit")
     out.push(fit_grid, fit_values)
     data.add(out)
