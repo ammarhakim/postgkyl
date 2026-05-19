@@ -2,7 +2,6 @@
 
 from typing import Literal, Tuple
 import numpy as np
-import shutil
 
 try:
   import adios2
@@ -15,6 +14,7 @@ from postgkyl.data.gkyl_reader import GkylReader
 from postgkyl.data.gkyl_adios_reader import GkylAdiosReader
 from postgkyl.data.gkyl_h5_reader import GkylH5Reader
 from postgkyl.data.flash_h5_reader import FlashH5Reader
+from postgkyl.data.write import write as write_impl
 import postgkyl.utils.gkeyll_enums as gkenums
 
 
@@ -459,13 +459,13 @@ class GData(object):
 
   # ---- Write ----
   def write(self, out_name: str = "",
-      extension: Literal["gkyl", "bp", "txt", "npy"] = "gkyl",
+      extension: Literal["gkyl", "bp", "txt", "npy", "vts"] = "gkyl",
       mode: str = "", var_name: str = "", append: bool = False,
-      cleaning: bool = True) -> None:
+      cleaning: bool = True, norm_axes: bool = False) -> None:
     """Writes data in a file.
 
     The available formats are Gkeyll .gkyl (default), ADIOS .bp file, ASCII .txt file,
-    or NumPy .npy file.
+    NumPy .npy file, or VTK structured grid .vts file.
 
     Args:
       out_name: str
@@ -478,142 +478,15 @@ class GData(object):
         Allows for writing multiple datasets into one file.
       cleaning: bool = True
         Remove temporary files after writing.
+      norm_axes: bool = False
+        Normalize axes to [-1, 1] for VTK output.
 
     Returns:
       None
     """
-
-    if mode:
-      extension = mode
-      print("Deprecation warning: mode of the write method is going to be renamed to extension.")
-    # end
-
-    if not out_name:
-      if self._file_name is not None:
-        fn = self._file_name
-        out_name = f"{fn.split('.', maxsplit=1)[0].strip('_')}_mod.{extension}"
-      else:
-        out_name = f"gdata.{extension}"
-      # end
-    else:
-      if not isinstance(out_name, str):
-        raise TypeError("'out_name' must be a string")
-      # end
-      if out_name.split(".")[-1] != extension:
-        out_name += "." + extension
-      # end
-    # end
-
-    num_dims = self.num_dims
-    num_comps = self.num_comps
-    num_cells = self.num_cells
-    lo, up = self.bounds
-    values = self.values
-
-    full_shape = list(num_cells) + [num_comps]
-    offset = [0] * (num_dims + 1)
-
-    if not var_name:
-      var_name = self._var_name
-    # end
-
-    if extension == "bp":
-      if not has_adios:
-        raise ModuleNotFoundError("ADIOS2 is not installed")
-      # end
-
-      if not append:
-        fh = adios2.open(out_name, "w", engine_type="BP3")
-        fh.write_attribute("numCells", num_cells)
-        fh.write_attribute("lowerBounds", lo)
-        fh.write_attribute("upperBounds", up)
-
-        if self.ctx["time"]:
-          fh.write("time", self.ctx["time"])
-        # end
-      else:
-        fh = adios2.open(out_name, "a", engine_type="BP3")
-      # end
-      fh.write(var_name, values, full_shape, offset, full_shape)
-      fh.close()
-
-      if cleaning:
-        if len(out_name.split("/")) > 1:
-          nm = out_name.split("/")[-1]
-        else:
-          nm = out_name
-        # end
-        shutil.move(f"{out_name}.dir/{nm}.0", f"{out_name}")
-        shutil.rmtree(f"{out_name}.dir")
-      # end
-    elif extension == "gkyl":
-      dti = np.dtype("i8")
-      dtf = np.dtype("f8")
-
-      fh = open(out_name, "w", encoding="utf-8")
-
-      # sep='' results in a binary file
-      np.array([103, 107, 121, 108, 48], dtype=np.dtype("b")).tofile(fh, sep="")
-      # version 1
-      np.array([1], dtype=dti).tofile(fh, sep="")
-      # type 1
-      np.array([1], dtype=dti).tofile(fh, sep="")
-      # meta size
-      np.array([0], dtype=dti).tofile(fh, sep="")
-      # real type (double)
-      np.array([2], dtype=dti).tofile(fh, sep="")
-      # num dims
-      np.array([num_dims], dtype=dti).tofile(fh, sep="")
-      # num cells
-      np.array(num_cells, dtype=dti).tofile(fh, sep="")
-      # lower
-      np.array(lo, dtype=dtf).tofile(fh, sep="")
-      # upper
-      np.array(up, dtype=dtf).tofile(fh, sep="")
-      # elem_sz
-      np.array([num_comps * 8], dtype=dti).tofile(fh, sep="")
-      # asize
-      np.array([np.size(values)], dtype=dti).tofile(fh, sep="")
-      # data
-      np.array(values, dtype=dtf).tofile(fh, sep="")
-
-      fh.close()
-    elif extension == "txt":
-      num_rows = np.prod(num_cells)
-      grid = self.get_grid()
-      for d in range(num_dims):
-        grid[d] = 0.5 * (grid[d][1:] + grid[d][:-1])
-      # end
-
-      basis = np.full(num_dims, 1.0)
-      for d in range(num_dims - 1):
-        basis[d] = np.prod(num_cells[(d + 1) :])
-      # end
-
-      fh = open(out_name, "w", encoding="utf-8")
-      for i in range(num_rows):
-        idx = i
-        idxs = np.zeros(num_dims, np.int32)
-        for d in range(num_dims):
-          idxs[d] = int(idx // basis[d])
-          idx = idx % basis[d]
-        # end
-        line = ""
-        for d in range(num_dims):
-          line += f"{grid[d][idxs[d]]:.15e}, "
-        # end
-        for c in range(num_comps - 1):
-          line += f"{values[tuple(idxs)][c]:.15e}, "
-        # end
-        line += f"{values[tuple(idxs)][num_comps - 1]:.15e}\n"
-        fh.write(line)
-      # end
-      fh.close()
-    elif extension == "npy":
-      np.save(out_name, values.squeeze())
-    # end
+    write_impl(self, out_name=out_name, extension=extension, mode=mode,
+      var_name=var_name, append=append, cleaning=cleaning, norm_axes=norm_axes)
 
   # ---- Context (metadata) ----
   def get_ctx(self) -> dict:
     return self.ctx
-

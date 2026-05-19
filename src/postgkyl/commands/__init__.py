@@ -35,6 +35,9 @@ from postgkyl.commands.gk_distf import gk_distf
 from postgkyl.commands.gk_particle_balance import gk_particle_balance
 from postgkyl.commands.perprotate import perprotate
 from postgkyl.commands.plot import plot
+from postgkyl.commands.plotly import plotly
+from postgkyl.commands.plotly_animate import plotly_animate
+from postgkyl.commands.pyvista import pyvista
 from postgkyl.commands.pr import pr
 from postgkyl.commands.relchange import relchange
 from postgkyl.commands.select import select
