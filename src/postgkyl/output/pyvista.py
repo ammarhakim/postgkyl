@@ -110,8 +110,8 @@ def pyvista(data: pg.GData | Tuple[list, np.ndarray], args: list = (),
     finite_data = data[np.isfinite(data)]
     colorbarformat = "10^%.1f"
     clim = (
-      cmin if cmin is not None else float(np.min(finite_data)),
-      cmax if cmax is not None else float(np.max(finite_data)),
+      np.log10(cmin) if cmin is not None else float(np.min(finite_data)),
+      np.log10(cmax) if cmax is not None else float(np.max(finite_data)),
     )
   # end
   grid3d["f_plot"] = data
