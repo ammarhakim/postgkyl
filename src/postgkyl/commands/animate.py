@@ -90,7 +90,7 @@ def globalrange(data,kwargs):
 @click.command()
 @click.option("--use", "-u", default=None, help="Specify a tag to plot.")
 @click.option("--grouptags", is_flag=True, help="Group coresponding tagged frames.")
-@click.option("--squeeze", "-s", is_flag=True, help="Squeeze the components into one panel.")
+@click.option("--squeeze", is_flag=True, help="Squeeze the components into one panel.")
 @click.option("--subplots", "-b", is_flag=True, help="Make subplots from multiple datasets.")
 @click.option("--nsubplotrow", "nSubplotRow", type=click.INT,
     help="Manually set the number of rows for subplots.")

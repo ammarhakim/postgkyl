@@ -45,6 +45,21 @@ class PgkylCommandGroup(click.Group):
       return rv
     # end
 
+    # Explicit aliases that should not appear in --help output.
+    aliases = {
+        "pl": "plot",
+        "ply": "plotly",
+        "ply-anim": "plotly_animate",
+        "pv": "pyvista",
+    }
+    target = aliases.get(cmd_name)
+    if target is not None:
+      rv = click.Group.get_command(self, ctx, target)
+      if rv is not None:
+        return rv
+      # end
+    # end
+
     # cmd_name is an abreviation of a pgkyl command
     matches = [x for x in self.list_commands(ctx) if x.startswith(cmd_name)]
     if matches and len(matches) == 1:
@@ -138,6 +153,7 @@ cli.add_command(cmd.activate)
 cli.add_command(cmd.agyro)
 cli.add_command(cmd.mom_agyro)
 cli.add_command(cmd.animate)
+cli.add_command(cmd.plotly_animate)
 cli.add_command(cmd.collect)
 cli.add_command(cmd.current)
 cli.add_command(cmd.deactivate)
@@ -148,6 +164,7 @@ cli.add_command(cmd.mhd)
 cli.add_command(cmd.ev)
 cli.add_command(cmd.extractinput)
 cli.add_command(cmd.fft)
+cli.add_command(cmd.fit)
 cli.add_command(cmd.gk_nodes)
 cli.add_command(cmd.gk_distf)
 cli.add_command(cmd.grid)
@@ -163,6 +180,8 @@ cli.add_command(cmd.mask)
 cli.add_command(cmd.gk_energy_balance)
 cli.add_command(cmd.gk_particle_balance)
 cli.add_command(cmd.plot)
+cli.add_command(cmd.plotly)
+cli.add_command(cmd.pyvista)
 cli.add_command(cmd.pr)
 cli.add_command(cmd.relchange)
 cli.add_command(cmd.select)
