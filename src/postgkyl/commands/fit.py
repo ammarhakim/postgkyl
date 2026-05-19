@@ -108,8 +108,6 @@ def _print_result(fit_type, params, std, R2, param_names=None):
 @click.argument("fit_type", type=FitTypeParam())
 @click.option("--use", "-u", default=None, help="Specify a 'tag' to apply to. [default: all]")
 @click.option("--guess", "-g", default=None, help="Comma-separated initial parameter guess.")
-@click.option("--component", "-c", type=click.INT, default=0, show_default=True,
-    help="Component index of the values array to fit.")
 @click.pass_context
 def fit(ctx, **kwargs):
   """Fit data with a model and print parameters + R².
@@ -171,8 +169,6 @@ def fit(ctx, **kwargs):
           f"but data has {n_spatial}. Use 'select' or 'integrate' to reduce first."
       )
 
-    ydata = values[..., kwargs["component"]].flatten()
-
     if ndim_fit == 1:
       xdata = cc_grid[0]
     else:
@@ -183,13 +179,20 @@ def fit(ctx, **kwargs):
     if kwargs["guess"]:
       p0 = [float(v) for v in kwargs["guess"].split(",")]
 
-    params, cov, R2 = tools.fit(xdata, ydata, fit_type, p0=p0)
-    std = np.sqrt(np.diag(cov))
-    _print_result(fit_type, params, std, R2)
-
-    y_fit = tools.fit_evaluate(xdata, fit_type, params)
+    n_components = values.shape[-1]
     active_spatial_shape = tuple(cg.shape[0] for cg in cc_grid)
-    fit_values = y_fit.reshape(active_spatial_shape + (1,))
+    fit_values_list = []
+    for comp in range(n_components):
+      if n_components > 1:
+        click.echo(f"  Component {comp}:")
+      ydata = values[..., comp].flatten()
+      params, cov, R2 = tools.fit(xdata, ydata, fit_type, p0=p0)
+      std = np.sqrt(np.diag(cov))
+      _print_result(fit_type, params, std, R2)
+      y_fit = tools.fit_evaluate(xdata, fit_type, params)
+      fit_values_list.append(y_fit.reshape(active_spatial_shape + (1,)))
+
+    fit_values = np.concatenate(fit_values_list, axis=-1)
     fit_grid = [grid[d] for d in active]
     out = GData(tag=dat.get_tag())
     out.push(fit_grid, fit_values)
