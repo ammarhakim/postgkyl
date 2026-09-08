@@ -6,190 +6,228 @@ This is the Postgkyl project. It is both Python library and command-line tool
 designed to provide unified access to Gkeyll data together with a broad variety
 of analytical and visualization tools.
 
-## Documentation
+## Installation
 
-Full documentation of the Gkeyll project is available at
-[ReadTheDocs](http://gkeyll.rtfd.io).
+Follow these steps to install the current source version of Postgkyl. Run
+the commands one line at a time in a terminal, using the same terminal
+throughout. These instructions use bash or zsh on Linux or macOS. On Windows,
+first set up [Ubuntu in WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+and use its terminal.
 
-## Dependencies and Installation
+You need an internet connection, Git (to download the code), and build tools
+(to build part of Postgkyl). Install the tools for your system:
 
-Postgkyl requires the packages listed in pyproject.toml
+- **Ubuntu / Debian, including WSL:** run `sudo apt update`, then
+  `sudo apt install git build-essential`.
+- **macOS:** run `xcode-select --install` and complete the installer.
+- **Other Linux distributions:** install Git, Make, and a C compiler using
+  your distribution's package manager.
 
-Postgkyl requires NumPy >= 2.2.6. In addition, there is one optional
-dependency:
-
-* [pytest](https://pypi.org/project/pytest/)
-
-[pytest](https://docs.pytest.org/en/stable/) is required only for developers.
-
-### Setting up virtual environment (recommended)
-
-We strongly recommend creating a virtual Python environment for everybody
-working with more than one Python project (this includes even using both
-Postgkyl and Sphinx). The two recommended options are
-[venv](https://docs.python.org/3/library/venv.html) and
-[mamba](https://mamba.readthedocs.io/en/latest/).
-
-With `venv`, one can create the virtual environment with:
-
-```bash
-python -m venv /path/to/new/virtual/environments/pgkyl
-```
-
-then activate it with:
-
-| bash/zsh | `source <venv>/bin/activate`      |
-| fish     | `source <venv>/bin/activate.fish` |
-| csh/tcsh | `source <venv>/bin/activate.csh`  |
-
-and deactivate with:
-
-```bash
-deactivate
-```
-
-With `mamba`, one can create the virtual environment with:
-
-```bash
-mamba create -n pgkyl
-```
-
-then activate with:
-
-```bash
-mamba activate pgkyl
-```
-
-and deactivate with:
-
-```bash
-mamba deactivate
-```
-
-With `mamba`, the provided `environment.yml` creates the Python build
-environment. Runtime and test dependencies remain authoritative in
-`pyproject.toml` and are installed by the `pip install` step below:
-
-```bash
-mamba env create -f environment.yml
-```
-
-### Installing Postgkyl
-
-Postgkyl itself is installed with `pip`.[^1] Developers and users who want to
-have the most up-to-date version should install Postgkyl from the source code:
+Download Postgkyl and enter its folder:
 
 ```bash
 git clone https://github.com/ammarhakim/postgkyl.git
 cd postgkyl
-pip install --upgrade numpy setuptools wheel
-pip install -e '.[test]' --no-build-isolation
 ```
 
-Alternatively, Postgkyl can be installed directly from [PyPI](https://pypi.org/project/postgkyl/):
+### 1. Create an environment
+
+An environment keeps Postgkyl's Python packages separate from those used by
+other projects. Choose **one** of the following options, then continue to
+step 2. If you are new to Python environments, use **mamba**.
+
+#### pyenv
+
+[pyenv](https://github.com/pyenv/pyenv#installation) lets you install a
+specific Python version. If it is not installed, follow its installation
+instructions, including the
+[Python build prerequisites](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
+and shell setup, then reopen your terminal and return to the `postgkyl`
+folder.
+
+Install Python 3.12, select it for this folder, and use Python's built-in
+`venv` tool to create and activate the environment:
 
 ```bash
-pip install --upgrade numpy setuptools wheel
-pip install 'postgkyl[test]' --no-build-isolation
+pyenv install 3.12
+pyenv local 3.12
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-#### The Gkeyll bridge (native `.gkyl` reading, `interpolate`, weak algebra)
+#### mamba
 
-Postgkyl talks to Gkeyll through a small compiled bridge (`gpython`), not a path you configure. **This is
-built automatically** as part of `pip install`/`pip install -e .`. `setup.py` runs
-`scripts/build_gkeyll.sh`, which:
+If you do not have mamba, install
+[Miniforge](https://github.com/conda-forge/miniforge#install), which includes
+it. Allow the installer to initialize your shell, then reopen your terminal
+and return to the `postgkyl` folder. Create and activate the environment:
 
-1. fetches the exact [Gkeyll](https://github.com/ammarhakim/gkeyll) commit in
-   `scripts/gkeyll-revision` into `./gkeyll/` (a sparse, blobless clone of just
-   the `core/` app — a few tens of MB, not a submodule),
-2. `./configure`s and `make core`s it into `gkeyll/build/core/libg0core.so`
-   with no external dependencies (`--use-lapack-lite=yes`, so no
-   MPI/CUDA/SuperLU/Lua/system LAPACK are required), then
-3. bundles `libg0core.so` beside and compiles postgkyl's `_gpython` CPython
-   extension (`src/postgkyl/gpython/csrc/_gpythonmodule.c`) against a relative
-   loader path, so a built wheel does not depend on the source checkout.
-
-This step needs **network access** (to clone Gkeyll) and **a C compiler**.
-It defaults to `cc`; if your system doesn't have `cc`, set `CC=gcc` (or any compiler you have) before
-installing:
 ```bash
-CC=gcc pip install -e '.[test]' --no-build-isolation
+mamba env create -f environment.yml
+mamba activate pgkyl
 ```
 
-**Always install with `--no-build-isolation`** (as above). Without it, `pip`
-builds the extension in a throwaway environment that resolves `numpy`
-independently of the one that ends up installed for running Postgkyl. The
-extension targets NumPy's `>=2.2` ABI explicitly (matching the `numpy>=2.2.6`
-floor above) so that a same-major mismatch fails loudly at import with a clear
-`numpy.dtype size changed` error rather than silently — but this is a
-best-effort backstop, not a guarantee: a build/runtime NumPy skew has been
-observed to crash the native bridge outright (segfault or memory corruption
-inside Gkeyll's own C code, surfacing anywhere from the next file read to an
-unrelated `matplotlib` call much later) instead of raising cleanly. Building
-against the exact NumPy already installed is the only reliable fix, which is
-what `--no-build-isolation` gives you.
+If you already use **conda** (for example, through Anaconda or Miniconda),
+you can use `conda` in place of `mamba` in both commands.
 
-If this step fails or is skipped, Postgkyl still imports and works — reading
-files falls back to a pure-Python reader, and anything that needs the
-compiled bridge (`.interpolate()`, weak `* /` on modal data, native `.gkyl`
-reading, `.integrate()`, …) raises a `RuntimeError` naming the missing piece
-instead of the pipeline silently doing the wrong thing. Check whether the
-bridge is active with:
+### 2. Install dependencies
+
+Dependencies are the other packages Postgkyl needs. The two configuration
+files have different jobs:
+
+- [environment.yml](environment.yml) creates the mamba/conda environment
+  with Python, pip (the Python package installer), and setuptools (a build
+  tool). The pyenv/venv option above sets up Python and pip without this file.
+- [pyproject.toml](pyproject.toml) lists the packages Postgkyl uses, such as
+  NumPy and Matplotlib, and the optional developer tools. pip reads this file
+  when installing Postgkyl, so these dependency lists are maintained here.
+
+With your environment active, install NumPy and the Python build tools:
+
+```bash
+python -m pip install --upgrade "numpy>=2.2.6" setuptools wheel
+```
+
+NumPy must be installed before building Postgkyl. The remaining dependencies
+will be installed automatically in step 3; you do not need to install them
+one by one.
+
+### 3. Install Postgkyl
+
+From the `postgkyl` folder, run:
+
+```bash
+python -m pip install --no-build-isolation .
+```
+
+The final `.` means "install from this folder." Keep `--no-build-isolation`
+so Postgkyl builds using the NumPy you just installed. This step also
+downloads and builds the Gkeyll bridge automatically and may take several
+minutes.
+
+Check the installation:
+
+```bash
+pgkyl --version
+pgkyl --help
+```
+
+The first command prints version information; the second lists the available
+commands. Each time you open a new terminal, activate your environment again:
+run `source .venv/bin/activate` from the `postgkyl` folder for pyenv/venv, or
+`mamba activate pgkyl` (or `conda activate pgkyl`) for mamba/conda.
+
+## Documentation
+
+Full documentation of the Gkeyll project, including Postgkyl, is available at
+[ReadTheDocs](https://gkeyll.readthedocs.io/). The repository also contains
+[examples](examples/README.md) and [notebooks](notebooks/README.md).
+
+For help with a particular command, add `--help`, for example:
+
+```bash
+pgkyl interpolate --help
+```
+
+### Additional installation notes
+
+To install the published version from [PyPI](https://pypi.org/project/postgkyl/),
+complete the environment and dependency steps above, then replace the install
+command in step 3 with:
+
+```bash
+python -m pip install --no-build-isolation postgkyl
+```
+
+To leave an environment, run `deactivate` for pyenv/venv, `mamba deactivate`
+for mamba, or `conda deactivate` for conda. In shells other than bash/zsh,
+venv activation uses `source .venv/bin/activate.fish` for fish or
+`source .venv/bin/activate.csh` for csh/tcsh.
+
+Installing with pip does not require changes to `PYTHONPATH`. If you
+previously added a Postgkyl checkout to that variable, remove that entry so
+Python uses the installed package.
+
+#### Gkeyll bridge
+
+The Gkeyll bridge (`gpython`) connects Postgkyl to Gkeyll's compiled code for
+native `.gkyl` reading, interpolation, integration, and DG arithmetic.
+Installing from source builds it automatically. A prebuilt wheel includes
+the bridge already.
+
+During a source build, `setup.py` runs `scripts/build_gkeyll.sh`, which:
+
+1. Downloads the [Gkeyll](https://github.com/ammarhakim/gkeyll) revision
+   recorded in `scripts/gkeyll-revision` into `gkeyll/`.
+2. Builds its core library with the bundled LAPACK implementation. No
+   separate MPI, CUDA, SuperLU, Lua, or system LAPACK installation is needed.
+3. Builds the Python extension and bundles the core library beside it, so
+   the installed package can run without the Gkeyll source folder.
+
+The build needs Git, Make, a C compiler, and network access. It uses `cc` by
+default. To select another installed compiler, for example GCC, run:
+
+```bash
+CC=gcc python -m pip install --no-build-isolation .
+```
+
+Always use `--no-build-isolation` when building from source so the bridge
+builds against the NumPy in your active environment. A different NumPy at
+build time can cause import errors or crashes. After changing NumPy, rebuild
+the bridge in that environment.
+
+Check whether the bridge is available:
+
 ```bash
 python -c "from postgkyl import gpython; print(gpython.available())"
 ```
 
-To rebuild by hand (e.g. after pulling a Postgkyl or Gkeyll update, or after
-fixing a compiler issue), re-run either script from the repo root — both are
-safe to re-run:
-```bash
-scripts/build_gkeyll.sh   # full: re-clone/build libg0core.so, then the extension
-scripts/build_gpython.sh  # just the extension, if libg0core.so is already built
-```
-
-Pure-Python compatibility testing can explicitly omit the native build with
-`POSTGKYL_SKIP_GKEYLL_BUILD=1`. This switch is intended for test lanes that
-select the `compatibility` marker; normal installs continue to build the
-bridge.
-
-To verify a release artifact independently of the checkout, build it and run
-the clean-environment smoke test:
+This should print `True`. If it prints `False`, get the error details with:
 
 ```bash
-python -m build --no-isolation
-scripts/smoke_wheel.sh dist/*.whl
+python -c "from postgkyl import gpython; gpython.require()"
 ```
 
-If `gpython.available()` is `False`, the printed error explains which of the
-two prerequisites (compiler, or the clone) is missing, or whether the built
-extension is stale relative to the shim header — the fix in that last case
-is always `scripts/build_gpython.sh`.
+A failed source build stops installation. An installation with an unavailable
+bridge can still read files through the Python reader, but operations that
+require the bridge raise an error.
 
-## Formatting
-
-Install the repository's Git hook and run both formatters over all tracked
-Python and C sources with:
+To rebuild and reinstall from the repository folder with your environment
+active, run:
 
 ```bash
-python -m pip install --no-build-isolation -e ".[test]"
-pre-commit install
-pre-commit run --all-files
+python -m pip install --no-build-isolation .
 ```
 
-The test extra pins the supported pre-commit runner; pre-commit installs the
-pinned YAPF, clang-format, Ruff, and repository-sanity hooks in isolated
-environments. YAPF reads `.style.yapf`; clang-format reads `.clang-format`;
-Ruff reads `pyproject.toml`. CI checks the exact pull-request commit and fails
-with a formatter diff when that commit is not clean.
+For an editable developer installation (see below), you can rebuild in place
+with `PYTHON=python scripts/build_gkeyll.sh`. If the Gkeyll core library is
+already built and only the Python extension needs rebuilding, use
+`PYTHON=python scripts/build_gpython.sh` instead.
 
-## Testing
+## Developing for Postgkyl
 
-Postgkyl utilizes [pytest](https://docs.pytest.org/) for testing. The tests can
-be called manually from the root Postgkyl directory simply by using:
+Complete the installation steps above, then run this from the `postgkyl`
+folder with your environment active:
 
 ```bash
-pytest [-v]
+python -m pip install --no-build-isolation -e '.[test]'
 ```
+
+The `-e` option makes the installation use your source files directly, so
+Python edits take effect without reinstalling. The `[test]` option also
+installs the testing, formatting, and packaging tools listed in
+`pyproject.toml`.
+
+### pytest
+
+[pytest](https://docs.pytest.org/) runs the automated tests. From the
+`postgkyl` folder, run:
+
+```bash
+python -m pytest tests/
+```
+
+Add `-v` to see a separate result for each test.
 
 The default suite treats unexpected warnings as errors and uses strict marker
 and configuration validation. Useful CI-equivalent subsets are:
@@ -206,7 +244,26 @@ The external-tool lane has explicit timeouts in CI. Native lanes set
 `POSTGKYL_REQUIRE_GKEYLL=1`, turning a missing bridge into a session failure
 instead of allowing the native test inventory to skip silently.
 
-## API and CLI documentation
+For pure-Python compatibility testing, skip the native build at installation
+time with `POSTGKYL_SKIP_GKEYLL_BUILD=1`. Use this only when testing the
+`compatibility` subset; normal installations build the bridge.
+
+### Formatting
+
+After installing the developer tools above, enable the checks that run
+before a Git commit and run them over all tracked files:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+pre-commit installs the pinned YAPF, clang-format, Ruff, and repository
+checks. YAPF reads `.style.yapf`; clang-format reads `.clang-format`; Ruff
+reads `pyproject.toml`. The automated pull-request checks use these same
+tools and report any formatting changes needed.
+
+### API and CLI documentation
 
 Public command documentation lives on the Python function that implements the
 operation. The equivalent `GData` spelling is a class-body alias to that same
@@ -226,6 +283,15 @@ docstring identity, and deterministic CLI lowering. Run it directly with:
 pytest tests/test_documentation.py
 ```
 
+### Checking a release package
+
+Build a wheel (an installable package) and test it in a clean environment:
+
+```bash
+python -m build --no-isolation
+scripts/smoke_wheel.sh dist/*.whl
+```
+
 ## Authors
 
 The full list of authors can be found [here](AUTHORS.md).
@@ -233,7 +299,3 @@ The full list of authors can be found [here](AUTHORS.md).
 ## License
 
 Postgkyl is distributed under the MIT License.
-
-[^1]: This does *not* require any additional modifications of `PYTHONPATH`. If
-    Postgkyl was used previously through `PYTHONPATH`, we strongly recommend
-    removing the path to the Postgkyl repository from the variable.
