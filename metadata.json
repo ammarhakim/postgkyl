@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.5",
+  "checkpoint_id": "01M239G46QPCA4SC036CGZNQFS",
+  "strategy": "manual-commit",
+  "branch": "refactor-diagnostics",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/postgkyl/operations/fit.py",
+    "tests/test_operations_fit.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 18245,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 456996,
+    "output_tokens": 5951,
+    "api_call_count": 7
+  }
+}
