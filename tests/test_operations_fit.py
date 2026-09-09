@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from importlib import import_module
 import os
+import re
 
 import numpy as np
 import pytest
@@ -131,6 +132,56 @@ def test_inplace_and_tag_label():
   assert out is d
   assert d.get_tag() == "t"
   assert d.get_label() == "l"
+
+
+def test_printed_statistics_match_known_linear_residuals(capsys):
+  x = np.arange(-2.0, 3.0)
+  # Orthogonal to both the constant and linear terms: the fit remains 2*x+3.
+  residual = np.array([1.0, -2.0, 2.0, -2.0, 1.0])
+  d = _make([x],
+            np.stack([2 * x + 3 + residual, 2 * x + 3 + 2 * residual], axis=-1))
+  operations.fit(d, "linear", print_coeffs=True)
+  components = capsys.readouterr().out.split("  component ")[1:]
+  assert len(components) == 2
+  for comp, output in enumerate(components):
+    rss = 14 * (comp + 1)**2
+    stats = dict(re.findall(r"^    ([^=]+) = (\S+)", output, re.MULTILINE))
+    assert float(stats["R^2"]) == pytest.approx(40 / (40 + rss))
+    assert float(stats["RSS"]) == pytest.approx(rss)
+    assert float(stats["RMSE"]) == pytest.approx(np.sqrt(rss / 5))
+    assert float(stats["Residual standard error"]) == pytest.approx(
+        np.sqrt(rss / 3))
+    assert "Samples = 5" in output
+    assert "Parameters = 2; residual degrees of freedom = 3" in output
+    assert "x range = [-2, 2]" in output
+    errors = re.findall(r"\+/- (\S+) \(1-sigma\)", output)
+    np.testing.assert_allclose([float(error) for error in errors],
+                               np.sqrt([rss / 30, rss / 15]),
+                               rtol=1e-6)
+
+
+def test_printed_window_statistics_exclude_unfitted_tail(capsys):
+  x = np.arange(8.0)
+  y = np.array([3., 5., 7., 9., 11., 400., -30., 600.])
+  d = _make([x], y[:, None])
+  out = operations.fit(d, "linear", window=True, min_n=5, print_coeffs=True)
+  output = capsys.readouterr().out
+  assert "Samples = 5 of 8 (leading window)" in output
+  assert "x range = [0, 4]" in output
+  stats = dict(re.findall(r"^    ([^=]+) = (\S+)", output, re.MULTILINE))
+  assert float(stats["R^2"]) == pytest.approx(1.0)
+  assert float(stats["RMSE"]) == pytest.approx(0.0, abs=1e-8)
+  assert out.values.shape == d.values.shape
+
+
+def test_printed_statistics_explain_undefined_estimates(capsys):
+  d = _make([np.array([0., 1.])], np.array([[3.], [3.]]))
+  operations.fit(d, "linear", guess=[0., 3.], print_coeffs=True)
+  output = capsys.readouterr().out
+  assert "R^2 = undefined (constant fitted data)" in output
+  assert "Residual standard error = undefined" in output
+  assert "no residual degrees of freedom" in output
+  assert "1-sigma uncertainty unavailable" in output
 
 
 @needs_gkeyll

@@ -61,9 +61,15 @@ def fit(data: "GDataState",
     min_n: minimum window length when ``window=True``; ``None`` defaults to
       one tenth of the number of samples. Ignored otherwise.
     print_coeffs: print the model equation and coefficient descriptions,
-      followed by named fitted coefficients for each zero-based component
-      (12 significant digits). Custom RPN models show their expression and
-      free parameter names. Full precision remains in ``ctx['fit_params']``.
+      followed by named coefficients with estimated 1-sigma uncertainties,
+      R^2, residual sum of squares (RSS), root mean squared error (RMSE),
+      residual standard error, sample count, degrees of freedom, and
+      coordinate ranges for each zero-based component (12 significant
+      digits). Statistics use only the fitted points, including when
+      ``window=True``. R^2 is undefined for constant data; residual standard
+      error requires positive residual degrees of freedom. Custom RPN models
+      show their expression and free parameter names. Full precision remains
+      in ``ctx['fit_params']``, ``ctx['fit_std']``, and ``ctx['fit_R2']``.
     inplace: mutate and return ``data`` instead of a new dataset.
     tag: optional tag for the returned dataset.
     label: optional label for the returned dataset.
@@ -124,15 +130,17 @@ def fit(data: "GDataState",
 
   active_shape = tuple(cg.shape[0] for cg in cc_grid)
   fit_values_list, all_params, all_std, all_r2 = [], [], [], []
+  all_n = []
   for comp in range(values.shape[-1]):
     ydata = values[..., comp].flatten()
     if window:
-      params, cov, r2, _n = numerics.fit_best_window(xdata,
-                                                     ydata,
-                                                     fit_type,
-                                                     min_n=min_n,
-                                                     p0=guess_list)
+      params, cov, r2, n = numerics.fit_best_window(xdata,
+                                                    ydata,
+                                                    fit_type,
+                                                    min_n=min_n,
+                                                    p0=guess_list)
     else:
+      n = ydata.size
       p0 = guess_list if guess_list is not None else numerics.auto_guess(
           fit_type, xdata, ydata)
       params, cov, r2 = numerics.fit(xdata, ydata, fit_type, p0=p0)
@@ -141,6 +149,7 @@ def fit(data: "GDataState",
     all_params.append(params)
     all_std.append(np.sqrt(np.diag(cov)))
     all_r2.append(r2)
+    all_n.append(n)
 
   fit_values = np.concatenate(fit_values_list, axis=-1)
   fit_grid = [grid[d] for d in active]
@@ -162,8 +171,37 @@ def fit(data: "GDataState",
       print(f"  x, y: input coordinates on grid axes {active[0]}, {active[1]}.")
     for comp, params in enumerate(all_params):
       print(f"  component {comp}:")
-      for name, value in zip(param_names, params):
-        print(f"    {name} = {value:.12g}")
+      for name, value, std in zip(param_names, params, all_std[comp]):
+        if np.isfinite(std):
+          print(f"    {name} = {value:.12g} +/- {std:.12g} (1-sigma)")
+        else:
+          print(f"    {name} = {value:.12g} (1-sigma uncertainty unavailable)")
+      n = all_n[comp]
+      observed = values[..., comp].reshape(-1)[:n]
+      predicted = fit_values[..., comp].reshape(-1)[:n]
+      rss = np.sum((observed - predicted)**2)
+      dof = n - len(params)
+      sample_scope = (f" of {values[..., comp].size} (leading window)"
+                      if window else "")
+      print(f"    Samples = {n}{sample_scope}")
+      print(f"    Parameters = {len(params)}; "
+            f"residual degrees of freedom = {dof}")
+      for name, coordinates in zip(("x", "y"), cc_grid):
+        fitted_coordinates = coordinates[:n] if window else coordinates
+        print(f"    {name} range = [{fitted_coordinates.min():.12g}, "
+              f"{fitted_coordinates.max():.12g}]")
+      if np.any(observed != observed[0]):
+        print(f"    R^2 = {all_r2[comp]:.12g} (coefficient of determination)")
+      else:
+        print("    R^2 = undefined (constant fitted data)")
+      print(f"    RSS = {rss:.12g} (sum of squared residuals)")
+      print(f"    RMSE = {np.sqrt(rss / n):.12g} (root mean squared error)")
+      if dof > 0:
+        print(f"    Residual standard error = {np.sqrt(rss / dof):.12g} "
+              "(sqrt(RSS / degrees of freedom))")
+      else:
+        print("    Residual standard error = undefined "
+              "(no residual degrees of freedom)")
   return data._result(fit_grid,
                       fit_values,
                       inplace=inplace,
