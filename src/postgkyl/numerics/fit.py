@@ -11,60 +11,109 @@ import scipy.optimize as opt
 
 
 def linear(x: np.ndarray, a: float, b: float) -> np.ndarray:
-  """Linear model ``a*x + b``."""
+  """``f(x) = a*x + b``
+
+  a: slope (change in f per unit x).
+  b: intercept, f(0).
+  """
   return a * x + b
 
 
 def quadratic(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
-  """Quadratic model ``a*x**2 + b*x + c``."""
+  """``f(x) = a*x**2 + b*x + c``
+
+  a: quadratic coefficient; the second derivative is 2*a.
+  b: linear coefficient, the slope at x = 0.
+  c: intercept, f(0).
+  """
   return a * x**2 + b * x + c
 
 
 def plane(XY: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
-  """Planar model ``a*x + b*y + c`` over two independent variables packed
-  as ``(x, y)`` (e.g. shape ``(2, N)``)."""
+  """``f(x, y) = a*x + b*y + c``
+
+  a: slope along x at fixed y.
+  b: slope along y at fixed x.
+  c: intercept, f(0, 0).
+  """
   x, y = XY
   return a * x + b * y + c
 
 
 def quadratic2d(XY: np.ndarray, a: float, b: float, c: float, d: float,
                 e: float, f: float) -> np.ndarray:
-  """``a*x^2 + b*y^2 + c*x*y + d*x + e*y + f``."""
+  """``fitted(x, y) = a*x**2 + b*y**2 + c*x*y + d*x + e*y + f``
+
+  a: x-squared coefficient.
+  b: y-squared coefficient.
+  c: cross-term coefficient multiplying x*y.
+  d: linear x coefficient.
+  e: linear y coefficient.
+  f: intercept, fitted(0, 0).
+  """
   x, y = XY
   return a * x**2 + b * y**2 + c * x * y + d * x + e * y + f
 
 
 def exp_plateau(x: np.ndarray, A: float, b: float, C: float) -> np.ndarray:
-  """``A*exp(b*x) + C`` (plateaus at ``C`` as ``b*x -> -inf``, or at
-  ``A+C`` as ``b*x -> +inf``)."""
+  """``f(x) = A*exp(b*x) + C``
+
+  A: initial offset from C; f(0) = A + C.
+  b: exponential rate (inverse x units); b < 0 means decay toward C.
+  C: plateau approached as b*x -> -infinity.
+  """
   return A * np.exp(b * x) + C
 
 
 def gaussian(x: np.ndarray, A: float, mu: float, sigma: float) -> np.ndarray:
-  """``A * exp(-0.5 * ((x - mu) / sigma)**2)``."""
+  """``f(x) = A * exp(-0.5 * ((x - mu) / sigma)**2)``
+
+  A: amplitude at the center, f(mu).
+  mu: center position.
+  sigma: width parameter; abs(sigma) is the standard deviation in x units.
+  """
   return A * np.exp(-0.5 * ((x - mu) / sigma)**2)
 
 
 def power(x: np.ndarray, a: float, n: float, b: float) -> np.ndarray:
-  """``a * x^n + b``."""
+  """``f(x) = a * x**n + b``
+
+  a: amplitude multiplying the power law.
+  n: power-law exponent.
+  b: additive offset.
+  """
   return a * x**n + b
 
 
 def sinusoid(x: np.ndarray, A: float, omega: float, phi: float,
              C: float) -> np.ndarray:
-  """``A * sin(omega * x + phi) + C``."""
+  """``f(x) = A * sin(omega * x + phi) + C``
+
+  A: signed oscillation amplitude.
+  omega: angular frequency (radians per unit x).
+  phi: phase at x = 0 (radians).
+  C: mean level of the oscillation.
+  """
   return A * np.sin(omega * x + phi) + C
 
 
 def tanh_transition(x: np.ndarray, A: float, x0: float, w: float,
                     C: float) -> np.ndarray:
-  """``A * tanh((x - x0) / w) + C``."""
+  """``f(x) = A * tanh((x - x0) / w) + C``
+
+  A: signed half-difference between the two asymptotic levels C - A and C + A.
+  x0: transition midpoint, where f(x0) = C.
+  w: transition scale in x units; the slope at x0 is A/w.
+  C: midpoint level.
+  """
   return A * np.tanh((x - x0) / w) + C
 
 
 def exp2(x: np.ndarray, a: float, b: float) -> np.ndarray:
-  """``a * exp(2*b*x)`` -- the growth-rate model.
+  """``f(x) = a * exp(2*b*x)``
 
+  a: initial value, f(0).
+  b: amplitude growth rate (inverse x units); the fitted curve's rate is 2*b.
   Energy (a squared quantity) is typically used for growth-rate studies,
   hence the factor of 2 in the exponent.
   """

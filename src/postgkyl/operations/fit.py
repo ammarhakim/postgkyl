@@ -15,6 +15,7 @@ should be fit (e.g. ``fit(d, 'exp2', window=True)``); see
 
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -59,9 +60,10 @@ def fit(data: "GDataState",
       instead of the full domain -- see ``numerics.fit_best_window``.
     min_n: minimum window length when ``window=True``; ``None`` defaults to
       one tenth of the number of samples. Ignored otherwise.
-    print_coeffs: print fitted coefficients to stdout for each zero-based
-      component, in model parameter order (first appearance for RPN
-      parameters), matching ``ctx['fit_params']``.
+    print_coeffs: print the model equation and coefficient descriptions,
+      followed by named fitted coefficients for each zero-based component
+      (12 significant digits). Custom RPN models show their expression and
+      free parameter names. Full precision remains in ``ctx['fit_params']``.
     inplace: mutate and return ``data`` instead of a new dataset.
     tag: optional tag for the returned dataset.
     label: optional label for the returned dataset.
@@ -143,10 +145,25 @@ def fit(data: "GDataState",
   fit_values = np.concatenate(fit_values_list, axis=-1)
   fit_grid = [grid[d] for d in active]
   if print_coeffs:
+    model = numerics.FIT_FUNCTIONS.get(fit_type)
+    if model is None:
+      description = f"RPN expression: {fit_type}"
+      param_names = numerics.rpn_param_names(fit_type)
+    else:
+      description = inspect.getdoc(model).replace("``", "")
+      param_names = list(inspect.signature(model).parameters)[1:]
+    print(f"fit '{fit_type}':")
+    for line in description.splitlines():
+      if line:
+        print(f"  {line}")
+    if len(active) == 1:
+      print("  x: input coordinate (time for a time series).")
+    else:
+      print(f"  x, y: input coordinates on grid axes {active[0]}, {active[1]}.")
     for comp, params in enumerate(all_params):
-      print(
-          f"fit '{fit_type}', component {comp}: coefficients = {params.tolist()}"
-      )
+      print(f"  component {comp}:")
+      for name, value in zip(param_names, params):
+        print(f"    {name} = {value:.12g}")
   return data._result(fit_grid,
                       fit_values,
                       inplace=inplace,
