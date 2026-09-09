@@ -31,6 +31,7 @@ def fit(data: "GDataState",
         guess=None,
         window: bool = False,
         min_n: int | None = None,
+        print_coeffs: bool = False,
         inplace: bool = False,
         tag: str | None = None,
         label: str | None = None):
@@ -58,6 +59,9 @@ def fit(data: "GDataState",
       instead of the full domain -- see ``numerics.fit_best_window``.
     min_n: minimum window length when ``window=True``; ``None`` defaults to
       one tenth of the number of samples. Ignored otherwise.
+    print_coeffs: print fitted coefficients to stdout for each zero-based
+      component, in model parameter order (first appearance for RPN
+      parameters), matching ``ctx['fit_params']``.
     inplace: mutate and return ``data`` instead of a new dataset.
     tag: optional tag for the returned dataset.
     label: optional label for the returned dataset.
@@ -138,6 +142,11 @@ def fit(data: "GDataState",
 
   fit_values = np.concatenate(fit_values_list, axis=-1)
   fit_grid = [grid[d] for d in active]
+  if print_coeffs:
+    for comp, params in enumerate(all_params):
+      print(
+          f"fit '{fit_type}', component {comp}: coefficients = {params.tolist()}"
+      )
   return data._result(fit_grid,
                       fit_values,
                       inplace=inplace,
