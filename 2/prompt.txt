@@ -1,0 +1,23 @@
+I'm trying to install the full stack of gkeyll into this postgkyl installation. I did
+POSTGKYL_GKEYLL_MODULE=pkpm python -m pip install -e '.[test]'
+But it seems to not be building all of gkeyll. Why is this?
+
+---
+
+How would one link a full build of gkeyll to postgkeyll? For instance, if we needed, in the future, the dependencies, how would this work? Would we be able to do this on the internal postgkyl build?
+
+---
+
+Does building against another gkeyll_dir freeze the build in place or is it automatically updated?
+
+---
+
+How can we clean this up? Would a configuration file be appropriate? How do we make this a smooth installation process for all the ways of installing this
+
+---
+
+Let's do a default postgkyl-build.toml which configures and builds gkeyll internally with just core, but leaving clear options for where you would link against another postgkyl
+
+---
+
+Why was the dependency tomli added with python_version < 3.11 ? Please clean up the installation instructions and the comments in postgkyl-build.toml. They should be highly concise and readable

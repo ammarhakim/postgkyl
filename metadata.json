@@ -3,14 +3,19 @@
   "checkpoint_id": "01M4RW6Y4X7ZMCVQD2CW5DCHG4",
   "strategy": "manual-commit",
   "branch": "flexible-builds",
-  "checkpoints_count": 3,
+  "checkpoints_count": 9,
   "files_touched": [
     ".gitignore",
     "MANIFEST.in",
     "docs/source/installation.md",
+    "docs/source/native-physics.md",
     "examples/scripts/native_physics.py",
+    "postgkyl-build.toml",
+    "pyproject.toml",
     "scripts/build_gkeyll.sh",
+    "scripts/gkeyll_config.py",
     "scripts/update_gkeyll.sh",
+    "scripts/update_pgkyl.sh",
     "setup.py",
     "src/postgkyl/cli/session.pyi",
     "src/postgkyl/dg/physics.py",
@@ -46,14 +51,21 @@
       "compact_transcript": "/1/transcript.jsonl",
       "content_hash": "/1/content_hash.txt",
       "prompt": "/1/prompt.txt"
+    },
+    {
+      "metadata": "/2/metadata.json",
+      "transcript": "/2/full.jsonl",
+      "compact_transcript": "/2/transcript.jsonl",
+      "content_hash": "/2/content_hash.txt",
+      "prompt": "/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 365973,
+    "input_tokens": 450306,
     "cache_creation_tokens": 0,
-    "cache_read_tokens": 17218048,
-    "output_tokens": 79948,
-    "api_call_count": 213,
+    "cache_read_tokens": 20331136,
+    "output_tokens": 98883,
+    "api_call_count": 267,
     "subagent_tokens_complete": true
   }
 }
