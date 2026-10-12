@@ -32,18 +32,45 @@ def _git(directory, *args):
   return result.stdout.strip() if result.returncode == 0 else "unknown"
 
 
-def _build_info():
+def _gkeyll_paths():
+  """Build the internal core or locate an explicitly selected external build."""
+  external = os.environ.get("POSTGKYL_GKEYLL_DIR")
+  if external is None:
+    subprocess.run(["sh", str(ROOT / "scripts/build_gkeyll.sh")],
+                   cwd=ROOT,
+                   check=True)
+    return GKEYLL, GKEYLL / "core/zero", GKEYLL / "build/core/libg0core.so"
+  if not external.strip():
+    raise ValueError("POSTGKYL_GKEYLL_DIR must be a nonempty path")
+  directory = Path(external).expanduser().resolve()
+  for headers, library in (("core/zero", "build/core/libg0core.so"),
+                           ("include", "lib/libg0core.so")):
+    include = directory / headers
+    core = directory / library
+    if (include / "gkyl_gpython.h").is_file() and core.is_file():
+      return directory, include, core
+  raise ValueError(
+      f"POSTGKYL_GKEYLL_DIR={directory} must contain either "
+      "core/zero/gkyl_gpython.h and build/core/libg0core.so (built checkout), "
+      "or include/gkyl_gpython.h and lib/libg0core.so (installation prefix). "
+      "Build a Gkeyll version with the gpython shim before installing Postgkyl."
+  )
+
+
+def _build_info(gkeyll):
   import numpy
 
-  branch = _git(GKEYLL, "symbolic-ref", "--short", "HEAD")
+  branch = _git(gkeyll, "symbolic-ref", "--short", "HEAD")
   if branch == "unknown":
     branch = "detached"
-  if _git(GKEYLL, "status", "--porcelain", "--untracked-files=no"):
+  status = _git(gkeyll, "status", "--porcelain", "--untracked-files=no")
+  if status not in {"", "unknown"}:
     branch += " (locally modified)"
   return {
-      "gkeyll_commit": _git(GKEYLL, "rev-parse", "HEAD"),
-      "gkeyll_commit_date": _git(GKEYLL, "log", "-1", "--format=%cI"),
+      "gkeyll_commit": _git(gkeyll, "rev-parse", "HEAD"),
+      "gkeyll_commit_date": _git(gkeyll, "log", "-1", "--format=%cI"),
       "gkeyll_branch": branch,
+      "gkeyll_directory": str(gkeyll),
       "postgkyl_build_commit": _git(ROOT, "rev-parse", "HEAD"),
       "build_date": datetime.now(timezone.utc).isoformat(),
       "build_cc": os.environ.get("CC", "cc"),
@@ -59,27 +86,25 @@ class BuildGkeyllExtension(build_ext):
   def build_extensions(self):
     import numpy
 
-    subprocess.run(["sh", str(ROOT / "scripts/build_gkeyll.sh")],
-                   cwd=ROOT,
-                   check=True)
+    gkeyll, headers, core = _gkeyll_paths()
     bundle = Path(self.build_lib) / PACKAGE.replace(".", "/")
     bundle.mkdir(parents=True, exist_ok=True)
     library = bundle / "libg0core.so"
-    shutil.copy2(GKEYLL / "build/core/libg0core.so", library)
+    shutil.copy2(core, library)
     if sys.platform == "darwin":
       subprocess.run(
           ["install_name_tool", "-id", "@rpath/libg0core.so",
            str(library)],
           check=True)
     for extension in self.extensions:
-      extension.include_dirs = [str(GKEYLL / "core/zero"), numpy.get_include()]
+      extension.include_dirs = [str(headers), numpy.get_include()]
       extension.library_dirs = [str(bundle.resolve())]
     # Reinstalling must relink even if only Gkeyll or the build environment
     # changed. Compiling this single wrapper is cheap; make handles core reuse.
     self.force = True
     super().build_extensions()
-    (bundle /
-     "_build_info.json").write_text(json.dumps(_build_info(), indent=2) + "\n")
+    (bundle / "_build_info.json"
+     ).write_text(json.dumps(_build_info(gkeyll), indent=2) + "\n")
 
   def _bundle_mapping(self):
     source = Path(

@@ -39,6 +39,54 @@ Activate the environment again in each terminal with `source .venv/bin/activate`
 Run `deactivate` to leave it. Installation does not require `PYTHONPATH` changes;
 remove old Postgkyl entries if they shadow the installed package.
 
+## Use an existing Gkeyll build
+
+Set `POSTGKYL_GKEYLL_DIR` when installing from source to use an already built
+Gkeyll checkout, including a full build with external dependencies:
+
+```bash
+POSTGKYL_GKEYLL_DIR="$HOME/gkeyll" python -m pip install -e '.[test]'
+```
+
+The checkout must contain `core/zero/gkyl_gpython.h` and
+`build/core/libg0core.so`. An installation prefix also works when it contains
+`include/gkyl_gpython.h` and `lib/libg0core.so`; point at that prefix, not its
+parent directory. Both files must come from the same compatible Gkeyll build
+with the gpython shim. Older builds without that shim cannot be used.
+
+Postgkyl compiles its Python extension against the selected headers and bundles
+a copy of the selected core library. It does not configure, build, update, or
+modify the external Gkeyll tree. A missing path or missing header/library fails
+installation instead of falling back to the internal build. The runtime bridge
+checks the shim API version, and `gpython.require()` reports loading failures:
+
+```bash
+python -c "from postgkyl import gpython; gpython.require(); print(gpython.build_info())"
+```
+
+The recorded `gkeyll_directory` identifies the selected tree or prefix. Git
+revision metadata describes the source checkout at installation time (which
+you are responsible for rebuilding); it is unavailable for prefixes without
+Git metadata. Shared dependencies of a full build, such as MPI or LuaJIT,
+must remain available to the dynamic loader. They are not bundled automatically,
+so such installations are specific to the configured environment.
+
+Repeat the installation command after rebuilding or changing the external
+Gkeyll version, including for editable installations. This is a build-time
+selection; changing the variable after installation does not switch the loaded
+library. Leave `POSTGKYL_SKIP_GKEYLL_BUILD` unset to build the bridge.
+
+To return to the default internal lapack-lite build:
+
+```bash
+unset POSTGKYL_GKEYLL_DIR
+python -m pip install -e '.[test]'
+```
+
+The default remains the bundled lapack-lite core with no MPI, CUDA, SuperLU,
+Lua, or system LAPACK requirement. `scripts/build_gkeyll.sh` and the updater
+scripts manage the internal checkout only; rebuild external Gkeyll separately.
+
 ## Alternative environments
 
 An existing Python environment works too; use the same pip installation command.

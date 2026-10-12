@@ -2,6 +2,7 @@
 
 import runpy
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import setuptools
@@ -13,6 +14,7 @@ ROOT = Path(__file__).parents[1]
 @pytest.fixture
 def setup_config(monkeypatch):
   config = {}
+  monkeypatch.delenv("POSTGKYL_GKEYLL_DIR", raising=False)
   monkeypatch.setattr(setuptools, "setup",
                       lambda **kwargs: config.update(kwargs))
   monkeypatch.setenv("POSTGKYL_SKIP_GKEYLL_BUILD", "0")
@@ -61,3 +63,52 @@ def test_skip_build_rejects_misspelled_value(monkeypatch):
   monkeypatch.setenv("POSTGKYL_SKIP_GKEYLL_BUILD", "true")
   with pytest.raises(ValueError, match="must be 0 or 1"):
     runpy.run_path(ROOT / "setup.py")
+
+
+@pytest.mark.parametrize("headers,library", [
+    ("core/zero", "build/core/libg0core.so"),
+    ("include", "lib/libg0core.so"),
+])
+def test_external_build_is_selected_without_building(setup_config, monkeypatch,
+                                                     tmp_path, headers,
+                                                     library):
+  directory = tmp_path / "external build"
+  include = directory / headers
+  core = directory / library
+  include.mkdir(parents=True)
+  core.parent.mkdir(parents=True)
+  (include / "gkyl_gpython.h").touch()
+  core.touch()
+  monkeypatch.setenv("POSTGKYL_GKEYLL_DIR", str(directory))
+  with patch("subprocess.run") as run:
+    selected = setup_config[1]["_gkeyll_paths"]()
+  assert selected == (directory, include, core)
+  run.assert_not_called()
+
+
+@pytest.mark.parametrize("missing", ["header", "library", "both", "empty"])
+def test_invalid_external_build_never_falls_back(setup_config, monkeypatch,
+                                                 tmp_path, missing):
+  include = tmp_path / "include"
+  library = tmp_path / "lib"
+  include.mkdir()
+  library.mkdir()
+  if missing == "header":
+    (library / "libg0core.so").touch()
+  if missing == "library":
+    (include / "gkyl_gpython.h").touch()
+  monkeypatch.setenv("POSTGKYL_GKEYLL_DIR",
+                     "" if missing == "empty" else str(tmp_path))
+  with patch("subprocess.run") as run:
+    with pytest.raises(ValueError, match="POSTGKYL_GKEYLL_DIR"):
+      setup_config[1]["_gkeyll_paths"]()
+  run.assert_not_called()
+
+
+def test_default_build_uses_internal_checkout(setup_config):
+  with patch("subprocess.run") as run:
+    selected = setup_config[1]["_gkeyll_paths"]()
+  assert selected == (ROOT / "gkeyll", ROOT / "gkeyll/core/zero",
+                      ROOT / "gkeyll/build/core/libg0core.so")
+  run.assert_called_once_with(
+      ["sh", str(ROOT / "scripts/build_gkeyll.sh")], cwd=ROOT, check=True)
