@@ -1,0 +1,5 @@
+What would happen if someone calls a function like coulomb_log, but doesn't have the appropriate gkeyll module installed?
+
+---
+
+Please enusre that when a function is called from postgkeyll, but the underlying gkeyll was built without that module, that the error is clear, saying that Gkeyll was built without the appropriate module, but that module is being called. In order to call that function, postgkeyll must be re-built with the appropriate layer
