@@ -1,0 +1,12 @@
+# Read by pip and build/update scripts. Reinstall after changes.
+[gkeyll]
+mode = "managed" # Configure and build the internal gkeyll/ checkout. Options: managed, exiting
+module = "core" # core, moments, vlasov, gyrokinetic, pkpm; includes predecessors.
+
+# To use a prebuilt Gkeyll checkout or installation prefix, set mode = "existing":
+# directory = "~/gkeyll"
+# build-dir = "cuda-build" # Checkout only; defaults to "build".
+
+# Relative directory paths start here; build-dir is relative to directory.
+# Existing builds need compatible gpython shims and their runtime dependencies.
+# See docs/source/installation.md for dependencies and environment overrides.
