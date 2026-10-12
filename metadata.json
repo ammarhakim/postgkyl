@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M4RW6Y4X7ZMCVQD2CW5DCHG4",
+  "strategy": "manual-commit",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".gitignore",
+    "MANIFEST.in",
+    "docs/source/installation.md",
+    "examples/scripts/native_physics.py",
+    "scripts/build_gkeyll.sh",
+    "scripts/update_gkeyll.sh",
+    "setup.py",
+    "src/postgkyl/cli/session.pyi",
+    "src/postgkyl/dg/physics.py",
+    "src/postgkyl/diagnostics/__init__.py",
+    "src/postgkyl/diagnostics/gk/__init__.py",
+    "src/postgkyl/diagnostics/gk/moments.py",
+    "src/postgkyl/diagnostics/vm/__init__.py",
+    "src/postgkyl/diagnostics/vm/collisions.py",
+    "src/postgkyl/gdatastate/layout.py",
+    "src/postgkyl/gpython/__init__.py",
+    "src/postgkyl/gpython/_lib.py",
+    "src/postgkyl/gpython/csrc/_gpythonmodule.c",
+    "src/postgkyl/gpython/gyrokinetic.py",
+    "src/postgkyl/gpython/vlasov.py",
+    "tests/generate_test_data.py",
+    "tests/test_gkeyll_build_revision.py",
+    "tests/test_gpython_lib.py",
+    "tests/test_native_physics.py",
+    "tests/test_packaging.py",
+    "tests/test_postgkyl.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 331584,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 16006528,
+    "output_tokens": 76281,
+    "api_call_count": 174,
+    "subagent_tokens_complete": true
+  }
+}

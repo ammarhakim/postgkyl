@@ -1,0 +1,15 @@
+I'd like an option to build more modules of gkeyll than just core. For instance, it may be useful to have postgkeyll call code from gkeyll/gyrokinetic of gkeyll/vlasov. For that to happen, I would think that we would need seperate gpython files for each module, linked to postgkeyll. Postgkeyll should always be able to compile against just core, which could be gpython_core.c . Each module could have gpython_gyrokinetic.c (or such). The default should be to build core without any dependencies (lapack-lite), but I would like to implement options to compile more modules too. In Gkeyll, the stack minimizes dependencies, so core is stand-alone, moments depends on core, vlasov depends on moments and core, and gyrokinetics depends on vlasov, moments, and core. This stack should be preserved for the DAG
+
+---
+
+I would have expected the header in core to change to gkyl_gpython_core.h. Add PKPM as one of the modules of Gkeyll and ensure that all modules can be called from postgkyl
+
+---
+
+For instance, make the modules spitzer_coll_req, the coulomb log function from vlasov into postgkyl, and gyrokinetic mom_gyrokinetic
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"Also add GData-level operations","question":"For these first bindings, should I expose explicit native-array functions under postgkyl.gpython, or also add GData-level operations that infer basis and grid metadata? I can implement the native shims while you choose.","questionItemId":"[\"request_user_input_async\",\"REDACTED\",0]"}]
+</send_user_message_question_reply>
