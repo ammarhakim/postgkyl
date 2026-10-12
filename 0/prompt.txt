@@ -1,0 +1,9 @@
+I notice that '/home/maxwell-rosen/postgkyl/docs/source/development.md' changed in the last PR, but the website at https://gkeyll.readthedocs.io/en/latest/postgkyl/development.html did not automatically update when the PR was merged. Why is this? Shouldn't the website be re-deployed when the documentation files are changed. Why didn't the website automatically update?
+
+---
+
+The documentation source  can be found at /home/maxwell-rosen/Documents/gkyl-doc . I want this to publish after each merge from postgkyl
+
+---
+
+How do I configure the READTHEDOCS_TOKEN ? How do I generate this secret? What should I put as the value of this variable? Give me step-by-step instructions for getting this working
