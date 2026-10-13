@@ -690,8 +690,7 @@ def plotly(data: GDataState,
     else:
       cmin_local, cmax_local = cmin, cmax
     if diverging:
-      cmin_val, cmax_val = centred_range(cmin_local, cmax_local,
-                                         float(np.nanmax(np.abs(color_value))))
+      cmin_val, cmax_val = centred_range(cmin_local, cmax_local, color_value)
     else:
       cmin_val = cmin_local if cmin_local is not None else value_min
       cmax_val = cmax_local if cmax_local is not None else value_max

@@ -645,7 +645,7 @@ def _apply_value_range(frames, kwargs):
     if axis == "z" and kwargs.get("diverging"):
       if kwargs.get("zmin") is not None or kwargs.get("zmax") is not None:
         continue  # The plot centres the range on the typed bound.
-      low, high = centred_range(None, None, max(abs(low), abs(high)))
+      low, high = centred_range(None, None, limits)
     for bound, value in (("min", low), ("max", high)):
       if kwargs.get(axis + bound) is None:
         bounds.setdefault(axis + bound, {})[panel] = value

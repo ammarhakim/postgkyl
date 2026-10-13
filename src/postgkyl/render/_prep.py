@@ -56,15 +56,20 @@ def default_axis_labels(axes: tuple[int, ...],
 
 
 def centred_range(lower: float | None, upper: float | None,
-                  extent: float) -> tuple[float, float]:
+                  values) -> tuple[float, float]:
   """The colour range of a diverging map, centred on zero.
 
   A typed bound fixes the half-width: ``±max(|lower|, |upper|)`` over the
   bounds given (``None`` when not given). Without bounds the half-width is
-  the data's ``extent``, its largest absolute value.
+  the largest finite ``|values|``, ignoring NaN/inf entries such as the cell
+  separators ``local_poly`` inserts (zero when no value is finite).
   """
   given = [abs(v) for v in (lower, upper) if v is not None]
-  top = max(given) if given else extent
+  if given:
+    top = max(given)
+  else:
+    values = np.asarray(values, dtype=float)
+    top = float(np.max(np.abs(values), initial=0.0, where=np.isfinite(values)))
   return -top, top
 
 

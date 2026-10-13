@@ -596,6 +596,17 @@ class TestColormap:
     fig = backend.plot(_field_2d(), no_show=True, diverging=True, **bounds)
     assert fig.axes[0].collections[0].get_clim() == expected
 
+  def test_diverging_range_ignores_nan_separators(self):
+    """``local_poly`` splices NaN rows/columns between cells; the range is
+    still set by the finite data, here -40..23."""
+    data = _field_2d()
+    values = data.values - 40.0
+    values[3, :, 0] = np.nan
+    values[:, 5, 0] = np.nan
+    data.push(data.grid, values)
+    fig = backend.plot(data, no_show=True, diverging=True)
+    assert fig.axes[0].collections[0].get_clim() == (-40.0, 40.0)
+
 
 # --------------------------------------------------------------------------
 # style / rcParams

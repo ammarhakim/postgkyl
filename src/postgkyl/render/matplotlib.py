@@ -292,7 +292,7 @@ def _contour_levels(z: np.ndarray, *, clevels: str | None, cnlevels: int | None,
     finite = z[np.isfinite(z)]
     if finite.size:
       if diverging:
-        lower, upper = centred_range(zmin, zmax, float(np.abs(finite).max()))
+        lower, upper = centred_range(zmin, zmax, finite)
       else:
         lower = zmin if zmin is not None else float(finite.min())
         upper = zmax if zmax is not None else float(finite.max())
@@ -1313,8 +1313,7 @@ def plot(
               if diverging:
                 if comp_zmin is not None or comp_zmax is not None:
                   extend = "both"  # A typed bound clips both ends.
-                comp_zmin, comp_zmax = centred_range(comp_zmin, comp_zmax,
-                                                     np.abs(z).max())
+                comp_zmin, comp_zmax = centred_range(comp_zmin, comp_zmax, z)
               elif (len(states) > 1 and comp_zmin is None
                     and comp_zmax is None):
                 if shared_z is None:
