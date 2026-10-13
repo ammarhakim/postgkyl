@@ -1,0 +1,10 @@
+Evaluate this branch, which would be a pull request into main. You are a reviewer. You are trying to get work done, but you also care deeply about code quality. We want to improve this work, but also need to get things done. Evaluate this work. Consider alternative approaches which might be cleaner
+
+---
+
+Evaluate this branch, which would be a pull request into main. You are a reviewer. You are trying to get work done, but you also care deeply about code quality. We want to improve this work, but also need to get things done. Evaluate this work. Consider alternative approaches which might be cleaner, but also be fair in your appraisal
+
+---
+
+Please extend CI to use module pkpm.
+I like this proposed cleanup to resolve build configuration once and derive the build plan centrally. Implement this

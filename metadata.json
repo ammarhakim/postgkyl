@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M4VBB9S2R6H2MM41WNNWJHHD",
+  "strategy": "manual-commit",
+  "branch": "flexible-builds",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".github/workflows/test.yml",
+    "MANIFEST.in",
+    "scripts/build_gkeyll.py",
+    "scripts/build_gkeyll.sh",
+    "scripts/check_wheel.py",
+    "scripts/gkeyll_config.py",
+    "setup.py",
+    "tests/test_gkeyll_build_revision.py",
+    "tests/test_packaging.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 123218,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5195008,
+    "output_tokens": 14509,
+    "api_call_count": 53,
+    "subagent_tokens_complete": true
+  }
+}
