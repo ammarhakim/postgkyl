@@ -1,5 +1,6 @@
 include postgkyl-build.toml
 include scripts/gkeyll_config.py
+include scripts/build_gkeyll.py
 include scripts/build_gkeyll.sh
 include scripts/update_gkeyll.sh
 include scripts/gkeyll-branch

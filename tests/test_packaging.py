@@ -1,9 +1,8 @@
 """Contracts of the native setuptools command, independent of compilation."""
 
 import runpy
-import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import setuptools
@@ -90,7 +89,8 @@ def test_external_build_is_selected_without_building(setup_config, monkeypatch,
   core.touch()
   monkeypatch.setenv("POSTGKYL_GKEYLL_DIR", str(directory))
   with patch("subprocess.run") as run:
-    selected = setup_config[1]["_gkeyll_paths"]()
+    selected = setup_config[1]["_gkeyll_paths"](
+        setup_config[1]["load_config"]())
   assert selected == (directory, include, core)
   run.assert_not_called()
 
@@ -110,20 +110,23 @@ def test_invalid_external_build_never_falls_back(setup_config, monkeypatch,
                      "" if missing == "empty" else str(tmp_path))
   with patch("subprocess.run") as run:
     with pytest.raises(ValueError, match="POSTGKYL_GKEYLL_DIR"):
-      setup_config[1]["_gkeyll_paths"]()
+      setup_config[1]["_gkeyll_paths"](setup_config[1]["load_config"]())
   run.assert_not_called()
 
 
-def test_default_build_uses_internal_checkout(setup_config):
-  with patch("subprocess.run") as run:
-    selected = setup_config[1]["_gkeyll_paths"]()
+def test_default_build_uses_internal_checkout(setup_config, monkeypatch):
+  _, namespace = setup_config
+  plan = namespace["PLAN"]
+  # Configuration changes after resolution must not change the build selection.
+  monkeypatch.setenv("POSTGKYL_GKEYLL_MODULE", "pkpm")
+  monkeypatch.setenv("POSTGKYL_BUILD_CONFIG", "/missing/config.toml")
+  build = Mock()
+  with patch.dict(namespace["_gkeyll_paths"].__globals__,
+                  {"build_gkeyll": build}):
+    selected = namespace["_gkeyll_paths"](plan)
+  build.assert_called_once_with(plan)
   assert selected == (ROOT / "gkeyll", ROOT / "gkeyll/core/zero",
                       ROOT / "gkeyll/build/core/libg0core.so")
-  assert run.call_count == 1
-  assert run.call_args.args == (["sh", str(ROOT / "scripts/build_gkeyll.sh")], )
-  assert run.call_args.kwargs["cwd"] == ROOT
-  assert run.call_args.kwargs["check"] is True
-  assert run.call_args.kwargs["env"]["PYTHON"] == sys.executable
 
 
 @pytest.mark.parametrize("module,expected", [
@@ -140,10 +143,11 @@ def test_module_selection_links_highest_and_bundles_prerequisites(
   monkeypatch.setenv("POSTGKYL_GKEYLL_MODULE", module)
   monkeypatch.setenv("POSTGKYL_SKIP_GKEYLL_BUILD", "0")
   namespace = runpy.run_path(ROOT / "setup.py")
-  assert namespace["MODULES"] == expected
+  assert namespace["PLAN"].modules == tuple(expected)
   monkeypatch.delenv("POSTGKYL_GKEYLL_DIR", raising=False)
-  with patch("subprocess.run"):
-    _, _, core = namespace["_gkeyll_paths"]()
+  with patch.dict(namespace["_gkeyll_paths"].__globals__,
+                  {"build_gkeyll": lambda plan: None}):
+    _, _, core = namespace["_gkeyll_paths"](namespace["PLAN"])
   build = "build" if module == "core" else "build/postgkyl-full"
   assert core == ROOT / "gkeyll" / build / "core/libg0core.so"
   assert namespace["BUNDLE_FILES"] == tuple(
@@ -214,12 +218,41 @@ def test_configured_existing_checkout_uses_selected_build(
   library.parent.mkdir(parents=True)
   (headers / "gkyl_gpython_core.h").touch()
   library.touch()
+  # An explicit build-dir must win even when an installation also exists.
+  (producer / "include").mkdir()
+  (producer / "lib").mkdir()
+  (producer / "include/gkyl_gpython_core.h").touch()
+  (producer / "lib/libg0core.so").touch()
   config = tmp_path / "native.toml"
   config.write_text('[gkeyll]\nmode = "existing"\ndirectory = "producer"\n'
                     f'build-dir = "{build_dir}"\n')
   monkeypatch.setenv("POSTGKYL_BUILD_CONFIG", str(config))
   with patch("subprocess.run") as run:
-    assert setup_config[1]["_gkeyll_paths"]() == (producer, headers, library)
+    assert setup_config[1]["_gkeyll_paths"](
+        setup_config[1]["load_config"]()) == (producer, headers, library)
+  run.assert_not_called()
+
+
+def test_installed_prefix_precedes_checkout_without_build_dir(
+    setup_config, monkeypatch, tmp_path):
+  producer = tmp_path / "gkylsoft/gkeyll"
+  for header in ("include/gkyl_gpython_core.h",
+                 "core/zero/gkyl_gpython_core.h"):
+    path = producer / header
+    path.parent.mkdir(parents=True)
+    path.touch()
+  for library in ("lib/libg0core.so", "build/core/libg0core.so"):
+    path = producer / library
+    path.parent.mkdir(parents=True)
+    path.touch()
+  config = tmp_path / "native.toml"
+  config.write_text('[gkeyll]\nmode = "existing"\n'
+                    'directory = "gkylsoft/gkeyll"\n')
+  monkeypatch.setenv("POSTGKYL_BUILD_CONFIG", str(config))
+  with patch("subprocess.run") as run:
+    assert setup_config[1]["_gkeyll_paths"](
+        setup_config[1]["load_config"]()) == (producer, producer / "include",
+                                              producer / "lib/libg0core.so")
   run.assert_not_called()
 
 
@@ -230,13 +263,13 @@ def test_config_module_and_environment_precedence(monkeypatch, tmp_path):
   monkeypatch.delenv("POSTGKYL_GKEYLL_MODULE", raising=False)
   monkeypatch.delenv("POSTGKYL_GKEYLL_DIR", raising=False)
   resolve = runpy.run_path(ROOT / "scripts/gkeyll_config.py")["load_config"]
-  assert resolve()["module"] == "pkpm"
+  assert resolve().module == "pkpm"
   monkeypatch.setenv("POSTGKYL_GKEYLL_MODULE", "moments")
   monkeypatch.setenv("POSTGKYL_GKEYLL_DIR", str(tmp_path))
   result = resolve()
-  assert result["module"] == "moments"
-  assert result["mode"] == "existing"
-  assert result["directory"] == tmp_path
+  assert result.module == "moments"
+  assert result.mode == "existing"
+  assert result.directory == tmp_path
 
 
 @pytest.mark.parametrize("settings", [

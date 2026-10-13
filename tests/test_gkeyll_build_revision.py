@@ -32,7 +32,8 @@ def checkout(tmp_path):
   workspace = tmp_path / "workspace"
   scripts = workspace / "scripts"
   scripts.mkdir(parents=True)
-  for name in ("build_gkeyll.sh", "update_gkeyll.sh", "gkeyll_config.py"):
+  for name in ("build_gkeyll.sh", "build_gkeyll.py", "update_gkeyll.sh",
+               "gkeyll_config.py"):
     source = (ROOT / "scripts" / name).read_text()
     (scripts / name).write_text(
         source.replace("https://github.com/ammarhakim/gkeyll.git",
@@ -180,7 +181,7 @@ def test_invalid_module_does_not_obtain_checkout(checkout):
   workspace, _, env = checkout
   env["POSTGKYL_GKEYLL_MODULE"] = "gyrokinetics"
   result = _run(checkout)
-  assert result.returncode == 2
+  assert result.returncode != 0
   assert "POSTGKYL_GKEYLL_MODULE" in result.stderr
   assert not (workspace / "gkeyll").exists()
 

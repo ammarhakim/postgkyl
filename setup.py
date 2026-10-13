@@ -14,15 +14,14 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 ROOT = Path(__file__).resolve().parent
-GKEYLL = ROOT / "gkeyll"
 PACKAGE = "postgkyl.gpython"
-MODULE_STACK = (ROOT / "scripts/gkeyll-modules").read_text().split()
 load_config = runpy.run_path(str(ROOT /
                                  "scripts/gkeyll_config.py"))["load_config"]
-SELECTED_MODULE = load_config()["module"]
-MODULES = MODULE_STACK[:MODULE_STACK.index(SELECTED_MODULE) + 1]
+build_gkeyll = runpy.run_path(str(ROOT /
+                                  "scripts/build_gkeyll.py"))["build_gkeyll"]
+PLAN = load_config()
 BUNDLE_FILES = tuple(f"libg0{module}.so"
-                     for module in MODULES) + ("_build_info.json", )
+                     for module in PLAN.modules) + ("_build_info.json", )
 
 
 def _skip_native():
@@ -39,23 +38,17 @@ def _git(directory, *args):
   return result.stdout.strip() if result.returncode == 0 else "unknown"
 
 
-def _gkeyll_paths():
+def _gkeyll_paths(plan):
   """Build the internal stack or locate an explicitly selected external build."""
-  config = load_config()
-  if config["mode"] == "managed":
-    subprocess.run(["sh", str(ROOT / "scripts/build_gkeyll.sh")],
-                   cwd=ROOT,
-                   env={
-                       **os.environ, "PYTHON": sys.executable
-                   },
-                   check=True)
-    build = "build" if SELECTED_MODULE == "core" else "build/postgkyl-full"
-    return GKEYLL, GKEYLL / "core/zero", GKEYLL / build / "core/libg0core.so"
-  directory = config["directory"]
-  build = config["build_dir"] or directory / "build"
+  if plan.mode == "managed":
+    build_gkeyll(plan)
+    return (plan.directory, plan.directory / "core/zero",
+            plan.build_dir / "core/libg0core.so")
+  directory = plan.directory
+  build = plan.build_dir
   layouts = [("core/zero", build / "core/libg0core.so")]
-  if config["build_dir"] is None:
-    layouts.append(("include", directory / "lib/libg0core.so"))
+  if plan.allow_prefix:
+    layouts.insert(0, ("include", directory / "lib/libg0core.so"))
   for headers, library in layouts:
     include = directory / headers
     core = directory / library
@@ -83,7 +76,7 @@ def _build_info(gkeyll):
       "gkeyll_commit_date": _git(gkeyll, "log", "-1", "--format=%cI"),
       "gkeyll_branch": branch,
       "gkeyll_directory": str(gkeyll),
-      "gkeyll_modules": MODULES,
+      "gkeyll_modules": PLAN.modules,
       "postgkyl_build_commit": _git(ROOT, "rev-parse", "HEAD"),
       "build_date": datetime.now(timezone.utc).isoformat(),
       "build_cc": os.environ.get("CC", "cc"),
@@ -99,13 +92,13 @@ class BuildGkeyllExtension(build_ext):
   def build_extensions(self):
     import numpy
 
-    gkeyll, headers, core = _gkeyll_paths()
+    gkeyll, headers, core = _gkeyll_paths(PLAN)
     bundle = Path(self.build_lib) / PACKAGE.replace(".", "/")
     bundle.mkdir(parents=True, exist_ok=True)
     # Gkeyll's higher libraries include all prerequisite objects. Link only
     # the highest one to avoid loading multiple copies of the same symbols.
     includes = [headers]
-    for module in MODULES:
+    for module in PLAN.modules:
       name = f"libg0{module}.so"
       source = (core.parent /
                 name if headers.name == "include" else core.parent.parent /
@@ -172,9 +165,9 @@ setup(
         Extension(
             "postgkyl.gpython._gpython",
             sources=["src/postgkyl/gpython/csrc/_gpythonmodule.c"],
-            libraries=[f"g0{SELECTED_MODULE}"],
+            libraries=[f"g0{PLAN.module}"],
             define_macros=[(f"POSTGKYL_HAVE_{module.upper()}", "1")
-                           for module in MODULES if module != "core"],
+                           for module in PLAN.modules if module != "core"],
             runtime_library_dirs=[
                 "@loader_path" if sys.platform == "darwin" else "$ORIGIN"
             ],

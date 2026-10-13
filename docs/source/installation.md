@@ -58,19 +58,21 @@ preceding modules. Modules above core require full LAPACK (OpenBLAS on Linux,
 Accelerate on macOS) and SuperLU, normally under `~/gkylsoft`. For custom
 features or dependency paths, configure Gkeyll separately and use existing mode.
 
-### Use an existing Gkeyll build
+### Use an installed Gkeyll
 
 ```toml
 [gkeyll]
 mode = "existing"
 module = "pkpm"
-directory = "~/gkeyll"
-# build-dir = "cuda-build" # Optional; defaults to "build".
+directory = "~/gkylsoft/gkeyll"
 ```
 
-A checkout needs the selected modules' `zero/gkyl_gpython_<module>.h` headers
-and `build/<module>/libg0<module>.so` libraries. For an installed prefix, point
-`directory` at its `include/` and `lib/` parent and omit `build-dir`.
+Point `directory` at the installation's `include/` and `lib/` parent and omit
+`build-dir`. Gkeyll's `make install` places these under `~/gkylsoft/gkeyll`
+by default. The selected modules must have compatible
+`include/gkyl_gpython_<module>.h` headers and `lib/libg0<module>.so` libraries;
+an older installation without the gpython shims must be rebuilt and installed.
+Postgkyl does not need the executables in `bin/`.
 
 Relative `directory` paths start at the configuration file; `build-dir` is
 relative to `directory`. `~` expands to your home directory; `$HOME` is not
