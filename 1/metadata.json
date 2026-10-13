@@ -1,0 +1,80 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M4VBB9S2R6H2MM41WNNWJHHD",
+  "session_id": "01a136a4-cd32-7b03-94ba-de6dfaaf0db6",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-13T19:20:37.994848891Z",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    ".github/workflows/test.yml",
+    "MANIFEST.in",
+    "docs/source/installation.md",
+    "postgkyl-build.toml",
+    "scripts/build_gkeyll.sh",
+    "scripts/check_wheel.py",
+    "scripts/gkeyll_config.py",
+    "setup.py",
+    "tests/test_gkeyll_build_revision.py",
+    "tests/test_packaging.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "10bd10b2761d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 53286,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 2530432,
+    "output_tokens": 6691,
+    "api_call_count": 55,
+    "subagent_tokens_complete": true
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-13T19:20:37.976048864Z",
+    "agent_lines": 0,
+    "agent_removed": 8,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 119,
+    "total_committed": 46,
+    "total_lines_changed": 127,
+    "agent_percentage": 6.299212598425196,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 374,
+      "user_lines_removed": 106,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".agents/skills/data/SKILL.md": 86,
+        ".agents/skills/design/SKILL.md": 98,
+        ".agents/skills/gkeyll-core/SKILL.md": 17,
+        ".github/workflows/test.yml": 18,
+        "MANIFEST.in": 1,
+        "scripts/build_gkeyll.py": 70,
+        "scripts/build_gkeyll.sh": 1,
+        "scripts/check_wheel.py": 7,
+        "scripts/gkeyll_config.py": 31,
+        "setup.py": 17,
+        "tests/test_gkeyll_build_revision.py": 3,
+        "tests/test_packaging.py": 25
+      },
+      "user_removed_per_file": {
+        ".github/workflows/test.yml": 2,
+        "scripts/build_gkeyll.sh": 48,
+        "scripts/gkeyll_config.py": 10,
+        "setup.py": 24,
+        "tests/test_gkeyll_build_revision.py": 2,
+        "tests/test_packaging.py": 20
+      }
+    }
+  ]
+}
