@@ -107,6 +107,54 @@ def test_3d_mapping_locates_every_angle_along_the_binormal_coordinate(prefix):
 
 
 @needs_gkeyll
+def test_3d_mapping_pairs_a_geometry_written_on_another_grid_cell_by_cell():
+  # This field spans y in +-0.0970 but its geometry file was written on
+  # y in +-0.1076 by another run. The geometry's grid defines the mapping, so
+  # geometry point k pairs with field point k: the angle the file gives
+  # there, atan2(Y, X), reads the field's interpolated value at point k.
+  # atan2 of the p1-projected X and Y is linear in y only to ~1e-4, which
+  # bounds the agreement; the unpaired grids differ by order one.
+  data = pg.load(F3D)
+  geometry = resolve_geometry(data.file_name)
+  np.testing.assert_allclose(geometry.domain[1], (-0.10763, 0.10763), atol=1e-5)
+  xyz = pg.load(F3D.replace("elc_M0_5", "geo_int_mapc2p")).interpolate().values
+  values = data.interpolate().values[..., 0]
+  projection = mapping.resolve_rz_projection(data, geometry, nz_interp=1)
+  for ix, k, iz in ((0, 3, 0), (20, 40, 10), (60, 17, 5), (95, 62, 31)):
+    angle = np.arctan2(xyz[ix, k, iz, 1], xyz[ix, k, iz, 0])
+    mapped = data.map_to_rz(projection=projection, phi_tor=angle)
+    np.testing.assert_allclose(mapped.values[ix, iz, 0],
+                               values[ix, k, iz],
+                               rtol=1e-5)
+
+
+@needs_gkeyll
+def test_a_geometry_maps_the_same_on_any_computational_range():
+  # Re-expressing the twisted geometry on other ranges (its own grid) must
+  # place the data identically: the projection pairs the two grids.
+  data = pg.load(str(GENERATED / "twisted_pos_3d_p1-field_0.gkyl"))
+  geometry = pg.resolve_geometry(data.file_name)
+  ranges = ((0.0, 1.0), (-1.0, 1.0), (10.0, 30.0))
+  moved = replace(
+      geometry,
+      coords=[
+          new_lo + (axis - lo) / (hi - lo) * (new_hi - new_lo)
+          for axis, (lo, hi), (
+              new_lo, new_hi) in zip(geometry.coords, geometry.domain, ranges)
+      ],
+      domain=ranges)
+  expected = pg.resolve_rz_projection(data, geometry, nz_interp=2)
+  actual = pg.resolve_rz_projection(data, moved, nz_interp=2)
+  for name in ("r", "z", "phi_lo", "span"):
+    np.testing.assert_allclose(getattr(actual, name),
+                               getattr(expected, name),
+                               rtol=1e-12,
+                               atol=1e-12)
+  with pytest.raises(ValueError, match="increasing"):
+    pg.resolve_rz_projection(data, replace(geometry, domain=ranges[:2]))
+
+
+@needs_gkeyll
 def test_missing_toroidal_geometry_and_incompatible_projection_fail_clearly():
   data = pg.load(F3D)
   coords = [np.array([0.0, 1.0])] * 3
