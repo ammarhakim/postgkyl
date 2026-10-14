@@ -1147,8 +1147,9 @@ py_coulomb_log(PyObject *self, PyObject *args)
     Py_DECREF(samples);
     return NULL;
   }
-  int status = gpython_coulomb_log(PyArray_SIZE(out), PyArray_DATA(samples), ms,
-                                   mr, qs, qr, eps0, hbar, PyArray_DATA(out));
+  int status = gpython_spitzer_coll_freq_calc_coulomb_log(
+      PyArray_SIZE(out), PyArray_DATA(samples), ms, mr, qs, qr, eps0, hbar,
+      PyArray_DATA(out));
   Py_DECREF(samples);
   if (status) {
     Py_DECREF(out);
