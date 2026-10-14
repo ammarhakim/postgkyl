@@ -43,14 +43,15 @@ def test_geometry_prefers_nodes_and_honors_explicit_modal_override(
   nodes.touch()
   modal.touch()
   coords = [np.array([0.0, 1.0]), np.array([-1.0, 1.0])]
+  domain = ((0.0, 1.0), (-1.0, 1.0))
   arrays = np.ones((2, 2))
   calls = []
   monkeypatch.setattr(
       geometry_module, "_read_nodes_geometry", lambda path: (calls.append(
-          ("nodes", path)) or (coords, arrays, arrays, None)))
+          ("nodes", path)) or (coords, domain, arrays, arrays, None)))
   monkeypatch.setattr(
       geometry_module, "_read_mapc2p_geometry", lambda path: (calls.append(
-          ("mapc2p", path)) or (coords, arrays, arrays, None)))
+          ("mapc2p", path)) or (coords, domain, arrays, arrays, None)))
 
   resolve_geometry(str(source))
   assert calls[-1] == ("nodes", str(nodes))

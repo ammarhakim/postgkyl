@@ -184,13 +184,11 @@ def _(
 
 
 @app.cell
-def _(initial, mo):
+def _(gp, initial, mo):
     # --- transform controls -------------------------------------------------
-    _transforms = ["interpolate", "local_poly", "map_to_rz",
-                   "extract_flux_surface", "none"]
     transform = mo.ui.dropdown(
-        options=_transforms,
-        value=initial("transform", "interpolate", _transforms),
+        options=list(gp.TRANSFORMS),
+        value=initial("transform", "interpolate", gp.TRANSFORMS),
         label="transform")
     interp_pts = mo.ui.number(start=1, stop=32, value=initial("interp_pts", 2),
                               label="points per cell")
@@ -250,7 +248,7 @@ def _(
 
 @app.cell
 def _(base_settings, gp, pg, replace):
-    # --- the raw layout: weight compatibility and the flux-surface index ----
+    # --- the raw layout: its dimensions and the weight's compatibility -----
     base_grid = None
     weight_path = None
     if base_settings is not None:
@@ -267,10 +265,16 @@ def _(base_settings, gp, pg, replace):
 
 
 @app.cell
-def _(base_grid, get_xidx, mo, set_xidx):
-    # --- radial cell of extract_flux_surface --------------------------------
-    if base_grid is not None:
-        _max = base_grid.cells[0] - 1
+def _(base_settings, get_xidx, gp, mo, set_xidx, transform):
+    # --- flux surface of map_to_phitheta, among the interpolated radii ------
+    _count = None
+    if base_settings is not None and transform.value == "map_to_phitheta":
+        try:
+            _count = gp.radial_samples(base_settings)
+        except Exception:
+            _count = None
+    if _count:
+        _max = _count - 1
         x_idx = mo.ui.slider(start=0, stop=_max, step=1,
                              value=min(get_xidx(), _max),
                              label=f"flux surface x-index (0 to {_max})",
@@ -291,7 +295,7 @@ def _(
     def _transform_settings():
         _mapc2p = (mapc2p_file.value or "").strip() or None
         _points = int(interp_pts.value) if interp_pts.value else None
-        _geometry = transform.value in ("map_to_rz", "extract_flux_surface")
+        _geometry = transform.value in gp.GEOMETRY_TRANSFORMS
         return replace(
             base_settings,
             weight=weight_path,
@@ -749,7 +753,7 @@ def _(
         fluct,
         mo.hstack([transform, interp_pts], justify="start", gap=1),
         mapc2p_file,
-        x_idx if transform.value == "extract_flux_surface" else mo.md(""),
+        x_idx if transform.value == "map_to_phitheta" else mo.md(""),
         phi_tor_deg if transform.value == "map_to_rz" else mo.md(""),
         mo.md("**select / average**: enable a dimension to slice it at the "
               "slider's coordinate, or to average over it"),

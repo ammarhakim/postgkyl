@@ -1028,7 +1028,10 @@ class PostgkylSession:
         DG field where the geometry places that angle along y. Angles that the
         simulated binormal domain covers are exact. Elsewhere the periodic domain
         repeats; unless it spans a whole fraction of the torus, its copies meet
-        along field lines with a jump. Geometry is shared by all equation systems.
+        along field lines with a jump. A geometry file's own grid defines the
+        mapping, even when written by another run on a different computational
+        range: the data's grid is placed on it cell for cell. Geometry is shared
+        by all equation systems.
 
         Args:
           data: Un-interpolated 2-D or 3-D modal DG field.

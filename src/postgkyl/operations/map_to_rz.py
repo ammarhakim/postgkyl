@@ -60,8 +60,7 @@ def resolve_rz_projection(first: "GDataState",
 
   Only the computational grid and DG metadata are read from ``first``;
   projection construction never evaluates or selects its field values.
-  ``z_axis`` is a vertical geometry offset in meters. A geometry read from
-  file maps on its own grid, onto which ``first``'s grid is placed.
+  ``z_axis`` is a vertical geometry offset in meters.
   """
   _validate_modal_data(first, "map_to_rz", (2, 3))
   nz_interp = _validate_positive_int(nz_interp, "nz_interp")
@@ -219,10 +218,7 @@ def map_to_rz(
   DG field where the geometry places that angle along y. Angles that the
   simulated binormal domain covers are exact. Elsewhere the periodic domain
   repeats; unless it spans a whole fraction of the torus, its copies meet
-  along field lines with a jump. A geometry file's own grid defines the
-  mapping, even when written by another run on a different computational
-  range: the data's grid is placed on it cell for cell. Geometry is shared
-  by all equation systems.
+  along field lines with a jump. Geometry is shared by all equation systems.
 
   Args:
     data: Un-interpolated 2-D or 3-D modal DG field.
