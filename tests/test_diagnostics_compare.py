@@ -68,6 +68,13 @@ def _sim(tmp_path, subdir, name="sim", *, n=5, energy_scale=1.0,
   return path
 
 
+def _only(reports):
+  """The single :class:`CompareSimsReport` out of a non-batch ``sims()``
+  call's one-entry dict."""
+  assert len(reports) == 1, reports
+  return next(iter(reports.values()))
+
+
 class TestDefaultLabels:
 
   def test_shares_no_suffix_uses_basenames(self, tmp_path):
@@ -118,8 +125,9 @@ class TestSimsDynvectorOnly:
   def test_plots_every_shared_quantity_within_num_plots(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=5))
     assert set(report.plotted) == {"field_energy", "elc_integrated_moms"}
     assert report.only_in_0 == ()
     assert report.only_in_1 == ()
@@ -131,8 +139,9 @@ class TestSimsDynvectorOnly:
   def test_ranks_larger_difference_first(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", energy_scale=1.001, moms_scale=2.0)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=5))
     by_quantity = {d.quantity: d for d in report.compared}
     assert (by_quantity["elc_integrated_moms"].max_rel_diff
            > by_quantity["field_energy"].max_rel_diff)
@@ -141,15 +150,17 @@ class TestSimsDynvectorOnly:
   def test_num_plots_limits_auto_selection(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1))
     assert report.plotted == ("elc_integrated_moms",)
 
   def test_must_include_is_always_plotted(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1, must_include=["field_energy"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field_energy"]))
     assert "field_energy" in report.plotted
     assert len(report.plotted) == 1
 
@@ -165,14 +176,14 @@ class TestSimsDynvectorOnly:
     path1 = _sim(tmp_path, "candidate")
     _write_dynvec(path0, "sim", "baseline_only", np.linspace(0.0, 1.0, 3),
                  np.ones((3, 1)))
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"))
+    report = _only(compare.sims(path0, path1, out_dir=str(tmp_path / "figs")))
     assert report.only_in_0 == ("baseline_only",)
     assert report.only_in_1 == ()
 
   def test_shape_mismatch_is_skipped_unless_must_include(self, tmp_path):
     path0 = _sim(tmp_path, "baseline", n=5)
     path1 = _sim(tmp_path, "candidate", n=4)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"))
+    report = _only(compare.sims(path0, path1, out_dir=str(tmp_path / "figs")))
     assert "field_energy" in report.skipped
     assert "field_energy" not in report.plotted
 
@@ -183,8 +194,9 @@ class TestSimsDynvectorOnly:
   def test_exclude_adds_to_default_prefixes(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          exclude=["elc_"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    exclude=["elc_"]))
     assert "elc_integrated_moms" not in [d.quantity for d in report.compared]
 
   def test_custom_labels_used_in_legend(self, tmp_path):
@@ -192,15 +204,17 @@ class TestSimsDynvectorOnly:
     # raise and is accepted end-to-end.
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          labels=["before", "after"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    labels=["before", "after"]))
     assert report.plotted
 
   def test_format_controls_saved_extension(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          format="jpg")
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    format="jpg"))
     for quantity in report.plotted:
       assert os.path.isfile(
           os.path.join(str(tmp_path / "figs"), f"{quantity}.jpg"))
@@ -220,8 +234,9 @@ class TestSimsMultiblockDynvector:
   def test_overlays_every_block_onto_one_figure(self, tmp_path):
     path0 = self._multiblock_sim(tmp_path, "baseline")
     path1 = self._multiblock_sim(tmp_path, "candidate", scale=1.2)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1))
     assert report.plotted == ("field_energy",)
     assert os.path.isfile(
         os.path.join(str(tmp_path / "figs"), "field_energy.png"))
@@ -244,8 +259,9 @@ class TestSimsField:
   def test_2d_field_plots_side_by_side(self, tmp_path):
     path0 = self._field_sim(tmp_path, "baseline")
     path1 = self._field_sim(tmp_path, "candidate", offset=0.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1, must_include=["field"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field"]))
     assert report.plotted == ("field",)
     assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
 
@@ -261,16 +277,18 @@ class TestSimsField:
   def test_3d_field_defaults_to_y_midpoint(self, tmp_path):
     path0 = self._field_sim_3d(tmp_path, "baseline")
     path1 = self._field_sim_3d(tmp_path, "candidate", offset=0.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1, must_include=["field"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field"]))
     assert report.plotted == ("field",)
     assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
 
   def test_3d_field_honors_explicit_z1(self, tmp_path):
     path0 = self._field_sim_3d(tmp_path, "baseline")
     path1 = self._field_sim_3d(tmp_path, "candidate", offset=0.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=1, must_include=["field"], z1="0")
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field"], z1="0"))
     assert report.plotted == ("field",)
 
   def _field_sim_4d(self, tmp_path, subdir, offset=0.0):
@@ -287,8 +305,9 @@ class TestSimsField:
   def test_4d_field_is_unplottable_without_more_selectors(self, tmp_path):
     path0 = self._field_sim_4d(tmp_path, "baseline")
     path1 = self._field_sim_4d(tmp_path, "candidate", offset=0.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          num_plots=5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=5))
     assert "field" not in report.plotted
     by_quantity = {d.quantity: d for d in report.compared}
     assert by_quantity["field"].plottable is False
@@ -303,19 +322,13 @@ class TestSimsField:
   def test_4d_field_plots_with_explicit_selectors(self, tmp_path):
     path0 = self._field_sim_4d(tmp_path, "baseline")
     path1 = self._field_sim_4d(tmp_path, "candidate", offset=0.5)
-    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                          must_include=["field"], z1="0", z2="0")
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["field"], z1="0", z2="0"))
     assert report.plotted == ("field",)
 
 
-class TestBatchSims:
-
-  def test_requires_exactly_two_paths(self, tmp_path):
-    with pytest.raises(ValueError, match="exactly two"):
-      compare.batch_sims([str(tmp_path)])
-    with pytest.raises(ValueError, match="exactly two"):
-      compare.batch_sims([str(tmp_path / "a"), str(tmp_path / "b"),
-                          str(tmp_path / "c")])
+class TestSimsBatch:
 
   def test_compares_every_shared_subdirectory(self, tmp_path):
     base = tmp_path / "baseline"
@@ -324,8 +337,8 @@ class TestBatchSims:
       _sim(base.parent, base.name + f"/{sim_name}", name=sim_name)
       _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
           moms_scale=1.5)
-    reports = compare.batch_sims([str(base), str(cand)],
-                                 out_dir=str(tmp_path / "figs"))
+    reports = compare.sims(str(base), str(cand), batch=True,
+                           out_dir=str(tmp_path / "figs"))
     assert set(reports) == {"sim_a", "sim_b"}
     for name, report in reports.items():
       assert report.plotted
@@ -337,4 +350,11 @@ class TestBatchSims:
     _sim(base.parent, base.name + "/sim_a", name="sim_a")
     _sim(cand.parent, cand.name + "/sim_b", name="sim_b")
     with pytest.raises(ValueError, match="no simulation subdirectory"):
-      compare.batch_sims([str(base), str(cand)], out_dir=str(tmp_path / "figs"))
+      compare.sims(str(base), str(cand), batch=True,
+                  out_dir=str(tmp_path / "figs"))
+
+  def test_single_sim_dict_key_is_path0_basename(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    reports = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"))
+    assert set(reports) == {"baseline"}

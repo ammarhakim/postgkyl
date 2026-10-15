@@ -102,7 +102,7 @@ mom.ten_moment.mom_agyro.__annotations__["measure"] = Literal["swisdak",
 
 for _function in (pkpm.load_pkpm, discovery.find_output_stems,
                   discovery.available_frames, mom.enstrophy.enstrophy,
-                  mom.ke_dke.ke_dke, compare.sims, compare.batch_sims):
+                  mom.ke_dke.ke_dke, compare.sims):
   _resolve(_function)
   command(_DIAG_LOAD if _function is pkpm.load_pkpm else _DIAG_REPORT)(
       _function)

@@ -294,88 +294,26 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str],
         saveas=out_path)
 
 
-def sims(
+def _compare_one(
     path0: str,
     path1: str,
     *,
-    out_dir: str = "./compare_figs",
-    num_plots: int = 5,
-    must_include: list[str] | None = None,
-    exclude: list[str] | None = None,
-    labels: list[str] | None = None,
-    z0: str | None = None,
-    z1: str | None = None,
-    z2: str | None = None,
-    z3: str | None = None,
-    z4: str | None = None,
-    z5: str | None = None,
-    format: str = "png",
-    frame: int | None = None,
+    out_dir: str,
+    num_plots: int,
+    must_include: list[str] | None,
+    exclude: list[str] | None,
+    labels: list[str] | None,
+    z0: str | None,
+    z1: str | None,
+    z2: str | None,
+    z3: str | None,
+    z4: str | None,
+    z5: str | None,
+    format: str,
+    frame: int | None,
 ) -> CompareSimsReport:
-  """Compare two Gkeyll simulations' output and plot their biggest differences.
-
-  Finds every output quantity both ``path0`` and ``path1`` wrote, ranks the
-  shared ones by :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative
-  difference first), and plots ``num_plots`` of them -- always including
-  every ``must_include`` quantity, filling any remaining slots with the
-  highest-ranked rest. Geometry (``geo_*``) and per-boundary (``bc_*``)
-  outputs are skipped by default (``exclude`` adds more prefixes; it does
-  not replace the default list). A shared quantity that cannot be loaded or
-  differenced as a field or dynvector at all (e.g. a multiblock
-  ``block_topo`` file) is likewise left out of the ranking and reported in
-  ``skipped``, unless it was explicitly named in ``must_include``, in which
-  case loading it raises instead of being silently dropped.
-
-  A 1-D field or a dynvector (time-series) quantity is overlaid onto one
-  panel, baseline and candidate together. A 2-D field (or a 3-D+ field once
-  ``z0``..``z5`` have reduced it to 2-D) is drawn with the two sims side by
-  side on a shared color scale. A 3-D field whose ``z1`` (``y``) axis is not
-  pinned via ``z1`` defaults to its midpoint coordinate, so a 3-D field
-  plots as its ``(x, z)`` cross-section without the caller having to know
-  the grid's extent up front. A quantity with more spatial dimensions than
-  that default can reduce to two (e.g. a full distribution function) is
-  still ranked, but skipped when auto-filling ``num_plots``; naming it in
-  ``must_include`` instead raises, pointing at the ``z2``..``z5`` selectors
-  it still needs. A multiblock quantity with spatial dimensions gets one
-  figure per block (its blocks don't share a coordinate system and can't be
-  usefully overlaid in one panel); a multiblock dynvector/0-D quantity
-  (e.g. ``field_energy``) overlays every block, from both sims, onto one
-  panel.
-
-  Args:
-    path0: Directory of the first ("baseline") simulation's output.
-    path1: Directory of the second ("candidate") simulation's output.
-    out_dir: Directory the figures are written to (created if needed).
-    num_plots: Number of quantities to plot, including every
-      ``must_include`` entry.
-    must_include: Quantity names (e.g. ``"field_energy"``) always plotted,
-      regardless of ranking.
-    exclude: Extra quantity-name prefixes to skip, added to the default
-      geometry/boundary skip list.
-    labels: Two legend labels for ``path0``/``path1``; defaults to their
-      basenames.
-    z0: Selector for coordinate direction 0, as in ``select``.
-    z1: Selector for coordinate direction 1, as in ``select``.
-    z2: Selector for coordinate direction 2, as in ``select``.
-    z3: Selector for coordinate direction 3, as in ``select``.
-    z4: Selector for coordinate direction 4, as in ``select``.
-    z5: Selector for coordinate direction 5, as in ``select``.
-    format: Output image file extension (e.g. ``"png"``, ``"jpg"``,
-      ``"pdf"``, ``"svg"``).
-    frame: Frame to compare for framed (per-timestep) quantities; defaults
-      to the latest frame both sims wrote. Quantities with no frame index
-      (dynvectors, single-snapshot fields) ignore this.
-
-  Returns:
-    A :class:`CompareSimsReport` describing what was found, ranked, and
-    plotted.
-
-  Raises:
-    ValueError: a ``must_include`` quantity is missing from either sim, has
-      too many spatial dimensions to plot without further ``z2``..``z5``
-      selectors, or two compared files are structurally incompatible
-      (block count or array shape mismatch).
-  """
+  """One single-sim comparison -- the body ``sims()`` runs once directly, or
+  once per shared subdirectory when ``batch=True``."""
   exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
   must_include = list(must_include or [])
   labels = list(labels or _default_labels(path0, path1))
@@ -450,13 +388,61 @@ def sims(
   )
 
 
-def batch_sims(
-    paths: list[str],
+def _batch(
+    path0: str,
+    path1: str,
     *,
+    out_dir: str,
+    num_plots: int,
+    must_include: list[str] | None,
+    exclude: list[str] | None,
+    z0: str | None,
+    z1: str | None,
+    z2: str | None,
+    z3: str | None,
+    z4: str | None,
+    z5: str | None,
+    format: str,
+    frame: int | None,
+) -> dict[str, CompareSimsReport]:
+  """``_compare_one`` on every simulation ``path0``/``path1`` share."""
+  names0 = {entry.name for entry in os.scandir(path0) if entry.is_dir()}
+  names1 = {entry.name for entry in os.scandir(path1) if entry.is_dir()}
+  common = sorted(names0 & names1)
+  if not common:
+    raise ValueError(
+        f"no simulation subdirectory is shared between {path0!r} and "
+        f"{path1!r}")
+
+  batch_labels = [os.path.basename(os.path.normpath(path0)),
+                 os.path.basename(os.path.normpath(path1))]
+  return {
+      name: _compare_one(
+          os.path.join(path0, name),
+          os.path.join(path1, name),
+          out_dir=os.path.join(out_dir, name),
+          num_plots=num_plots,
+          must_include=must_include,
+          exclude=exclude,
+          labels=batch_labels,
+          z0=z0, z1=z1, z2=z2, z3=z3, z4=z4, z5=z5,
+          format=format,
+          frame=frame,
+      )
+      for name in common
+  }
+
+
+def sims(
+    path0: str,
+    path1: str,
+    *,
+    batch: bool = False,
     out_dir: str = "./compare_figs",
     num_plots: int = 5,
     must_include: list[str] | None = None,
     exclude: list[str] | None = None,
+    labels: list[str] | None = None,
     z0: str | None = None,
     z1: str | None = None,
     z2: str | None = None,
@@ -466,77 +452,100 @@ def batch_sims(
     format: str = "png",
     frame: int | None = None,
 ) -> dict[str, CompareSimsReport]:
-  """Run :func:`sims` on every simulation two directories-of-sims share.
+  """Compare two Gkeyll simulations' output and plot their biggest differences.
 
-  ``paths[0]`` and ``paths[1]`` each hold one subdirectory per simulation
-  (the layout a CI run's accepted/candidate trees use). Subdirectories
-  present under both are compared by name; each pair's figures go to their
-  own ``<out_dir>/<name>/`` subfolder.
+  Finds every output quantity both sims wrote, ranks the shared ones by
+  :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative difference
+  first), and plots ``num_plots`` of them -- always including every
+  ``must_include`` quantity, filling any remaining slots with the
+  highest-ranked rest. Geometry (``geo_*``) and per-boundary (``bc_*``)
+  outputs are skipped by default (``exclude`` adds more prefixes; it does
+  not replace the default list). A shared quantity that cannot be loaded or
+  differenced as a field or dynvector at all (e.g. a multiblock
+  ``block_topo`` file) is likewise left out of the ranking and reported in
+  that sim's ``CompareSimsReport.skipped``, unless it was explicitly named
+  in ``must_include``, in which case loading it raises instead of being
+  silently dropped.
+
+  A 1-D field or a dynvector (time-series) quantity is overlaid onto one
+  panel, baseline and candidate together. A 2-D field (or a 3-D+ field once
+  ``z0``..``z5`` have reduced it to 2-D) is drawn with the two sims side by
+  side on a shared color scale. A 3-D field whose ``z1`` (``y``) axis is not
+  pinned via ``z1`` defaults to its midpoint coordinate, so a 3-D field
+  plots as its ``(x, z)`` cross-section without the caller having to know
+  the grid's extent up front. A quantity with more spatial dimensions than
+  that default can reduce to two (e.g. a full distribution function) is
+  still ranked, but skipped when auto-filling ``num_plots``; naming it in
+  ``must_include`` instead raises, pointing at the ``z2``..``z5`` selectors
+  it still needs. A multiblock quantity with spatial dimensions gets one
+  figure per block (its blocks don't share a coordinate system and can't be
+  usefully overlaid in one panel); a multiblock dynvector/0-D quantity
+  (e.g. ``field_energy``) overlays every block, from both sims, onto one
+  panel.
+
+  ``batch`` reinterprets ``path0``/``path1`` as directories *of* simulations
+  rather than one simulation each: each holds one subdirectory per
+  simulation (the layout a CI run's accepted/candidate trees use).
+  Subdirectories present under both are compared by name, each pair run
+  exactly as a single (non-batch) comparison, with its own
+  ``<out_dir>/<name>/`` figure subfolder. ``labels`` is ignored in batch
+  mode -- every pair instead shares one label per side, the basenames of
+  ``path0``/``path1`` themselves (e.g. ``"baseline"``/``"candidate"``),
+  since those two top-level directories are what distinguishes the pairs
+  from each other.
 
   Args:
-    paths: Exactly two directories, each containing one subdirectory per
-      simulation.
-    out_dir: Parent directory for each compared simulation's own figure
-      subfolder.
-    num_plots: Forwarded to :func:`sims`.
-    must_include: Forwarded to :func:`sims`.
-    exclude: Forwarded to :func:`sims`.
-    z0: Forwarded to :func:`sims`.
-    z1: Forwarded to :func:`sims`.
-    z2: Forwarded to :func:`sims`.
-    z3: Forwarded to :func:`sims`.
-    z4: Forwarded to :func:`sims`.
-    z5: Forwarded to :func:`sims`.
-    format: Forwarded to :func:`sims`.
-    frame: Forwarded to :func:`sims`.
+    path0: Without ``batch``, the first ("baseline") simulation's output
+      directory. With ``batch``, a directory holding one subdirectory per
+      simulation to compare against ``path1``'s matching subdirectory.
+    path1: The second ("candidate") counterpart to ``path0``, under the
+      same interpretation ``batch`` selects.
+    batch: Compare every simulation two directories-of-sims share, instead
+      of treating ``path0``/``path1`` as one simulation each.
+    out_dir: Directory the figures are written to (created if needed); in
+      batch mode, the parent of each compared simulation's own subfolder.
+    num_plots: Number of quantities to plot, including every
+      ``must_include`` entry.
+    must_include: Quantity names (e.g. ``"field_energy"``) always plotted,
+      regardless of ranking.
+    exclude: Extra quantity-name prefixes to skip, added to the default
+      geometry/boundary skip list.
+    labels: Two legend labels for ``path0``/``path1``; defaults to their
+      basenames. Ignored when ``batch`` is set (see above).
+    z0: Selector for coordinate direction 0, as in ``select``.
+    z1: Selector for coordinate direction 1, as in ``select``.
+    z2: Selector for coordinate direction 2, as in ``select``.
+    z3: Selector for coordinate direction 3, as in ``select``.
+    z4: Selector for coordinate direction 4, as in ``select``.
+    z5: Selector for coordinate direction 5, as in ``select``.
+    format: Output image file extension (e.g. ``"png"``, ``"jpg"``,
+      ``"pdf"``, ``"svg"``).
+    frame: Frame to compare for framed (per-timestep) quantities; defaults
+      to the latest frame both sims wrote. Quantities with no frame index
+      (dynvectors, single-snapshot fields) ignore this.
 
   Returns:
-    A dict mapping each compared simulation name to its
-    :class:`CompareSimsReport`.
+    A dict mapping each compared simulation's name to its
+    :class:`CompareSimsReport`. Without ``batch``, this has exactly one
+    entry, keyed by ``path0``'s basename. With ``batch``, one entry per
+    simulation subdirectory shared by ``path0`` and ``path1``.
 
   Raises:
-    ValueError: ``paths`` does not contain exactly two directories, or
-      neither directory holds a common simulation subdirectory.
+    ValueError: a ``must_include`` quantity is missing from either sim, has
+      too many spatial dimensions to plot without further ``z2``..``z5``
+      selectors, two compared files are structurally incompatible (block
+      count or array shape mismatch), or (``batch`` only) ``path0`` and
+      ``path1`` share no simulation subdirectory.
   """
-  if len(paths) != 2:
-    raise ValueError(f"batch_sims compares exactly two directories; got "
-                     f"{len(paths)}")
-  path0, path1 = paths
-  names0 = {
-      entry.name
-      for entry in os.scandir(path0) if entry.is_dir()
-  }
-  names1 = {
-      entry.name
-      for entry in os.scandir(path1) if entry.is_dir()
-  }
-  common = sorted(names0 & names1)
-  if not common:
-    raise ValueError(
-        f"no simulation subdirectory is shared between {path0!r} and "
-        f"{path1!r}")
-
-  reports: dict[str, CompareSimsReport] = {}
-  for name in common:
-    reports[name] = sims(
-        os.path.join(path0, name),
-        os.path.join(path1, name),
-        out_dir=os.path.join(out_dir, name),
-        num_plots=num_plots,
-        must_include=must_include,
-        exclude=exclude,
-        labels=[os.path.basename(os.path.normpath(path0)),
-               os.path.basename(os.path.normpath(path1))],
-        z0=z0,
-        z1=z1,
-        z2=z2,
-        z3=z3,
-        z4=z4,
-        z5=z5,
-        format=format,
-        frame=frame,
-    )
-  return reports
+  if batch:
+    return _batch(path0, path1, out_dir=out_dir, num_plots=num_plots,
+                 must_include=must_include, exclude=exclude, z0=z0, z1=z1,
+                 z2=z2, z3=z3, z4=z4, z5=z5, format=format, frame=frame)
+  report = _compare_one(path0, path1, out_dir=out_dir, num_plots=num_plots,
+                       must_include=must_include, exclude=exclude,
+                       labels=labels, z0=z0, z1=z1, z2=z2, z3=z3, z4=z4,
+                       z5=z5, format=format, frame=frame)
+  return {os.path.basename(os.path.normpath(path0)): report}
 
 
-__all__ = ["CompareSimsReport", "QuantityDiff", "sims", "batch_sims"]
+__all__ = ["CompareSimsReport", "QuantityDiff", "sims"]

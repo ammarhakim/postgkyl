@@ -213,13 +213,15 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
 ```
 
 `--z0`..`--z5` reduce a 3-D+ field the same way `select`'s selectors do; a
-3-D field left unpinned on `--z1` (`y`) defaults to its midpoint. `compare_batch_sims`
+3-D field left unpinned on `--z1` (`y`) defaults to its midpoint. `--batch`
 runs the same comparison across every simulation two directories-of-sims
-share (e.g. a CI run's accepted-vs-candidate trees), one subfolder of
-figures per simulation:
+share (e.g. a CI run's accepted-vs-candidate trees) -- `path0`/`path1` are
+now each a directory holding one subdirectory per simulation, and each
+pair's figures go to their own subfolder:
 
 ```bash
-pgkyl compare_batch_sims --paths '["tests/test_data/generated/compare_sims/baseline","tests/test_data/generated/compare_sims/candidate"]' \
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline \
+    --path1 tests/test_data/generated/compare_sims/candidate --batch \
     --out_dir /tmp/compare_sims_batch_tutorial
 ```
 

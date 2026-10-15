@@ -87,7 +87,6 @@ def test_only_canonical_diagnostic_names_are_registered():
       "gk_load_distf",
       "gk_load_quantity",
       "compare_sims",
-      "compare_batch_sims",
   ):
     assert name in COMMAND_BY_NAME
   for old_name in (
