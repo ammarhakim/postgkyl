@@ -1,0 +1,542 @@
+"""Equation-blind comparison of two Gkeyll simulations' output directories.
+
+Finds the output quantities two simulation runs have in common, ranks them
+by how much they differ (:func:`postgkyl.numerics.max_abs_rel_diff`), and
+plots the most-different ones (plus any the caller always wants) baseline
+overlaid on candidate for 1-D/dynvector data, or side by side for 2-D
+(including a ``select()``-ed slice of 3-D+ data). Shares a home with
+:mod:`postgkyl.diagnostics.discovery` -- like it, this performs no equation-
+specific physics and belongs to no model family -- rather than under
+``gk``/``vm``/``pkpm``/``mom``.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import os
+from pathlib import Path
+
+from postgkyl import io
+from postgkyl.gdata.load import load
+from postgkyl.gdatastate import materialize_point_values
+from postgkyl.numerics import max_abs_rel_diff
+from postgkyl.operations.interpolate import interpolate
+from postgkyl.operations.select import select
+from postgkyl.render.matplotlib import plot
+
+from . import discovery
+
+# Auxiliary/geometry output every simulation writes that is rarely what
+# anyone means by "compare these two sims" -- the same categories we leave
+# out by hand when eyeballing a regression diff. ``--exclude`` adds to this,
+# it never replaces it.
+_DEFAULT_EXCLUDE_PREFIXES = ("geo_", "bc_zlower", "bc_zupper", "bc_xlower",
+                            "bc_xupper", "bc_ylower", "bc_yupper")
+
+
+@dataclass(frozen=True)
+class QuantityDiff:
+  """One shared quantity's difference ranking.
+
+  Attributes:
+    quantity: The bare quantity name (e.g. ``"field_energy"``,
+      ``"elc_integrated_moms"`` -- the part of the filename after the sim
+      name and block suffix; see :mod:`postgkyl.io.naming`).
+    max_abs_diff: Largest absolute element-wise difference across every
+      block/frame compared for this quantity.
+    max_rel_diff: Largest relative element-wise difference, likewise.
+    plottable: False when this quantity has more spatial dimensions than
+      ``sims()`` can reduce to two by default (e.g. a full distribution
+      function, 4-D+ even after the ``y``-midpoint default): still ranked,
+      but skipped when auto-filling ``num_plots`` unless named in
+      ``must_include``, where it instead raises so the caller can pin its
+      remaining axes with ``z2``..``z5``.
+  """
+
+  quantity: str
+  max_abs_diff: float
+  max_rel_diff: float
+  plottable: bool = True
+
+
+@dataclass(frozen=True)
+class CompareSimsReport:
+  """What :func:`sims` found, ranked, and plotted.
+
+  Attributes:
+    compared: Every shared quantity actually diffed, ranked by
+      ``max_rel_diff`` descending.
+    plotted: The quantities a figure was saved for, in the order plotted.
+    only_in_0: Quantities found only under ``path0``.
+    only_in_1: Quantities found only under ``path1``.
+    skipped: Shared quantities neither ranked nor plotted because loading or
+      differencing them raised (e.g. a non-field, non-dynvector file like a
+      multiblock ``block_topo``), mapped to the error message.
+    out_dir: Directory the figures were written to.
+  """
+
+  compared: tuple[QuantityDiff, ...]
+  plotted: tuple[str, ...]
+  only_in_0: tuple[str, ...] = field(default_factory=tuple)
+  only_in_1: tuple[str, ...] = field(default_factory=tuple)
+  skipped: dict[str, str] = field(default_factory=dict)
+  out_dir: str = ""
+
+
+def _default_labels(path0: str, path1: str) -> list[str]:
+  """The shortest distinguishing trailing path segments of ``path0``/
+  ``path1`` (mirrors ``render.matplotlib._dataset_labels``) -- a bare
+  basename is useless whenever both sims share a name, as a baseline and a
+  candidate directory for the same simulation normally do."""
+  parts0 = Path(os.path.normpath(path0)).parts
+  parts1 = Path(os.path.normpath(path1)).parts
+  depth = 1
+  while (depth < len(parts0) and depth < len(parts1)
+        and parts0[-depth:] == parts1[-depth:]):
+    depth += 1
+  return [os.path.join(*parts0[-depth:]), os.path.join(*parts1[-depth:])]
+
+
+def _stems_by_quantity(path: str) -> dict[str, str]:
+  """Map each distinct quantity name under ``path`` to one representative
+  stem (block index stripped, since blocks of the same field compare as one
+  quantity)."""
+  out: dict[str, str] = {}
+  for stem in discovery.find_output_stems("gkyl", path)["gkyl"]:
+    name = io.parse_output_name(f"{stem}.gkyl")
+    out.setdefault(name.quantity, stem)
+  return out
+
+
+def _is_excluded(quantity: str, exclude: tuple[str, ...]) -> bool:
+  return any(quantity.startswith(prefix) for prefix in exclude)
+
+
+def _block_paths(path: str, stem: str) -> list[str]:
+  """Every per-block file path for ``stem`` (one entry for a single-block
+  stem), sorted by block index."""
+  name = io.parse_output_name(f"{stem}.gkyl")
+  if name.block is None:
+    return [os.path.join(path, f"{stem}.gkyl")]
+  blocks = sorted(
+      b for b in discovery.find_output_stems("gkyl", path)["gkyl"]
+      if io.parse_output_name(f"{b}.gkyl").quantity == name.quantity)
+  return [os.path.join(path, f"{b}.gkyl") for b in blocks]
+
+
+def _latest_common_frame(path0: str, stem0: str, path1: str,
+                         stem1: str) -> int | None:
+  """The latest frame both sims wrote for a framed quantity family, or
+  ``None`` when the family carries no frame index at all (e.g. a
+  dynvector/time-series quantity, always one file with no trailing
+  number)."""
+  frames0 = discovery.available_frames(os.path.join(path0, f"{stem0}_"))
+  frames1 = discovery.available_frames(os.path.join(path1, f"{stem1}_"))
+  common = frames0 & frames1
+  if not common and not frames0 and not frames1:
+    return None
+  if not common:
+    raise ValueError(
+        f"'{stem0}' has no frame in common between the two sims "
+        f"(found {sorted(frames0)} vs {sorted(frames1)})")
+  return max(common)
+
+
+def _load_quantity(path: str, stem: str, frame: int | None):
+  """Load (and block-combine, if multiblock) one quantity family as a single
+  dataset or list of per-block datasets."""
+  paths = _block_paths(path, stem)
+  suffix = f"_{frame}.gkyl" if frame is not None else ".gkyl"
+  files = [p.removesuffix(".gkyl") + suffix for p in paths]
+  return [load(f) for f in files]
+
+
+def _point_values(data):
+  """Interpolate/materialize ``data`` into plain point values for both
+  plotting and differencing, leaving an already-evaluated dataset (a
+  dynvector, or anything with no DG basis) untouched."""
+  if data.ctx.get("basis_type") and not data.is_interpolated:
+    data = interpolate(data)
+  return materialize_point_values(data)
+
+
+def _default_slice_selectors(data, zs: tuple) -> dict[str, float]:
+  """Default a 3-D+ field to its midpoint in ``y`` (coordinate direction 1)
+  when the caller left ``z1`` unpinned -- Gkeyll's gyrokinetic config-space
+  axis order is ``(x, y, z, ...)``, so this is what turns a 3-D field into
+  the same ``(x, z)`` 2-D cross-section used when comparing CI runs by hand.
+  A 4-D+ field (e.g. a full distribution function) still needs the caller
+  to pin its remaining axes explicitly via ``z2``..``z5``; ``plot`` raises
+  its own error if more than two axes survive."""
+  if data.num_dims < 3 or zs[1] is not None:
+    return {}
+  lower, upper = data.bounds
+  return {"z1": float(0.5 * (lower[1] + upper[1]))}
+
+
+def _sliced(data, zs: tuple):
+  """Apply the caller's ``z0``..``z5`` selectors, defaulting a 3-D field's
+  unpinned ``y`` axis to its midpoint (see
+  :func:`_default_slice_selectors`)."""
+  kwargs = {
+      f"z{d}": z
+      for d, z in enumerate(zs)
+      if z is not None and d < data.num_dims
+  }
+  kwargs.update(_default_slice_selectors(data, zs))
+  return select(data, **kwargs) if kwargs else data
+
+
+def _num_dims_after_slice(data, zs: tuple) -> int:
+  """How many spatial dimensions ``data`` would have left after applying
+  the caller's ``z0``..``z5`` plus the ``y``-midpoint default -- without
+  actually materializing/selecting it, just to decide plottability."""
+  num_dims = data.num_dims
+  pinned = sum(1 for d in range(min(num_dims, 6)) if zs[d] is not None)
+  if num_dims >= 3 and zs[1] is None:
+    pinned += 1  # the y-midpoint default pins one more axis
+  return num_dims - pinned
+
+
+def _resolve_frame(frame: int | None, path0: str, stem0: str, path1: str,
+                   stem1: str) -> int | None:
+  """The caller's pinned ``frame``, or the latest one both sims wrote."""
+  if frame is not None:
+    return frame
+  return _latest_common_frame(path0, stem0, path1, stem1)
+
+
+def _diff_quantity(path0: str, path1: str, quantity: str, stem0: str,
+                   stem1: str, frame: int | None,
+                   zs: tuple) -> QuantityDiff:
+  blocks0 = _load_quantity(path0, stem0, frame)
+  blocks1 = _load_quantity(path1, stem1, frame)
+  if len(blocks0) != len(blocks1):
+    raise ValueError(
+        f"'{quantity}' has {len(blocks0)} blocks under {path0!r} but "
+        f"{len(blocks1)} under {path1!r}")
+  max_abs = max_rel = 0.0
+  plottable = True
+  for data0, data1 in zip(blocks0, blocks1):
+    plottable = plottable and _num_dims_after_slice(data0, zs) <= 2
+    values0 = _point_values(data0).values
+    values1 = _point_values(data1).values
+    if values0.shape != values1.shape:
+      raise ValueError(
+          f"'{quantity}' has shape {values0.shape} under {path0!r} but "
+          f"{values1.shape} under {path1!r}")
+    abs_diff, rel_diff = max_abs_rel_diff(values0, values1)
+    max_abs = max(max_abs, abs_diff)
+    max_rel = max(max_rel, rel_diff) if rel_diff != float("inf") else max_rel
+  return QuantityDiff(quantity, max_abs, max_rel, plottable)
+
+
+def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
+                   frame: int | None, zs: tuple, labels: list[str],
+                   out_path: str) -> None:
+  blocks0 = _load_quantity(path0, stem0, frame)
+  blocks1 = _load_quantity(path1, stem1, frame)
+  num_blocks = len(blocks0)
+
+  if num_blocks > 1:
+    # Each block is its own coordinate patch of the same decomposed domain:
+    # a dynvector block family (e.g. multiblock field_energy, a time series
+    # with no spatial grid at all -- see gdatastate.gdatastate's "no 'cells'
+    # in ctx" dynvector convention) overlays cleanly on one shared time
+    # axis, but a spatial field's blocks do not share coordinates and must
+    # be drawn one block at a time (matching what we did by hand comparing
+    # CI runs).
+    is_dynvector = blocks0[0].ctx.get("cells") is None
+    if is_dynvector:
+      datasets, dataset_labels = [], []
+      for block_idx, (data0, data1) in enumerate(zip(blocks0, blocks1)):
+        datasets.extend((_point_values(data0), _point_values(data1)))
+        dataset_labels.extend(f"{label}_b{block_idx}" for label in labels)
+      plot(*datasets, multiblock=True, legend_labels=dataset_labels,
+          no_show=True, saveas=out_path)
+      return
+    for block_idx, (data0, data1) in enumerate(zip(blocks0, blocks1)):
+      block_path = f"{os.path.splitext(out_path)[0]}_b{block_idx}" \
+          f"{os.path.splitext(out_path)[1]}"
+      _plot_one_block(data0, data1, zs, labels, block_path)
+    return
+
+  _plot_one_block(blocks0[0], blocks1[0], zs, labels, out_path)
+
+
+def _plot_one_block(data0, data1, zs: tuple, labels: list[str],
+                    out_path: str) -> None:
+  data0 = _sliced(_point_values(data0), zs)
+  data1 = _sliced(_point_values(data1), zs)
+  # Both datasets carry no multiblock identity of their own (a single sim
+  # directory's quantity, not one block of a decomposed one), so without a
+  # shared target figure `plot` would treat them as two singleton families
+  # and draw each on its own figure instead of overlaying/pairing them;
+  # figure=0 forces one shared figure, clear=True keeps it from
+  # accumulating axes left over from an earlier quantity plotted in the
+  # same process (e.g. an earlier call from the same `sims()` run).
+  if data0.num_dims <= 1:
+    plot(data0,
+        data1,
+        figure=0,
+        clear=True,
+        legend_labels=labels,
+        no_show=True,
+        saveas=out_path)
+  else:
+    plot(data0,
+        data1,
+        num_axes=2 * data0.num_comps,
+        figure=0,
+        clear=True,
+        legend_labels=labels,
+        no_show=True,
+        saveas=out_path)
+
+
+def sims(
+    path0: str,
+    path1: str,
+    *,
+    out_dir: str = "./compare_figs",
+    num_plots: int = 5,
+    must_include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    labels: list[str] | None = None,
+    z0: str | None = None,
+    z1: str | None = None,
+    z2: str | None = None,
+    z3: str | None = None,
+    z4: str | None = None,
+    z5: str | None = None,
+    format: str = "png",
+    frame: int | None = None,
+) -> CompareSimsReport:
+  """Compare two Gkeyll simulations' output and plot their biggest differences.
+
+  Finds every output quantity both ``path0`` and ``path1`` wrote, ranks the
+  shared ones by :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative
+  difference first), and plots ``num_plots`` of them -- always including
+  every ``must_include`` quantity, filling any remaining slots with the
+  highest-ranked rest. Geometry (``geo_*``) and per-boundary (``bc_*``)
+  outputs are skipped by default (``exclude`` adds more prefixes; it does
+  not replace the default list). A shared quantity that cannot be loaded or
+  differenced as a field or dynvector at all (e.g. a multiblock
+  ``block_topo`` file) is likewise left out of the ranking and reported in
+  ``skipped``, unless it was explicitly named in ``must_include``, in which
+  case loading it raises instead of being silently dropped.
+
+  A 1-D field or a dynvector (time-series) quantity is overlaid onto one
+  panel, baseline and candidate together. A 2-D field (or a 3-D+ field once
+  ``z0``..``z5`` have reduced it to 2-D) is drawn with the two sims side by
+  side on a shared color scale. A 3-D field whose ``z1`` (``y``) axis is not
+  pinned via ``z1`` defaults to its midpoint coordinate, so a 3-D field
+  plots as its ``(x, z)`` cross-section without the caller having to know
+  the grid's extent up front. A quantity with more spatial dimensions than
+  that default can reduce to two (e.g. a full distribution function) is
+  still ranked, but skipped when auto-filling ``num_plots``; naming it in
+  ``must_include`` instead raises, pointing at the ``z2``..``z5`` selectors
+  it still needs. A multiblock quantity with spatial dimensions gets one
+  figure per block (its blocks don't share a coordinate system and can't be
+  usefully overlaid in one panel); a multiblock dynvector/0-D quantity
+  (e.g. ``field_energy``) overlays every block, from both sims, onto one
+  panel.
+
+  Args:
+    path0: Directory of the first ("baseline") simulation's output.
+    path1: Directory of the second ("candidate") simulation's output.
+    out_dir: Directory the figures are written to (created if needed).
+    num_plots: Number of quantities to plot, including every
+      ``must_include`` entry.
+    must_include: Quantity names (e.g. ``"field_energy"``) always plotted,
+      regardless of ranking.
+    exclude: Extra quantity-name prefixes to skip, added to the default
+      geometry/boundary skip list.
+    labels: Two legend labels for ``path0``/``path1``; defaults to their
+      basenames.
+    z0: Selector for coordinate direction 0, as in ``select``.
+    z1: Selector for coordinate direction 1, as in ``select``.
+    z2: Selector for coordinate direction 2, as in ``select``.
+    z3: Selector for coordinate direction 3, as in ``select``.
+    z4: Selector for coordinate direction 4, as in ``select``.
+    z5: Selector for coordinate direction 5, as in ``select``.
+    format: Output image file extension (e.g. ``"png"``, ``"jpg"``,
+      ``"pdf"``, ``"svg"``).
+    frame: Frame to compare for framed (per-timestep) quantities; defaults
+      to the latest frame both sims wrote. Quantities with no frame index
+      (dynvectors, single-snapshot fields) ignore this.
+
+  Returns:
+    A :class:`CompareSimsReport` describing what was found, ranked, and
+    plotted.
+
+  Raises:
+    ValueError: a ``must_include`` quantity is missing from either sim, has
+      too many spatial dimensions to plot without further ``z2``..``z5``
+      selectors, or two compared files are structurally incompatible
+      (block count or array shape mismatch).
+  """
+  exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
+  must_include = list(must_include or [])
+  labels = list(labels or _default_labels(path0, path1))
+  zs = (z0, z1, z2, z3, z4, z5)
+
+  quantities0 = _stems_by_quantity(path0)
+  quantities1 = _stems_by_quantity(path1)
+  shared = sorted(set(quantities0) & set(quantities1))
+  shared = [q for q in shared if not _is_excluded(q, exclude_prefixes)]
+  only_in_0 = sorted(set(quantities0) - set(quantities1))
+  only_in_1 = sorted(set(quantities1) - set(quantities0))
+
+  missing_must_include = [
+      quantity for quantity in must_include
+      if quantity not in quantities0 or quantity not in quantities1
+  ]
+  if missing_must_include:
+    raise ValueError(
+        "must_include quantity(s) not present in both sims: "
+        f"{', '.join(sorted(missing_must_include))}")
+
+  compared: list[QuantityDiff] = []
+  skipped: dict[str, str] = {}
+  for quantity in shared:
+    stem0, stem1 = quantities0[quantity], quantities1[quantity]
+    try:
+      common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
+      compared.append(
+          _diff_quantity(path0, path1, quantity, stem0, stem1, common_frame,
+                        zs))
+    except Exception as exc:  # noqa: BLE001 -- see docstring: an explicit
+      # must_include still raises (below); an auto-ranked quantity merely
+      # doesn't participate in ranking. Not every ".gkyl" stem is a field or
+      # dynvector `load()` can read (e.g. a multiblock `block_topo` file),
+      # and a single such output has nothing to do with the health of the
+      # rest of the comparison.
+      if quantity in must_include:
+        raise
+      skipped[quantity] = str(exc)
+  compared.sort(key=lambda d: d.max_rel_diff, reverse=True)
+
+  # Every must_include quantity (even an unplottable one -- it then raises
+  # inside _plot_quantity, pointing the caller at the axes they still need
+  # to pin), then the highest-ranked plottable rest, until num_plots is
+  # filled. A quantity with too many spatial dimensions to reduce by
+  # default (e.g. a full distribution function) is silently skipped when
+  # only auto-filling, rather than crashing an otherwise-routine comparison.
+  selected = list(dict.fromkeys(must_include))
+  for diff in compared:
+    if len(selected) >= num_plots:
+      break
+    if diff.quantity not in selected and diff.plottable:
+      selected.append(diff.quantity)
+
+  os.makedirs(out_dir, exist_ok=True)
+  plotted: list[str] = []
+  for quantity in selected:
+    stem0, stem1 = quantities0[quantity], quantities1[quantity]
+    common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
+    out_path = os.path.join(out_dir, f"{quantity}.{format}")
+    _plot_quantity(path0, path1, stem0, stem1, common_frame, zs, labels,
+                  out_path)
+    plotted.append(quantity)
+
+  return CompareSimsReport(
+      compared=tuple(compared),
+      plotted=tuple(plotted),
+      only_in_0=tuple(only_in_0),
+      only_in_1=tuple(only_in_1),
+      skipped=skipped,
+      out_dir=out_dir,
+  )
+
+
+def batch_sims(
+    paths: list[str],
+    *,
+    out_dir: str = "./compare_figs",
+    num_plots: int = 5,
+    must_include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    z0: str | None = None,
+    z1: str | None = None,
+    z2: str | None = None,
+    z3: str | None = None,
+    z4: str | None = None,
+    z5: str | None = None,
+    format: str = "png",
+    frame: int | None = None,
+) -> dict[str, CompareSimsReport]:
+  """Run :func:`sims` on every simulation two directories-of-sims share.
+
+  ``paths[0]`` and ``paths[1]`` each hold one subdirectory per simulation
+  (the layout a CI run's accepted/candidate trees use). Subdirectories
+  present under both are compared by name; each pair's figures go to their
+  own ``<out_dir>/<name>/`` subfolder.
+
+  Args:
+    paths: Exactly two directories, each containing one subdirectory per
+      simulation.
+    out_dir: Parent directory for each compared simulation's own figure
+      subfolder.
+    num_plots: Forwarded to :func:`sims`.
+    must_include: Forwarded to :func:`sims`.
+    exclude: Forwarded to :func:`sims`.
+    z0: Forwarded to :func:`sims`.
+    z1: Forwarded to :func:`sims`.
+    z2: Forwarded to :func:`sims`.
+    z3: Forwarded to :func:`sims`.
+    z4: Forwarded to :func:`sims`.
+    z5: Forwarded to :func:`sims`.
+    format: Forwarded to :func:`sims`.
+    frame: Forwarded to :func:`sims`.
+
+  Returns:
+    A dict mapping each compared simulation name to its
+    :class:`CompareSimsReport`.
+
+  Raises:
+    ValueError: ``paths`` does not contain exactly two directories, or
+      neither directory holds a common simulation subdirectory.
+  """
+  if len(paths) != 2:
+    raise ValueError(f"batch_sims compares exactly two directories; got "
+                     f"{len(paths)}")
+  path0, path1 = paths
+  names0 = {
+      entry.name
+      for entry in os.scandir(path0) if entry.is_dir()
+  }
+  names1 = {
+      entry.name
+      for entry in os.scandir(path1) if entry.is_dir()
+  }
+  common = sorted(names0 & names1)
+  if not common:
+    raise ValueError(
+        f"no simulation subdirectory is shared between {path0!r} and "
+        f"{path1!r}")
+
+  reports: dict[str, CompareSimsReport] = {}
+  for name in common:
+    reports[name] = sims(
+        os.path.join(path0, name),
+        os.path.join(path1, name),
+        out_dir=os.path.join(out_dir, name),
+        num_plots=num_plots,
+        must_include=must_include,
+        exclude=exclude,
+        labels=[os.path.basename(os.path.normpath(path0)),
+               os.path.basename(os.path.normpath(path1))],
+        z0=z0,
+        z1=z1,
+        z2=z2,
+        z3=z3,
+        z4=z4,
+        z5=z5,
+        format=format,
+        frame=frame,
+    )
+  return reports
+
+
+__all__ = ["CompareSimsReport", "QuantityDiff", "sims", "batch_sims"]

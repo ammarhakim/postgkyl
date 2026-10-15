@@ -196,6 +196,33 @@ pgkyl tests/test_data/generated/gaussian_volume.gkyl interpolate \
 Omit `--no_show` from the PyVista command to open an interactive window.
 Use contour mode for this example; `--clevels` cannot be combined with `--volume`.
 
+## 11. Comparing two simulations: `compare_sims`
+
+`compare_sims` finds the output quantities two simulation directories share,
+ranks them by how much they differ, and plots the biggest differences --
+always including anything named in `--must_include`.
+`tests/test_data/generated/compare_sims/{baseline,candidate}/toy_sim` is a
+toy two-quantity sim pair (run `python tests/generate_test_data.py` if
+needed): `field_energy` differs between the two, `elc_integrated_moms`
+does not.
+
+```bash
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
+    --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
+    --must_include field_energy --out_dir /tmp/compare_sims_tutorial
+```
+
+`--z0`..`--z5` reduce a 3-D+ field the same way `select`'s selectors do; a
+3-D field left unpinned on `--z1` (`y`) defaults to its midpoint. `compare_batch_sims`
+runs the same comparison across every simulation two directories-of-sims
+share (e.g. a CI run's accepted-vs-candidate trees), one subfolder of
+figures per simulation:
+
+```bash
+pgkyl compare_batch_sims --paths '["tests/test_data/generated/compare_sims/baseline","tests/test_data/generated/compare_sims/candidate"]' \
+    --out_dir /tmp/compare_sims_batch_tutorial
+```
+
 ## See also
 
 - `pgkyl --help` lists every registered command, grouped by section
