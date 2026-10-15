@@ -17,10 +17,15 @@ def _git(directory, *args):
 
 
 @pytest.fixture
-def checkout(tmp_path):
+def selected_branch():
+  return (ROOT / "scripts/gkeyll-branch").read_text().strip()
+
+
+@pytest.fixture
+def checkout(tmp_path, selected_branch):
   remote = tmp_path / "remote"
   remote.mkdir()
-  _git(remote, "init", "-b", "main")
+  _git(remote, "init", "-b", selected_branch)
   _git(remote, "config", "user.name", "Build test")
   _git(remote, "config", "user.email", "build@example.invalid")
   configure = remote / "configure"
@@ -38,7 +43,7 @@ def checkout(tmp_path):
     (scripts / name).write_text(
         source.replace("https://github.com/ammarhakim/gkeyll.git",
                        remote.as_uri()))
-  shutil.copyfile(ROOT / "scripts/gkeyll-branch", scripts / "gkeyll-branch")
+  (scripts / "gkeyll-branch").write_text(selected_branch + "\n")
   shutil.copyfile(ROOT / "scripts/gkeyll-modules", scripts / "gkeyll-modules")
   shutil.copyfile(ROOT / "postgkyl-build.toml",
                   workspace / "postgkyl-build.toml")
@@ -67,8 +72,8 @@ def _run(checkout, script="build_gkeyll.sh"):
 
 
 @pytest.mark.parametrize("existing_branch", [None, "old-feature"])
-def test_only_explicit_update_follows_main_as_remote_advances(
-    checkout, existing_branch):
+def test_only_explicit_update_follows_selected_branch_as_remote_advances(
+    checkout, existing_branch, selected_branch):
   workspace, remote, _ = checkout
   if existing_branch is not None:
     _git(remote, "branch", existing_branch)
@@ -87,9 +92,9 @@ def test_only_explicit_update_follows_main_as_remote_advances(
   updated = _run(checkout, "update_gkeyll.sh")
   assert updated.returncode == 0, updated.stderr
   assert _git(producer, "rev-parse", "HEAD") == latest
-  assert _git(producer, "symbolic-ref", "--short", "HEAD") == "main"
+  assert _git(producer, "symbolic-ref", "--short", "HEAD") == selected_branch
   assert _git(producer, "rev-parse", "--abbrev-ref",
-              "@{upstream}") == "origin/main"
+              "@{upstream}") == f"origin/{selected_branch}"
 
 
 @pytest.mark.parametrize("local_change", ["dirty", "commit"])
