@@ -1,0 +1,19 @@
+These commands produce the same figures
+(master) Downloads: pgkyl rt_euler_riem_2d_hllc-euler_1.gkyl -l "hllc" rt_euler_riem_2d_roe-euler_1.gkyl -l "Roe" sel -c0 pl --fixaspect
+(master) Downloads: pgkyl rt_euler_riem_2d_hllc-euler_1.gkyl rt_euler_riem_2d_roe-euler_1.gkyl sel -c0 pl --fixaspect 
+
+However, I would expect the top ones to put the label into the legend. Fix this
+
+---
+
+Make the ev command label the data with the expression, whether it is numpy or gkeyll underlying
+
+---
+
+This is wrong. We shouldn't have to specify --label '' here
+
+    "02_arithmetic.png": "pgkyl tests/test_data/generated/2d_c2p_stretch_ms_p1.gkyl interpolate evaluate --label '' 'f sq 2 * sqrt' plot --title 'Componentwise magnitude' --no_show --dpi 100 --saveas '{output}/02_arithmetic.png'"
+
+---
+
+Continue. Unit testing is failng.

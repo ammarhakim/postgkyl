@@ -1,0 +1,71 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M50A5QE4FFDVDSGPKV2ZBBZ8",
+  "session_id": "01a13c19-374b-7f73-bb3e-d7aaac5904a5",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-15T17:36:18.446984065Z",
+  "branch": "labels-legends",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "examples/scripts/02_arithmetic_and_numpy.py",
+    "examples/scripts/06_growth.py",
+    "examples/scripts/10_manual_arrays.py",
+    "src/postgkyl/cli/session.pyi",
+    "src/postgkyl/render/matplotlib.py",
+    "tests/test_cli_commands.py",
+    "tests/test_render_matplotlib.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "6b6ebafbc231",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 165841,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7597952,
+    "output_tokens": 12163,
+    "api_call_count": 114,
+    "subagent_tokens_complete": true
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-15T17:36:18.410762485Z",
+    "agent_lines": 125,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 6,
+    "total_committed": 125,
+    "total_lines_changed": 131,
+    "agent_percentage": 95.41984732824427,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 321,
+      "user_lines_removed": 6,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".agents/skills/architecture/SKILL.md": 40,
+        ".agents/skills/data/SKILL.md": 86,
+        ".agents/skills/design/SKILL.md": 98,
+        ".agents/skills/gkeyll-core/SKILL.md": 17,
+        "examples/scripts/06_growth.py": 28,
+        "src/postgkyl/cli/session.pyi": 2,
+        "src/postgkyl/render/matplotlib.py": 3,
+        "tests/test_cli_commands.py": 39,
+        "tests/test_render_matplotlib.py": 8
+      },
+      "user_removed_per_file": {
+        "src/postgkyl/cli/session.pyi": 1,
+        "src/postgkyl/render/matplotlib.py": 2,
+        "tests/test_render_matplotlib.py": 3
+      }
+    }
+  ]
+}
