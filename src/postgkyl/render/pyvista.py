@@ -65,6 +65,7 @@ def pyvista(data: GDataState,
             cmin: float | None = None,
             cmax: float | None = None,
             aspect_ratio: tuple[float, float, float] = (1, 1, 1),
+            no_normalize: bool = False,
             camera_azimuth: float = 0.0,
             camera_elevation: float = -30.0,
             opacity: Annotated[str | float, CliType(str)] = "sigmoid_4",
@@ -89,8 +90,9 @@ def pyvista(data: GDataState,
 
   Builds a structured grid from the (single-component) scalar values and
   renders it as a volume, contour isosurfaces, or an interactive clip/slice
-  plane. The grid is normalized to ``aspect_ratio`` because PyVista handles
-  non-integer axis extents poorly. Only the first value component is used.
+  plane. By default the grid is normalized to ``aspect_ratio``; use
+  ``no_normalize`` to preserve physical coordinates and proportions.
+  Only the first value component is used.
 
   Args:
     data: dataset to plot; must be 3-D (after squeezing any size-1 axis).
@@ -112,7 +114,10 @@ def pyvista(data: GDataState,
     volume_clip_plane: add an interactive volume clip plane (volume mode).
     cmin: Color-limit lower bound; defaults to the data minimum.
     cmax: Color-limit upper bound; defaults to the data maximum.
-    aspect_ratio: per-axis aspect the grid is normalized to.
+    aspect_ratio: per-axis aspect the grid is normalized to; ignored when
+      ``no_normalize`` is set.
+    no_normalize: Preserve coordinates without recentering or rescaling,
+      after any cylindrical-to-Cartesian conversion.
     camera_azimuth: Initial camera azimuth in degrees.
     camera_elevation: Initial camera elevation in degrees.
     opacity: a PyVista opacity preset string, ``"diverging"`` (opaque at
@@ -204,13 +209,12 @@ def pyvista(data: GDataState,
   ymax, ymin = np.max(y), np.min(y)
   zmax, zmin = np.max(z), np.min(z)
   datamax, datamin = np.max(scalar), np.min(scalar)
-  x_range, y_range, z_range = xmax - xmin, ymax - ymin, zmax - zmin
-
-  # Normalize to [-aspect, aspect] per axis -- PyVista struggles with
-  # non-integer axis extents.
-  x = (x - xmin) / x_range * aspect_ratio[0] * 2 - aspect_ratio[0]
-  y = (y - ymin) / y_range * aspect_ratio[1] * 2 - aspect_ratio[1]
-  z = (z - zmin) / z_range * aspect_ratio[2] * 2 - aspect_ratio[2]
+  if not no_normalize:
+    x_range, y_range, z_range = xmax - xmin, ymax - ymin, zmax - zmin
+    # Normalize to [-aspect, aspect] per axis.
+    x = (x - xmin) / x_range * aspect_ratio[0] * 2 - aspect_ratio[0]
+    y = (y - ymin) / y_range * aspect_ratio[1] * 2 - aspect_ratio[1]
+    z = (z - zmin) / z_range * aspect_ratio[2] * 2 - aspect_ratio[2]
 
   x, y, z, scalar = downsample(x,
                                y,
@@ -323,16 +327,23 @@ def pyvista(data: GDataState,
     if hide_axes:
       pl.hide_axes()
     else:
-      # The mesh itself is normalized to +/-aspect_ratio (see above), so its
-      # own bounds carry no physical meaning; axes_ranges relabels the ticks
-      # with the true (shift/scale-adjusted) physical extent instead.
       pv_bounds = pl.bounds
-      axes_ranges = (-(xmin + xshift) * xscale * pv_bounds.x_min,
-                     (xmax + xshift) * xscale * pv_bounds.x_max,
-                     -(ymin + yshift) * yscale * pv_bounds.y_min,
-                     (ymax + yshift) * yscale * pv_bounds.y_max,
-                     -(zmin + zshift) * zscale * pv_bounds.z_min,
-                     (zmax + zshift) * zscale * pv_bounds.z_max)
+      if no_normalize:
+        # Rendered bounds are already physical; shifts/scales affect ticks only.
+        axes_ranges = ((pv_bounds.x_min + xshift) * xscale,
+                       (pv_bounds.x_max + xshift) * xscale,
+                       (pv_bounds.y_min + yshift) * yscale,
+                       (pv_bounds.y_max + yshift) * yscale,
+                       (pv_bounds.z_min + zshift) * zscale,
+                       (pv_bounds.z_max + zshift) * zscale)
+      else:
+        # Retain the existing tick relabeling for normalized meshes.
+        axes_ranges = (-(xmin + xshift) * xscale * pv_bounds.x_min,
+                       (xmax + xshift) * xscale * pv_bounds.x_max,
+                       -(ymin + yshift) * yscale * pv_bounds.y_min,
+                       (ymax + yshift) * yscale * pv_bounds.y_max,
+                       -(zmin + zshift) * zscale * pv_bounds.z_min,
+                       (zmax + zshift) * zscale * pv_bounds.z_max)
       pl.show_bounds(xtitle=latex_to_unicode(xlabel),
                      ytitle=latex_to_unicode(ylabel),
                      ztitle=latex_to_unicode(zlabel),

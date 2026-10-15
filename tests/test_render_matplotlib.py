@@ -204,10 +204,12 @@ class TestMultiPanel:
   @pytest.mark.parametrize("count", [1, 2])
   @pytest.mark.parametrize("components", [1, 2])
   @pytest.mark.parametrize("forcelegend", [False, True])
-  def test_default_legend_labels(self, count, components, forcelegend):
+  @pytest.mark.parametrize("label", ["", "custom"])
+  def test_default_legend_labels(self, count, components, forcelegend, label):
     datasets = [_line(offset=i) for i in range(count)]
     for i, data in enumerate(datasets):
       data._file_name = f"/results/run{i}.gkyl"
+      data.label = label
       data.values = np.repeat(data.values, components, axis=-1)
     fig = backend.plot(*datasets,
                        multiblock=True,
@@ -215,9 +217,47 @@ class TestMultiPanel:
                        forcelegend=forcelegend)
     for comp, ax in enumerate(fig.axes):
       expected = ([f"c{comp}"] if count == 1 else
-                  [f"run{i}.gkyl_c{comp}" for i in range(count)])
+                  [f"{label or f'run{i}.gkyl'}_c{comp}" for i in range(count)])
       assert [text.get_text()
               for text in ax.get_legend().get_texts()] == expected
+
+  @pytest.mark.parametrize("paths, expected", [
+      (["my_folder/my_sim/data1.gkyl", "your_folder/your_sim/data1.gkyl"
+        ], ["my_sim/data1.gkyl", "your_sim/data1.gkyl"]),
+      ([
+          "my_folder/sim/data1.gkyl", "your_folder/sim/data1.gkyl",
+          "elsewhere/data2.gkyl"
+      ], [
+          "my_folder/sim/data1.gkyl", "your_folder/sim/data1.gkyl", "data2.gkyl"
+      ]),
+      (["sim/data1.gkyl", "sim/data1.gkyl"], ["data1.gkyl", "data1.gkyl"]),
+  ])
+  def test_default_legend_uses_distinguishing_path_suffix(
+      self, paths, expected):
+    datasets = [_line() for _ in paths]
+    for data, path in zip(datasets, paths):
+      data._file_name = path
+    fig = backend.plot(*datasets, multiblock=True, no_show=True)
+    assert [text.get_text() for text in fig.axes[0].get_legend().get_texts()
+            ] == [f"{label}_c0" for label in expected]
+    assert [data.label for data in datasets
+            ] == [path.rsplit("/", 1)[-1] for path in paths]
+
+  @pytest.mark.parametrize("legend_labels, first", [(None, "custom_c0"),
+                                                    (["explicit"], "explicit")])
+  def test_path_disambiguation_preserves_supplied_labels(
+      self, legend_labels, first):
+    datasets = [_line() for _ in range(3)]
+    for i, data in enumerate(datasets):
+      data._file_name = f"run{i}/data.gkyl"
+    datasets[0]._custom_label = "custom"
+    datasets[1].label = "generated"
+    fig = backend.plot(*datasets,
+                       multiblock=True,
+                       no_show=True,
+                       legend_labels=legend_labels)
+    assert [text.get_text() for text in fig.axes[0].get_legend().get_texts()
+            ] == [first, "generated_c0", "data.gkyl_c0"]
 
   def test_partial_legend_labels_and_in_memory_fallback(self):
     datasets = [_line() for _ in range(3)]

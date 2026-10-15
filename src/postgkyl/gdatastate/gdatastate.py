@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import numbers
+import os
 from typing import Tuple
 
 import numpy as np
@@ -123,8 +124,9 @@ class GDataState:
   tag = property(get_tag, set_tag)
 
   def get_label(self) -> str:
-    """Return the custom label, falling back to the generated label."""
-    return self._custom_label or self._label
+    """Return the custom label, generated label, or source filename, in order."""
+    return self._custom_label or self._label or os.path.basename(
+        self._file_name)
 
   def set_label(self, label: str) -> None:
     """Set the generated display label."""
