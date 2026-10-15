@@ -2431,7 +2431,8 @@ class PostgkylSession:
           no_legend: Suppress legends for line plots.
           legend_labels: Dataset labels in input order; CLI: --legend_labels
             '["new","old"]' (quote the whole JSON array), or repeat the option.
-            For multiple datasets, defaults to each dataset's label (using the
+            Defaults to supplied dataset labels, including single-dataset figures.
+            For multiple datasets, uses each dataset's label (using the
             shortest distinguishing path suffix for source filenames), falling back
             to ``dataset N`` for unnamed in-memory data.
           legend_subplot: Zero-based subplot receiving the legend.
