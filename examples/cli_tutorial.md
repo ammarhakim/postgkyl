@@ -225,6 +225,21 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline \
     --out_dir /tmp/compare_sims_batch_tutorial
 ```
 
+`--out_dir` is optional in every mode above; omitting it writes individual
+figures under `./postgkyl_compare_sims/` in the current directory.
+`--single_pdf` collects every figure into one combined, multi-page PDF
+instead (`--format` is then unused), with a title page naming the compared
+directories so the PDF is self-contained. Without `--out_dir`, the PDF is
+written directly in the current directory (not inside
+`postgkyl_compare_sims/`), as `postgkyl_compare_sims.pdf` unless
+`--pdf_name` gives it another name:
+
+```bash
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
+    --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
+    --single_pdf --pdf_name toy_sim_comparison.pdf
+```
+
 ## See also
 
 - `pgkyl --help` lists every registered command, grouped by section

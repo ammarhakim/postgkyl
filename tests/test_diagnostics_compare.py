@@ -75,6 +75,17 @@ def _only(reports):
   return next(iter(reports.values()))
 
 
+def _pdf_page_count(path) -> int:
+  """Count pages in a PDF by scanning its raw bytes for ``/Type /Page``
+  (excluding ``/Type /Pages``) -- neither ``pypdf`` nor ``pdfminer`` is
+  installed in this environment, but this is enough to verify page counts
+  against a real ``matplotlib.backends.backend_pdf.PdfPages`` file."""
+  import re
+  with open(path, "rb") as f:
+    data = f.read()
+  return len(re.findall(rb"/Type\s*/Page(?!s)", data))
+
+
 class TestDefaultLabels:
 
   def test_shares_no_suffix_uses_basenames(self, tmp_path):
@@ -90,10 +101,14 @@ class TestDefaultLabels:
 
 class TestIsExcluded:
 
-  def test_default_prefixes(self):
-    assert compare._is_excluded("geo_int_bmag", compare._DEFAULT_EXCLUDE_PREFIXES)
-    assert compare._is_excluded("bc_zlower_vcutsq",
-                                compare._DEFAULT_EXCLUDE_PREFIXES)
+  def test_nothing_excluded_by_default(self):
+    assert compare._DEFAULT_EXCLUDE_PREFIXES == ()
+    assert not compare._is_excluded("geo_int_bmag",
+                                    compare._DEFAULT_EXCLUDE_PREFIXES)
+    assert not compare._is_excluded("bc_zlower_vcutsq",
+                                    compare._DEFAULT_EXCLUDE_PREFIXES)
+    assert not compare._is_excluded("bflux_xlower_HamiltonianMoments",
+                                    compare._DEFAULT_EXCLUDE_PREFIXES)
     assert not compare._is_excluded("field_energy",
                                     compare._DEFAULT_EXCLUDE_PREFIXES)
 
@@ -191,7 +206,7 @@ class TestSimsDynvectorOnly:
       compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                   must_include=["field_energy"])
 
-  def test_exclude_adds_to_default_prefixes(self, tmp_path):
+  def test_exclude_skips_matching_prefix(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
@@ -327,6 +342,27 @@ class TestSimsField:
                     must_include=["field"], z1="0", z2="0"))
     assert report.plotted == ("field",)
 
+  def _multiblock_field_sim(self, tmp_path, subdir, num_blocks=3, offset=0.0):
+    path = str(tmp_path / subdir)
+    os.makedirs(path, exist_ok=True)
+    rng = np.random.default_rng(0)
+    for block in range(num_blocks):
+      values = rng.standard_normal((4, 4, 4)) + offset
+      _write_field(path, f"sim_b{block}", "field", [4, 4], values, frame=0)
+    return path
+
+  def test_multiblock_field_contributes_one_page_per_block(self, tmp_path):
+    path0 = self._multiblock_field_sim(tmp_path, "baseline")
+    path1 = self._multiblock_field_sim(tmp_path, "candidate", offset=0.5)
+    report = _only(
+        compare.sims(path0, path1, single_pdf=True, num_plots=1,
+                    must_include=["field"], out_dir=str(tmp_path / "out")))
+    assert report.plotted == ("field",)
+    pdf_path = os.path.join(str(tmp_path / "out"),
+                            "postgkyl_compare_sims.pdf")
+    # Title page + one page per block (3 blocks), no per-quantity image files.
+    assert _pdf_page_count(pdf_path) == 1 + 3
+
 
 class TestSimsBatch:
 
@@ -358,3 +394,130 @@ class TestSimsBatch:
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     reports = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"))
     assert set(reports) == {"baseline"}
+
+
+class TestOutDirDefault:
+
+  def test_out_dir_omitted_uses_cwd_subfolder(self, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = _only(compare.sims(path0, path1))
+    expected = os.path.join(str(tmp_path), "postgkyl_compare_sims")
+    assert report.out_dir == expected
+    assert os.path.isfile(os.path.join(expected, "field_energy.png"))
+
+  def test_out_dir_given_is_honored(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "custom")))
+    assert report.out_dir == str(tmp_path / "custom")
+
+
+class TestSinglePdf:
+
+  def test_defaults_to_cwd_filename(self, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = _only(compare.sims(path0, path1, single_pdf=True))
+    pdf_path = os.path.join(str(tmp_path), "postgkyl_compare_sims.pdf")
+    assert os.path.isfile(pdf_path)
+    # Title page + one page per plotted quantity; no individual image files.
+    assert _pdf_page_count(pdf_path) == 1 + len(report.plotted)
+    assert not os.path.isdir(
+        os.path.join(str(tmp_path), "postgkyl_compare_sims"))
+
+  def test_out_dir_given_no_pdf_name(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    compare.sims(path0, path1, single_pdf=True,
+                out_dir=str(tmp_path / "out"))
+    assert os.path.isfile(
+        os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
+
+  def test_pdf_name_given_no_out_dir(self, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    compare.sims(path0, path1, single_pdf=True, pdf_name="report.pdf")
+    assert os.path.isfile(os.path.join(str(tmp_path), "report.pdf"))
+
+  def test_pdf_name_and_out_dir_given(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    compare.sims(path0, path1, single_pdf=True, pdf_name="report.pdf",
+                out_dir=str(tmp_path / "out"))
+    assert os.path.isfile(os.path.join(str(tmp_path / "out"), "report.pdf"))
+
+  def test_pdf_name_without_single_pdf_raises(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    with pytest.raises(ValueError, match="pdf_name requires single_pdf"):
+      compare.sims(path0, path1, pdf_name="report.pdf")
+
+  def test_format_is_ignored(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    compare.sims(path0, path1, single_pdf=True, format="jpg",
+                out_dir=str(tmp_path / "out"))
+    assert os.path.isfile(
+        os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
+
+  def test_multiblock_dynvector_contributes_one_page(self, tmp_path):
+    path0 = str(tmp_path / "baseline")
+    path1 = str(tmp_path / "candidate")
+    os.makedirs(path0, exist_ok=True)
+    os.makedirs(path1, exist_ok=True)
+    time = np.linspace(0.0, 1.0, 4)
+    for path, scale in ((path0, 1.0), (path1, 1.2)):
+      for block in range(3):
+        _write_dynvec(path, f"sim_b{block}", "field_energy", time,
+                     (np.linspace(1.0, 2.0, 4) * scale * (block + 1))[:, None])
+    report = _only(
+        compare.sims(path0, path1, single_pdf=True, num_plots=1,
+                    out_dir=str(tmp_path / "out")))
+    assert report.plotted == ("field_energy",)
+    pdf_path = os.path.join(str(tmp_path / "out"),
+                            "postgkyl_compare_sims.pdf")
+    assert _pdf_page_count(pdf_path) == 2  # title page + one overlay page
+
+  def test_batch_writes_one_combined_pdf(self, tmp_path):
+    base = tmp_path / "baseline"
+    cand = tmp_path / "candidate"
+    for sim_name in ("sim_a", "sim_b"):
+      _sim(base.parent, base.name + f"/{sim_name}", name=sim_name)
+      _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
+          moms_scale=1.5)
+    reports = compare.sims(str(base), str(cand), batch=True, single_pdf=True,
+                           out_dir=str(tmp_path / "out"))
+    assert set(reports) == {"sim_a", "sim_b"}
+    pdf_path = os.path.join(str(tmp_path / "out"),
+                            "postgkyl_compare_sims.pdf")
+    assert os.path.isfile(pdf_path)
+    total_plotted = sum(len(r.plotted) for r in reports.values())
+    assert _pdf_page_count(pdf_path) == 1 + total_plotted
+    # No per-simulation subfolders when single_pdf is set.
+    assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_a"))
+    assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_b"))
+
+
+class TestTitlePageFigure:
+
+  def test_non_batch_names_both_paths(self):
+    fig = compare._title_page_figure("/a/baseline", "/a/candidate",
+                                     batch=False)
+    text = fig.texts[0].get_text()
+    assert "/a/baseline" in text
+    assert "/a/candidate" in text
+
+  def test_batch_lists_every_simulation(self):
+    fig = compare._title_page_figure(
+        "/a/baseline", "/a/candidate", batch=True,
+        sim_names=["sim_a", "sim_b", "sim_c"])
+    text = fig.texts[0].get_text()
+    assert "/a/baseline" in text
+    assert "/a/candidate" in text
+    for name in ("sim_a", "sim_b", "sim_c"):
+      assert name in text
