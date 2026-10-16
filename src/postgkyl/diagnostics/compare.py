@@ -263,24 +263,12 @@ def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
   num_blocks = len(blocks0)
 
   if num_blocks > 1:
-    # Each block is its own coordinate patch of the same decomposed domain:
-    # a dynvector block family (e.g. multiblock field_energy, a time series
-    # with no spatial grid at all -- see gdatastate.gdatastate's "no 'cells'
-    # in ctx" dynvector convention) overlays cleanly on one shared time
-    # axis, but a spatial field's blocks do not share coordinates and must
-    # be drawn one block at a time (matching what we did by hand comparing
-    # CI runs).
-    is_dynvector = blocks0[0].ctx.get("cells") is None
-    if is_dynvector:
-      datasets, dataset_labels = [], []
-      for block_idx, (data0, data1) in enumerate(zip(blocks0, blocks1)):
-        datasets.extend((_point_values(data0), _point_values(data1)))
-        dataset_labels.extend(f"{label}_b{block_idx}" for label in labels)
-      fig = plot(*datasets, multiblock=True, legend_labels=dataset_labels,
-                title=title, no_show=True,
-                saveas=out_path if pdf is None else None)
-      _save_or_collect(fig, out_path, pdf)
-      return
+    # Each block is its own coordinate patch of the same decomposed domain
+    # (or, for a dynvector, its own independent time series) -- overlaying
+    # every block's baseline+candidate on one shared axis gets unreadable
+    # past a handful of blocks (one legend entry per block per sim), so
+    # every multiblock quantity, dynvector or spatial field alike, gets one
+    # plot per block.
     for block_idx, (data0, data1) in enumerate(zip(blocks0, blocks1)):
       block_title = f"{title} (block {block_idx})"
       block_path = None
@@ -553,11 +541,10 @@ def sims(
   that default can reduce to two (e.g. a full distribution function) is
   still ranked, but skipped when auto-filling ``num_plots``; naming it in
   ``must_include`` instead raises, pointing at the ``z2``..``z5`` selectors
-  it still needs. A multiblock quantity with spatial dimensions gets one
-  figure per block (its blocks don't share a coordinate system and can't be
-  usefully overlaid in one panel); a multiblock dynvector/0-D quantity
-  (e.g. ``field_energy``) overlays every block, from both sims, onto one
-  panel.
+  it still needs. A multiblock quantity -- spatial field or dynvector alike
+  (e.g. ``field_energy``) -- gets one figure per block, each overlaying
+  baseline and candidate; past a handful of blocks, one shared axis with
+  every block's pair of curves becomes unreadable.
 
   ``batch`` reinterprets ``path0``/``path1`` as directories *of* simulations
   rather than one simulation each: each holds one subdirectory per

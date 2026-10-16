@@ -237,27 +237,27 @@ class TestSimsDynvectorOnly:
 
 class TestSimsMultiblockDynvector:
 
-  def _multiblock_sim(self, tmp_path, subdir, scale=1.0):
+  def _multiblock_sim(self, tmp_path, subdir, scale=1.0, num_blocks=3):
     path = str(tmp_path / subdir)
     os.makedirs(path, exist_ok=True)
     time = np.linspace(0.0, 1.0, 4)
-    for block in range(3):
+    for block in range(num_blocks):
       _write_dynvec(path, f"sim_b{block}", "field_energy", time,
                    (np.linspace(1.0, 2.0, 4) * scale * (block + 1))[:, None])
     return path
 
-  def test_overlays_every_block_onto_one_figure(self, tmp_path):
+  def test_plots_one_file_per_block(self, tmp_path):
     path0 = self._multiblock_sim(tmp_path, "baseline")
     path1 = self._multiblock_sim(tmp_path, "candidate", scale=1.2)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                     num_plots=1))
     assert report.plotted == ("field_energy",)
-    assert os.path.isfile(
-        os.path.join(str(tmp_path / "figs"), "field_energy.png"))
-    # Exactly one PNG, not one per block.
-    pngs = [f for f in os.listdir(str(tmp_path / "figs")) if f.endswith(".png")]
-    assert pngs == ["field_energy.png"]
+    pngs = sorted(
+        f for f in os.listdir(str(tmp_path / "figs")) if f.endswith(".png"))
+    assert pngs == [
+        "field_energy_b0.png", "field_energy_b1.png", "field_energy_b2.png"
+    ]
 
 
 @needs_gkeyll
@@ -465,7 +465,7 @@ class TestSinglePdf:
     assert os.path.isfile(
         os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
 
-  def test_multiblock_dynvector_contributes_one_page(self, tmp_path):
+  def test_multiblock_dynvector_contributes_one_page_per_block(self, tmp_path):
     path0 = str(tmp_path / "baseline")
     path1 = str(tmp_path / "candidate")
     os.makedirs(path0, exist_ok=True)
@@ -481,7 +481,7 @@ class TestSinglePdf:
     assert report.plotted == ("field_energy",)
     pdf_path = os.path.join(str(tmp_path / "out"),
                             "postgkyl_compare_sims.pdf")
-    assert _pdf_page_count(pdf_path) == 2  # title page + one overlay page
+    assert _pdf_page_count(pdf_path) == 1 + 3  # title page + one per block
 
   def test_batch_writes_one_combined_pdf(self, tmp_path):
     base = tmp_path / "baseline"
