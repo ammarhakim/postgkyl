@@ -194,14 +194,12 @@ def _(initial, mo):
         label="transform")
     interp_pts = mo.ui.number(start=1, stop=32, value=initial("interp_pts", 2),
                               label="points per cell")
-    mapc2p_file = mo.ui.text(value=initial("mapc2p", ""),
-                             label="mapc2p file (optional)", full_width=True)
     phi_tor_deg = mo.ui.slider(start=0, stop=360, step=1,
                                value=initial("phi_tor_deg", 0),
                                label="toroidal angle (degrees)",
                                show_value=True, include_input=True,
                                full_width=True)
-    return interp_pts, mapc2p_file, phi_tor_deg, transform
+    return interp_pts, phi_tor_deg, transform
 
 
 @app.cell
@@ -284,12 +282,11 @@ def _(base_grid, get_xidx, mo, set_xidx):
 
 @app.cell
 def _(
-    base_grid, base_settings, gp, interp_pts, mapc2p_file, math, phi_tor_deg,
+    base_grid, base_settings, gp, interp_pts, math, phi_tor_deg,
     replace, settings_error, transform, weight_path, x_idx,
 ):
     # --- settings through the transform, and the layout they produce --------
     def _transform_settings():
-        _mapc2p = (mapc2p_file.value or "").strip() or None
         _points = int(interp_pts.value) if interp_pts.value else None
         _geometry = transform.value in ("map_to_rz", "extract_flux_surface")
         return replace(
@@ -299,7 +296,6 @@ def _(
             transform=transform.value,
             num_interp=None if _geometry else _points,
             nz_interp=_points if _geometry else None,
-            mapc2p=_mapc2p,
             phi_tor=math.radians(float(phi_tor_deg.value)),
             x_idx=int(x_idx.value),
         )
@@ -620,7 +616,7 @@ def _(
     cmap, collect_chk, comp_enable, comp_slider, contour, contourf,
     destination, diverging, dir_input, direction, field_dropdown, fixaspect,
     fluct, frame_range, frame_slider, gk_options, gp, interp_pts, legend,
-    load_mode, logx, logy, logz, mapc2p_file, mo, movie_file, movie_fixed,
+    load_mode, logx, logy, logz, mo, movie_file, movie_fixed,
     movie_fps, movie_frames, nlevels, os, phi_tor_deg, quantity, save_name,
     sel_enables, sel_modes, sel_sliders, showgrid, simprefix, species,
     state_button, state_name, surface, texts, transform, x_idx,
@@ -636,7 +632,7 @@ def _(
         "fluct": fluct.value, "frame_range": frame_range.value,
         "collect": collect_chk.value, "frame": frame_slider.value,
         "transform": transform.value, "interp_pts": interp_pts.value,
-        "mapc2p": mapc2p_file.value, "phi_tor_deg": phi_tor_deg.value,
+        "phi_tor_deg": phi_tor_deg.value,
         "x_idx": x_idx.value, "sel_enables": list(sel_enables.value),
         "sel_values": list(sel_sliders.value),
         "sel_modes": list(sel_modes.value), "comp_enable": comp_enable.value,
@@ -710,7 +706,7 @@ def _(
 def _(
     collect_chk, comp_enable, comp_slider, dir_input, direction, field_dropdown,
     fluct, frame_range, frame_slider, gk_options, grid_info, grid_msg, header,
-    interp_pts, load_mode, mapc2p_file, mo, movie_button, movie_file,
+    interp_pts, load_mode, mo, movie_button, movie_file,
     movie_fixed, movie_fps, movie_frames, movie_msg, phi_tor_deg, plot_options_view,
     plot_view, quantity, save_button, save_msg, save_name, sel_enables,
     sel_modes, sel_sliders, simprefix, species, state_button, state_error,
@@ -748,7 +744,6 @@ def _(
         frame_slider,
         fluct,
         mo.hstack([transform, interp_pts], justify="start", gap=1),
-        mapc2p_file,
         x_idx if transform.value == "extract_flux_surface" else mo.md(""),
         phi_tor_deg if transform.value == "map_to_rz" else mo.md(""),
         mo.md("**select / average**: enable a dimension to slice it at the "
