@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5DQME7QVPY5EV268CKNRZJV",
+  "strategy": "manual-commit",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/test.yml",
+    "pyproject.toml",
+    "tests/test_diagnostics_gk_load.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 45046,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 1469056,
+    "output_tokens": 4192,
+    "api_call_count": 38
+  }
+}
