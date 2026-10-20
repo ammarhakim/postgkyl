@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5DJ1DEJ03VZ9RFM2P7K84AA",
+  "strategy": "manual-commit",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/postgkyl/diagnostics/gk/quantities.py",
+    "tests/test_native_physics.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 147724,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 1654656,
+    "output_tokens": 3459,
+    "api_call_count": 34,
+    "subagent_tokens_complete": true
+  }
+}

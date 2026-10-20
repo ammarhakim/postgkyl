@@ -1,0 +1,55 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5DJ1DEJ03VZ9RFM2P7K84AA",
+  "session_id": "01a15b17-51e4-7481-9675-2edae060e569",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-20T21:03:53.178665581Z",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "src/postgkyl/diagnostics/gk/quantities.py",
+    "tests/test_native_physics.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "e90c577bcbb8",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 147724,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 1654656,
+    "output_tokens": 3459,
+    "api_call_count": 34,
+    "subagent_tokens_complete": true
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-20T21:03:53.162262793Z",
+    "agent_lines": 33,
+    "agent_removed": 27,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 33,
+    "total_lines_changed": 60,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 201,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".agents/skills/data/SKILL.md": 86,
+        ".agents/skills/design/SKILL.md": 98,
+        ".agents/skills/gkeyll-core/SKILL.md": 17
+      }
+    }
+  ]
+}

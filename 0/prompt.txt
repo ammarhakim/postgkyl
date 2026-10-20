@@ -1,0 +1,3 @@
+can you replace the harcoded _coulomb_log in
+src/postgkyl/diagnostics/gk/quantities.py
+with the coulomb log from gkeyll now please? that will more clearly set the precedent for how we can use these things for more complicated diags (in particular for GK).
