@@ -4,11 +4,13 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy import constants
 from numpy.testing import assert_allclose
 
 import postgkyl as pg
 from postgkyl import gpython
 from postgkyl.diagnostics.gk import mom_gyrokinetic
+from postgkyl.diagnostics.gk.quantities import _coulomb_log
 from postgkyl.diagnostics.vm.collisions import coulomb_log, spitzer_coll_freq
 
 GEN = Path(__file__).parent / "test_data" / "generated"
@@ -46,6 +48,24 @@ def test_coulomb_impact_parameters(hbar):
                                           "hbar": hbar
                                       }))
   assert_allclose(result, expected, rtol=2e-15, atol=2e-15)
+
+
+@needs_vlasov
+@pytest.mark.parametrize("temperature_ev", [1., 1.e5])
+def test_gk_reference_coulomb_log_si(temperature_ev):
+  # Equal electron species: screening length squared is
+  # 2*eps0*T/(n*e^2), and reduced mass is m_e/2. The two temperatures
+  # exercise classical and quantum closest approach, respectively.
+  n, mass, charge = 2.e19, constants.electron_mass, -constants.e
+  temperature = temperature_ev * constants.e
+  screening_sq = 2 * constants.epsilon_0 * temperature / (n * charge**2)
+  classical = charge**2 / (12 * np.pi * constants.epsilon_0 * temperature)
+  quantum = constants.hbar / np.sqrt(6 * np.e * mass * temperature)
+  closest = max(classical, quantum)
+  expected = .5 * np.log1p(screening_sq / closest**2)
+  result = _coulomb_log(n, n, mass, mass, temperature, temperature, charge,
+                        charge, 0.)
+  assert_allclose(result, expected, rtol=2e-15, atol=0.)
 
 
 @needs_vlasov
