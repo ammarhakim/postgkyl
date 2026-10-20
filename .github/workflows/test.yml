@@ -86,9 +86,11 @@ jobs:
             numpy: "numpy==2.2.6"
           - python-version: "3.13"
             numpy: "numpy==2.2.6"
-          # NumPy 2.2 predates Python 3.14 support. Resolve the current NumPy
-          # release on this one lane instead of asking pip for no wheel.
+          # NumPy 2.2 predates Python 3.14+ support. Resolve the current NumPy
+          # release on these lanes instead of asking pip for no wheel.
           - python-version: "3.14"
+            numpy: "numpy"
+          - python-version: "3.15"
             numpy: "numpy"
     steps:
       - name: Check out source commit
