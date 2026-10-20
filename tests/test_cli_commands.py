@@ -172,7 +172,7 @@ def test_select_prioritizes_the_first_option_for_each_initial():
   }
   result = _ok(FIELD, "interpolate", "select", "-c", "0", "-z", "0", "-t",
                "chosen", "info")
-  assert result.output.startswith("(chosen#0)")
+  assert result.output.startswith(f"{FIELD.name} (chosen#0)")
 
 
 def test_api_underscores_are_the_only_cli_spellings():
@@ -260,6 +260,69 @@ def test_plot_legend_labels(labels):
     plt.close("all")
 
 
+@pytest.mark.parametrize("dims", [1, 2])
+@pytest.mark.parametrize("custom_labels", [False, True])
+def test_plot_uses_load_labels_after_interpolation(dims, custom_labels):
+  import matplotlib.pyplot as plt
+
+  plt.close("all")
+  try:
+    field = DATA / "generated" / f"{dims}d_ms_p1.gkyl"
+    args = ([field, "-l", "o", field, "-l", "n"]
+            if custom_labels else [field, field])
+    _ok(*args, "interp", "pl", "-f0", "--num_axes", "2", "--no_show")
+    expected = ["o_c0", "n_c0"] if custom_labels else [f"{field.name}_c0"] * 2
+    axes = plt.figure(0).axes
+    if dims == 1:
+      assert [
+          text.get_text() for ax in axes
+          for text in ax.get_legend().get_texts()
+      ] == expected
+    else:
+      assert [text.get_text() for ax in axes for text in ax.texts] == expected
+  finally:
+    plt.close("all")
+
+
+@pytest.mark.parametrize("custom_labels", [False, True])
+@pytest.mark.parametrize("no_legend", [False, True])
+def test_plot_load_labels_in_separate_2d_figures(custom_labels, no_legend):
+  import matplotlib.pyplot as plt
+
+  plt.close("all")
+  try:
+    field = DATA / "generated" / "2d_ms_p1.gkyl"
+    args = ([field, "-l", "hllc", field, "-l", "Roe"]
+            if custom_labels else [field, field])
+    options = ["--no_legend"] if no_legend else []
+    _ok(*args, "sel", "-c0", "pl", "--fixaspect", "--no_show", *options)
+    figures = [plt.figure(number) for number in plt.get_fignums()]
+    assert len(figures) == 2
+    expected = ["hllc_c0", "Roe_c0"] if custom_labels else ["c0", "c0"]
+    for figure, label in zip(figures, expected):
+      ax = figure.axes[0]
+      assert [text.get_text()
+              for text in ax.texts] == ([] if no_legend else [label])
+      assert ax.get_aspect() == 1.0
+  finally:
+    plt.close("all")
+
+
+@pytest.mark.parametrize("interpolate", [False, True])
+def test_ev_expression_labels_both_backends(interpolate):
+  import matplotlib.pyplot as plt
+
+  plt.close("all")
+  try:
+    field = DATA / "generated" / "2d_ms_p1.gkyl"
+    options = ["interpolate"] if interpolate else []
+    _ok(field, "-l", "input", *options, "ev", "f 2 *", "sel", "-c0", "pl",
+        "--no_show")
+    assert [text.get_text() for text in plt.gcf().axes[0].texts] == ["f 2 *_c0"]
+  finally:
+    plt.close("all")
+
+
 def test_manual_session_render_options_are_not_registered():
   assert _run("--batch_mode", FIELD, "info").exit_code != 0
   assert _run("--saveframes-prefix", "frame", FIELD, "info").exit_code != 0
@@ -295,13 +358,15 @@ def test_plotly_explicit_isosurface_cli(tmp_path):
   assert '"isomax":0.0' in html
 
 
-def test_pyvista_explicit_isosurface_cli(monkeypatch):
+@pytest.mark.parametrize("options",
+                         [[], ["--no_normalize"], ["--no_normalize", "False"]])
+def test_pyvista_explicit_isosurface_cli(monkeypatch, options):
   import pyvista as pv
 
   plotter = MagicMock()
   monkeypatch.setattr(pv, "Plotter", lambda **kwargs: plotter)
   _ok(FIELD_3D, "pyvista", "--clevels", "0.0", "--no_show", "--no_spin",
-      "--hide_axes")
+      "--hide_axes", *options)
   mesh = plotter.add_mesh.call_args.args[0]
   assert mesh.n_points > 0
   np.testing.assert_allclose(mesh["f_plot"], 0.0, rtol=0, atol=1e-7)

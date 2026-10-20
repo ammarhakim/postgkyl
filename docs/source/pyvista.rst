@@ -27,4 +27,10 @@ To draw one individual isosurface, pass ``--clevels 0.5`` on the CLI or
 ellipsoid ``x² + 2y² + 0.5z² = ln(2)`` on the sampled grid.
 An explicit level overrides the automatic surface count.
 
+By default, each coordinate axis is normalized independently to the requested
+``aspect_ratio`` (a cube by default). To preserve the data's physical coordinates
+and proportions, use ``--no_normalize`` on the CLI or ``no_normalize=True`` in
+Python. This disables recentering and rescaling, ignores ``aspect_ratio``, and
+applies after any cylindrical-to-Cartesian conversion.
+
 .. include:: _pairs/09_pyvista.inc

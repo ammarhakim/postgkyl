@@ -59,6 +59,19 @@ def test_label_getter_setter():
   assert d.label == "raw-label"
 
 
+@pytest.mark.parametrize("custom,generated,expected", [
+    ("", "", "field_1.gkyl"),
+    ("", "density", "density"),
+    ("new", "density", "new"),
+])
+def test_label_precedence_survives_clone(custom, generated, expected):
+  data = GDataState(label=custom)
+  data._file_name = "/results/field_1.gkyl"
+  data.set_label(generated)
+  assert data.label == expected
+  assert data.clone().label == expected
+
+
 # ---------------------------------------------------------------- shape info
 def test_num_cells_falls_back_to_values_shape_then_empty():
   d = GDataState()

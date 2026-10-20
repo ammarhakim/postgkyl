@@ -77,7 +77,8 @@ def load(
   Args:
     file_name: Literal filename or shell-style glob pattern to load.
     tag: Tag assigned to every loaded dataset.
-    label: Optional display label assigned to every loaded dataset.
+    label: Optional display label assigned to every loaded dataset; defaults
+      to each source filename without its directory.
     ctx: Initial metadata as repeated key/value entries.
     value_form: Stored representation of the loaded values.
     basis_type: DG basis name overriding file metadata.
