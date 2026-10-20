@@ -638,6 +638,58 @@ class TestSimsBatch:
     assert lines == ["before", "after"]
 
 
+class TestVerbose:
+  """``verbose`` controls only how the returned value prints at the CLI
+  edge (``repr()``, since the CLI echoes a command's return value verbatim)
+  -- the value itself is always a fully-populated, ordinary-dict-compatible
+  mapping regardless."""
+
+  def test_default_repr_is_a_short_per_sim_summary(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                          must_include=["field_energy"], num_plots=1,
+                          file_per_fig=True)
+    text = repr(report)
+    assert "baseline: 1 plotted, 0 skipped" in text
+    assert "--verbose" in text
+    assert "QuantityDiff" not in text
+
+  def test_verbose_repr_is_the_full_dict(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                          must_include=["field_energy"], num_plots=1,
+                          file_per_fig=True, verbose=True)
+    text = repr(report)
+    assert "QuantityDiff" in text
+    assert "CompareSimsReport" in text
+
+  def test_returned_value_behaves_like_a_plain_dict_either_way(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                          must_include=["field_energy"], num_plots=1,
+                          file_per_fig=True)
+    assert isinstance(report, dict)
+    assert report == {"baseline": report["baseline"]}
+    assert report["baseline"].plotted == ("field_energy",)
+
+  def test_batch_summary_has_one_line_per_simulation(self, tmp_path):
+    base = tmp_path / "baseline"
+    cand = tmp_path / "candidate"
+    for sim_name in ("sim_a", "sim_b"):
+      _sim(base.parent, base.name + f"/{sim_name}", name=sim_name)
+      _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
+          moms_scale=1.5)
+    report = compare.sims(str(base), str(cand), batch=True,
+                          out_dir=str(tmp_path / "figs"), num_plots=1,
+                          must_include=["field_energy"], file_per_fig=True)
+    text = repr(report)
+    assert "sim_a:" in text
+    assert "sim_b:" in text
+
+
 class TestOutDirDefault:
 
   def test_out_dir_omitted_uses_cwd_subfolder(self, tmp_path, monkeypatch):

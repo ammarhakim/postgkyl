@@ -96,6 +96,35 @@ class CompareSimsReport:
   out_dir: str = ""
 
 
+class _ReportDict(dict):
+  """The dict ``sims()`` returns, identical in every way to a plain
+  ``dict[str, CompareSimsReport]`` except for how it prints at the CLI
+  edge: the CLI echoes a command's return value verbatim via ``repr()``
+  (see ``postgkyl.cli.compiler._present``), and a full ``CompareSimsReport``
+  per compared quantity can run to hundreds of lines -- unreadable for a
+  real CI sweep with many quantities. ``verbose=False`` (the CLI default)
+  prints a one-line-per-sim summary instead; ``--verbose``/``-v`` restores
+  the full dict repr. Python callers of :func:`sims` are unaffected either
+  way -- this is still a real ``dict``, just one whose __repr__ is overridden."""
+
+  def __init__(self, data: dict[str, CompareSimsReport], *, verbose: bool):
+    super().__init__(data)
+    self._verbose = verbose
+
+  def __repr__(self) -> str:
+    if self._verbose:
+      return dict.__repr__(self)
+    if not self:
+      return "{}"
+    lines = [
+        f"{name}: {len(report.plotted)} plotted, "
+        f"{len(report.skipped)} skipped, out_dir={report.out_dir!r}"
+        for name, report in self.items()
+    ]
+    lines.append("(pass --verbose/-v for the full per-quantity report)")
+    return "\n".join(lines)
+
+
 def _default_labels(path0: str, path1: str) -> list[str]:
   """The shortest distinguishing trailing path segments of ``path0``/
   ``path1`` (mirrors ``render.matplotlib._dataset_labels``) -- a bare
@@ -674,6 +703,7 @@ def sims(
     format: str = "jpg",
     frame: int | None = None,
     diff: bool = False,
+    verbose: bool = False,
 ) -> dict[str, CompareSimsReport]:
   """Compare two Gkeyll simulations' output and plot their biggest differences.
 
@@ -743,6 +773,8 @@ def sims(
       (dynvectors, single-snapshot fields) ignore this.
     diff: Also plot ``baseline - candidate``, appended after the
       baseline/candidate panel(s).
+    verbose: Print the full per-quantity report at the CLI (the ``repr`` of
+      the returned value). Default: CLI prints a one-line-per-sim summary.
 
   Returns:
     A dict mapping each compared simulation's name to its
@@ -787,11 +819,11 @@ def sims(
       pdf.savefig(
           _title_page_figure(path0, path1, batch=batch,
                              sim_names=sim_names))
-      return _run(pdf_dir, pdf)
+      return _ReportDict(_run(pdf_dir, pdf), verbose=verbose)
 
   effective_out_dir = (out_dir if out_dir is not None else
                       os.path.join(os.getcwd(), _DEFAULT_SUBDIR))
-  return _run(effective_out_dir, None)
+  return _ReportDict(_run(effective_out_dir, None), verbose=verbose)
 
 
 __all__ = ["CompareSimsReport", "QuantityDiff", "sims"]

@@ -270,6 +270,17 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
     --out_dir /tmp/compare_sims_tutorial
 ```
 
+By default the CLI prints a one-line-per-sim summary (quantities plotted,
+quantities skipped, output directory), not the full per-quantity report --
+a sim with many quantities can produce a report hundreds of lines long.
+`-v`/`--verbose` prints the full report instead:
+
+```bash
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
+    --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
+    --must_include field_energy --verbose --out_dir /tmp/compare_sims_tutorial
+```
+
 ## See also
 
 - `pgkyl --help` lists every registered command, grouped by section
