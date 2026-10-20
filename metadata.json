@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5DB8YGTGZVS170NH1RKF4MZ",
+  "strategy": "manual-commit",
+  "branch": "compare_sims",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/postgkyl/diagnostics/compare.py",
+    "src/postgkyl/diagnostics/gk/quantities.py",
+    "src/postgkyl/numerics/diff_metrics.py",
+    "tests/generate_test_data.py",
+    "tests/test_cli_diagnostics.py",
+    "tests/test_diagnostics_compare.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 414,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 61312,
+    "output_tokens": 53,
+    "api_call_count": 2
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5DB8YGTGZVS170NH1RKF4MZ",
+  "session_id": "01a159e6-897e-75e1-a41c-357ee5c52284",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-20T19:05:40.022642061Z",
+  "branch": "compare_sims",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/postgkyl/diagnostics/compare.py",
+    "src/postgkyl/diagnostics/gk/quantities.py",
+    "src/postgkyl/numerics/diff_metrics.py",
+    "tests/generate_test_data.py",
+    "tests/test_cli_diagnostics.py",
+    "tests/test_diagnostics_compare.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "ee7c75d7d92e",
+  "checkpoint_transcript_start": 150,
+  "transcript_lines_at_start": 150,
+  "compact_transcript_start": 20,
+  "token_usage": {
+    "input_tokens": 414,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 61312,
+    "output_tokens": 53,
+    "api_call_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-20T19:05:40.004153151Z",
+    "agent_lines": 2098,
+    "agent_removed": 82,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2098,
+    "total_lines_changed": 2180,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
