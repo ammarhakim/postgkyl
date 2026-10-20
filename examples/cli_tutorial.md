@@ -221,9 +221,12 @@ component (`before_c0`, `before_c1`, ...) so every subplot stays
 distinguishable; a single-component quantity like `field_energy` keeps the
 plain label.
 
-`--z0`..`--z5` reduce a 3-D+ field the same way `select`'s selectors do; a
-3-D field left unpinned on `--z1` (`y`) defaults to its midpoint. `--batch`
-runs the same comparison across every simulation two directories-of-sims
+`--z0`..`--z5` reduce a 3-D+ field the same way `select`'s selectors do; any
+axis left unpinned is pinned automatically instead, at the point where the
+two sims differ most, along whichever directions the difference itself
+changes fastest there -- so a 3-D, 4-D, 5-D, or 6-D field always plots with
+no selectors at all. `--batch` runs the same comparison across every
+simulation two directories-of-sims
 share (e.g. a CI run's accepted-vs-candidate trees) -- `path0`/`path1` are
 now each a directory holding one subdirectory per simulation, and each
 pair's figures go to their own subfolder:

@@ -155,6 +155,94 @@ class TestStemsByQuantity:
     assert quantities["field_energy"] == "sim_b0-field_energy"
 
 
+class TestDominantAxes:
+  """``_dominant_axes`` picks which axes to pin (beyond the 2 kept for
+  plotting) from the data itself -- the point of largest relative
+  difference, and which directions the difference changes fastest there."""
+
+  def test_two_or_fewer_free_axes_pins_nothing(self):
+    values0 = np.zeros((3, 4))
+    values1 = np.ones((3, 4))
+    grid = [np.linspace(0, 1, 3), np.linspace(0, 1, 4)]
+    assert compare._dominant_axes(values0, values1, grid, [0, 1]) == {}
+    assert compare._dominant_axes(values0, values1, grid, [0]) == {}
+
+  def test_pins_the_flattest_axis_at_the_spike_location(self):
+    # 3 free axes: axis 0 varies steeply around the spike, axis 1 is where
+    # the spike sits, axis 2 is perfectly flat everywhere -- axis 2 should
+    # always be the one pinned, regardless of where along it we look.
+    rng = np.random.default_rng(0)
+    shape = (6, 5, 4)
+    values0 = np.ones(shape) * 10.0
+    values1 = values0.copy()
+    spike_idx = (3, 2, 1)
+    values1[spike_idx] = 50.0
+    # Make axis 0 steep near the spike so it's clearly favored over axis 1.
+    ramp = np.linspace(0.0, 5.0, shape[0])
+    values1 += ramp[:, None, None]
+    grid = [np.linspace(0, 1, n) for n in shape]
+    pins = compare._dominant_axes(values0, values1, grid, [0, 1, 2])
+    assert len(pins) == 1
+    assert 2 in pins  # the flat axis is the one pinned
+    assert pins[2] == spike_idx[2]
+
+  def test_near_zero_pivot_value_falls_back_to_raw_derivative(self):
+    # The difference at its own point of max relative difference is tiny in
+    # absolute terms (large relative diff from a tiny baseline), so scoring
+    # must fall back to |derivative| instead of |derivative / value| to
+    # avoid dividing by ~0.
+    shape = (5, 5, 5)
+    values0 = np.full(shape, 1e-10)
+    values1 = values0.copy()
+    values1[2, 2, 2] = 1e-8  # huge relative diff, but a tiny absolute value
+    grid = [np.linspace(0, 1, n) for n in shape]
+    pins = compare._dominant_axes(values0, values1, grid, [0, 1, 2])
+    assert len(pins) == 1  # ran to completion, no division blow-up/crash
+
+  def test_boundary_pivot_uses_one_sided_difference(self):
+    # The point of max difference sits at axis 0's lower edge (index 0);
+    # np.gradient's edge_order=2 one-sided stencil must still produce a
+    # finite, usable derivative there instead of raising or returning nan.
+    shape = (6, 6, 6)
+    values0 = np.zeros(shape)
+    values1 = values0.copy()
+    values1[0, 3, 3] = 10.0
+    grid = [np.linspace(0, 1, n) for n in shape]
+    pins = compare._dominant_axes(values0, values1, grid, [0, 1, 2])
+    assert len(pins) == 1
+    for axis, idx in pins.items():
+      assert np.isfinite(idx)
+
+  def test_short_axis_falls_back_to_first_order_edge(self):
+    # One free axis has only 2 points -- too short for edge_order=2 (needs
+    # at least 3); _dominant_axes must still run, not raise.
+    shape = (2, 5, 5)
+    values0 = np.zeros(shape)
+    values1 = values0.copy()
+    values1[1, 2, 2] = 5.0
+    grid = [np.linspace(0, 1, n) for n in shape]
+    pins = compare._dominant_axes(values0, values1, grid, [0, 1, 2])
+    assert len(pins) == 1
+
+  def test_pivot_picks_largest_relative_not_absolute_difference(self):
+    # A small baseline with a modest absolute change (huge relative change)
+    # must win the pivot over a much larger absolute change on a huge
+    # baseline (tiny relative change) -- confirms ranking is by relative,
+    # not absolute, difference. Axes 0/1 are flat everywhere except at the
+    # pivot, so whichever pivot wins pins both of them at its own index.
+    shape = (4, 4, 4)
+    values0 = np.full(shape, 1000.0)
+    values1 = values0.copy()
+    values1[0, 0, 0] = 1000.0 + 100.0  # +10% relative, +100 absolute
+    values0[3, 3, 3] = 0.001
+    values1[3, 3, 3] = 0.002  # +100% relative, +0.001 absolute
+    grid = [np.linspace(0, 1, n) for n in shape]
+    pins = compare._dominant_axes(values0, values1, grid, [0, 1, 2])
+    assert len(pins) == 1
+    pinned_axis, pinned_idx = next(iter(pins.items()))
+    assert pinned_idx == 3  # the small-baseline (100% relative diff) spot
+
+
 class TestSimsDynvectorOnly:
 
   def test_plots_every_shared_quantity_within_num_plots(self, tmp_path):
@@ -423,7 +511,7 @@ class TestSimsField:
     _write_field(path, "sim", "field", [4, 4, 4], values, frame=0)
     return path
 
-  def test_3d_field_defaults_to_y_midpoint(self, tmp_path):
+  def test_3d_field_plots_without_any_selectors(self, tmp_path):
     path0 = self._field_sim_3d(tmp_path, "baseline")
     path1 = self._field_sim_3d(tmp_path, "candidate", offset=0.5)
     report = _only(
@@ -444,29 +532,28 @@ class TestSimsField:
     path = str(tmp_path / subdir)
     os.makedirs(path, exist_ok=True)
     rng = np.random.default_rng(0)
-    # serendipity p1 in 4D packs 16 basis coefficients per cell; a 4-D
-    # spatial field still has 3 dimensions left after the y-midpoint
-    # default, so it needs further selectors to plot.
+    # serendipity p1 in 4D packs 16 basis coefficients per cell.
     values = rng.standard_normal((2, 2, 2, 2, 16)) + offset
     _write_field(path, "sim", "field", [2, 2, 2, 2], values, frame=0)
     return path
 
-  def test_4d_field_is_unplottable_without_more_selectors(self, tmp_path):
+  def test_4d_field_plots_without_any_selectors_when_auto_filled(
+      self, tmp_path):
     path0 = self._field_sim_4d(tmp_path, "baseline")
     path1 = self._field_sim_4d(tmp_path, "candidate", offset=0.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                     num_plots=5))
-    assert "field" not in report.plotted
-    by_quantity = {d.quantity: d for d in report.compared}
-    assert by_quantity["field"].plottable is False
+    assert "field" in report.plotted
 
-  def test_4d_field_as_must_include_raises(self, tmp_path):
+  def test_4d_field_plots_without_any_selectors_as_must_include(
+      self, tmp_path):
     path0 = self._field_sim_4d(tmp_path, "baseline")
     path1 = self._field_sim_4d(tmp_path, "candidate", offset=0.5)
-    with pytest.raises(ValueError):
-      compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                  must_include=["field"])
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["field"]))
+    assert report.plotted == ("field",)
 
   def test_4d_field_plots_with_explicit_selectors(self, tmp_path):
     path0 = self._field_sim_4d(tmp_path, "baseline")

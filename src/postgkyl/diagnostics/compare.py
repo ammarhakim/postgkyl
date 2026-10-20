@@ -28,6 +28,7 @@ from postgkyl import io
 from postgkyl.gdata.load import load
 from postgkyl.gdatastate import materialize_point_values
 from postgkyl.numerics import max_abs_rel_diff
+from postgkyl.numerics.grid_centering import sample_coordinates
 from postgkyl.operations.interpolate import interpolate
 from postgkyl.operations.select import select
 from postgkyl.render.matplotlib import plot
@@ -55,18 +56,11 @@ class QuantityDiff:
     max_abs_diff: Largest absolute element-wise difference across every
       block/frame compared for this quantity.
     max_rel_diff: Largest relative element-wise difference, likewise.
-    plottable: False when this quantity has more spatial dimensions than
-      ``sims()`` can reduce to two by default (e.g. a full distribution
-      function, 4-D+ even after the ``y``-midpoint default): still ranked,
-      but skipped when auto-filling ``num_plots`` unless named in
-      ``must_include``, where it instead raises so the caller can pin its
-      remaining axes with ``z2``..``z5``.
   """
 
   quantity: str
   max_abs_diff: float
   max_rel_diff: float
-  plottable: bool = True
 
 
 @dataclass(frozen=True)
@@ -223,42 +217,100 @@ def _point_values(data):
   return materialize_point_values(data)
 
 
-def _default_slice_selectors(data, zs: tuple) -> dict[str, float]:
-  """Default a 3-D+ field to its midpoint in ``y`` (coordinate direction 1)
-  when the caller left ``z1`` unpinned -- Gkeyll's gyrokinetic config-space
-  axis order is ``(x, y, z, ...)``, so this is what turns a 3-D field into
-  the same ``(x, z)`` 2-D cross-section used when comparing CI runs by hand.
-  A 4-D+ field (e.g. a full distribution function) still needs the caller
-  to pin its remaining axes explicitly via ``z2``..``z5``; ``plot`` raises
-  its own error if more than two axes survive."""
-  if data.num_dims < 3 or zs[1] is not None:
+def _dominant_axes(values0: np.ndarray, values1: np.ndarray,
+                   grid: list[np.ndarray],
+                   free_axes: list[int]) -> dict[int, int]:
+  """Which of ``free_axes`` to pin (and at what index) so at most 2 survive
+  for plotting, chosen from the data rather than an arbitrary fixed axis.
+
+  Finds the array index (including its component, if any) where ``values0``
+  and ``values1`` differ the most by relative difference -- the same metric
+  :func:`postgkyl.numerics.max_abs_rel_diff` ranks whole quantities by, just
+  applied per-element here to locate *where* a quantity differs most, not
+  just *whether* it does. At that index, estimates how fast the difference
+  ``values1 - values0`` itself changes along each free axis (a 2nd-order
+  finite difference -- centered in the interior, one-sided at a boundary,
+  via ``np.gradient(..., edge_order=2)``), normalized by the difference's
+  own value there so axes are compared on equal footing regardless of the
+  quantity's units or scale. The 2 axes with the largest such normalized
+  rate of change are kept; every other free axis is pinned at its own index
+  from the point of maximum difference.
+
+  A 2-D (or already ``z0``..``z5``-reduced) quantity never reaches this --
+  callers only invoke it when more than 2 free axes remain.
+
+  Args:
+    values0: Reference ("before"/baseline) array, component axis last (if
+      any); any number of leading spatial axes.
+    values1: Array to compare against the reference; same shape as
+      ``values0``.
+    grid: One 1-D coordinate array per spatial axis (i.e. excluding the
+      trailing component axis), in axis order. May be nodal (one more
+      coordinate than samples along that axis); resolved to cell-centered
+      sample points before differencing.
+    free_axes: Spatial axis indices not already pinned by the caller's own
+      ``z0``..``z5``; only these are candidates to keep or pin here.
+
+  Returns:
+    A dict mapping every axis in ``free_axes`` that should be pinned (all
+    but the 2 kept) to its index at the point of maximum difference. Empty
+    when ``len(free_axes) <= 2`` -- nothing needs pinning.
+  """
+  if len(free_axes) <= 2:
     return {}
-  lower, upper = data.bounds
-  return {"z1": float(0.5 * (lower[1] + upper[1]))}
+
+  abs_diff = np.abs(values1 - values0)
+  with np.errstate(divide="ignore", invalid="ignore"):
+    rel_diff = abs_diff / np.abs(values0)
+  # A real inf (values0 exactly 0, values1 not) is a legitimate "biggest
+  # possible difference" and must be able to win the pivot; a nan (both
+  # exactly 0, a true no-op) must not -- mirrors max_abs_rel_diff's own
+  # inf-keeps/nan-drops policy, applied per-element to locate the pivot
+  # rather than reduced to one scalar.
+  pivot = np.unravel_index(
+      np.argmax(np.where(np.isnan(rel_diff), -np.inf, rel_diff)),
+      rel_diff.shape)
+
+  diff = values1 - values0
+  value_at_pivot = diff[pivot]
+  derivatives: dict[int, float] = {}
+  for axis in free_axes:
+    length = diff.shape[axis]
+    if length < 2:
+      derivatives[axis] = 0.0  # nothing to resolve along a singleton axis
+      continue
+    edge_order = 2 if length >= 3 else 1
+    coords = sample_coordinates(grid[axis], length)
+    gradient = np.gradient(diff, coords, axis=axis, edge_order=edge_order)
+    derivatives[axis] = float(gradient[pivot])
+
+  # Normalizing by a near-zero value would make an otherwise-flat direction
+  # look artificially steep, so fall back to comparing raw derivatives there.
+  if abs(value_at_pivot) > np.finfo(float).eps:
+    scores = {axis: abs(d / value_at_pivot) for axis, d in derivatives.items()}
+  else:
+    scores = {axis: abs(d) for axis, d in derivatives.items()}
+
+  keep = set(sorted(scores, key=scores.get, reverse=True)[:2])
+  return {axis: int(pivot[axis]) for axis in free_axes if axis not in keep}
 
 
-def _sliced(data, zs: tuple):
-  """Apply the caller's ``z0``..``z5`` selectors, defaulting a 3-D field's
-  unpinned ``y`` axis to its midpoint (see
-  :func:`_default_slice_selectors`)."""
-  kwargs = {
+def _reduced(data0, data1, zs: tuple):
+  """Apply the caller's ``z0``..``z5`` selectors to both datasets, then pin
+  any remaining axes beyond 2 via :func:`_dominant_axes` so both are
+  plottable regardless of their original dimensionality."""
+  num_dims = min(data0.num_dims, data1.num_dims)
+  explicit = {
       f"z{d}": z
       for d, z in enumerate(zs)
-      if z is not None and d < data.num_dims
+      if z is not None and d < num_dims
   }
-  kwargs.update(_default_slice_selectors(data, zs))
-  return select(data, **kwargs) if kwargs else data
-
-
-def _num_dims_after_slice(data, zs: tuple) -> int:
-  """How many spatial dimensions ``data`` would have left after applying
-  the caller's ``z0``..``z5`` plus the ``y``-midpoint default -- without
-  actually materializing/selecting it, just to decide plottability."""
-  num_dims = data.num_dims
-  pinned = sum(1 for d in range(min(num_dims, 6)) if zs[d] is not None)
-  if num_dims >= 3 and zs[1] is None:
-    pinned += 1  # the y-midpoint default pins one more axis
-  return num_dims - pinned
+  free_axes = [d for d in range(num_dims) if f"z{d}" not in explicit]
+  auto = _dominant_axes(data0.values, data1.values, data0.grid, free_axes)
+  kwargs = {**explicit, **{f"z{d}": idx for d, idx in auto.items()}}
+  if not kwargs:
+    return data0, data1
+  return select(data0, **kwargs), select(data1, **kwargs)
 
 
 def _resolve_frame(frame: int | None, path0: str, stem0: str, path1: str,
@@ -270,8 +322,7 @@ def _resolve_frame(frame: int | None, path0: str, stem0: str, path1: str,
 
 
 def _diff_quantity(path0: str, path1: str, quantity: str, stem0: str,
-                   stem1: str, frame: int | None,
-                   zs: tuple) -> QuantityDiff:
+                   stem1: str, frame: int | None) -> QuantityDiff:
   blocks0 = _load_quantity(path0, stem0, frame)
   blocks1 = _load_quantity(path1, stem1, frame)
   if len(blocks0) != len(blocks1):
@@ -279,9 +330,7 @@ def _diff_quantity(path0: str, path1: str, quantity: str, stem0: str,
         f"'{quantity}' has {len(blocks0)} blocks under {path0!r} but "
         f"{len(blocks1)} under {path1!r}")
   max_abs = max_rel = 0.0
-  plottable = True
   for data0, data1 in zip(blocks0, blocks1):
-    plottable = plottable and _num_dims_after_slice(data0, zs) <= 2
     values0 = _point_values(data0).values
     values1 = _point_values(data1).values
     if values0.shape != values1.shape:
@@ -291,7 +340,7 @@ def _diff_quantity(path0: str, path1: str, quantity: str, stem0: str,
     abs_diff, rel_diff = max_abs_rel_diff(values0, values1)
     max_abs = max(max_abs, abs_diff)
     max_rel = max(max_rel, rel_diff) if rel_diff != float("inf") else max_rel
-  return QuantityDiff(quantity, max_abs, max_rel, plottable)
+  return QuantityDiff(quantity, max_abs, max_rel)
 
 
 def _save_or_collect(fig, out_path: str | None, pdf: PdfPages | None) -> None:
@@ -371,8 +420,7 @@ def _diff_panel_zbounds(
 def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
                     out_path: str | None, pdf: PdfPages | None,
                     diff: bool = False) -> None:
-  data0 = _sliced(_point_values(data0), zs)
-  data1 = _sliced(_point_values(data1), zs)
+  data0, data1 = _reduced(_point_values(data0), _point_values(data1), zs)
   # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
   # coordinate match, but two independently-run sims' grids commonly agree
   # only to ~1e-6 relative (platform/compiler floating-point noise) even
@@ -553,8 +601,7 @@ def _compare_one(
     try:
       common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
       compared.append(
-          _diff_quantity(path0, path1, quantity, stem0, stem1, common_frame,
-                        zs))
+          _diff_quantity(path0, path1, quantity, stem0, stem1, common_frame))
     except Exception as exc:  # noqa: BLE001 -- see docstring: an explicit
       # must_include still raises (below); an auto-ranked quantity merely
       # doesn't participate in ranking. Not every ".gkyl" stem is a field or
@@ -566,17 +613,15 @@ def _compare_one(
       skipped[quantity] = str(exc)
   compared.sort(key=lambda d: d.max_rel_diff, reverse=True)
 
-  # Every must_include quantity (even an unplottable one -- it then raises
-  # inside _plot_quantity, pointing the caller at the axes they still need
-  # to pin), then the highest-ranked plottable rest, until num_plots is
-  # filled. A quantity with too many spatial dimensions to reduce by
-  # default (e.g. a full distribution function) is silently skipped when
-  # only auto-filling, rather than crashing an otherwise-routine comparison.
+  # Every must_include quantity, then the highest-ranked rest, until
+  # num_plots is filled -- every ranked quantity is plottable now (any N-D
+  # quantity reduces to 2 axes via _dominant_axes), so nothing here needs
+  # to skip or raise for dimensionality.
   selected = list(dict.fromkeys(must_include))
   for quantity_diff in compared:
     if len(selected) >= num_plots:
       break
-    if quantity_diff.quantity not in selected and quantity_diff.plottable:
+    if quantity_diff.quantity not in selected:
       selected.append(quantity_diff.quantity)
 
   if pdf is None:
@@ -714,12 +759,15 @@ def sims(
   prefixes. 
 
   A 2-D field (or a 3-D+ field once ``z0``..``z5`` have reduced it to 2-D)
-  is drawn with the two sims side by side on a shared color scale. A 3-D field
-  whose ``z1`` (``y``) axis is not pinned via ``z1`` defaults to its midpoint
-  coordinate. A quantity with more spatial dimensions than that default can
-  reduce to two (e.g. a full distribution function) is still ranked, but
-  skipped when auto-filling ``num_plots``; naming it in ``must_include``
-  instead raises, pointing at the ``z2``..``z5`` selectors it still needs.
+  is drawn with the two sims side by side on a shared color scale. Any axis
+  left unpinned by ``z0``..``z5`` beyond the 2 ``plot`` can draw is pinned
+  automatically: at the point where the two sims differ most (by relative
+  difference), the axes along which that difference itself changes fastest
+  (a normalized, 2nd-order finite-difference estimate) are kept, and every
+  other unpinned axis is fixed at its own index there -- so a 3-D, 4-D, 5-D,
+  or 6-D quantity is always plottable with no selectors at all, picking
+  whichever cross-section is most informative for that specific pair of
+  sims rather than an arbitrary fixed coordinate.
 
   ``diff`` additionally plots ``baseline - candidate``: one more
   overlay-adjacent panel per component for a dynvector/1-D field, or one
@@ -783,13 +831,12 @@ def sims(
     simulation subdirectory shared by ``path0`` and ``path1``.
 
   Raises:
-    ValueError: a ``must_include`` quantity is missing from either sim, has
-      too many spatial dimensions to plot without further ``z2``..``z5``
-      selectors, two compared files are structurally incompatible (block
-      count or array shape mismatch), ``labels`` is not exactly two
-      comma-separated, non-empty labels, ``pdf_name`` was given together
-      with ``file_per_fig``, or (``batch`` only) ``path0`` and ``path1``
-      share no simulation subdirectory.
+    ValueError: a ``must_include`` quantity is missing from either sim, two
+      compared files are structurally incompatible (block count or array
+      shape mismatch), ``labels`` is not exactly two comma-separated,
+      non-empty labels, ``pdf_name`` was given together with
+      ``file_per_fig``, or (``batch`` only) ``path0`` and ``path1`` share no
+      simulation subdirectory.
   """
   if pdf_name is not None and file_per_fig:
     raise ValueError("pdf_name cannot be combined with file_per_fig")
