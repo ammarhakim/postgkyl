@@ -1,0 +1,20 @@
+The neccisary changes for this branch were pushed to gkeyll on branch main, so ensure that this branch is ready to merge with postgkeyll. CI was failing, reporting low pytest --cov coverage (needs to be >99%) 
+
+Release wheels failed to build
+
+Documentation building failed
+/tmp/tmpnmbfkp3m.build-temp/src/postgkyl/gpython/csrc/_gpythonmodule.o
+      src/postgkyl/gpython/csrc/_gpythonmodule.c:28:10: fatal error: gkyl_gpython_core.h: No such file or directory
+         28 | #include <gkyl_gpython_core.h>
+            |          ^~~~~~~~~~~~~~~~~~~~~
+      compilation terminated.
+      error: Command '['gcc', '-fno-strict-overflow', '-Wsign-compare', '-DNDEBUG', '-g', '-O3', '-Wall', '-fPIC', '-I/home/runner/work/postgkyl/postgkyl/gkeyll/core/zero', '-I/tmp/pip-build-env-f5nuj6mq/overlay/lib/python3.12/site-packages/numpy/_core/include', '-I/opt/hostedtoolcache/Python/3.12.15/x64/include/python3.12', '-c', 'src/postgkyl/gpython/csrc/_gpythonmodule.c', '-o', '/tmp/tmpnmbfkp3m.build-temp/src/postgkyl/gpython/csrc/_gpythonmodule.o']' returned non-zero exit status 1.
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building editable for postgkyl
+error: failed-wheel-build-for-install
+
+× Failed to build installable wheels for some pyproject.toml based projects
+╰─> postgkyl
+Failed to build postgkyl
