@@ -4,7 +4,8 @@ Finds the output quantities two simulation runs have in common, ranks them
 by how much they differ (:func:`postgkyl.numerics.max_abs_rel_diff`), and
 plots the most-different ones (plus any the caller always wants) baseline
 overlaid on candidate for 1-D/dynvector data, or side by side for 2-D
-(including a ``select()``-ed slice of 3-D+ data). Shares a home with
+(including a ``select()``-ed slice of 3-D+ data), optionally also plotting
+``sim0 - sim1`` alongside them via ``diff``. Shares a home with
 :mod:`postgkyl.diagnostics.discovery` -- like it, this performs no equation-
 specific physics and belongs to no model family -- rather than under
 ``gk``/``vm``/``pkpm``/``mom``. By default every figure is collected into one
@@ -21,6 +22,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import numpy as np
 
 from postgkyl import io
 from postgkyl.gdata.load import load
@@ -277,8 +279,8 @@ def _save_or_collect(fig, out_path: str | None, pdf: PdfPages | None) -> None:
 
 def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
                    frame: int | None, zs: tuple, labels: list[str],
-                   title: str, out_path: str | None,
-                   pdf: PdfPages | None) -> None:
+                   title: str, out_path: str | None, pdf: PdfPages | None,
+                   diff: bool = False) -> None:
   blocks0 = _load_quantity(path0, stem0, frame)
   blocks1 = _load_quantity(path1, stem1, frame)
   num_blocks = len(blocks0)
@@ -296,17 +298,65 @@ def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
       if out_path is not None:
         block_path = f"{os.path.splitext(out_path)[0]}_b{block_idx}" \
             f"{os.path.splitext(out_path)[1]}"
-      _plot_one_block(data0, data1, zs, labels, block_title, block_path, pdf)
+      _plot_one_block(data0, data1, zs, labels, block_title, block_path, pdf,
+                      diff=diff)
     return
 
-  _plot_one_block(blocks0[0], blocks1[0], zs, labels, title, out_path, pdf)
+  _plot_one_block(blocks0[0], blocks1[0], zs, labels, title, out_path, pdf,
+                  diff=diff)
+
+
+def _diff_panel_zbounds(
+    data0, data1, diff_data) -> tuple[dict[int, float], dict[int, float]]:
+  """``zmin``/``zmax`` dicts for the combined ``plot(data0, data1, diff_data,
+  ...)`` call: panels ``0..num_comps-1`` (baseline) and
+  ``num_comps..2*num_comps-1`` (candidate) share one color scale per
+  component; panels ``2*num_comps..3*num_comps-1`` (the diff) get their own
+  independent scale instead -- a difference is usually much smaller in
+  magnitude than the original quantity, so sharing the scale would make it
+  look flat. Returned as complete dicts covering every panel, since
+  ``plot()``'s own auto shared-scale fallback is keyed only by component (not
+  by panel) and would otherwise let the diff's range leak into the
+  baseline/candidate scale. A degenerate (all-NaN or constant) component is
+  simply absent from the dict, deferring to Matplotlib's own default."""
+  num_comps = data0.num_comps
+  zmin: dict[int, float] = {}
+  zmax: dict[int, float] = {}
+  for comp in range(num_comps):
+    shared = np.concatenate(
+        [data0.values[..., comp].ravel(), data1.values[..., comp].ravel()])
+    shared = shared[np.isfinite(shared)]
+    if shared.size and shared.min() < shared.max():
+      for panel in (comp, num_comps + comp):
+        zmin[panel] = float(shared.min())
+        zmax[panel] = float(shared.max())
+    diff_vals = diff_data.values[..., comp].ravel()
+    diff_vals = diff_vals[np.isfinite(diff_vals)]
+    if diff_vals.size and diff_vals.min() < diff_vals.max():
+      panel = 2 * num_comps + comp
+      zmin[panel] = float(diff_vals.min())
+      zmax[panel] = float(diff_vals.max())
+  return zmin, zmax
 
 
 def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
-                    out_path: str | None, pdf: PdfPages | None) -> None:
+                    out_path: str | None, pdf: PdfPages | None,
+                    diff: bool = False) -> None:
   data0 = _sliced(_point_values(data0), zs)
   data1 = _sliced(_point_values(data1), zs)
+  # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
+  # coordinate match, but two independently-run sims' grids commonly agree
+  # only to ~1e-6 relative (platform/compiler floating-point noise) even
+  # when every other part of this module already treats them as the same
+  # quantity (ranking only ever compares .values shape, never grid
+  # closeness -- see _diff_quantity). Building the result directly from
+  # .values, the same way every other diagnostic in this codebase computes
+  # a derived dataset, skips that check; the shapes are already guaranteed
+  # equal by _diff_quantity before either dataset reaches this function.
+  diff_data = (data0._result(data0.grid, data0.values - data1.values)
+              if diff else None)
   saveas = out_path if pdf is None else None
+  num_comps = data0.num_comps
   # plot()'s explicit legend_labels are used verbatim on every component
   # subplot, with no added _cN suffix (a deliberate, documented contract
   # relied on elsewhere) -- so a multi-component quantity would otherwise
@@ -317,11 +367,27 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
   # label directly and let plot() derive "<label>_c<i>" on its own; for a
   # single component there is nothing to disambiguate, so pass legend_labels
   # explicitly instead, keeping today's plain, unsuffixed labels.
-  if data0.num_comps > 1:
+  if num_comps > 1:
     data0.label, data1.label = labels
     legend_kwargs = {}
   else:
     legend_kwargs = {"legend_labels": labels}
+  if diff_data is not None:
+    if num_comps > 1:
+      # plot()'s default-label path only ever appends "_c<i>" to the whole
+      # dataset's own label, giving every one of the diff's components the
+      # identical "<label0> - <label1>_c<i>" (the labels joined, THEN
+      # suffixed) instead of joining each component's own suffixed label
+      # ("<label0>_c<i> - <label1>_c<i>"). Splitting the diff into one
+      # single-component dataset per component via select(), each with its
+      # own explicit legend_labels entry, sidesteps that path entirely.
+      diff_pieces = [select(diff_data, comp=c) for c in range(num_comps)]
+      diff_piece_labels = [
+          f"{labels[0]}_c{c} - {labels[1]}_c{c}" for c in range(num_comps)
+      ]
+    else:
+      diff_pieces = [diff_data]
+      diff_piece_labels = [f"{labels[0]} - {labels[1]}"]
   # Both datasets carry no multiblock identity of their own (a single sim
   # directory's quantity, not one block of a decomposed one), so without a
   # shared target figure `plot` would treat them as two singleton families
@@ -330,24 +396,71 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
   # accumulating axes left over from an earlier quantity plotted in the
   # same process (e.g. an earlier call from the same `sims()` run).
   if data0.num_dims <= 1:
+    # A single combined call with all 3 datasets would NOT keep baseline and
+    # candidate overlaid -- each dataset would get its own axis block, since
+    # overlay_axes is all-or-nothing for the whole call. Reserving
+    # num_axes=2*num_comps with overlay_axes=True instead keeps baseline and
+    # candidate sharing block 0 while leaving block 1 free for a second,
+    # separate call to append the diff dataset right after -- 1-D line
+    # panels carry no colorbar, so (unlike the 2-D case below) a second call
+    # appending to the same figure is safe.
+    extra_axes_kwargs = ({"num_axes": 2 * num_comps, "overlay_axes": True}
+                         if diff_data is not None else {})
     fig = plot(data0,
               data1,
               figure=0,
               clear=True,
               title=title,
               no_show=True,
-              saveas=saveas,
+              saveas=(None if diff_data is not None else saveas),
+              **extra_axes_kwargs,
               **legend_kwargs)
+    if diff_data is not None:
+      fig = plot(*diff_pieces,
+                figure=0,
+                start_axes=num_comps,
+                num_axes=num_comps,
+                no_show=True,
+                saveas=saveas,
+                legend_labels=diff_piece_labels)
   else:
-    fig = plot(data0,
-              data1,
-              num_axes=2 * data0.num_comps,
-              figure=0,
-              clear=True,
-              title=title,
-              no_show=True,
-              saveas=saveas,
-              **legend_kwargs)
+    if diff_data is None:
+      fig = plot(data0,
+                data1,
+                num_axes=2 * num_comps,
+                figure=0,
+                clear=True,
+                title=title,
+                no_show=True,
+                saveas=saveas,
+                **legend_kwargs)
+    else:
+      # Unlike 1-D, a 2-D (pcolormesh) panel brings along its own colorbar
+      # axis, interleaved into the figure's axes list in a way a second,
+      # separate plot() call's start_axes arithmetic can't account for -- so
+      # this must be one single combined call with all 3 datasets instead.
+      # Each dataset is likewise split into its single-component pieces (see
+      # above), so every one of the 3*num_comps panels gets its own
+      # explicit, correctly-suffixed legend_labels entry.
+      base_pieces = [select(data0, comp=c) for c in range(num_comps)]
+      cand_pieces = [select(data1, comp=c) for c in range(num_comps)]
+      all_pieces = base_pieces + cand_pieces + diff_pieces
+      all_labels = ([f"{labels[0]}_c{c}" for c in range(num_comps)] +
+                   [f"{labels[1]}_c{c}" for c in range(num_comps)] +
+                   diff_piece_labels) if num_comps > 1 else (
+                       list(labels) + diff_piece_labels)
+      zmin, zmax = _diff_panel_zbounds(data0, data1, diff_data)
+      fig = plot(*all_pieces,
+                num_axes=3 * num_comps,
+                num_subplot_row=num_comps,
+                zmin=zmin,
+                zmax=zmax,
+                figure=0,
+                clear=True,
+                title=title,
+                no_show=True,
+                saveas=saveas,
+                legend_labels=all_labels)
   _save_or_collect(fig, out_path, pdf)
 
 
@@ -370,6 +483,7 @@ def _compare_one(
     frame: int | None,
     pdf: PdfPages | None = None,
     title_prefix: str = "",
+    diff: bool = False,
 ) -> CompareSimsReport:
   """One single-sim comparison -- the body ``sims()`` runs once directly, or
   once per shared subdirectory when ``batch=True``.
@@ -430,11 +544,11 @@ def _compare_one(
   # default (e.g. a full distribution function) is silently skipped when
   # only auto-filling, rather than crashing an otherwise-routine comparison.
   selected = list(dict.fromkeys(must_include))
-  for diff in compared:
+  for quantity_diff in compared:
     if len(selected) >= num_plots:
       break
-    if diff.quantity not in selected and diff.plottable:
-      selected.append(diff.quantity)
+    if quantity_diff.quantity not in selected and quantity_diff.plottable:
+      selected.append(quantity_diff.quantity)
 
   if pdf is None:
     os.makedirs(out_dir, exist_ok=True)
@@ -445,7 +559,8 @@ def _compare_one(
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
     _plot_quantity(path0, path1, stem0, stem1, common_frame, zs,
-                  resolved_labels, f"{title_prefix}{quantity}", out_path, pdf)
+                  resolved_labels, f"{title_prefix}{quantity}", out_path, pdf,
+                  diff=diff)
     plotted.append(quantity)
 
   return CompareSimsReport(
@@ -488,6 +603,7 @@ def _batch(
     format: str,
     frame: int | None,
     pdf: PdfPages | None = None,
+    diff: bool = False,
 ) -> dict[str, CompareSimsReport]:
   """``_compare_one`` on every simulation ``path0``/``path1`` share. ``pdf``,
   when given, is shared by every simulation's pages instead of each sim
@@ -513,6 +629,7 @@ def _batch(
           frame=frame,
           pdf=pdf,
           title_prefix=f"{name}: ",
+          diff=diff,
       )
       for name in common
   }
@@ -556,6 +673,7 @@ def sims(
     z5: str | None = None,
     format: str = "jpg",
     frame: int | None = None,
+    diff: bool = False,
 ) -> dict[str, CompareSimsReport]:
   """Compare two Gkeyll simulations' output and plot their biggest differences.
 
@@ -572,6 +690,14 @@ def sims(
   reduce to two (e.g. a full distribution function) is still ranked, but
   skipped when auto-filling ``num_plots``; naming it in ``must_include``
   instead raises, pointing at the ``z2``..``z5`` selectors it still needs.
+
+  ``diff`` additionally plots ``baseline - candidate``: one more
+  overlay-adjacent panel per component for a dynvector/1-D field, or one
+  more side-by-side panel per component (with its own independent color
+  scale, since a difference is usually much smaller than the original
+  quantity) for a 2-D field. Labeled ``"<label0> - <label1>"`` for a
+  single-component quantity, or ``"<label0>_c<i> - <label1>_c<i>"`` per
+  component for a multi-component one.
 
   By default, every plotted quantity is collected into one combined,
   PDF, whose path is ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
@@ -615,6 +741,8 @@ def sims(
     frame: Frame to compare for framed (per-timestep) quantities; defaults
       to the latest frame both sims wrote. Quantities with no frame index
       (dynvectors, single-snapshot fields) ignore this.
+    diff: Also plot ``baseline - candidate``, appended after the
+      baseline/candidate panel(s).
 
   Returns:
     A dict mapping each compared simulation's name to its
@@ -642,12 +770,12 @@ def sims(
                    num_plots=num_plots, must_include=must_include,
                    exclude=exclude, labels=resolved_labels, z0=z0, z1=z1,
                    z2=z2, z3=z3, z4=z4, z5=z5, format=format, frame=frame,
-                   pdf=pdf)
+                   pdf=pdf, diff=diff)
     report = _compare_one(path0, path1, out_dir=effective_out_dir,
                          num_plots=num_plots, must_include=must_include,
                          exclude=exclude, labels=resolved_labels, z0=z0,
                          z1=z1, z2=z2, z3=z3, z4=z4, z5=z5, format=format,
-                         frame=frame, pdf=pdf)
+                         frame=frame, pdf=pdf, diff=diff)
     return {os.path.basename(os.path.normpath(path0)): report}
 
   if not file_per_fig:

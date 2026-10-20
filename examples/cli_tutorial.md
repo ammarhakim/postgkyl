@@ -256,6 +256,20 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
     --file_per_fig --out_dir /tmp/compare_sims_tutorial
 ```
 
+`--diff` additionally plots `baseline - candidate`: one more
+overlay-adjacent panel per component for a dynvector, or one more
+side-by-side panel per component -- with its own independent color scale --
+for a 2-D field. Labeled `"<label0> - <label1>"` for a single-component
+quantity, or `"<label0>_c<i> - <label1>_c<i>"` per component for a
+multi-component one:
+
+```bash
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
+    --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
+    --must_include field_energy -l 'before,after' --diff \
+    --out_dir /tmp/compare_sims_tutorial
+```
+
 ## See also
 
 - `pgkyl --help` lists every registered command, grouped by section

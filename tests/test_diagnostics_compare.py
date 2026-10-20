@@ -279,6 +279,96 @@ class TestSimsDynvectorOnly:
           os.path.join(str(tmp_path / "figs"), f"{quantity}.png"))
 
 
+class TestSimsDiff:
+  """``diff`` additionally plots ``baseline - candidate`` for 1-D/dynvector
+  data: one more panel, appended after the baseline/candidate overlay
+  panel(s), labeled with the two labels joined by ``" - "``."""
+
+  def test_single_component_diff_adds_third_line_with_diff_label(
+      self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", energy_scale=1.5)
+    _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["field_energy"], num_plots=1,
+                    labels="before,after", file_per_fig=True, diff=True))
+    fig = plt.gcf()
+    assert len(fig.axes) == 2
+    lines = [l.get_label() for ax in fig.axes for l in ax.get_lines()]
+    assert lines == ["before", "after", "before - after"]
+
+  def test_diff_line_values_are_the_elementwise_difference(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", energy_scale=1.5)
+    _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["field_energy"], num_plots=1,
+                    labels="before,after", file_per_fig=True, diff=True))
+    fig = plt.gcf()
+    lines_by_label = {
+        l.get_label(): l
+        for ax in fig.axes for l in ax.get_lines()
+    }
+    before = lines_by_label["before"].get_ydata()
+    after = lines_by_label["after"].get_ydata()
+    diff = lines_by_label["before - after"].get_ydata()
+    np.testing.assert_allclose(diff, before - after)
+
+  def test_multi_component_diff_adds_one_diff_panel_per_component(
+      self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["elc_integrated_moms"], num_plots=1,
+                    labels="before,after", file_per_fig=True, diff=True))
+    fig = plt.gcf()
+    assert len(fig.axes) == 6  # 3 overlay panels + 3 diff panels
+    lines = [l.get_label() for ax in fig.axes for l in ax.get_lines()]
+    assert lines == [
+        "before_c0", "after_c0", "before_c1", "after_c1", "before_c2",
+        "after_c2", "before_c0 - after_c0", "before_c1 - after_c1",
+        "before_c2 - after_c2"
+    ]
+
+  def test_diff_false_matches_omitting_diff(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report_omitted = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs1"),
+                    must_include=["field_energy"], num_plots=1,
+                    labels="before,after", file_per_fig=True))
+    report_explicit = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs2"),
+                    must_include=["field_energy"], num_plots=1,
+                    labels="before,after", file_per_fig=True, diff=False))
+    assert report_omitted.plotted == report_explicit.plotted
+    fig = plt.gcf()
+    assert len(fig.axes) == 1
+    lines = [l.get_label() for ax in fig.axes for l in ax.get_lines()]
+    assert lines == ["before", "after"]
+
+  def test_multiblock_diff_adds_one_diff_panel_per_block(self, tmp_path):
+    path0 = str(tmp_path / "baseline")
+    path1 = str(tmp_path / "candidate")
+    os.makedirs(path0, exist_ok=True)
+    os.makedirs(path1, exist_ok=True)
+    time = np.linspace(0.0, 1.0, 4)
+    for path, scale in ((path0, 1.0), (path1, 1.2)):
+      for block in range(3):
+        _write_dynvec(path, f"sim_b{block}", "field_energy", time,
+                     (np.linspace(1.0, 2.0, 4) * scale * (block + 1))[:, None])
+    report = _only(
+        compare.sims(path0, path1, num_plots=1, out_dir=str(tmp_path / "out"),
+                    diff=True))
+    assert report.plotted == ("field_energy",)
+    pdf_path = os.path.join(str(tmp_path / "out"),
+                            "postgkyl_compare_sims.pdf")
+    # Title page + one page per block (3 blocks) -- diff adds a panel WITHIN
+    # each block's page, not additional pages.
+    assert _pdf_page_count(pdf_path) == 1 + 3
+
+
 class TestSimsMultiblockDynvector:
 
   def _multiblock_sim(self, tmp_path, subdir, scale=1.0, num_blocks=3):
@@ -406,6 +496,94 @@ class TestSimsField:
                             "postgkyl_compare_sims.pdf")
     # Title page + one page per block (3 blocks), no per-quantity image files.
     assert _pdf_page_count(pdf_path) == 1 + 3
+
+
+@needs_gkeyll
+class TestSimsDiffField:
+  """``diff`` for a 2-D field: one more side-by-side panel, with its own
+  independent color scale, appended after the baseline/candidate panels."""
+
+  def _field_sim(self, tmp_path, subdir, offset=0.0):
+    path = str(tmp_path / subdir)
+    os.makedirs(path, exist_ok=True)
+    rng = np.random.default_rng(0)
+    values = rng.standard_normal((4, 4, 4)) + offset
+    _write_field(path, "sim", "field", [4, 4], values, frame=0)
+    return path
+
+  def _multiblock_field_sim(self, tmp_path, subdir, num_blocks=3, offset=0.0):
+    path = str(tmp_path / subdir)
+    os.makedirs(path, exist_ok=True)
+    rng = np.random.default_rng(0)
+    for block in range(num_blocks):
+      values = rng.standard_normal((4, 4, 4)) + offset
+      _write_field(path, f"sim_b{block}", "field", [4, 4], values, frame=0)
+    return path
+
+  def _multicomp_field_sim(self, tmp_path, subdir, offset=0.0):
+    """A 2-physical-component field: 2 interleaved p1 serendipity fields,
+    each contributing 4 basis coefficients per cell (8 total)."""
+    path = str(tmp_path / subdir)
+    os.makedirs(path, exist_ok=True)
+    rng = np.random.default_rng(0)
+    nc_per_field = generate_test_data.num_comps("serendipity", 2, 1)
+    values = rng.standard_normal((4, 4, 2 * nc_per_field)) + offset
+    _write_field(path, "sim", "field", [4, 4], values, frame=0)
+    return path
+
+  @staticmethod
+  def _data_axes(fig):
+    """The figure's pcolormesh data panels, excluding the narrow (fixed 3%
+    width) colorbar axes ``make_axes_locatable`` appends beside each one --
+    filtering on ``.collections`` alone doesn't distinguish them, since a
+    colorbar axis has its own ``.collections`` entry too."""
+    return [ax for ax in fig.axes if ax.get_position().width > 0.05]
+
+  def test_2d_diff_adds_third_panel_with_independent_scale(self, tmp_path):
+    path0 = self._field_sim(tmp_path, "baseline")
+    path1 = self._field_sim(tmp_path, "candidate", offset=0.5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field"], labels="before,after",
+                    file_per_fig=True, diff=True))
+    assert report.plotted == ("field",)
+    fig = plt.gcf()
+    data_axes = self._data_axes(fig)
+    assert len(data_axes) == 3
+    clims = [ax.collections[0].get_clim() for ax in data_axes]
+    assert clims[0] == clims[1]
+    assert clims[2] != clims[0]
+
+  def test_multiblock_field_diff_contributes_one_diff_panel_per_block(
+      self, tmp_path):
+    path0 = self._multiblock_field_sim(tmp_path, "baseline")
+    path1 = self._multiblock_field_sim(tmp_path, "candidate", offset=0.5)
+    report = _only(
+        compare.sims(path0, path1, num_plots=1, must_include=["field"],
+                    out_dir=str(tmp_path / "out"), diff=True))
+    assert report.plotted == ("field",)
+    pdf_path = os.path.join(str(tmp_path / "out"),
+                            "postgkyl_compare_sims.pdf")
+    # Title page + one page per block (3 blocks) -- diff adds a panel WITHIN
+    # each block's page, not additional pages.
+    assert _pdf_page_count(pdf_path) == 1 + 3
+
+  def test_multi_component_2d_diff_gets_per_component_labels(self, tmp_path):
+    path0 = self._multicomp_field_sim(tmp_path, "baseline")
+    path1 = self._multicomp_field_sim(tmp_path, "candidate", offset=0.5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    num_plots=1, must_include=["field"], labels="before,after",
+                    file_per_fig=True, diff=True))
+    assert report.plotted == ("field",)
+    fig = plt.gcf()
+    data_axes = self._data_axes(fig)
+    assert len(data_axes) == 6  # 2 components x (baseline, candidate, diff)
+    texts = [ax.texts[0].get_text() for ax in data_axes]
+    assert texts == [
+        "before_c0", "before_c1", "after_c0", "after_c1",
+        "before_c0 - after_c0", "before_c1 - after_c1"
+    ]
 
 
 class TestSimsBatch:
