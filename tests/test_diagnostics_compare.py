@@ -169,7 +169,7 @@ class TestSimsDynvectorOnly:
     assert report.skipped == {}
     for quantity in report.plotted:
       assert os.path.isfile(
-          os.path.join(str(tmp_path / "figs"), f"{quantity}.png"))
+          os.path.join(str(tmp_path / "figs"), f"{quantity}.jpg"))
 
   def test_ranks_larger_difference_first(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
@@ -273,10 +273,10 @@ class TestSimsDynvectorOnly:
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    format="jpg", file_per_fig=True))
+                    format="png", file_per_fig=True))
     for quantity in report.plotted:
       assert os.path.isfile(
-          os.path.join(str(tmp_path / "figs"), f"{quantity}.jpg"))
+          os.path.join(str(tmp_path / "figs"), f"{quantity}.png"))
 
 
 class TestSimsMultiblockDynvector:
@@ -297,10 +297,10 @@ class TestSimsMultiblockDynvector:
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                     num_plots=1, file_per_fig=True))
     assert report.plotted == ("field_energy",)
-    pngs = sorted(
-        f for f in os.listdir(str(tmp_path / "figs")) if f.endswith(".png"))
-    assert pngs == [
-        "field_energy_b0.png", "field_energy_b1.png", "field_energy_b2.png"
+    images = sorted(
+        f for f in os.listdir(str(tmp_path / "figs")) if f.endswith(".jpg"))
+    assert images == [
+        "field_energy_b0.jpg", "field_energy_b1.jpg", "field_energy_b2.jpg"
     ]
 
 
@@ -322,7 +322,7 @@ class TestSimsField:
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                     num_plots=1, must_include=["field"], file_per_fig=True))
     assert report.plotted == ("field",)
-    assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
+    assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.jpg"))
 
   def _field_sim_3d(self, tmp_path, subdir, offset=0.0):
     path = str(tmp_path / subdir)
@@ -340,7 +340,7 @@ class TestSimsField:
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
                     num_plots=1, must_include=["field"], file_per_fig=True))
     assert report.plotted == ("field",)
-    assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
+    assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.jpg"))
 
   def test_3d_field_honors_explicit_z1(self, tmp_path):
     path0 = self._field_sim_3d(tmp_path, "baseline")
@@ -469,7 +469,7 @@ class TestOutDirDefault:
     report = _only(compare.sims(path0, path1, file_per_fig=True))
     expected = os.path.join(str(tmp_path), "postgkyl_compare_sims")
     assert report.out_dir == expected
-    assert os.path.isfile(os.path.join(expected, "field_energy.png"))
+    assert os.path.isfile(os.path.join(expected, "field_energy.jpg"))
 
   def test_out_dir_given_is_honored(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
@@ -525,7 +525,7 @@ class TestCombinedPdf:
   def test_format_is_ignored(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    compare.sims(path0, path1, format="jpg", out_dir=str(tmp_path / "out"))
+    compare.sims(path0, path1, format="png", out_dir=str(tmp_path / "out"))
     assert os.path.isfile(
         os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
 
@@ -579,7 +579,7 @@ class TestFilePerFig:
                     file_per_fig=True))
     for quantity in report.plotted:
       assert os.path.isfile(
-          os.path.join(str(tmp_path / "figs"), f"{quantity}.png"))
+          os.path.join(str(tmp_path / "figs"), f"{quantity}.jpg"))
     assert not os.path.isfile(
         os.path.join(str(tmp_path), "postgkyl_compare_sims.pdf"))
     assert not os.path.isfile(

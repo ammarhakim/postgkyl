@@ -554,7 +554,7 @@ def sims(
     z3: str | None = None,
     z4: str | None = None,
     z5: str | None = None,
-    format: str = "png",
+    format: str = "jpg",
     frame: int | None = None,
 ) -> dict[str, CompareSimsReport]:
   """Compare two Gkeyll simulations' output and plot their biggest differences.
@@ -610,7 +610,7 @@ def sims(
     z3: Selector for coordinate direction 3.
     z4: Selector for coordinate direction 4.
     z5: Selector for coordinate direction 5.
-    format: Output image file extension (e.g. ``"png"``, ``"jpg"``,
+    format: Output image file extension (e.g. ``"jpg"``, ``"png"``,
       ``"pdf"``, ``"svg"``) if ``file_per_fig`` is set.
     frame: Frame to compare for framed (per-timestep) quantities; defaults
       to the latest frame both sims wrote. Quantities with no frame index
