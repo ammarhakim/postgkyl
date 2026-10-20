@@ -6,7 +6,7 @@ import numpy as np
 
 
 def max_abs_rel_diff(values0: np.ndarray,
-                      values: np.ndarray) -> tuple[float, float]:
+                     values: np.ndarray) -> tuple[float, float]:
   """The largest absolute and relative element-wise differences.
 
   Mirrors the combined-tolerance metric Gkeyll's regression runner computes

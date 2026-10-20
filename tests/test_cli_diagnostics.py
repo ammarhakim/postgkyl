@@ -33,8 +33,9 @@ def _invoke(name, datasets, **kwargs):
 
 
 def test_diagnostics_follow_gkeyll_model_families():
-  assert diagnostics.__all__ == ["gk", "vm", "mom", "pkpm", "discovery",
-                                 "compare"]
+  assert diagnostics.__all__ == [
+      "gk", "vm", "mom", "pkpm", "discovery", "compare"
+  ]
   assert diagnostics.mom.five_moment.__name__.endswith(".mom.five_moment")
   assert diagnostics.mom.enstrophy.__name__.endswith(".mom.enstrophy")
   assert diagnostics.vm.kinetic.__name__.endswith(".vm.kinetic")

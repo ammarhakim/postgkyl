@@ -128,7 +128,7 @@ def _default_labels(path0: str, path1: str) -> list[str]:
   parts1 = Path(os.path.normpath(path1)).parts
   depth = 1
   while (depth < len(parts0) and depth < len(parts1)
-        and parts0[-depth:] == parts1[-depth:]):
+         and parts0[-depth:] == parts1[-depth:]):
     depth += 1
   return [os.path.join(*parts0[-depth:]), os.path.join(*parts1[-depth:])]
 
@@ -193,9 +193,8 @@ def _latest_common_frame(path0: str, stem0: str, path1: str,
   if not common and not frames0 and not frames1:
     return None
   if not common:
-    raise ValueError(
-        f"'{stem0}' has no frame in common between the two sims "
-        f"(found {sorted(frames0)} vs {sorted(frames1)})")
+    raise ValueError(f"'{stem0}' has no frame in common between the two sims "
+                     f"(found {sorted(frames0)} vs {sorted(frames1)})")
   return max(common)
 
 
@@ -302,8 +301,7 @@ def _reduced(data0, data1, zs: tuple):
   num_dims = min(data0.num_dims, data1.num_dims)
   explicit = {
       f"z{d}": z
-      for d, z in enumerate(zs)
-      if z is not None and d < num_dims
+      for d, z in enumerate(zs) if z is not None and d < num_dims
   }
   free_axes = [d for d in range(num_dims) if f"z{d}" not in explicit]
   auto = _dominant_axes(data0.values, data1.values, data0.grid, free_axes)
@@ -355,9 +353,16 @@ def _save_or_collect(fig, out_path: str | None, pdf: PdfPages | None) -> None:
     plt.close(fig)
 
 
-def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
-                   frame: int | None, zs: tuple, labels: list[str],
-                   title: str, out_path: str | None, pdf: PdfPages | None,
+def _plot_quantity(path0: str,
+                   path1: str,
+                   stem0: str,
+                   stem1: str,
+                   frame: int | None,
+                   zs: tuple,
+                   labels: list[str],
+                   title: str,
+                   out_path: str | None,
+                   pdf: PdfPages | None,
                    diff: bool = False) -> None:
   blocks0 = _load_quantity(path0, stem0, frame)
   blocks1 = _load_quantity(path1, stem1, frame)
@@ -376,16 +381,28 @@ def _plot_quantity(path0: str, path1: str, stem0: str, stem1: str,
       if out_path is not None:
         block_path = f"{os.path.splitext(out_path)[0]}_b{block_idx}" \
             f"{os.path.splitext(out_path)[1]}"
-      _plot_one_block(data0, data1, zs, labels, block_title, block_path, pdf,
+      _plot_one_block(data0,
+                      data1,
+                      zs,
+                      labels,
+                      block_title,
+                      block_path,
+                      pdf,
                       diff=diff)
     return
 
-  _plot_one_block(blocks0[0], blocks1[0], zs, labels, title, out_path, pdf,
+  _plot_one_block(blocks0[0],
+                  blocks1[0],
+                  zs,
+                  labels,
+                  title,
+                  out_path,
+                  pdf,
                   diff=diff)
 
 
-def _diff_panel_zbounds(
-    data0, data1, diff_data) -> tuple[dict[int, float], dict[int, float]]:
+def _diff_panel_zbounds(data0, data1,
+                        diff_data) -> tuple[dict[int, float], dict[int, float]]:
   """``zmin``/``zmax`` dicts for the combined ``plot(data0, data1, diff_data,
   ...)`` call: panels ``0..num_comps-1`` (baseline) and
   ``num_comps..2*num_comps-1`` (candidate) share one color scale per
@@ -417,8 +434,13 @@ def _diff_panel_zbounds(
   return zmin, zmax
 
 
-def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
-                    out_path: str | None, pdf: PdfPages | None,
+def _plot_one_block(data0,
+                    data1,
+                    zs: tuple,
+                    labels: list[str],
+                    title: str,
+                    out_path: str | None,
+                    pdf: PdfPages | None,
                     diff: bool = False) -> None:
   data0, data1 = _reduced(_point_values(data0), _point_values(data1), zs)
   # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
@@ -430,8 +452,8 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
   # .values, the same way every other diagnostic in this codebase computes
   # a derived dataset, skips that check; the shapes are already guaranteed
   # equal by _diff_quantity before either dataset reaches this function.
-  diff_data = (data0._result(data0.grid, data0.values - data1.values)
-              if diff else None)
+  diff_data = (data0._result(data0.grid, data0.values -
+                             data1.values) if diff else None)
   saveas = out_path if pdf is None else None
   num_comps = data0.num_comps
   # plot()'s explicit legend_labels are used verbatim on every component
@@ -481,36 +503,38 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
     # separate call to append the diff dataset right after -- 1-D line
     # panels carry no colorbar, so (unlike the 2-D case below) a second call
     # appending to the same figure is safe.
-    extra_axes_kwargs = ({"num_axes": 2 * num_comps, "overlay_axes": True}
-                         if diff_data is not None else {})
+    extra_axes_kwargs = ({
+        "num_axes": 2 * num_comps,
+        "overlay_axes": True
+    } if diff_data is not None else {})
     fig = plot(data0,
-              data1,
-              figure=0,
-              clear=True,
-              title=title,
-              no_show=True,
-              saveas=(None if diff_data is not None else saveas),
-              **extra_axes_kwargs,
-              **legend_kwargs)
+               data1,
+               figure=0,
+               clear=True,
+               title=title,
+               no_show=True,
+               saveas=(None if diff_data is not None else saveas),
+               **extra_axes_kwargs,
+               **legend_kwargs)
     if diff_data is not None:
       fig = plot(*diff_pieces,
-                figure=0,
-                start_axes=num_comps,
-                num_axes=num_comps,
-                no_show=True,
-                saveas=saveas,
-                legend_labels=diff_piece_labels)
+                 figure=0,
+                 start_axes=num_comps,
+                 num_axes=num_comps,
+                 no_show=True,
+                 saveas=saveas,
+                 legend_labels=diff_piece_labels)
   else:
     if diff_data is None:
       fig = plot(data0,
-                data1,
-                num_axes=2 * num_comps,
-                figure=0,
-                clear=True,
-                title=title,
-                no_show=True,
-                saveas=saveas,
-                **legend_kwargs)
+                 data1,
+                 num_axes=2 * num_comps,
+                 figure=0,
+                 clear=True,
+                 title=title,
+                 no_show=True,
+                 saveas=saveas,
+                 **legend_kwargs)
     else:
       # Unlike 1-D, a 2-D (pcolormesh) panel brings along its own colorbar
       # axis, interleaved into the figure's axes list in a way a second,
@@ -523,21 +547,21 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
       cand_pieces = [select(data1, comp=c) for c in range(num_comps)]
       all_pieces = base_pieces + cand_pieces + diff_pieces
       all_labels = ([f"{labels[0]}_c{c}" for c in range(num_comps)] +
-                   [f"{labels[1]}_c{c}" for c in range(num_comps)] +
-                   diff_piece_labels) if num_comps > 1 else (
-                       list(labels) + diff_piece_labels)
+                    [f"{labels[1]}_c{c}" for c in range(num_comps)] +
+                    diff_piece_labels) if num_comps > 1 else (list(labels) +
+                                                              diff_piece_labels)
       zmin, zmax = _diff_panel_zbounds(data0, data1, diff_data)
       fig = plot(*all_pieces,
-                num_axes=3 * num_comps,
-                num_subplot_row=num_comps,
-                zmin=zmin,
-                zmax=zmax,
-                figure=0,
-                clear=True,
-                title=title,
-                no_show=True,
-                saveas=saveas,
-                legend_labels=all_labels)
+                 num_axes=3 * num_comps,
+                 num_subplot_row=num_comps,
+                 zmin=zmin,
+                 zmax=zmax,
+                 figure=0,
+                 clear=True,
+                 title=title,
+                 no_show=True,
+                 saveas=saveas,
+                 legend_labels=all_labels)
   _save_or_collect(fig, out_path, pdf)
 
 
@@ -590,9 +614,8 @@ def _compare_one(
       if quantity not in quantities0 or quantity not in quantities1
   ]
   if missing_must_include:
-    raise ValueError(
-        "must_include quantity(s) not present in both sims: "
-        f"{', '.join(sorted(missing_must_include))}")
+    raise ValueError("must_include quantity(s) not present in both sims: "
+                     f"{', '.join(sorted(missing_must_include))}")
 
   compared: list[QuantityDiff] = []
   skipped: dict[str, str] = {}
@@ -632,9 +655,17 @@ def _compare_one(
     common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
-    _plot_quantity(path0, path1, stem0, stem1, common_frame, zs,
-                  resolved_labels, f"{title_prefix}{quantity}", out_path, pdf,
-                  diff=diff)
+    _plot_quantity(path0,
+                   path1,
+                   stem0,
+                   stem1,
+                   common_frame,
+                   zs,
+                   resolved_labels,
+                   f"{title_prefix}{quantity}",
+                   out_path,
+                   pdf,
+                   diff=diff)
     plotted.append(quantity)
 
   return CompareSimsReport(
@@ -686,19 +717,26 @@ def _batch(
   replaces the basenames of ``path0``/``path1`` as the shared pair of legend
   labels every compared simulation uses."""
   common = _shared_subdirs(path0, path1)
-  batch_labels = labels or [os.path.basename(os.path.normpath(path0)),
-                           os.path.basename(os.path.normpath(path1))]
+  batch_labels = labels or [
+      os.path.basename(os.path.normpath(path0)),
+      os.path.basename(os.path.normpath(path1))
+  ]
   return {
-      name: _compare_one(
+      name:
+      _compare_one(
           os.path.join(path0, name),
           os.path.join(path1, name),
-          out_dir=out_dir if pdf is not None else os.path.join(
-              out_dir, name),
+          out_dir=out_dir if pdf is not None else os.path.join(out_dir, name),
           num_plots=num_plots,
           must_include=must_include,
           exclude=exclude,
           labels=batch_labels,
-          z0=z0, z1=z1, z2=z2, z3=z3, z4=z4, z5=z5,
+          z0=z0,
+          z1=z1,
+          z2=z2,
+          z3=z3,
+          z4=z4,
+          z5=z5,
           format=format,
           frame=frame,
           pdf=pdf,
@@ -709,7 +747,10 @@ def _batch(
   }
 
 
-def _title_page_figure(path0: str, path1: str, *, batch: bool,
+def _title_page_figure(path0: str,
+                       path1: str,
+                       *,
+                       batch: bool,
                        sim_names: list[str] | None = None):
   """A plain text-only title page naming what a combined-PDF comparison
   covers, so the PDF is self-contained without its filename or the command
@@ -717,13 +758,21 @@ def _title_page_figure(path0: str, path1: str, *, batch: bool,
   fig = plt.figure(figsize=(8.5, 11))
   lines = ["Gkeyll simulation comparison", ""]
   if batch:
-    lines += [f"Baseline directory: {path0}", f"Candidate directory: {path1}",
-              "", f"Simulations compared ({len(sim_names or [])}):"]
+    lines += [
+        f"Baseline directory: {path0}", f"Candidate directory: {path1}", "",
+        f"Simulations compared ({len(sim_names or [])}):"
+    ]
     lines += [f"  - {name}" for name in sim_names or []]
   else:
     lines += [f"Baseline: {path0}", f"Candidate: {path1}"]
-  fig.text(0.1, 0.9, "\n".join(lines), ha="left", va="top", fontsize=12,
-           family="monospace", wrap=True)
+  fig.text(0.1,
+           0.9,
+           "\n".join(lines),
+           ha="left",
+           va="top",
+           fontsize=12,
+           family="monospace",
+           wrap=True)
   return fig
 
 
@@ -756,7 +805,7 @@ def sims(
   :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative difference
   first), and plots ``num_plots`` of them -- always including every
   ``must_include`` quantity. Use ``exclude`` to skip specific quantities or
-  prefixes. 
+  prefixes.
 
   A 2-D field (or a 3-D+ field once ``z0``..``z5`` have reduced it to 2-D)
   is drawn with the two sims side by side on a shared color scale. Any axis
@@ -843,18 +892,42 @@ def sims(
   resolved_labels = _parse_label_pair(labels)
 
   def _run(effective_out_dir: str,
-          pdf: PdfPages | None) -> dict[str, CompareSimsReport]:
+           pdf: PdfPages | None) -> dict[str, CompareSimsReport]:
     if batch:
-      return _batch(path0, path1, out_dir=effective_out_dir,
-                   num_plots=num_plots, must_include=must_include,
-                   exclude=exclude, labels=resolved_labels, z0=z0, z1=z1,
-                   z2=z2, z3=z3, z4=z4, z5=z5, format=format, frame=frame,
-                   pdf=pdf, diff=diff)
-    report = _compare_one(path0, path1, out_dir=effective_out_dir,
-                         num_plots=num_plots, must_include=must_include,
-                         exclude=exclude, labels=resolved_labels, z0=z0,
-                         z1=z1, z2=z2, z3=z3, z4=z4, z5=z5, format=format,
-                         frame=frame, pdf=pdf, diff=diff)
+      return _batch(path0,
+                    path1,
+                    out_dir=effective_out_dir,
+                    num_plots=num_plots,
+                    must_include=must_include,
+                    exclude=exclude,
+                    labels=resolved_labels,
+                    z0=z0,
+                    z1=z1,
+                    z2=z2,
+                    z3=z3,
+                    z4=z4,
+                    z5=z5,
+                    format=format,
+                    frame=frame,
+                    pdf=pdf,
+                    diff=diff)
+    report = _compare_one(path0,
+                          path1,
+                          out_dir=effective_out_dir,
+                          num_plots=num_plots,
+                          must_include=must_include,
+                          exclude=exclude,
+                          labels=resolved_labels,
+                          z0=z0,
+                          z1=z1,
+                          z2=z2,
+                          z3=z3,
+                          z4=z4,
+                          z5=z5,
+                          format=format,
+                          frame=frame,
+                          pdf=pdf,
+                          diff=diff)
     return {os.path.basename(os.path.normpath(path0)): report}
 
   if not file_per_fig:
@@ -864,12 +937,11 @@ def sims(
     with PdfPages(pdf_path) as pdf:
       sim_names = _shared_subdirs(path0, path1) if batch else None
       pdf.savefig(
-          _title_page_figure(path0, path1, batch=batch,
-                             sim_names=sim_names))
+          _title_page_figure(path0, path1, batch=batch, sim_names=sim_names))
       return _ReportDict(_run(pdf_dir, pdf), verbose=verbose)
 
-  effective_out_dir = (out_dir if out_dir is not None else
-                      os.path.join(os.getcwd(), _DEFAULT_SUBDIR))
+  effective_out_dir = (out_dir if out_dir is not None else os.path.join(
+      os.getcwd(), _DEFAULT_SUBDIR))
   return _ReportDict(_run(effective_out_dir, None), verbose=verbose)
 
 

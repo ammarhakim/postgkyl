@@ -716,20 +716,21 @@ def _generate_compare_sims_fixtures(out_dir: Path) -> None:
   for sim, scale in (("baseline", 1.0), ("candidate", 1.2)):
     path = out_dir / "compare_sims" / sim / "toy_sim"
     path.mkdir(parents=True, exist_ok=True)
-    write_gkyl_dynvector(
-        path / "toy_sim-field_energy.gkyl", time,
-        (np.linspace(1.0, 2.0, 5) * scale)[:, None],
-        metadata={
-            "description": "Toy field-energy history for the compare_sims "
-                           "tutorial example.",
-        })
-    write_gkyl_dynvector(
-        path / "toy_sim-elc_integrated_moms.gkyl", time,
-        np.tile(np.linspace(1.0, 2.0, 5)[:, None], (1, 3)),
-        metadata={
-            "description": "Toy integrated moments, identical in both sims, "
-                           "for the compare_sims tutorial example.",
-        })
+    write_gkyl_dynvector(path / "toy_sim-field_energy.gkyl",
+                         time, (np.linspace(1.0, 2.0, 5) * scale)[:, None],
+                         metadata={
+                             "description":
+                             "Toy field-energy history for the compare_sims "
+                             "tutorial example.",
+                         })
+    write_gkyl_dynvector(path / "toy_sim-elc_integrated_moms.gkyl",
+                         time,
+                         np.tile(np.linspace(1.0, 2.0, 5)[:, None], (1, 3)),
+                         metadata={
+                             "description":
+                             "Toy integrated moments, identical in both sims, "
+                             "for the compare_sims tutorial example.",
+                         })
 
 
 def generate_all(out_dir: Path | str) -> None:
