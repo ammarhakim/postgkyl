@@ -302,3 +302,103 @@ def test_coulomb_species_order_is_preserved():
                   .5 * np.log1p(900 * np.pi**2 * 208 / 29),
                   rtol=2e-15,
                   atol=2e-15)
+
+
+@needs_vlasov
+@pytest.mark.parametrize("basis_type,ndim", [("hybrid", 2), ("serendipity", 0),
+                                             ("tensor", 4)])
+def test_spitzer_rejects_nonconfiguration_basis(basis_type, ndim):
+  with pytest.raises(ValueError, match="1..3D configuration basis"):
+    gpython.vlasov.spitzer_coll_freq(basis_type, ndim, 1, None, None, None,
+                                     **CONSTANTS)
+
+
+@needs_gk
+@pytest.mark.parametrize("cdim,vdim,order", [(2, 1, 1), (1, 2, 3), (3, 2, 2)])
+def test_gyrokinetic_rejects_unsupported_basis(cdim, vdim, order):
+  with pytest.raises(ValueError, match="unsupported|p1 only"):
+    gpython.gyrokinetic.mom_gyrokinetic(cdim,
+                                        vdim,
+                                        order,
+                                        None,
+                                        None, [], [], [],
+                                        mass=1.)
+
+
+@needs_vlasov
+@pytest.mark.parametrize("point_values", [False, True])
+def test_coulomb_rejects_vector_fields(point_values):
+  density, temperature, bmag, moms = collision_fields()
+  fields = [moms, density, temperature, temperature, bmag]
+  if point_values:
+    fields = [field.interpolate() for field in fields]
+  with pytest.raises(ValueError, match="scalar fields"):
+    coulomb_log(*fields, **CONSTANTS)
+
+
+@needs_vlasov
+def test_coulomb_rejects_quadrature_option_on_points():
+  density, temperature, bmag, _ = [
+      field.interpolate() for field in collision_fields()
+  ]
+  with pytest.raises(ValueError, match="num_quad applies only to modal"):
+    coulomb_log(density,
+                density,
+                temperature,
+                temperature,
+                bmag,
+                **CONSTANTS,
+                num_quad=4)
+
+
+@needs_vlasov
+@pytest.mark.parametrize("representation", ["nodal", "quad"])
+def test_spitzer_requires_modal_moments(representation):
+  _, _, bmag, moms = collision_fields()
+  with pytest.raises(ValueError, match="requires native modal data"):
+    spitzer_coll_freq(moms.represent(to=representation), moms, bmag,
+                      **CONSTANTS)
+
+
+@needs_gk
+@pytest.mark.parametrize("field", ["distribution", "bmag", "phi"])
+def test_gyrokinetic_rejects_vector_fields(field):
+  stem = "native_gk_1x2v_p1"
+  fields = dict(
+      zip(("distribution", "bmag", "phi"), [
+          pg.load(str(GEN / f"{stem}_{name}.gkyl"))
+          for name in ("f", "bmag", "phi")
+      ]))
+  data = fields[field]
+  fields[field] = data._result(
+      data.grid,
+      gpython.GkylArray.from_numpy(
+          np.tile(data.values, 2).reshape(data.native.size, -1)))
+  with pytest.raises(ValueError, match="scalar"):
+    mom_gyrokinetic(**fields, mass=2., moment="HamiltonianMoments")
+
+
+@needs_gk
+def test_gyrokinetic_rejects_shifted_configuration_grid():
+  stem = "native_gk_1x2v_p1"
+  f, b = [pg.load(str(GEN / f"{stem}_{name}.gkyl")) for name in ("f", "bmag")]
+  b = b._result([b.grid[0] + .1], b.native)
+  with pytest.raises(ValueError, match="configuration grid"):
+    mom_gyrokinetic(f, b, mass=2.)
+
+
+@needs_gk
+def test_gyrokinetic_rejects_mismatched_basis_orders():
+  f = pg.load(str(GEN / "native_gk_1x2v_p1_f.gkyl"))
+  b = pg.load(str(GEN / "native_gk_1x2v_p2_bmag.gkyl"))
+  with pytest.raises(ValueError,
+                     match="matching configuration and phase bases"):
+    mom_gyrokinetic(f, b, mass=2.)
+
+
+@needs_gk
+def test_gyrokinetic_rejects_incompatible_configuration_dimension():
+  f = pg.load(str(GEN / "native_gk_1x2v_p1_f.gkyl"))
+  b = pg.load(str(GEN / "native_gk_2x2v_p1_bmag.gkyl"))
+  with pytest.raises(ValueError, match="basis split disagrees with bmag"):
+    mom_gyrokinetic(f, b, mass=2.)
