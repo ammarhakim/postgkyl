@@ -209,8 +209,17 @@ does not.
 ```bash
 pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
     --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
-    --must_include field_energy --out_dir /tmp/compare_sims_tutorial
+    --must_include field_energy -l 'before,after' --out_dir /tmp/compare_sims_tutorial
 ```
+
+`-l`/`--labels` takes the two legend labels for `path0`/`path1` as one
+comma-separated string (there is no way to place it between the two paths
+the way `load`'s own `-l` sits right after its file, since `compare_sims` is
+a single chained command, not two). For a multi-component quantity (e.g.
+`elc_integrated_moms`'s three moments), each label gets a `_c<i>` suffix per
+component (`before_c0`, `before_c1`, ...) so every subplot stays
+distinguishable; a single-component quantity like `field_energy` keeps the
+plain label.
 
 `--z0`..`--z5` reduce a 3-D+ field the same way `select`'s selectors do; a
 3-D field left unpinned on `--z1` (`y`) defaults to its midpoint. `--batch`
@@ -225,19 +234,26 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline \
     --out_dir /tmp/compare_sims_batch_tutorial
 ```
 
-`--out_dir` is optional in every mode above; omitting it writes individual
-figures under `./postgkyl_compare_sims/` in the current directory.
-`--single_pdf` collects every figure into one combined, multi-page PDF
-instead (`--format` is then unused), with a title page naming the compared
-directories so the PDF is self-contained. Without `--out_dir`, the PDF is
-written directly in the current directory (not inside
-`postgkyl_compare_sims/`), as `postgkyl_compare_sims.pdf` unless
+By default every figure is collected into one combined, multi-page PDF, with
+a title page naming the compared directories so the PDF is self-contained
+(`--format` is then unused). `--out_dir` is optional; omitting it writes the
+PDF directly in the current directory as `postgkyl_compare_sims.pdf`, unless
 `--pdf_name` gives it another name:
 
 ```bash
 pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
     --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
-    --single_pdf --pdf_name toy_sim_comparison.pdf
+    --pdf_name toy_sim_comparison.pdf
+```
+
+`--file_per_fig` opts into individual image files instead (one per plotted
+quantity), ignoring `--pdf_name`. Without `--out_dir`, these go under
+`./postgkyl_compare_sims/` in the current directory:
+
+```bash
+pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_sim \
+    --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
+    --file_per_fig --out_dir /tmp/compare_sims_tutorial
 ```
 
 ## See also

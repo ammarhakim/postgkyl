@@ -20,6 +20,7 @@ import sys
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -99,6 +100,25 @@ class TestDefaultLabels:
                       os.path.join("candidate", "sim")]
 
 
+class TestParseLabelPair:
+
+  def test_none_passes_through(self):
+    assert compare._parse_label_pair(None) is None
+
+  def test_valid_pair_is_split_and_stripped(self):
+    assert compare._parse_label_pair("baseline,candidate") == [
+        "baseline", "candidate"
+    ]
+    assert compare._parse_label_pair(" baseline , candidate ") == [
+        "baseline", "candidate"
+    ]
+
+  @pytest.mark.parametrize("bad", ["onlyone", "a,b,c", "a,", ",b", ""])
+  def test_malformed_pair_raises(self, bad):
+    with pytest.raises(ValueError, match="exactly two comma-separated"):
+      compare._parse_label_pair(bad)
+
+
 class TestIsExcluded:
 
   def test_nothing_excluded_by_default(self):
@@ -142,7 +162,7 @@ class TestSimsDynvectorOnly:
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=5))
+                    num_plots=5, file_per_fig=True))
     assert set(report.plotted) == {"field_energy", "elc_integrated_moms"}
     assert report.only_in_0 == ()
     assert report.only_in_1 == ()
@@ -167,7 +187,7 @@ class TestSimsDynvectorOnly:
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=1))
+                    num_plots=1, file_per_fig=True))
     assert report.plotted == ("elc_integrated_moms",)
 
   def test_must_include_is_always_plotted(self, tmp_path):
@@ -175,7 +195,8 @@ class TestSimsDynvectorOnly:
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=1, must_include=["field_energy"]))
+                    num_plots=1, must_include=["field_energy"],
+                    file_per_fig=True))
     assert "field_energy" in report.plotted
     assert len(report.plotted) == 1
 
@@ -215,21 +236,44 @@ class TestSimsDynvectorOnly:
     assert "elc_integrated_moms" not in [d.quantity for d in report.compared]
 
   def test_custom_labels_used_in_legend(self, tmp_path):
-    # No assertion on rendered pixels; only that a custom label list doesn't
-    # raise and is accepted end-to-end.
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    labels=["before", "after"]))
+                    labels="before,after"))
     assert report.plotted
+
+  def test_single_component_label_has_no_suffix(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["field_energy"], num_plots=1,
+                    labels="before,after", file_per_fig=True))
+    fig = plt.gcf()
+    lines = [l.get_label() for ax in fig.axes for l in ax.get_lines()]
+    assert lines == ["before", "after"]
+
+  def test_multi_component_label_gets_per_component_suffix(self, tmp_path):
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    must_include=["elc_integrated_moms"], num_plots=1,
+                    labels="before,after", file_per_fig=True))
+    fig = plt.gcf()
+    lines = [l.get_label() for ax in fig.axes for l in ax.get_lines()]
+    assert lines == [
+        "before_c0", "after_c0", "before_c1", "after_c1", "before_c2",
+        "after_c2"
+    ]
 
   def test_format_controls_saved_extension(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    format="jpg"))
+                    format="jpg", file_per_fig=True))
     for quantity in report.plotted:
       assert os.path.isfile(
           os.path.join(str(tmp_path / "figs"), f"{quantity}.jpg"))
@@ -251,7 +295,7 @@ class TestSimsMultiblockDynvector:
     path1 = self._multiblock_sim(tmp_path, "candidate", scale=1.2)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=1))
+                    num_plots=1, file_per_fig=True))
     assert report.plotted == ("field_energy",)
     pngs = sorted(
         f for f in os.listdir(str(tmp_path / "figs")) if f.endswith(".png"))
@@ -276,7 +320,7 @@ class TestSimsField:
     path1 = self._field_sim(tmp_path, "candidate", offset=0.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=1, must_include=["field"]))
+                    num_plots=1, must_include=["field"], file_per_fig=True))
     assert report.plotted == ("field",)
     assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
 
@@ -294,7 +338,7 @@ class TestSimsField:
     path1 = self._field_sim_3d(tmp_path, "candidate", offset=0.5)
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
-                    num_plots=1, must_include=["field"]))
+                    num_plots=1, must_include=["field"], file_per_fig=True))
     assert report.plotted == ("field",)
     assert os.path.isfile(os.path.join(str(tmp_path / "figs"), "field.png"))
 
@@ -355,7 +399,7 @@ class TestSimsField:
     path0 = self._multiblock_field_sim(tmp_path, "baseline")
     path1 = self._multiblock_field_sim(tmp_path, "candidate", offset=0.5)
     report = _only(
-        compare.sims(path0, path1, single_pdf=True, num_plots=1,
+        compare.sims(path0, path1, num_plots=1,
                     must_include=["field"], out_dir=str(tmp_path / "out")))
     assert report.plotted == ("field",)
     pdf_path = os.path.join(str(tmp_path / "out"),
@@ -374,7 +418,8 @@ class TestSimsBatch:
       _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
           moms_scale=1.5)
     reports = compare.sims(str(base), str(cand), batch=True,
-                           out_dir=str(tmp_path / "figs"))
+                           out_dir=str(tmp_path / "figs"),
+                           file_per_fig=True)
     assert set(reports) == {"sim_a", "sim_b"}
     for name, report in reports.items():
       assert report.plotted
@@ -395,6 +440,25 @@ class TestSimsBatch:
     reports = compare.sims(path0, path1, out_dir=str(tmp_path / "figs"))
     assert set(reports) == {"baseline"}
 
+  def test_labels_replace_basenames_for_every_pair(self, tmp_path):
+    base = tmp_path / "baseline"
+    cand = tmp_path / "candidate"
+    for sim_name in ("sim_a", "sim_b"):
+      _sim(base.parent, base.name + f"/{sim_name}", name=sim_name)
+      _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
+          moms_scale=1.5)
+    compare.sims(str(base), str(cand), batch=True,
+                out_dir=str(tmp_path / "figs"), num_plots=1,
+                must_include=["field_energy"], labels="before,after",
+                file_per_fig=True)
+    # Every pair reuses the same shared figure 0, so only the
+    # last-plotted sim's labels remain on screen; checking that they are
+    # exactly "before"/"after" (not that sim's basename) confirms labels
+    # was honored rather than silently ignored, as it was before this
+    # change.
+    lines = [l.get_label() for ax in plt.gcf().axes for l in ax.get_lines()]
+    assert lines == ["before", "after"]
+
 
 class TestOutDirDefault:
 
@@ -402,7 +466,7 @@ class TestOutDirDefault:
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = _only(compare.sims(path0, path1))
+    report = _only(compare.sims(path0, path1, file_per_fig=True))
     expected = os.path.join(str(tmp_path), "postgkyl_compare_sims")
     assert report.out_dir == expected
     assert os.path.isfile(os.path.join(expected, "field_energy.png"))
@@ -415,13 +479,15 @@ class TestOutDirDefault:
     assert report.out_dir == str(tmp_path / "custom")
 
 
-class TestSinglePdf:
+class TestCombinedPdf:
+  """The default (no ``file_per_fig``) output mode: one combined,
+  multi-page PDF instead of individual image files."""
 
   def test_defaults_to_cwd_filename(self, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    report = _only(compare.sims(path0, path1, single_pdf=True))
+    report = _only(compare.sims(path0, path1))
     pdf_path = os.path.join(str(tmp_path), "postgkyl_compare_sims.pdf")
     assert os.path.isfile(pdf_path)
     # Title page + one page per plotted quantity; no individual image files.
@@ -432,8 +498,7 @@ class TestSinglePdf:
   def test_out_dir_given_no_pdf_name(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    compare.sims(path0, path1, single_pdf=True,
-                out_dir=str(tmp_path / "out"))
+    compare.sims(path0, path1, out_dir=str(tmp_path / "out"))
     assert os.path.isfile(
         os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
 
@@ -441,27 +506,26 @@ class TestSinglePdf:
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    compare.sims(path0, path1, single_pdf=True, pdf_name="report.pdf")
+    compare.sims(path0, path1, pdf_name="report.pdf")
     assert os.path.isfile(os.path.join(str(tmp_path), "report.pdf"))
 
   def test_pdf_name_and_out_dir_given(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    compare.sims(path0, path1, single_pdf=True, pdf_name="report.pdf",
+    compare.sims(path0, path1, pdf_name="report.pdf",
                 out_dir=str(tmp_path / "out"))
     assert os.path.isfile(os.path.join(str(tmp_path / "out"), "report.pdf"))
 
-  def test_pdf_name_without_single_pdf_raises(self, tmp_path):
+  def test_pdf_name_with_file_per_fig_raises(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    with pytest.raises(ValueError, match="pdf_name requires single_pdf"):
-      compare.sims(path0, path1, pdf_name="report.pdf")
+    with pytest.raises(ValueError, match="pdf_name cannot be combined"):
+      compare.sims(path0, path1, pdf_name="report.pdf", file_per_fig=True)
 
   def test_format_is_ignored(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
-    compare.sims(path0, path1, single_pdf=True, format="jpg",
-                out_dir=str(tmp_path / "out"))
+    compare.sims(path0, path1, format="jpg", out_dir=str(tmp_path / "out"))
     assert os.path.isfile(
         os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf"))
 
@@ -476,7 +540,7 @@ class TestSinglePdf:
         _write_dynvec(path, f"sim_b{block}", "field_energy", time,
                      (np.linspace(1.0, 2.0, 4) * scale * (block + 1))[:, None])
     report = _only(
-        compare.sims(path0, path1, single_pdf=True, num_plots=1,
+        compare.sims(path0, path1, num_plots=1,
                     out_dir=str(tmp_path / "out")))
     assert report.plotted == ("field_energy",)
     pdf_path = os.path.join(str(tmp_path / "out"),
@@ -490,7 +554,7 @@ class TestSinglePdf:
       _sim(base.parent, base.name + f"/{sim_name}", name=sim_name)
       _sim(cand.parent, cand.name + f"/{sim_name}", name=sim_name,
           moms_scale=1.5)
-    reports = compare.sims(str(base), str(cand), batch=True, single_pdf=True,
+    reports = compare.sims(str(base), str(cand), batch=True,
                            out_dir=str(tmp_path / "out"))
     assert set(reports) == {"sim_a", "sim_b"}
     pdf_path = os.path.join(str(tmp_path / "out"),
@@ -498,9 +562,28 @@ class TestSinglePdf:
     assert os.path.isfile(pdf_path)
     total_plotted = sum(len(r.plotted) for r in reports.values())
     assert _pdf_page_count(pdf_path) == 1 + total_plotted
-    # No per-simulation subfolders when single_pdf is set.
+    # No per-simulation subfolders when writing the combined PDF.
     assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_a"))
     assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_b"))
+
+
+class TestFilePerFig:
+  """The opt-in individual-image-files output mode."""
+
+  def test_writes_individual_files_not_a_pdf(self, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    path0 = _sim(tmp_path, "baseline")
+    path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
+    report = _only(
+        compare.sims(path0, path1, out_dir=str(tmp_path / "figs"),
+                    file_per_fig=True))
+    for quantity in report.plotted:
+      assert os.path.isfile(
+          os.path.join(str(tmp_path / "figs"), f"{quantity}.png"))
+    assert not os.path.isfile(
+        os.path.join(str(tmp_path), "postgkyl_compare_sims.pdf"))
+    assert not os.path.isfile(
+        os.path.join(str(tmp_path / "figs"), "postgkyl_compare_sims.pdf"))
 
 
 class TestTitlePageFigure:

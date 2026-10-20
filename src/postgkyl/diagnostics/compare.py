@@ -7,10 +7,10 @@ overlaid on candidate for 1-D/dynvector data, or side by side for 2-D
 (including a ``select()``-ed slice of 3-D+ data). Shares a home with
 :mod:`postgkyl.diagnostics.discovery` -- like it, this performs no equation-
 specific physics and belongs to no model family -- rather than under
-``gk``/``vm``/``pkpm``/``mom``. ``single_pdf`` collects every figure into one
+``gk``/``vm``/``pkpm``/``mom``. By default every figure is collected into one
 multi-page PDF, via ``matplotlib.backends.backend_pdf.PdfPages`` (a plain
-Matplotlib facility, not a new dependency) instead of individual image
-files.
+Matplotlib facility, not a new dependency); ``file_per_fig`` opts into
+individual image files instead.
 """
 
 from __future__ import annotations
@@ -81,9 +81,9 @@ class CompareSimsReport:
       differencing them raised (e.g. a non-field, non-dynvector file like a
       multiblock ``block_topo``), mapped to the error message.
     out_dir: Directory the figures were written to (resolved, never
-      ``None``, even when the caller left ``out_dir`` unset). In
-      ``single_pdf`` mode, this is the directory the combined PDF was
-      written to, not the PDF path itself.
+      ``None``, even when the caller left ``out_dir`` unset). By default
+      (combined PDF), this is the directory the PDF was written to, not the
+      PDF path itself.
   """
 
   compared: tuple[QuantityDiff, ...]
@@ -106,6 +106,27 @@ def _default_labels(path0: str, path1: str) -> list[str]:
         and parts0[-depth:] == parts1[-depth:]):
     depth += 1
   return [os.path.join(*parts0[-depth:]), os.path.join(*parts1[-depth:])]
+
+
+def _parse_label_pair(labels: str | None) -> list[str] | None:
+  """Split ``"label0,label1"`` into the two labels ``sims()``'s ``-l``
+  takes, or ``None`` unchanged so callers fall back to
+  :func:`_default_labels`.
+
+  A single comma-separated string for ``path0``/``path1``'s pair of labels,
+  rather than a repeatable/JSON-array list option like ``plot``'s
+  ``--legend_labels`` -- there are always exactly two labels here (one per
+  compared sim), so one ``-l 'baseline,candidate'`` reads more directly than
+  ``-l baseline -l candidate`` or a quoted JSON array would.
+  """
+  if labels is None:
+    return None
+  parts = labels.split(",")
+  if len(parts) != 2 or not all(p.strip() for p in parts):
+    raise ValueError(
+        "labels must be exactly two comma-separated, non-empty labels, "
+        f"e.g. 'baseline,candidate' (got {labels!r})")
+  return [p.strip() for p in parts]
 
 
 def _stems_by_quantity(path: str) -> dict[str, str]:
@@ -286,6 +307,21 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
   data0 = _sliced(_point_values(data0), zs)
   data1 = _sliced(_point_values(data1), zs)
   saveas = out_path if pdf is None else None
+  # plot()'s explicit legend_labels are used verbatim on every component
+  # subplot, with no added _cN suffix (a deliberate, documented contract
+  # relied on elsewhere) -- so a multi-component quantity would otherwise
+  # show the identical pair of labels on every one of its component panels,
+  # with no way to tell which panel is which component. Its *default*
+  # label path (triggered by omitting legend_labels) does add that suffix,
+  # built from each dataset's own .label -- so for >1 component, set the
+  # label directly and let plot() derive "<label>_c<i>" on its own; for a
+  # single component there is nothing to disambiguate, so pass legend_labels
+  # explicitly instead, keeping today's plain, unsuffixed labels.
+  if data0.num_comps > 1:
+    data0.label, data1.label = labels
+    legend_kwargs = {}
+  else:
+    legend_kwargs = {"legend_labels": labels}
   # Both datasets carry no multiblock identity of their own (a single sim
   # directory's quantity, not one block of a decomposed one), so without a
   # shared target figure `plot` would treat them as two singleton families
@@ -298,20 +334,20 @@ def _plot_one_block(data0, data1, zs: tuple, labels: list[str], title: str,
               data1,
               figure=0,
               clear=True,
-              legend_labels=labels,
               title=title,
               no_show=True,
-              saveas=saveas)
+              saveas=saveas,
+              **legend_kwargs)
   else:
     fig = plot(data0,
               data1,
               num_axes=2 * data0.num_comps,
               figure=0,
               clear=True,
-              legend_labels=labels,
               title=title,
               no_show=True,
-              saveas=saveas)
+              saveas=saveas,
+              **legend_kwargs)
   _save_or_collect(fig, out_path, pdf)
 
 
@@ -338,6 +374,8 @@ def _compare_one(
   """One single-sim comparison -- the body ``sims()`` runs once directly, or
   once per shared subdirectory when ``batch=True``.
 
+  ``labels`` is the already-resolved two-item legend-label list (see
+  :func:`_parse_label_pair`); ``None`` falls back to :func:`_default_labels`.
   ``pdf``, when given, collects every quantity's figure as a page instead of
   writing individual image files (``out_dir``/``format`` are then unused for
   plotting, though ``out_dir`` is still reported on the returned
@@ -346,7 +384,7 @@ def _compare_one(
   """
   exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
   must_include = list(must_include or [])
-  labels = list(labels or _default_labels(path0, path1))
+  resolved_labels = labels or _default_labels(path0, path1)
   zs = (z0, z1, z2, z3, z4, z5)
 
   quantities0 = _stems_by_quantity(path0)
@@ -406,8 +444,8 @@ def _compare_one(
     common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
-    _plot_quantity(path0, path1, stem0, stem1, common_frame, zs, labels,
-                  f"{title_prefix}{quantity}", out_path, pdf)
+    _plot_quantity(path0, path1, stem0, stem1, common_frame, zs,
+                  resolved_labels, f"{title_prefix}{quantity}", out_path, pdf)
     plotted.append(quantity)
 
   return CompareSimsReport(
@@ -440,6 +478,7 @@ def _batch(
     num_plots: int,
     must_include: list[str] | None,
     exclude: list[str] | None,
+    labels: list[str] | None,
     z0: str | None,
     z1: str | None,
     z2: str | None,
@@ -452,10 +491,13 @@ def _batch(
 ) -> dict[str, CompareSimsReport]:
   """``_compare_one`` on every simulation ``path0``/``path1`` share. ``pdf``,
   when given, is shared by every simulation's pages instead of each sim
-  writing its own ``<out_dir>/<name>/`` subfolder of individual files."""
+  writing its own ``<out_dir>/<name>/`` subfolder of individual files.
+  ``labels`` (already resolved, see :func:`_parse_label_pair`), when given,
+  replaces the basenames of ``path0``/``path1`` as the shared pair of legend
+  labels every compared simulation uses."""
   common = _shared_subdirs(path0, path1)
-  batch_labels = [os.path.basename(os.path.normpath(path0)),
-                 os.path.basename(os.path.normpath(path1))]
+  batch_labels = labels or [os.path.basename(os.path.normpath(path0)),
+                           os.path.basename(os.path.normpath(path1))]
   return {
       name: _compare_one(
           os.path.join(path0, name),
@@ -478,7 +520,7 @@ def _batch(
 
 def _title_page_figure(path0: str, path1: str, *, batch: bool,
                        sim_names: list[str] | None = None):
-  """A plain text-only title page naming what a ``single_pdf`` comparison
+  """A plain text-only title page naming what a combined-PDF comparison
   covers, so the PDF is self-contained without its filename or the command
   that produced it."""
   fig = plt.figure(figsize=(8.5, 11))
@@ -500,12 +542,12 @@ def sims(
     *,
     batch: bool = False,
     out_dir: str | None = None,
-    single_pdf: bool = False,
+    file_per_fig: bool = False,
     pdf_name: str | None = None,
     num_plots: int = 5,
     must_include: list[str] | None = None,
     exclude: list[str] | None = None,
-    labels: list[str] | None = None,
+    labels: str | None = None,
     z0: str | None = None,
     z1: str | None = None,
     z2: str | None = None,
@@ -520,90 +562,56 @@ def sims(
   Finds every output quantity both sims wrote, ranks the shared ones by
   :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative difference
   first), and plots ``num_plots`` of them -- always including every
-  ``must_include`` quantity, filling any remaining slots with the
-  highest-ranked rest. No quantity is excluded by default -- geometry
-  (``geo_*``), per-boundary (``bc_*``), and flux (``bflux_*``) outputs are
-  ranked and plotted like any other quantity; pass ``exclude`` to skip
-  specific prefixes. A shared quantity that cannot be loaded or differenced
-  as a field or dynvector at all (e.g. a multiblock ``block_topo`` file) is
-  likewise left out of the ranking and reported in that sim's
-  ``CompareSimsReport.skipped``, unless it was explicitly named in
-  ``must_include``, in which case loading it raises instead of being
-  silently dropped.
+  ``must_include`` quantity. Use ``exclude`` to skip specific quantities or
+  prefixes. 
 
-  A 1-D field or a dynvector (time-series) quantity is overlaid onto one
-  panel, baseline and candidate together. A 2-D field (or a 3-D+ field once
-  ``z0``..``z5`` have reduced it to 2-D) is drawn with the two sims side by
-  side on a shared color scale. A 3-D field whose ``z1`` (``y``) axis is not
-  pinned via ``z1`` defaults to its midpoint coordinate, so a 3-D field
-  plots as its ``(x, z)`` cross-section without the caller having to know
-  the grid's extent up front. A quantity with more spatial dimensions than
-  that default can reduce to two (e.g. a full distribution function) is
-  still ranked, but skipped when auto-filling ``num_plots``; naming it in
-  ``must_include`` instead raises, pointing at the ``z2``..``z5`` selectors
-  it still needs. A multiblock quantity -- spatial field or dynvector alike
-  (e.g. ``field_energy``) -- gets one figure per block, each overlaying
-  baseline and candidate; past a handful of blocks, one shared axis with
-  every block's pair of curves becomes unreadable.
+  A 2-D field (or a 3-D+ field once ``z0``..``z5`` have reduced it to 2-D)
+  is drawn with the two sims side by side on a shared color scale. A 3-D field
+  whose ``z1`` (``y``) axis is not pinned via ``z1`` defaults to its midpoint
+  coordinate. A quantity with more spatial dimensions than that default can
+  reduce to two (e.g. a full distribution function) is still ranked, but
+  skipped when auto-filling ``num_plots``; naming it in ``must_include``
+  instead raises, pointing at the ``z2``..``z5`` selectors it still needs.
 
-  ``batch`` reinterprets ``path0``/``path1`` as directories *of* simulations
-  rather than one simulation each: each holds one subdirectory per
-  simulation (the layout a CI run's accepted/candidate trees use).
-  Subdirectories present under both are compared by name, each pair run
-  exactly as a single (non-batch) comparison, with its own
-  ``<out_dir>/<name>/`` figure subfolder (unless ``single_pdf`` is set, see
-  below). ``labels`` is ignored in batch mode -- every pair instead shares
-  one label per side, the basenames of ``path0``/``path1`` themselves (e.g.
-  ``"baseline"``/``"candidate"``), since those two top-level directories are
-  what distinguishes the pairs from each other.
+  By default, every plotted quantity is collected into one combined,
+  PDF, whose path is ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
+  ``<cwd>/<pdf_name>``. Alternatively, passing ``file_per_fig`` yields
+  individual image files.
 
-  ``single_pdf`` collects every plotted quantity into one combined,
-  multi-page PDF instead of individual image files (``format`` is then
-  unused). Its first page is a title page naming the compared directories
-  (and, in batch mode, every simulation covered), so the PDF is readable on
-  its own without its filename or the command that produced it. In batch
-  mode this is **one** PDF for the whole batch, pages grouped by simulation
-  in comparison order and titled ``"<sim_name>: <quantity>"``; no
-  per-simulation subfolders are created. The PDF's path is
-  ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
-  ``<cwd>/<pdf_name>`` -- a single self-contained file doesn't need the
-  dedicated ``out_dir`` default that a pile of per-quantity images does.
+  ``batch`` reinterprets ``path0``/``path1`` as directories with multiple
+  simulations each (rather than having one simulation each): each holds one
+  subdirectory per simulation. Subdirectories or simulations present in both
+  are compared.
 
   Args:
-    path0: Without ``batch``, the first ("baseline") simulation's output
-      directory. With ``batch``, a directory holding one subdirectory per
-      simulation to compare against ``path1``'s matching subdirectory.
-    path1: The second ("candidate") counterpart to ``path0``, under the
-      same interpretation ``batch`` selects.
-    batch: Compare every simulation two directories-of-sims share, instead
-      of treating ``path0``/``path1`` as one simulation each.
-    out_dir: Directory individual figures are written to (created if
-      needed); in batch mode, the parent of each compared simulation's own
-      subfolder. Defaults to ``<cwd>/postgkyl_compare_sims``. With
-      ``single_pdf``, this instead names the directory the combined PDF is
-      written to (defaulting to the current directory, not the
-      ``postgkyl_compare_sims`` subfolder -- see above).
-    single_pdf: Collect every figure into one combined PDF instead of
-      individual image files (see above).
-    pdf_name: Explicit filename for the combined PDF; defaults to
-      ``"postgkyl_compare_sims.pdf"``. Only valid together with
-      ``single_pdf``.
+    path0: the first simulation's output directory (w/o --batch) or a
+      directory with one subdirectory per simulation (w/ --batch) to compare
+      against --path1.
+    path1: Path to data from the second simulation(s).
+    batch: Compare every simulation two directories-of-sims share.
+    pdf_name: Filename for the combined PDF; defaults to
+      ``"postgkyl_compare_sims.pdf"``.
+    out_dir: The path to the directory where the combined PDF is written to
+      (defaults to ``<cwd>/``). With --file_per_fig this is the directory
+      individual figures are written to (defaults to
+      ``<cwd>/postgkyl_compare_sims``).
+    file_per_fig: Write individual image files instead of one combined PDF.
     num_plots: Number of quantities to plot, including every
       ``must_include`` entry.
-    must_include: Quantity names (e.g. ``"field_energy"``) always plotted,
-      regardless of ranking.
-    exclude: Quantity-name prefixes to skip (e.g. ``"geo_"``, ``"bc_"``);
-      none are excluded by default.
-    labels: Two legend labels for ``path0``/``path1``; defaults to their
-      basenames. Ignored when ``batch`` is set (see above).
-    z0: Selector for coordinate direction 0, as in ``select``.
-    z1: Selector for coordinate direction 1, as in ``select``.
-    z2: Selector for coordinate direction 2, as in ``select``.
-    z3: Selector for coordinate direction 3, as in ``select``.
-    z4: Selector for coordinate direction 4, as in ``select``.
-    z5: Selector for coordinate direction 5, as in ``select``.
+    must_include: Names of quantities (e.g. ``"field_energy"``) that must
+      beplotted.
+    exclude: Quantity-name prefixes to skip (e.g. ``"geo_"``, ``"bc_"``).
+    labels: The two legend labels for ``path0``/``path1`` as one
+      comma-separated string, e.g. ``"baseline,candidate"``; defaults to
+      each path's shortest distinguishing path segment
+    z0: Selector for coordinate direction 0.
+    z1: Selector for coordinate direction 1.
+    z2: Selector for coordinate direction 2.
+    z3: Selector for coordinate direction 3.
+    z4: Selector for coordinate direction 4.
+    z5: Selector for coordinate direction 5.
     format: Output image file extension (e.g. ``"png"``, ``"jpg"``,
-      ``"pdf"``, ``"svg"``). Ignored when ``single_pdf`` is set.
+      ``"pdf"``, ``"svg"``) if ``file_per_fig`` is set.
     frame: Frame to compare for framed (per-timestep) quantities; defaults
       to the latest frame both sims wrote. Quantities with no frame index
       (dynvectors, single-snapshot fields) ignore this.
@@ -618,28 +626,31 @@ def sims(
     ValueError: a ``must_include`` quantity is missing from either sim, has
       too many spatial dimensions to plot without further ``z2``..``z5``
       selectors, two compared files are structurally incompatible (block
-      count or array shape mismatch), ``pdf_name`` was given without
-      ``single_pdf``, or (``batch`` only) ``path0`` and ``path1`` share no
-      simulation subdirectory.
+      count or array shape mismatch), ``labels`` is not exactly two
+      comma-separated, non-empty labels, ``pdf_name`` was given together
+      with ``file_per_fig``, or (``batch`` only) ``path0`` and ``path1``
+      share no simulation subdirectory.
   """
-  if pdf_name is not None and not single_pdf:
-    raise ValueError("pdf_name requires single_pdf to be set")
+  if pdf_name is not None and file_per_fig:
+    raise ValueError("pdf_name cannot be combined with file_per_fig")
+  resolved_labels = _parse_label_pair(labels)
 
   def _run(effective_out_dir: str,
           pdf: PdfPages | None) -> dict[str, CompareSimsReport]:
     if batch:
       return _batch(path0, path1, out_dir=effective_out_dir,
                    num_plots=num_plots, must_include=must_include,
-                   exclude=exclude, z0=z0, z1=z1, z2=z2, z3=z3, z4=z4,
-                   z5=z5, format=format, frame=frame, pdf=pdf)
+                   exclude=exclude, labels=resolved_labels, z0=z0, z1=z1,
+                   z2=z2, z3=z3, z4=z4, z5=z5, format=format, frame=frame,
+                   pdf=pdf)
     report = _compare_one(path0, path1, out_dir=effective_out_dir,
                          num_plots=num_plots, must_include=must_include,
-                         exclude=exclude, labels=labels, z0=z0, z1=z1,
-                         z2=z2, z3=z3, z4=z4, z5=z5, format=format,
+                         exclude=exclude, labels=resolved_labels, z0=z0,
+                         z1=z1, z2=z2, z3=z3, z4=z4, z5=z5, format=format,
                          frame=frame, pdf=pdf)
     return {os.path.basename(os.path.normpath(path0)): report}
 
-  if single_pdf:
+  if not file_per_fig:
     pdf_dir = out_dir if out_dir is not None else os.getcwd()
     pdf_path = os.path.join(pdf_dir, pdf_name or _DEFAULT_PDF_NAME)
     os.makedirs(pdf_dir, exist_ok=True)
