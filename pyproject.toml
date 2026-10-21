@@ -27,7 +27,7 @@ license = "MIT"
 maintainers = [
   {name = "Petr Cagas", email = "p.cagas@hzdr.de"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"
 keywords = ["plasma", "Gkeyll"]
 classifiers = [
   # 3 - Alpha
@@ -45,7 +45,6 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
-  "Programming Language :: Python :: 3.15",
   "Topic :: Scientific/Engineering",
 ]
 
