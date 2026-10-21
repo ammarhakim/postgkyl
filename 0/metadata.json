@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.11.3",
+  "checkpoint_id": "01M5FFZFGFQ2B6WB5CX9D9BTAC",
+  "session_id": "01a15efe-8976-7c11-a70f-cbe48cef5a0c",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-21T15:06:21.384940245Z",
+  "branch": "flexible-builds",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "pyproject.toml"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "6990aa50e08c",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 26007,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 273536,
+    "output_tokens": 1226,
+    "api_call_count": 11,
+    "subagent_tokens_complete": true
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-21T15:06:21.36847871Z",
+    "agent_lines": 2,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2,
+    "total_lines_changed": 3,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 201,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".agents/skills/data/SKILL.md": 86,
+        ".agents/skills/design/SKILL.md": 98,
+        ".agents/skills/gkeyll-core/SKILL.md": 17
+      }
+    }
+  ]
+}

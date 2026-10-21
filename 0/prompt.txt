@@ -1,0 +1,94 @@
+It seems like one of the release  builds failed this latest commit 
+Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+0s
+Run # Install cibuildwheel and build the command line
+6s
+Run export PATH="$CIBW_PREPEND_PATH:$PATH"
+1m 11s
+Run export PATH="$CIBW_PREPEND_PATH:$PATH"
+  
+       _ _       _ _   _       _           _
+   ___|_| |_ _ _|_| |_| |_ _ _| |_ ___ ___| |
+  |  _| | . | | | | | . | | | |   | -_| -_| |
+  |___|_|___|___|_|_|___|_____|_|_|___|___|_|
+  
+  cibuildwheel version 4.3.1
+  
+  Build options:
+    platform: linux
+    allow_empty: False
+    architectures: x86_64
+    build_selector: 
+      build_config: cp312-*
+      skip_config: *-musllinux*
+      requires_python: <3.15,>=3.10
+      enable: []
+    output_dir: /home/runner/work/postgkyl/postgkyl/wheelhouse
+    package_dir: /home/runner/work/postgkyl/postgkyl
+    test_selector: 
+      skip_config:
+    audit_command: 
+      abi3audit --strict --report {abi3_wheel}
+    audit_requires: 
+      abi3audit
+    before_all: dnf install -y git mesa-libGL
+    before_build: 
+    before_test: 
+    build_frontend: build
+    build_verbosity: 0
+    config_settings: 
+    container_engine: docker
+    dependency_constraints: pinned
+    environment: 
+      POSTGKYL_REQUIRE_GKEYLL="1"
+      OPENBLAS_NUM_THREADS="1"
+      OMP_NUM_THREADS="1"
+    manylinux_images: 
+      x86_64: quay.io/pypa/manylinux_2_28_x86_64@sha256:4131ddd7acb9c6c966af02fe7e71edc51e078c2d41f475966697676430bfa2ae
+      i686: quay.io/pypa/manylinux_2_28_i686@sha256:72e885761b30ced82b166c1fa0177f20d12bedb46c8aa1d869a54864c68ba294
+      pypy_x86_64: quay.io/pypa/manylinux_2_28_x86_64@sha256:4131ddd7acb9c6c966af02fe7e71edc51e078c2d41f475966697676430bfa2ae
+      aarch64: quay.io/pypa/manylinux_2_28_aarch64@sha256:abd1230aa9e4058a74b89d27cd14ba18c0db036d7bfe6e6f219a29ea63c24eb6
+      ppc64le: quay.io/pypa/manylinux_2_28_ppc64le@sha256:a66c8911b2b6c1f12c6dd33d77d7ea94947cce5176d6bb05780792e41649dc31
+      s390x: quay.io/pypa/manylinux_2_28_s390x@sha256:9ee863acd24acc5537fcb88a370c018151b8a8a8889148ca786488610ad7efb7
+      armv7l: quay.io/pypa/manylinux_2_31_armv7l@sha256:19693b5c1aa30e568c4b1480bc8f1e1e66e7b6bb10f2ccb021f15eb34164d71a
+      riscv64: quay.io/pypa/manylinux_2_39_riscv64@sha256:be5cb4698cc7c13486bd2c3aa21b0124d80d4641d34be2f6ef357903693eb9d1
+      pypy_aarch64: quay.io/pypa/manylinux_2_28_aarch64@sha256:abd1230aa9e4058a74b89d27cd14ba18c0db036d7bfe6e6f219a29ea63c24eb6
+      pypy_i686: quay.io/pypa/manylinux_2_28_i686@sha256:72e885761b30ced82b166c1fa0177f20d12bedb46c8aa1d869a54864c68ba294
+    musllinux_images: 
+      x86_64: quay.io/pypa/musllinux_1_2_x86_64@sha256:dc96c1f69b8a6241bcc8175a8d89b1caf0dccf959ff111a2272c42747af38350
+      i686: quay.io/pypa/musllinux_1_2_i686@sha256:131d4accbf96853ebe7508a8659520019fcedb353bb3aeba9944b48344efaa93
+      aarch64: quay.io/pypa/musllinux_1_2_aarch64@sha256:83a69fa8383ba5ac2d4f01597b791ebf93269c9748270b51b7a54fbba0dcdd39
+      ppc64le: quay.io/pypa/musllinux_1_2_ppc64le@sha256:1c92fb30e31d6912001d2aece53af5141b81d362d30f2f7791f091d88f910555
+      s390x: quay.io/pypa/musllinux_1_2_s390x@sha256:a51c6abfd7686efc9c0778b5ab5357894292a6dbd0f02a58d81cf20aab9e4a4a
+      armv7l: quay.io/pypa/musllinux_1_2_armv7l@sha256:f54e78498818fbf3b71324af55f4bb87214baeb42a736465bdacaa112a9332ea
+      riscv64: quay.io/pypa/musllinux_1_2_riscv64@sha256:2fb619d4bc948178659a93243ad6edc689c6157082678fa6d7d24ef43d924cbb
+    pyodide_version: None
+    repair_command: auditwheel repair -w {dest_dir} {wheel}
+    test_command: python {project}/scripts/check_wheel.py && python -m pip install postgkyl "numpy==2.2.6; python_version < '3.14'" "numpy==2.3.3; python_version >= '3.14'" && python {project}/scripts/check_wheel.py
+    test_environment: 
+    test_extras: 
+    test_groups: 
+    test_requires: 
+      pytest>=9.0.3
+      pytest-timeout>=2.4.0
+    test_runtime: 
+      args: ()
+    test_sources: 
+    xbuild_files: 
+      numpy: ['numpy/_core/include/numpy/_numpyconfig.h', 'numpy/_core/include/numpy/numpyconfig.h', 'numpy/_core/lib/libnpymath.a', 'numpy/random/lib/libnpyrandom.a']
+    xbuild_tools: None
+  
+  Cache folder: /home/runner/.cache/cibuildwheel
+  
+  1 build selected:
+  cp312-manylinux_x86_64
+  
+  Here we go!
+  
+Starting container image quay.io/pypa/manylinux_2_28_x86_64@sha256:4131ddd7acb9c6c966af02fe7e71edc51e078c2d41f475966697676430bfa2ae...
+                                                               ✓ 30.56s
+Copying project into container...
+                                                                ✓ 0.11s
+Running before_all...
+                                                               ✕ 39.71s
+  Error: cibuildwheel: Command ['sh', '-c', 'dnf install -y git mesa-libGL'] failed with code 1.
