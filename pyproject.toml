@@ -159,7 +159,8 @@ environment = { POSTGKYL_REQUIRE_GKEYLL = "1", OPENBLAS_NUM_THREADS = "1", OMP_N
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
-before-all = "dnf install -y git mesa-libGL"
+# Both packages come from AlmaLinux; avoid unrelated EPEL mirror failures.
+before-all = "dnf install -y --disablerepo='epel*' git mesa-libGL"
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
