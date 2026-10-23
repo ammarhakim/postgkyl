@@ -101,6 +101,7 @@ class _ReportDict(dict):
   prints a one-line-per-sim summary instead; ``--verbose``/``-v`` restores
   the full dict repr. Python callers of :func:`sims` are unaffected either
   way -- this is still a real ``dict``, just one whose __repr__ is overridden."""
+
   def __init__(self, data: dict[str, CompareSimsReport], *, verbose: bool):
     super().__init__(data)
     self._verbose = verbose
@@ -742,7 +743,8 @@ def _batch(
       os.path.basename(os.path.normpath(path1))
   ]
   return {
-      name: _compare_one(
+      name:
+      _compare_one(
           os.path.join(path0, name),
           os.path.join(path1, name),
           out_dir=out_dir if pdf is not None else os.path.join(out_dir, name),

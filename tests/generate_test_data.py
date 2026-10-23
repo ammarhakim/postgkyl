@@ -732,6 +732,7 @@ def _generate_compare_sims_fixtures(out_dir: Path) -> None:
                              "for the compare_sims tutorial example.",
                          })
 
+
 def _generate_native_physics_fields(out_dir: Path) -> None:
   """Exact affine DG data for optional native collision and moment kernels.
 

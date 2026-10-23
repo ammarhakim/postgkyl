@@ -107,6 +107,7 @@ def _pdf_page_count(path) -> int:
 
 
 class TestDefaultLabels:
+
   def test_shares_no_suffix_uses_basenames(self, tmp_path):
     labels = compare._default_labels(str(tmp_path / "a"), str(tmp_path / "b"))
     assert labels == ["a", "b"]
@@ -121,6 +122,7 @@ class TestDefaultLabels:
 
 
 class TestSliceTitles:
+
   @staticmethod
   def _field(values):
     data = GDataState(ctx={"value_form": "nodal"})
@@ -154,6 +156,7 @@ class TestSliceTitles:
 
 
 class TestParseLabelPair:
+
   def test_none_passes_through(self):
     assert compare._parse_label_pair(None) is None
 
@@ -172,6 +175,7 @@ class TestParseLabelPair:
 
 
 class TestIsExcluded:
+
   def test_nothing_excluded_by_default(self):
     assert compare._DEFAULT_EXCLUDE_PREFIXES == ()
     assert not compare._is_excluded("geo_int_bmag",
@@ -189,6 +193,7 @@ class TestIsExcluded:
 
 
 class TestStemsByQuantity:
+
   def test_maps_quantity_to_one_stem(self, tmp_path):
     path = _sim(tmp_path, "s")
     quantities = compare._stems_by_quantity(path)
@@ -209,6 +214,7 @@ class TestDominantAxes:
   """``_dominant_axes`` picks which axes to pin (beyond the 2 kept for
   plotting) from the data itself -- the point of largest relative
   difference, and which directions the difference changes fastest there."""
+
   def test_two_or_fewer_free_axes_pins_nothing(self):
     values0 = np.zeros((3, 4))
     values1 = np.ones((3, 4))
@@ -292,6 +298,7 @@ class TestDominantAxes:
 
 
 class TestSimsDynvectorOnly:
+
   def test_plots_every_shared_quantity_within_num_plots(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
@@ -315,8 +322,8 @@ class TestSimsDynvectorOnly:
     report = _only(
         compare.sims(path0, path1, out_dir=str(tmp_path / "figs"), num_plots=5))
     by_quantity = {d.quantity: d for d in report.compared}
-    assert (by_quantity["elc_integrated_moms"].max_rel_diff >
-            by_quantity["field_energy"].max_rel_diff)
+    assert (by_quantity["elc_integrated_moms"].max_rel_diff
+            > by_quantity["field_energy"].max_rel_diff)
     assert report.compared[0].quantity == "elc_integrated_moms"
 
   def test_num_plots_limits_auto_selection(self, tmp_path):
@@ -445,6 +452,7 @@ class TestSimsDiff:
   """``diff`` additionally plots ``baseline - candidate`` for 1-D/dynvector
   data: one more panel, appended after the baseline/candidate overlay
   panel(s), labeled with the two labels joined by ``" - "``."""
+
   def test_single_component_diff_adds_third_line_with_diff_label(
       self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
@@ -478,7 +486,8 @@ class TestSimsDiff:
     fig = plt.gcf()
     lines_by_label = {
         l.get_label(): l
-        for ax in fig.axes for l in ax.get_lines()
+        for ax in fig.axes
+        for l in ax.get_lines()
     }
     before = lines_by_label["before"].get_ydata()
     after = lines_by_label["after"].get_ydata()
@@ -557,6 +566,7 @@ class TestSimsDiff:
 
 
 class TestSimsMultiblockDynvector:
+
   def _multiblock_sim(self, tmp_path, subdir, scale=1.0, num_blocks=3):
     path = str(tmp_path / subdir)
     os.makedirs(path, exist_ok=True)
@@ -585,6 +595,7 @@ class TestSimsMultiblockDynvector:
 
 @needs_gkeyll
 class TestSimsField:
+
   def _field_sim(self, tmp_path, subdir, offset=0.0):
     path = str(tmp_path / subdir)
     os.makedirs(path, exist_ok=True)
@@ -707,6 +718,7 @@ class TestSimsField:
 class TestSimsDiffField:
   """``diff`` for a 2-D field: one more side-by-side panel, with its own
   independent color scale, appended after the baseline/candidate panels."""
+
   def _field_sim(self, tmp_path, subdir, offset=0.0):
     path = str(tmp_path / subdir)
     os.makedirs(path, exist_ok=True)
@@ -804,6 +816,7 @@ class TestSimsDiffField:
 
 
 class TestSimsBatch:
+
   def test_title_uses_file_sim_when_directory_name_is_truncated(self, tmp_path):
     base = tmp_path / "baseline"
     cand = tmp_path / "candidate"
@@ -886,6 +899,7 @@ class TestVerbose:
   edge (``repr()``, since the CLI echoes a command's return value verbatim)
   -- the value itself is always a fully-populated, ordinary-dict-compatible
   mapping regardless."""
+
   def test_default_repr_is_a_short_per_sim_summary(self, tmp_path):
     path0 = _sim(tmp_path, "baseline")
     path1 = _sim(tmp_path, "candidate", moms_scale=1.5)
@@ -949,6 +963,7 @@ class TestVerbose:
 
 
 class TestOutDirDefault:
+
   def test_out_dir_omitted_uses_cwd_subfolder(self, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
@@ -968,6 +983,7 @@ class TestOutDirDefault:
 class TestCombinedPdf:
   """The default (no ``file_per_fig``) output mode: one combined,
   multi-page PDF instead of individual image files."""
+
   def test_defaults_to_cwd_filename(self, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
@@ -1057,6 +1073,7 @@ class TestCombinedPdf:
 
 class TestFilePerFig:
   """The opt-in individual-image-files output mode."""
+
   def test_writes_individual_files_not_a_pdf(self, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     path0 = _sim(tmp_path, "baseline")
@@ -1076,6 +1093,7 @@ class TestFilePerFig:
 
 
 class TestTitlePageFigure:
+
   def test_non_batch_names_both_paths(self):
     fig = compare._title_page_figure("/a/baseline", "/a/candidate", batch=False)
     text = fig.texts[0].get_text()
