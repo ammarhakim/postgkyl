@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from postgkyl.gpython import basis
+from postgkyl.io.surface import surface_direction
 from .guards import quadrature_order
 
 if TYPE_CHECKING:
@@ -25,6 +26,7 @@ class DGLayout:
   block_size: int
   num_fields: int
   num_quad: int | None = None
+  surface_dir: int | None = None
 
   @property
   def basis_args(self):
@@ -36,7 +38,15 @@ class DGLayout:
 
   @property
   def basis_identity(self):
-    return (*self.basis_args, self.cdim, self.vdim)
+    return (*self.basis_args, self.cdim, self.vdim, self.surface_dir)
+
+  @property
+  def expansion_args(self):
+    """Basis used by each stored cell or surface coefficient block."""
+    if self.surface_dir is None:
+      return self.basis_args
+    return (self.basis_type, max(1, self.ndim - 1),
+            0 if self.ndim == 1 else self.poly_order)
 
 
 def resolve_basis_split(ctx: dict, ndim: int, ncomp: int) -> tuple[int, int]:
@@ -83,7 +93,8 @@ def dg_layout(data: "GDataState") -> DGLayout | None:
   if not kind or ctx.get("interpolated", False):
     return None
   form = ctx.get("value_form", "modal")
-  if form not in ("modal", "nodal", "quad"):
+  surface_dir = surface_direction(form, data.num_dims)
+  if surface_dir is None and form not in ("modal", "nodal", "quad"):
     raise ValueError(f"unknown value_form '{form}'")
   values = data.values
   if values is None:
@@ -96,8 +107,23 @@ def dg_layout(data: "GDataState") -> DGLayout | None:
   if order is None:
     raise ValueError("dataset has no basis_type/poly_order metadata")
   ndim = data.num_dims
+  if surface_dir is not None:
+    if kind != "serendipity":
+      raise ValueError("surface geometry requires a serendipity basis")
+    if any(
+        len(data.grid[d]) != values.shape[d] + (d != surface_dir)
+        for d in range(ndim)):
+      raise ValueError("surface coordinates must locate every face and "
+                       "bound each tangential cell")
   cdim, vdim = resolve_basis_split(ctx, ndim, values.shape[-1])
-  b = basis.get_basis(kind, ndim, int(order), cdim=cdim, vdim=vdim)
+  expansion_dim = max(1, ndim - 1) if surface_dir is not None else ndim
+  expansion_order = 0 if surface_dir is not None and ndim == 1 else int(order)
+  b = basis.get_basis(
+      kind, expansion_dim, expansion_order,
+      **({} if surface_dir is not None else {
+          "cdim": cdim,
+          "vdim": vdim
+      }))
   nq = quadrature_order(data) if form == "quad" else None
   block = (
       b.num_quad if nq is None else nq**ndim) if form == "quad" else b.num_basis
@@ -105,7 +131,7 @@ def dg_layout(data: "GDataState") -> DGLayout | None:
     raise ValueError(f"{form} component count {values.shape[-1]} must contain "
                      f"complete field blocks of {block}")
   return DGLayout(kind, ndim, int(order), form, cdim, vdim, block,
-                  values.shape[-1] // block, nq)
+                  values.shape[-1] // block, nq, surface_dir)
 
 
 def require_dg_layout(data: "GDataState") -> DGLayout:
@@ -120,6 +146,9 @@ def require_dg_layout(data: "GDataState") -> DGLayout:
 def require_kernel_basis(data: "GDataState") -> DGLayout:
   """Reject basis splits unsupported by the legacy native-kernel signatures."""
   layout = require_dg_layout(data)
+  if layout.surface_dir is not None:
+    raise NotImplementedError("native DG kernels do not support surface "
+                              "coefficients; call .interpolate() first")
   if (layout.cdim, layout.vdim) != basis.cdim_vdim(layout.basis_type,
                                                    layout.ndim):
     raise NotImplementedError(
