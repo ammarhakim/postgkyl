@@ -188,16 +188,16 @@ class TestPanelPaging:
       ((3, 4, 4), False, (6, 2)),
       ((3, 4, 3), True, (6, 3)),
   ])
-  def test_splits_complete_components_at_six_panels(self, tmp_path,
-                                                      monkeypatch, shape, diff,
-                                                      counts):
+  def test_splits_complete_components_at_six_panels(self, tmp_path, monkeypatch,
+                                                    shape, diff, counts):
     values = np.arange(np.prod(shape), dtype=float).reshape(shape) + 1
     baseline = TestSliceTitles._field(values)
     candidate = TestSliceTitles._field(values * 1.2)
     figures = self._capture_pages(monkeypatch)
     compare._plot_one_block(baseline,
                             candidate, (None, ) * 6, ["before", "after"],
-                            "sim: field", str(tmp_path / "field.png"),
+                            "sim: field",
+                            str(tmp_path / "field.png"),
                             None,
                             diff=diff)
     assert len(figures) == 2
@@ -209,34 +209,36 @@ class TestPanelPaging:
       panels = (fig.axes if is_line else
                 [ax for ax in fig.axes if ax.get_position().width > 0.05])
       assert len(panels) == count
-    first_positions = [ax.get_position() for ax in
-                       (figures[0].axes if is_line else [
-                           ax for ax in figures[0].axes
-                           if ax.get_position().width > 0.05
-                       ])]
+    first_positions = [
+        ax.get_position() for ax in (
+            figures[0].axes if is_line else
+            [ax for ax in figures[0].axes if ax.get_position().width > 0.05])
+    ]
     assert len({round(pos.x0, 2) for pos in first_positions}) == 3
     assert len({round(pos.y0, 2) for pos in first_positions}) == 2
     assert "page 1/2" in figures[0]._suptitle.get_text()
     assert f"c{shape[-1] - 1}" in figures[-1]._suptitle.get_text()
     if is_line:
-      labels = [line.get_label() for ax in figures[-1].axes
-                for line in ax.lines]
+      labels = [
+          line.get_label() for ax in figures[-1].axes for line in ax.lines
+      ]
     else:
-      labels = [ax.texts[0].get_text() for ax in figures[-1].axes
-                if ax.get_position().width > 0.05]
+      labels = [
+          ax.texts[0].get_text() for ax in figures[-1].axes
+          if ax.get_position().width > 0.05
+      ]
     assert f"before_c{shape[-1] - 1}" in labels
     assert f"after_c{shape[-1] - 1}" in labels
     if diff:
-      assert (f"before_c{shape[-1] - 1} - after_c{shape[-1] - 1}"
-              in labels)
+      assert (f"before_c{shape[-1] - 1} - after_c{shape[-1] - 1}" in labels)
 
-  def test_fig_per_quantity_keeps_unlimited_layout(self, tmp_path,
-                                                    monkeypatch):
+  def test_fig_per_quantity_keeps_unlimited_layout(self, tmp_path, monkeypatch):
     values = np.arange(3 * 4 * 3, dtype=float).reshape(3, 4, 3) + 1
     figures = self._capture_pages(monkeypatch)
     compare._plot_one_block(TestSliceTitles._field(values),
-                            TestSliceTitles._field(values * 1.2),
-                            (None, ) * 6, ["before", "after"], "sim: field",
+                            TestSliceTitles._field(values * 1.2), (None, ) * 6,
+                            ["before", "after"],
+                            "sim: field",
                             str(tmp_path / "field.png"),
                             None,
                             fig_per_quantity=True,
@@ -253,20 +255,20 @@ class TestPanelPaging:
       ((3, 4, 3), False),
       ((3, 4, 2), True),
   ])
-  def test_exactly_six_panels_use_two_rows_and_three_columns(self, monkeypatch,
-                                                               shape, diff):
+  def test_exactly_six_panels_use_two_rows_and_three_columns(
+      self, monkeypatch, shape, diff):
     values = np.arange(np.prod(shape), dtype=float).reshape(shape) + 1
     figures = self._capture_pages(monkeypatch)
     compare._plot_one_block(TestSliceTitles._field(values),
-                            TestSliceTitles._field(values * 1.2),
-                            (None, ) * 6, ["before", "after"], "sim: field",
+                            TestSliceTitles._field(values * 1.2), (None, ) * 6,
+                            ["before", "after"],
+                            "sim: field",
                             None,
                             None,
                             diff=diff)
     assert len(figures) == 1
-    panels = (figures[0].axes if len(shape) == 2 else [
-        ax for ax in figures[0].axes if ax.get_position().width > 0.05
-    ])
+    panels = (figures[0].axes if len(shape) == 2 else
+              [ax for ax in figures[0].axes if ax.get_position().width > 0.05])
     assert len(panels) == 6
     assert len({round(ax.get_position().x0, 2) for ax in panels}) == 3
     assert len({round(ax.get_position().y0, 2) for ax in panels}) == 2
@@ -275,13 +277,13 @@ class TestPanelPaging:
     values = np.arange(3 * 4 * 3, dtype=float).reshape(3, 4, 3) + 1
     figures = self._capture_pages(monkeypatch)
     compare._plot_one_block(TestSliceTitles._field(values),
-                            TestSliceTitles._field(values * 1.2),
-                            (None, ) * 6, ["before", "after"], "sim: field",
+                            TestSliceTitles._field(values * 1.2), (None, ) * 6,
+                            ["before", "after"],
+                            "sim: field",
                             None,
                             None,
                             diff=True)
-    panels = [ax for ax in figures[0].axes
-              if ax.get_position().width > 0.05]
+    panels = [ax for ax in figures[0].axes if ax.get_position().width > 0.05]
     clims = [ax.collections[0].get_clim() for ax in panels]
     assert clims[0] == clims[1]
     assert clims[0] != clims[2]
@@ -296,12 +298,16 @@ class TestPanelPaging:
                             (None, None, "2", None, None, None),
                             ["before", "after"],
                             "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1: "
-                            "ion_source_M3par", None, None,
+                            "ion_source_M3par",
+                            None,
+                            None,
                             diff=True)
     assert len(figures) == 2
     assert all("z2=2" in fig._suptitle.get_text() for fig in figures)
-    assert all(max(map(len, fig._suptitle.get_text().splitlines())) <= 60
-               for fig in figures)
+    assert all(
+        max(map(len,
+                fig._suptitle.get_text().splitlines())) <= 60
+        for fig in figures)
 
 
 class TestParseLabelPair:
@@ -1203,8 +1209,7 @@ class TestCombinedPdf:
       path.mkdir()
       for block in range(2):
         values = np.arange(5 * 4, dtype=float).reshape(5, 4) * scale + 1
-        _write_dynvec(str(path), f"sim_b{block}", "many", np.arange(5),
-                      values)
+        _write_dynvec(str(path), f"sim_b{block}", "many", np.arange(5), values)
     report = _only(
         compare.sims(str(paths[0]),
                      str(paths[1]),
@@ -1223,8 +1228,7 @@ class TestCombinedPdf:
                  file_per_fig=True,
                  out_dir=str(tmp_path / "images"))
     assert sorted(p.name for p in (tmp_path / "images").iterdir()) == [
-        "many_b0_p1.jpg", "many_b0_p2.jpg", "many_b1_p1.jpg",
-        "many_b1_p2.jpg"
+        "many_b0_p1.jpg", "many_b0_p2.jpg", "many_b1_p1.jpg", "many_b1_p2.jpg"
     ]
 
     compare.sims(str(paths[0]),
@@ -1270,6 +1274,52 @@ class TestCombinedPdf:
     assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_a"))
     assert not os.path.isdir(os.path.join(str(tmp_path / "out"), "sim_b"))
 
+  def test_title_page_lists_each_simulation_page_range(self, tmp_path,
+                                                       monkeypatch):
+    base = tmp_path / "baseline"
+    cand = tmp_path / "candidate"
+    for root, scale in ((base, 1.0), (cand, 1.2)):
+      for name, components in (("sim_a", 4), ("sim_b", 1)):
+        path = root / name
+        path.mkdir(parents=True)
+        values = np.arange(5 * components, dtype=float).reshape(5,
+                                                                components) + 1
+        _write_dynvec(str(path), name, "many", np.arange(5), values * scale)
+
+    title_texts = []
+    make_title = compare._title_page_figure
+
+    def capture_title(*args, **kwargs):
+      fig = make_title(*args, **kwargs)
+      title_texts.append(fig.texts[0].get_text())
+      return fig
+
+    monkeypatch.setattr(compare, "_title_page_figure", capture_title)
+    compare.sims(str(base),
+                 str(cand),
+                 batch=True,
+                 must_include=["many"],
+                 num_plots=1,
+                 diff=True,
+                 out_dir=str(tmp_path / "paged"))
+    assert "sim_a — pages 2-3" in title_texts[-1]
+    assert "sim_b — page 4" in title_texts[-1]
+    assert _pdf_page_count(tmp_path / "paged" /
+                           "postgkyl_compare_sims.pdf") == 4
+
+    compare.sims(str(base),
+                 str(cand),
+                 batch=True,
+                 must_include=["many"],
+                 num_plots=1,
+                 diff=True,
+                 fig_per_quantity=True,
+                 out_dir=str(tmp_path / "unlimited"))
+    assert "sim_a — page 2" in title_texts[-1]
+    assert "sim_b — page 3" in title_texts[-1]
+    assert _pdf_page_count(tmp_path / "unlimited" /
+                           "postgkyl_compare_sims.pdf") == 3
+
 
 class TestFilePerFig:
   """The opt-in individual-image-files output mode."""
@@ -1295,10 +1345,14 @@ class TestFilePerFig:
 class TestTitlePageFigure:
 
   def test_non_batch_names_both_paths(self):
-    fig = compare._title_page_figure("/a/baseline", "/a/candidate", batch=False)
+    fig = compare._title_page_figure("/a/baseline",
+                                     "/a/candidate",
+                                     batch=False,
+                                     page_ranges={"baseline": (2, 5)})
     text = fig.texts[0].get_text()
     assert "/a/baseline" in text
     assert "/a/candidate" in text
+    assert "baseline — pages 2-5" in text
 
   def test_batch_lists_every_simulation(self):
     fig = compare._title_page_figure("/a/baseline",

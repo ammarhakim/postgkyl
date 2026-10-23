@@ -272,6 +272,8 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
 figure. Complete components continue on numbered PDF pages when needed;
 `--diff` panels count toward the six. `--fig_per_quantity` restores the
 unlimited, single-figure layout for each quantity (or multiblock patch).
+The combined PDF's title page lists the page number or range for each
+simulation.
 
 `--file_per_fig` opts into individual image files instead, ignoring
 `--pdf_name`. A quantity needing multiple figures gets `_p1`, `_p2`, ...

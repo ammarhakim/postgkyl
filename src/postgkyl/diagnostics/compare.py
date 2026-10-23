@@ -94,6 +94,16 @@ class CompareSimsReport:
   out_dir: str = ""
 
 
+@dataclass(frozen=True)
+class _ComparisonPlan:
+  """Ranked selection and resolved inputs for one simulation pair."""
+
+  quantities0: dict[str, str]
+  quantities1: dict[str, str]
+  frames: dict[str, int | None]
+  report: CompareSimsReport
+
+
 class _ReportDict(dict):
   """The dict ``sims()`` returns, identical in every way to a plain
   ``dict[str, CompareSimsReport]`` except for how it prints at the CLI
@@ -456,6 +466,13 @@ def _finite_bounds(*arrays: np.ndarray) -> tuple[float, float] | None:
   return float(values.min()), float(values.max())
 
 
+def _page_layout(data, diff: bool) -> tuple[bool, int]:
+  """Whether the reduced data plots as lines, and components per page."""
+  is_line = sum(length > 1 for length in data.values.shape[:-1]) <= 1
+  panels_per_comp = (1 if is_line else 2) + int(diff)
+  return is_line, _MAX_PANELS_PER_FIGURE // panels_per_comp
+
+
 def _plot_one_block(data0,
                     data1,
                     zs: tuple,
@@ -467,9 +484,7 @@ def _plot_one_block(data0,
                     diff: bool = False) -> None:
   data0, data1, pinned = _reduced(_point_values(data0), _point_values(data1),
                                   zs)
-  is_line = sum(length > 1 for length in data0.values.shape[:-1]) <= 1
-  panels_per_comp = (1 if is_line else 2) + int(diff)
-  comps_per_page = _MAX_PANELS_PER_FIGURE // panels_per_comp
+  is_line, comps_per_page = _page_layout(data0, diff)
   num_pages = (1 if fig_per_quantity else
                (data0.num_comps + comps_per_page - 1) // comps_per_page)
   for page in range(num_pages):
@@ -479,8 +494,8 @@ def _plot_one_block(data0,
     stop = min(start + comps_per_page, data0.num_comps)
     page_title = title
     if num_pages > 1:
-      comp_range = (f"c{start}" if stop == start + 1 else
-                    f"c{start}-c{stop - 1}")
+      comp_range = (f"c{start}" if stop == start +
+                    1 else f"c{start}-c{stop - 1}")
       page_title += f" (page {page + 1}/{num_pages}, {comp_range})"
     if pinned:
       page_title += " (" + ", ".join(
@@ -513,15 +528,9 @@ def _plot_one_block(data0,
         plt.close(0)
 
 
-def _plot_unlimited_block(data0,
-                          data1,
-                          labels: list[str],
-                          title: str,
-                          out_path: str | None,
-                          pdf: PdfPages | None,
-                          *,
-                          diff: bool,
-                          is_line: bool) -> None:
+def _plot_unlimited_block(data0, data1, labels: list[str], title: str,
+                          out_path: str | None, pdf: PdfPages | None, *,
+                          diff: bool, is_line: bool) -> None:
   # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
   # coordinate match, but two independently-run sims' grids commonly agree
   # only to ~1e-6 relative (platform/compiler floating-point noise) even
@@ -643,16 +652,9 @@ def _plot_unlimited_block(data0,
   _finish_figure(fig, out_path, pdf)
 
 
-def _plot_split_page(data0,
-                     data1,
-                     components: range,
-                     labels: list[str],
-                     title: str,
-                     out_path: str | None,
-                     pdf: PdfPages | None,
-                     *,
-                     diff: bool,
-                     is_line: bool) -> None:
+def _plot_split_page(data0, data1, components: range, labels: list[str],
+                     title: str, out_path: str | None, pdf: PdfPages | None, *,
+                     diff: bool, is_line: bool) -> None:
   """Draw complete original components on one page with at most six panels."""
   difference = (data0._result(data0.grid, data0.values -
                               data1.values) if diff else None)
@@ -708,13 +710,11 @@ def _plot_split_page(data0,
       # Two three-panel components fill two rows, one component per row.
       panel_specs = []
       for comp in components:
-        panel_specs.extend([
-            (data0, comp, label(0, comp), shared_bounds[comp]),
-            (data1, comp, label(1, comp), shared_bounds[comp]),
-            (difference, comp,
-             f"{label(0, comp)} - {label(1, comp)}",
-             _finite_bounds(difference.values[..., comp]))
-        ])
+        panel_specs.extend([(data0, comp, label(0, comp), shared_bounds[comp]),
+                            (data1, comp, label(1, comp), shared_bounds[comp]),
+                            (difference, comp,
+                             f"{label(0, comp)} - {label(1, comp)}",
+                             _finite_bounds(difference.values[..., comp]))])
     for data, comp, panel_label, scale in panel_specs:
       panel = len(panels)
       panels.append(select(data, comp=comp))
@@ -742,7 +742,7 @@ def _finish_figure(fig, out_path: str | None, pdf: PdfPages | None) -> None:
   _save_or_collect(fig, pdf)
 
 
-def _compare_one(
+def _prepare_one(
     path0: str,
     path1: str,
     *,
@@ -750,35 +750,11 @@ def _compare_one(
     num_plots: int,
     must_include: list[str] | None,
     exclude: list[str] | None,
-    labels: list[str] | None,
-    z0: str | None,
-    z1: str | None,
-    z2: str | None,
-    z3: str | None,
-    z4: str | None,
-    z5: str | None,
-    format: str,
     frame: int | None,
-    pdf: PdfPages | None = None,
-    title_prefix: str = "",
-    fig_per_quantity: bool = False,
-    diff: bool = False,
-) -> CompareSimsReport:
-  """One single-sim comparison -- the body ``sims()`` runs once directly, or
-  once per shared subdirectory when ``batch=True``.
-
-  ``labels`` is the already-resolved two-item legend-label list (see
-  :func:`_parse_label_pair`); ``None`` falls back to :func:`_default_labels`.
-  ``pdf``, when given, collects every quantity's figure as a page instead of
-  writing individual image files (``out_dir``/``format`` are then unused for
-  plotting, though ``out_dir`` is still reported on the returned
-  :class:`CompareSimsReport`). ``title_prefix`` is prepended to each page's
-  title (e.g. ``"<sim_name>: "`` in batch mode).
-  """
+) -> _ComparisonPlan:
+  """Rank shared quantities once, before counting or rendering PDF pages."""
   exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
   must_include = list(must_include or [])
-  resolved_labels = labels or _default_labels(path0, path1)
-  zs = (z0, z1, z2, z3, z4, z5)
 
   quantities0 = _stems_by_quantity(path0)
   quantities1 = _stems_by_quantity(path1)
@@ -825,19 +801,86 @@ def _compare_one(
     if quantity_diff.quantity not in selected:
       selected.append(quantity_diff.quantity)
 
+  frames = {
+      quantity:
+      _resolve_frame(frame, path0, quantities0[quantity], path1,
+                     quantities1[quantity])
+      for quantity in selected
+  }
+  report = CompareSimsReport(
+      compared=tuple(compared),
+      plotted=tuple(selected),
+      only_in_0=tuple(only_in_0),
+      only_in_1=tuple(only_in_1),
+      skipped=skipped,
+      out_dir=out_dir,
+  )
+  return _ComparisonPlan(quantities0, quantities1, frames, report)
+
+
+def _page_count_for_plan(path0: str, path1: str, plan: _ComparisonPlan,
+                         zs: tuple, fig_per_quantity: bool, diff: bool) -> int:
+  """Count the pages a prepared comparison will render, including blocks."""
+  count = 0
+  for quantity in plan.report.plotted:
+    blocks0 = _load_quantity(path0, plan.quantities0[quantity],
+                             plan.frames[quantity])
+    blocks1 = _load_quantity(path1, plan.quantities1[quantity],
+                             plan.frames[quantity])
+    for data0, data1 in zip(blocks0, blocks1):
+      if fig_per_quantity:
+        count += 1
+      else:
+        reduced, _, _ = _reduced(_point_values(data0), _point_values(data1), zs)
+        _, comps_per_page = _page_layout(reduced, diff)
+        count += (reduced.num_comps + comps_per_page - 1) // comps_per_page
+  return count
+
+
+def _compare_one(
+    path0: str,
+    path1: str,
+    *,
+    out_dir: str,
+    num_plots: int,
+    must_include: list[str] | None,
+    exclude: list[str] | None,
+    labels: list[str] | None,
+    z0: str | None,
+    z1: str | None,
+    z2: str | None,
+    z3: str | None,
+    z4: str | None,
+    z5: str | None,
+    format: str,
+    frame: int | None,
+    pdf: PdfPages | None = None,
+    title_prefix: str = "",
+    fig_per_quantity: bool = False,
+    diff: bool = False,
+    plan: _ComparisonPlan | None = None,
+) -> CompareSimsReport:
+  """Render one prepared simulation comparison."""
+  if plan is None:
+    plan = _prepare_one(path0,
+                        path1,
+                        out_dir=out_dir,
+                        num_plots=num_plots,
+                        must_include=must_include,
+                        exclude=exclude,
+                        frame=frame)
   if pdf is None:
     os.makedirs(out_dir, exist_ok=True)
-  plotted: list[str] = []
-  for quantity in selected:
-    stem0, stem1 = quantities0[quantity], quantities1[quantity]
-    common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
+  resolved_labels = labels or _default_labels(path0, path1)
+  zs = (z0, z1, z2, z3, z4, z5)
+  for quantity in plan.report.plotted:
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
     _plot_quantity(path0,
                    path1,
-                   stem0,
-                   stem1,
-                   common_frame,
+                   plan.quantities0[quantity],
+                   plan.quantities1[quantity],
+                   plan.frames[quantity],
                    zs,
                    resolved_labels,
                    f"{title_prefix}{quantity}",
@@ -845,16 +888,7 @@ def _compare_one(
                    pdf,
                    fig_per_quantity=fig_per_quantity,
                    diff=diff)
-    plotted.append(quantity)
-
-  return CompareSimsReport(
-      compared=tuple(compared),
-      plotted=tuple(plotted),
-      only_in_0=tuple(only_in_0),
-      only_in_1=tuple(only_in_1),
-      skipped=skipped,
-      out_dir=out_dir,
-  )
+  return plan.report
 
 
 def _shared_subdirs(path0: str, path1: str) -> list[str]:
@@ -889,6 +923,7 @@ def _batch(
     pdf: PdfPages | None = None,
     fig_per_quantity: bool = False,
     diff: bool = False,
+    plans: dict[str, _ComparisonPlan] | None = None,
 ) -> dict[str, CompareSimsReport]:
   """``_compare_one`` on every simulation ``path0``/``path1`` share. ``pdf``,
   when given, is shared by every simulation's pages instead of each sim
@@ -923,6 +958,7 @@ def _batch(
           title_prefix=f"{name}: ",
           fig_per_quantity=fig_per_quantity,
           diff=diff,
+          plan=plans[name] if plans is not None else None,
       )
       for name in common
   }
@@ -932,20 +968,36 @@ def _title_page_figure(path0: str,
                        path1: str,
                        *,
                        batch: bool,
-                       sim_names: list[str] | None = None):
+                       sim_names: list[str] | None = None,
+                       page_ranges: dict[str, tuple[int, int]] | None = None):
   """A plain text-only title page naming what a combined-PDF comparison
   covers, so the PDF is self-contained without its filename or the command
   that produced it."""
   fig = plt.figure(figsize=(8.5, 11))
   lines = ["Gkeyll simulation comparison", ""]
+
+  def page_label(name: str) -> str:
+    if page_ranges is None or name not in page_ranges:
+      return ""
+    first, last = page_ranges[name]
+    if first > last:
+      return " — no plot pages"
+    if first == last:
+      return f" — page {first}"
+    return f" — pages {first}-{last}"
+
   if batch:
     lines += [
         f"Baseline directory: {path0}", f"Candidate directory: {path1}", "",
         f"Simulations compared ({len(sim_names or [])}):"
     ]
-    lines += [f"  - {name}" for name in sim_names or []]
+    lines += [f"  - {name}{page_label(name)}" for name in sim_names or []]
   else:
-    lines += [f"Baseline: {path0}", f"Candidate: {path1}"]
+    name = os.path.basename(os.path.normpath(path0))
+    lines += [
+        f"Baseline: {path0}", f"Candidate: {path1}", "",
+        f"Comparison: {name}{page_label(name)}"
+    ]
   fig.text(0.1,
            0.9,
            "\n".join(lines),
@@ -1016,8 +1068,9 @@ def sims(
 
   By default, every plotted quantity is collected into one combined,
   PDF, whose path is ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
-  ``<cwd>/<pdf_name>``. Alternatively, passing ``file_per_fig`` yields
-  individual image files.
+  ``<cwd>/<pdf_name>``. Its title page lists the PDF page range for each
+  simulation. Alternatively, passing ``file_per_fig`` yields individual
+  image files.
 
   ``batch`` reinterprets ``path0``/``path1`` as directories with multiple
   simulations each (rather than having one simulation each): each holds one
@@ -1082,8 +1135,11 @@ def sims(
     raise ValueError("pdf_name cannot be combined with file_per_fig")
   resolved_labels = _parse_label_pair(labels)
 
-  def _run(effective_out_dir: str,
-           pdf: PdfPages | None) -> dict[str, CompareSimsReport]:
+  def _run(
+      effective_out_dir: str,
+      pdf: PdfPages | None,
+      plans: dict[str, _ComparisonPlan] | None = None
+  ) -> dict[str, CompareSimsReport]:
     if batch:
       return _batch(path0,
                     path1,
@@ -1102,7 +1158,8 @@ def sims(
                     frame=frame,
                     pdf=pdf,
                     fig_per_quantity=fig_per_quantity,
-                    diff=diff)
+                    diff=diff,
+                    plans=plans)
     report = _compare_one(path0,
                           path1,
                           out_dir=effective_out_dir,
@@ -1120,18 +1177,44 @@ def sims(
                           frame=frame,
                           pdf=pdf,
                           fig_per_quantity=fig_per_quantity,
-                          diff=diff)
+                          diff=diff,
+                          plan=plans[os.path.basename(os.path.normpath(path0))]
+                          if plans is not None else None)
     return {os.path.basename(os.path.normpath(path0)): report}
 
   if not file_per_fig:
     pdf_dir = out_dir if out_dir is not None else os.getcwd()
     pdf_path = os.path.join(pdf_dir, pdf_name or _DEFAULT_PDF_NAME)
-    sim_names = _shared_subdirs(path0, path1) if batch else None
+    sim_names = (_shared_subdirs(path0, path1)
+                 if batch else [os.path.basename(os.path.normpath(path0))])
+    plans: dict[str, _ComparisonPlan] = {}
+    page_ranges: dict[str, tuple[int, int]] = {}
+    next_page = 2  # The title page occupies page 1.
+    zs = (z0, z1, z2, z3, z4, z5)
+    for name in sim_names:
+      sim_path0 = os.path.join(path0, name) if batch else path0
+      sim_path1 = os.path.join(path1, name) if batch else path1
+      plans[name] = _prepare_one(sim_path0,
+                                 sim_path1,
+                                 out_dir=pdf_dir,
+                                 num_plots=num_plots,
+                                 must_include=must_include,
+                                 exclude=exclude,
+                                 frame=frame)
+      num_pages = _page_count_for_plan(sim_path0, sim_path1, plans[name], zs,
+                                       fig_per_quantity, diff)
+      page_ranges[name] = (next_page, next_page + num_pages - 1)
+      next_page += num_pages
     os.makedirs(pdf_dir, exist_ok=True)
     with PdfPages(pdf_path) as pdf:
-      pdf.savefig(
-          _title_page_figure(path0, path1, batch=batch, sim_names=sim_names))
-      return _ReportDict(_run(pdf_dir, pdf), verbose=verbose)
+      title = _title_page_figure(path0,
+                                 path1,
+                                 batch=batch,
+                                 sim_names=sim_names if batch else None,
+                                 page_ranges=page_ranges)
+      pdf.savefig(title)
+      plt.close(title)
+      return _ReportDict(_run(pdf_dir, pdf, plans), verbose=verbose)
 
   effective_out_dir = (out_dir if out_dir is not None else os.path.join(
       os.getcwd(), _DEFAULT_SUBDIR))
