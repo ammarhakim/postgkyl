@@ -604,6 +604,7 @@ def _compare_one(
     format: str,
     frame: int | None,
     pdf: PdfPages | None = None,
+    title_prefix: str = "",
     diff: bool = False,
 ) -> CompareSimsReport:
   """One single-sim comparison -- the body ``sims()`` runs once directly, or
@@ -614,8 +615,8 @@ def _compare_one(
   ``pdf``, when given, collects every quantity's figure as a page instead of
   writing individual image files (``out_dir``/``format`` are then unused for
   plotting, though ``out_dir`` is still reported on the returned
-  :class:`CompareSimsReport`). Each page is titled using the simulation name
-  parsed from the plotted file, which may differ from its batch directory.
+  :class:`CompareSimsReport`). ``title_prefix`` is prepended to each page's
+  title (e.g. ``"<sim_name>: "`` in batch mode).
   """
   exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
   must_include = list(must_include or [])
@@ -672,7 +673,6 @@ def _compare_one(
   plotted: list[str] = []
   for quantity in selected:
     stem0, stem1 = quantities0[quantity], quantities1[quantity]
-    sim_name = io.parse_output_name(f"{stem0}.gkyl").sim
     common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
@@ -683,7 +683,7 @@ def _compare_one(
                    common_frame,
                    zs,
                    resolved_labels,
-                   f"{sim_name}: {quantity}",
+                   f"{title_prefix}{quantity}",
                    out_path,
                    pdf,
                    diff=diff)
@@ -761,6 +761,7 @@ def _batch(
           format=format,
           frame=frame,
           pdf=pdf,
+          title_prefix=f"{name}: ",
           diff=diff,
       )
       for name in common

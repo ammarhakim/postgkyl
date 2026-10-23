@@ -154,6 +154,19 @@ class TestSliceTitles:
     title = plt.gcf()._suptitle.get_text()
     assert title == "sim: field (z2=3)"
 
+  def test_long_title_wraps_after_simulation_name(self):
+    values = np.ones((3, 4, 1))
+    baseline = self._field(values)
+    candidate = self._field(values + 1)
+    compare._plot_one_block(
+        baseline, candidate, (None, ) * 6, ["before", "after"],
+        "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1: ion_source_M3par",
+        None, None)
+    title = plt.gcf()._suptitle
+    assert title.get_text() == (
+        "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1:\nion_source_M3par")
+    assert title.get_fontsize() == 10
+
 
 class TestParseLabelPair:
 
@@ -817,12 +830,12 @@ class TestSimsDiffField:
 
 class TestSimsBatch:
 
-  def test_title_uses_file_sim_when_directory_name_is_truncated(self, tmp_path):
+  def test_title_uses_batch_directory_name(self, tmp_path):
     base = tmp_path / "baseline"
     cand = tmp_path / "candidate"
     sim = "rt_gk_sheath_1x2v_p1_cons"
-    _sim(base, "_cons", name=sim)
-    _sim(cand, "_cons", name=sim, energy_scale=1.2)
+    _sim(base, sim, name="different_output_prefix")
+    _sim(cand, sim, name="different_output_prefix", energy_scale=1.2)
     compare.sims(str(base),
                  str(cand),
                  batch=True,
