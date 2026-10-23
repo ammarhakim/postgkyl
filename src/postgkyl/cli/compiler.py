@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from enum import Enum
 import inspect
 import json
+import numbers
+import os
 from pathlib import Path
 import types
 from typing import Annotated, Any, Literal, Union, get_args, get_origin, get_type_hints
@@ -403,7 +405,8 @@ def compile_callable(fn, *, name: str | None = None) -> CommandModel:
         in (Execution.MAP_REPLACE, Execution.MAP_APPEND,
             Execution.MAP_OR_TERMINAL_EACH, Execution.TERMINAL_EACH))
     is_variadic_input = parameter.kind is inspect.Parameter.VAR_POSITIONAL and (
-        spec.execution in (Execution.COMBINE, Execution.TERMINAL_ALL))
+        spec.execution
+        in (Execution.COMBINE, Execution.TERMINAL_ALL, Execution.ACTIVATE))
     injected = marker_injected or is_receiver or is_variadic_input
     if injected and parameter.name != "self" and base in (
         Any, inspect.Parameter.empty):
@@ -578,8 +581,142 @@ def _convert(value, codec: TypeCodec):
   return _convert_scalar(value, codec)
 
 
+def _scalar_token(value, codec: TypeCodec) -> str:
+  """One Python scalar spelled as the CLI token ``_convert`` reads back."""
+  if isinstance(value, Enum):
+    value = value.value
+  if isinstance(value, bool):
+    raise TypeError("a boolean has no scalar spelling")
+  textual = codec.kind in (CodecKind.STRING, CodecKind.PATH)
+  if textual and isinstance(value, os.PathLike):
+    return os.fspath(value)
+  if isinstance(value, str) and (textual or codec.kind
+                                 in (CodecKind.CHOICE, CodecKind.ENUM)):
+    return value
+  if isinstance(value, numbers.Integral) and codec.kind is not CodecKind.FLOAT:
+    return str(int(value))
+  # repr keeps a float's decimal point, so "2.0" is never read as an index.
+  if isinstance(value, numbers.Real) and codec.kind is not CodecKind.INTEGER:
+    return repr(float(value))
+  raise TypeError(f"{type(value).__name__} has no {codec.kind.value} spelling")
+
+
+def _value_tokens(value, codec: TypeCodec) -> list[list[str]]:
+  """The option occurrences spelling ``value``, each one list of tokens."""
+  if codec.kind is CodecKind.BOOLEAN:
+    if not isinstance(value, bool):
+      raise TypeError(f"expected a bool, got {type(value).__name__}")
+    return [[]] if value else []
+  if codec.kind is CodecKind.SEQUENCE:
+    if not isinstance(value, (list, tuple)):
+      raise TypeError(f"expected a list or tuple, got {type(value).__name__}")
+    return [[_scalar_token(item, codec.items[0])] for item in value]
+  if codec.kind is CodecKind.TUPLE:
+    if not isinstance(value, (list, tuple)) or len(value) != codec.nargs:
+      raise TypeError(f"expected {codec.nargs} values")
+    return [[_scalar_token(item, sub) for item, sub in zip(value, codec.items)]]
+  if codec.kind is CodecKind.MAPPING:
+    if not isinstance(value, Mapping):
+      raise TypeError(f"expected a mapping, got {type(value).__name__}")
+    key_codec, value_codec = codec.items
+    return [[
+        f"{_scalar_token(key, key_codec)}={_scalar_token(item, value_codec)}"
+    ] for key, item in value.items()]
+  return [[_scalar_token(value, codec)]]
+
+
+def command_tokens(model: CommandModel, values: dict) -> list[str]:
+  """Spell ``values`` as the argv tokens that follow ``model.name``.
+
+  The inverse of the parsing that ``build_click_command`` and ``_convert``
+  perform: parsing the tokens gives back ``values``. Unset values (``None``,
+  the default, a false boolean) are omitted; dataset references are tags;
+  positional arguments come last, after every option (and after ``--`` when
+  one starts with a dash). A value with no CLI spelling raises ``TypeError``
+  rather than being stringified.
+  """
+  options: list[str] = []
+  arguments: list[str] = []
+  for parameter in model.parameters:
+    if parameter.injected:
+      continue
+    value = values.get(parameter.name)
+    if value is None:
+      continue
+    try:
+      if parameter.dataset_ref and not isinstance(value, str):
+        raise TypeError("a dataset is referred to by its tag")
+      occurrences = _value_tokens(value, parameter.codec)
+    except TypeError as exc:
+      raise TypeError(f"{model.name}: {parameter.name}={value!r} has no "
+                      f"command-line spelling ({exc})") from None
+    if not parameter.required and value == parameter.default:
+      continue
+    if parameter.argument:
+      arguments.extend(token for occurrence in occurrences
+                       for token in occurrence)
+      continue
+    for occurrence in occurrences:
+      options.extend([f"--{parameter.name}", *occurrence])
+  if any(token.startswith("-") for token in arguments):
+    # "--" ends the options, so a value such as "-1 f0 *" stays positional.
+    arguments.insert(0, "--")
+  return options + arguments
+
+
+def _scalar_hint(codec: TypeCodec, annotation=None) -> str:
+  """The Python scalars ``_scalar_token`` spells for ``codec``.
+
+  A string option also takes the numbers or paths its Python annotation
+  admits (``select``'s ``z0`` accepts ``0.5``; ``load``'s ``file_name`` a
+  ``Path``).
+  """
+  if codec.kind in (CodecKind.CHOICE, CodecKind.ENUM):
+    return f"Literal[{', '.join(map(repr, codec.choices))}]"
+  if codec.kind is CodecKind.PATH:
+    return "str | os.PathLike[str]"
+  if codec.kind is CodecKind.STRING:
+    admitted = get_args(annotation) if get_origin(annotation) in (
+        Union, types.UnionType) else (annotation, )
+    hints = ["str"]
+    if any(arg in (int, float) for arg in admitted):
+      hints.append("float")
+    if any(
+        inspect.isclass(arg) and issubclass(arg, os.PathLike)
+        for arg in admitted):
+      hints.append("os.PathLike[str]")
+    return " | ".join(hints)
+  return {
+      CodecKind.BOOLEAN: "bool",
+      CodecKind.INTEGER: "int",
+      CodecKind.FLOAT: "float"
+  }[codec.kind]
+
+
+def value_hint(parameter: ParameterModel) -> str:
+  """The values ``command_tokens`` accepts for ``parameter``, as a type."""
+  codec = parameter.codec
+  if parameter.dataset_ref:
+    hint = "str"
+  elif codec.kind is CodecKind.SEQUENCE:
+    item = _scalar_hint(codec.items[0])
+    hint = f"list[{item}] | tuple[{item}, ...]"
+  elif codec.kind is CodecKind.TUPLE:
+    hint = f"tuple[{', '.join(map(_scalar_hint, codec.items))}]"
+  elif codec.kind is CodecKind.MAPPING:
+    hint = f"Mapping[{', '.join(map(_scalar_hint, codec.items))}]"
+  else:
+    hint = _scalar_hint(codec, parameter.annotation)
+  if not parameter.required and parameter.default is None:
+    hint += " | None"
+  return hint
+
+
 def _resolve_tag(ctx, parameter: str, tag: str):
-  matches = [dataset for dataset in ctx.obj.datasets if dataset.tag == tag]
+  matches = [
+      dataset for dataset in ctx.obj.datasets + ctx.obj.set_aside
+      if dataset.tag == tag
+  ]
   if not matches:
     raise click.UsageError(f"--{parameter}: no dataset tagged {tag!r}")
   if len(matches) != 1:
@@ -661,7 +798,7 @@ def execute_model(ctx, model: CommandModel, values: dict):
   """Invoke one model through its generic working-set execution adapter."""
   selected = _selected(ctx)
   execution = model.spec.execution
-  needs_input = execution is not Execution.LOAD
+  needs_input = execution not in (Execution.LOAD, Execution.ACTIVATE)
   if needs_input and not selected and not any(p.dataset_ref
                                               for p in model.parameters):
     raise click.UsageError(f"{model.name}: no datasets selected")
@@ -707,6 +844,14 @@ def execute_model(ctx, model: CommandModel, values: dict):
           for result in outputs:
             _present(result)
       return outputs
+
+    if execution is Execution.ACTIVATE:
+      everything = ctx.obj.datasets + ctx.obj.set_aside
+      result, _ = _call(model, everything, values, ctx)
+      active = {id(dataset) for dataset in _datasets_from_result(result)}
+      ctx.obj.datasets = [d for d in everything if id(d) in active]
+      ctx.obj.set_aside = [d for d in everything if id(d) not in active]
+      return result
 
     result, referenced = _call(model, selected, values, ctx)
     if execution is Execution.LOAD:
@@ -816,8 +961,10 @@ __all__ = [
     "ParameterModel",
     "TypeCodec",
     "build_click_command",
+    "command_tokens",
     "compile_callable",
     "compile_public_surface",
     "execute_model",
     "group_by_section",
+    "value_hint",
 ]

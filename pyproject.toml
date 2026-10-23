@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77", "numpy>=2.2.6"]
+requires = ["setuptools>=77", "numpy>=2.2.6", "tomli>=2; python_version < '3.11'"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -27,7 +27,7 @@ license = "MIT"
 maintainers = [
   {name = "Petr Cagas", email = "p.cagas@hzdr.de"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"
 keywords = ["plasma", "Gkeyll"]
 classifiers = [
   # 3 - Alpha
@@ -56,6 +56,7 @@ docs = [
 ]
 test = [
     "setuptools>=77",
+    "tomli>=2; python_version < '3.11'",
     "pre-commit==4.6.2",
     "pytest>=9.0.3",
     "pytest-cov>=7.0.0",
@@ -87,6 +88,7 @@ where = ["src/"]
 
 [tool.setuptools.package-data]
 "postgkyl" = ["py.typed"]
+"postgkyl.cli" = ["*.pyi"]
 "postgkyl.render" = ["*.mplstyle", "*.js"]
 "postgkyl.gpython" = ["csrc/*.c"]
 
@@ -157,7 +159,8 @@ environment = { POSTGKYL_REQUIRE_GKEYLL = "1", OPENBLAS_NUM_THREADS = "1", OMP_N
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
-before-all = "dnf install -y git mesa-libGL"
+# Both packages come from AlmaLinux; avoid unrelated EPEL mirror failures.
+before-all = "dnf install -y --disablerepo='epel*' git mesa-libGL"
 
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
