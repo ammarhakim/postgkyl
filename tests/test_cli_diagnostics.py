@@ -113,6 +113,11 @@ def test_only_canonical_diagnostic_names_are_registered():
     assert old_name not in COMMAND_BY_NAME
 
 
+def test_compare_sims_exposes_fig_per_quantity_option():
+  command = COMMAND_BY_NAME["compare_sims"]
+  assert any(option.name == "fig_per_quantity" for option in command.params)
+
+
 def test_load_distf_frame_is_text_and_cli_accepts_all_frames(
     tmp_path, monkeypatch):
   command = COMMAND_BY_NAME["gk_load_distf"]

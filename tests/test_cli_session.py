@@ -118,7 +118,11 @@ def test_methods_are_derived_from_the_cli_models():
 
 
 def test_the_ide_stub_is_generated_from_the_current_commands():
-  assert STUB.read_text() == render_stub(), (
+  # The pre-commit formatter changes whitespace in the generated file;
+  # compare Python syntax so a stale signature or docstring still fails.
+  actual = ast.dump(ast.parse(STUB.read_text()), include_attributes=False)
+  expected = ast.dump(ast.parse(render_stub()), include_attributes=False)
+  assert actual == expected, (
       "session.pyi is out of date: run "
       "`python scripts/generate_session_stub.py`")
 

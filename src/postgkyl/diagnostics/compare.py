@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
+import textwrap
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -38,6 +39,8 @@ from . import discovery
 
 _DEFAULT_SUBDIR = "postgkyl_compare_sims"
 _DEFAULT_PDF_NAME = "postgkyl_compare_sims.pdf"
+_MAX_PANELS_PER_FIGURE = 6
+_COMPARE_FIGSIZE = (12, 8)
 
 # No quantity-name prefix is excluded by default: geometry (``geo_*``),
 # per-boundary (``bc_*``), and flux (``bflux_*``) outputs are ranked and
@@ -375,6 +378,7 @@ def _plot_quantity(path0: str,
                    title: str,
                    out_path: str | None,
                    pdf: PdfPages | None,
+                   fig_per_quantity: bool = False,
                    diff: bool = False) -> None:
   blocks0 = _load_quantity(path0, stem0, frame)
   blocks1 = _load_quantity(path1, stem1, frame)
@@ -400,6 +404,7 @@ def _plot_quantity(path0: str,
                       block_title,
                       block_path,
                       pdf,
+                      fig_per_quantity=fig_per_quantity,
                       diff=diff)
     return
 
@@ -410,6 +415,7 @@ def _plot_quantity(path0: str,
                   title,
                   out_path,
                   pdf,
+                  fig_per_quantity=fig_per_quantity,
                   diff=diff)
 
 
@@ -430,20 +436,24 @@ def _diff_panel_zbounds(data0, data1,
   zmin: dict[int, float] = {}
   zmax: dict[int, float] = {}
   for comp in range(num_comps):
-    shared = np.concatenate(
-        [data0.values[..., comp].ravel(), data1.values[..., comp].ravel()])
-    shared = shared[np.isfinite(shared)]
-    if shared.size and shared.min() < shared.max():
+    shared = _finite_bounds(data0.values[..., comp], data1.values[..., comp])
+    if shared is not None:
       for panel in (comp, num_comps + comp):
-        zmin[panel] = float(shared.min())
-        zmax[panel] = float(shared.max())
-    diff_vals = diff_data.values[..., comp].ravel()
-    diff_vals = diff_vals[np.isfinite(diff_vals)]
-    if diff_vals.size and diff_vals.min() < diff_vals.max():
+        zmin[panel], zmax[panel] = shared
+    diff_vals = _finite_bounds(diff_data.values[..., comp])
+    if diff_vals is not None:
       panel = 2 * num_comps + comp
-      zmin[panel] = float(diff_vals.min())
-      zmax[panel] = float(diff_vals.max())
+      zmin[panel], zmax[panel] = diff_vals
   return zmin, zmax
+
+
+def _finite_bounds(*arrays: np.ndarray) -> tuple[float, float] | None:
+  """The range of finite values, absent when no color scale can be set."""
+  values = np.concatenate([array.ravel() for array in arrays])
+  values = values[np.isfinite(values)]
+  if not values.size or values.min() == values.max():
+    return None
+  return float(values.min()), float(values.max())
 
 
 def _plot_one_block(data0,
@@ -453,14 +463,65 @@ def _plot_one_block(data0,
                     title: str,
                     out_path: str | None,
                     pdf: PdfPages | None,
+                    fig_per_quantity: bool = False,
                     diff: bool = False) -> None:
   data0, data1, pinned = _reduced(_point_values(data0), _point_values(data1),
                                   zs)
-  if pinned:
-    title += " (" + ", ".join(f"z{d}={index}"
-                              for d, index in sorted(pinned.items())) + ")"
-  if len(title) > 60:
-    title = title.replace(": ", ":\n", 1)
+  is_line = sum(length > 1 for length in data0.values.shape[:-1]) <= 1
+  panels_per_comp = (1 if is_line else 2) + int(diff)
+  comps_per_page = _MAX_PANELS_PER_FIGURE // panels_per_comp
+  num_pages = (1 if fig_per_quantity else
+               (data0.num_comps + comps_per_page - 1) // comps_per_page)
+  for page in range(num_pages):
+    if not fig_per_quantity:
+      plt.figure(0).set_size_inches(*_COMPARE_FIGSIZE)
+    start = page * comps_per_page
+    stop = min(start + comps_per_page, data0.num_comps)
+    page_title = title
+    if num_pages > 1:
+      comp_range = (f"c{start}" if stop == start + 1 else
+                    f"c{start}-c{stop - 1}")
+      page_title += f" (page {page + 1}/{num_pages}, {comp_range})"
+    if pinned:
+      page_title += " (" + ", ".join(
+          f"z{d}={index}" for d, index in sorted(pinned.items())) + ")"
+    page_title = textwrap.fill(page_title, width=60, break_on_hyphens=False)
+    page_path = out_path
+    if out_path is not None and num_pages > 1:
+      stem, extension = os.path.splitext(out_path)
+      page_path = f"{stem}_p{page + 1}{extension}"
+    if num_pages == 1:
+      _plot_unlimited_block(data0,
+                            data1,
+                            labels,
+                            page_title,
+                            page_path,
+                            pdf,
+                            diff=diff,
+                            is_line=is_line)
+    else:
+      _plot_split_page(data0,
+                       data1,
+                       range(start, stop),
+                       labels,
+                       page_title,
+                       page_path,
+                       pdf,
+                       diff=diff,
+                       is_line=is_line)
+      if page < num_pages - 1 and pdf is None:
+        plt.close(0)
+
+
+def _plot_unlimited_block(data0,
+                          data1,
+                          labels: list[str],
+                          title: str,
+                          out_path: str | None,
+                          pdf: PdfPages | None,
+                          *,
+                          diff: bool,
+                          is_line: bool) -> None:
   # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
   # coordinate match, but two independently-run sims' grids commonly agree
   # only to ~1e-6 relative (platform/compiler floating-point noise) even
@@ -511,7 +572,7 @@ def _plot_one_block(data0,
   # figure=0 forces one shared figure, clear=True keeps it from
   # accumulating axes left over from an earlier quantity plotted in the
   # same process (e.g. an earlier call from the same `sims()` run).
-  if data0.num_dims <= 1:
+  if is_line:
     # A single combined call with all 3 datasets would NOT keep baseline and
     # candidate overlaid -- each dataset would get its own axis block, since
     # overlay_axes is all-or-nothing for the whole call. Reserving
@@ -579,6 +640,101 @@ def _plot_one_block(data0,
                  no_show=True,
                  saveas=None,
                  legend_labels=all_labels)
+  _finish_figure(fig, out_path, pdf)
+
+
+def _plot_split_page(data0,
+                     data1,
+                     components: range,
+                     labels: list[str],
+                     title: str,
+                     out_path: str | None,
+                     pdf: PdfPages | None,
+                     *,
+                     diff: bool,
+                     is_line: bool) -> None:
+  """Draw complete original components on one page with at most six panels."""
+  difference = (data0._result(data0.grid, data0.values -
+                              data1.values) if diff else None)
+  num_components = len(components)
+  num_panels = num_components * ((1 if is_line else 2) + int(diff))
+
+  def label(which: int, comp: int) -> str:
+    return f"{labels[which]}_c{comp}"
+
+  if is_line:
+    # Line panels have no colorbar axes, so each component can be appended
+    # to its reserved axis. Baseline and candidate share the top-row axis;
+    # the difference for that component occupies the axis beneath it.
+    fig = None
+    for local, comp in enumerate(components):
+      fig = plot(select(data0, comp=comp),
+                 select(data1, comp=comp),
+                 num_axes=num_panels,
+                 start_axes=local,
+                 overlay_axes=True,
+                 figure=0,
+                 clear=fig is None,
+                 title=title if fig is None else None,
+                 no_show=True,
+                 legend_labels=[label(0, comp), label(1, comp)])
+    if difference is not None:
+      for local, comp in enumerate(components):
+        fig = plot(select(difference, comp=comp),
+                   num_axes=num_panels,
+                   start_axes=num_components + local,
+                   figure=0,
+                   no_show=True,
+                   legend_labels=[f"{label(0, comp)} - {label(1, comp)}"])
+  else:
+    # A 2-D plot appends a colorbar axis per panel, so all panels must be
+    # supplied in one plot() call; a later start_axes would count colorbars.
+    panels = []
+    panel_labels = []
+    zmin: dict[int, float] = {}
+    zmax: dict[int, float] = {}
+    shared_bounds = {
+        comp: _finite_bounds(data0.values[..., comp], data1.values[..., comp])
+        for comp in components
+    }
+    if difference is None:
+      # Baselines occupy the top row and candidates the bottom row when
+      # three two-panel components fill a page.
+      panel_specs = ([(data0, comp, label(0, comp), shared_bounds[comp])
+                      for comp in components] +
+                     [(data1, comp, label(1, comp), shared_bounds[comp])
+                      for comp in components])
+    else:
+      # Two three-panel components fill two rows, one component per row.
+      panel_specs = []
+      for comp in components:
+        panel_specs.extend([
+            (data0, comp, label(0, comp), shared_bounds[comp]),
+            (data1, comp, label(1, comp), shared_bounds[comp]),
+            (difference, comp,
+             f"{label(0, comp)} - {label(1, comp)}",
+             _finite_bounds(difference.values[..., comp]))
+        ])
+    for data, comp, panel_label, scale in panel_specs:
+      panel = len(panels)
+      panels.append(select(data, comp=comp))
+      panel_labels.append(panel_label)
+      if scale is not None:
+        zmin[panel], zmax[panel] = scale
+    fig = plot(*panels,
+               num_axes=num_panels,
+               num_subplot_col=3 if num_panels in (3, 6) else None,
+               zmin=zmin,
+               zmax=zmax,
+               figure=0,
+               clear=True,
+               title=title,
+               no_show=True,
+               legend_labels=panel_labels)
+  _finish_figure(fig, out_path, pdf)
+
+
+def _finish_figure(fig, out_path: str | None, pdf: PdfPages | None) -> None:
   if fig._suptitle is not None:
     fig._suptitle.set_fontsize(10)
   if out_path is not None:
@@ -605,6 +761,7 @@ def _compare_one(
     frame: int | None,
     pdf: PdfPages | None = None,
     title_prefix: str = "",
+    fig_per_quantity: bool = False,
     diff: bool = False,
 ) -> CompareSimsReport:
   """One single-sim comparison -- the body ``sims()`` runs once directly, or
@@ -686,6 +843,7 @@ def _compare_one(
                    f"{title_prefix}{quantity}",
                    out_path,
                    pdf,
+                   fig_per_quantity=fig_per_quantity,
                    diff=diff)
     plotted.append(quantity)
 
@@ -729,6 +887,7 @@ def _batch(
     format: str,
     frame: int | None,
     pdf: PdfPages | None = None,
+    fig_per_quantity: bool = False,
     diff: bool = False,
 ) -> dict[str, CompareSimsReport]:
   """``_compare_one`` on every simulation ``path0``/``path1`` share. ``pdf``,
@@ -762,6 +921,7 @@ def _batch(
           frame=frame,
           pdf=pdf,
           title_prefix=f"{name}: ",
+          fig_per_quantity=fig_per_quantity,
           diff=diff,
       )
       for name in common
@@ -804,6 +964,7 @@ def sims(
     batch: bool = False,
     out_dir: str | None = None,
     file_per_fig: bool = False,
+    fig_per_quantity: bool = False,
     pdf_name: str | None = None,
     num_plots: int = 5,
     must_include: list[str] | None = None,
@@ -847,6 +1008,12 @@ def sims(
   single-component quantity, or ``"<label0>_c<i> - <label1>_c<i>"`` per
   component for a multi-component one.
 
+  Each figure contains at most six panels by default. Complete component
+  groups continue on numbered pages when necessary: a 1-D component needs
+  one panel (two with ``diff``), and a 2-D component needs two (three with
+  ``diff``). ``fig_per_quantity`` restores the unlimited, single-figure
+  layout for each quantity or multiblock patch.
+
   By default, every plotted quantity is collected into one combined,
   PDF, whose path is ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
   ``<cwd>/<pdf_name>``. Alternatively, passing ``file_per_fig`` yields
@@ -870,6 +1037,9 @@ def sims(
       individual figures are written to (defaults to
       ``<cwd>/postgkyl_compare_sims``).
     file_per_fig: Write individual image files instead of one combined PDF.
+      A quantity that spans figures gets numbered ``_p1``, ``_p2``, ... files.
+    fig_per_quantity: Keep every component of a quantity on one figure,
+      without the default six-panel limit.
     num_plots: Number of quantities to plot, including every
       ``must_include`` entry.
     must_include: Names of quantities (e.g. ``"field_energy"``) that must
@@ -931,6 +1101,7 @@ def sims(
                     format=format,
                     frame=frame,
                     pdf=pdf,
+                    fig_per_quantity=fig_per_quantity,
                     diff=diff)
     report = _compare_one(path0,
                           path1,
@@ -948,6 +1119,7 @@ def sims(
                           format=format,
                           frame=frame,
                           pdf=pdf,
+                          fig_per_quantity=fig_per_quantity,
                           diff=diff)
     return {os.path.basename(os.path.normpath(path0)): report}
 

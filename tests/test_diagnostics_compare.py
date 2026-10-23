@@ -160,12 +160,148 @@ class TestSliceTitles:
     candidate = self._field(values + 1)
     compare._plot_one_block(
         baseline, candidate, (None, ) * 6, ["before", "after"],
-        "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1: ion_source_M3par",
-        None, None)
+        "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1: ion_source_M3par", None,
+        None)
     title = plt.gcf()._suptitle
     assert title.get_text() == (
         "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1:\nion_source_M3par")
     assert title.get_fontsize() == 10
+
+
+class TestPanelPaging:
+
+  @staticmethod
+  def _capture_pages(monkeypatch):
+    figures = []
+    finish = compare._finish_figure
+
+    def capture(fig, out_path, pdf):
+      figures.append(fig)
+      finish(fig, out_path, pdf)
+
+    monkeypatch.setattr(compare, "_finish_figure", capture)
+    return figures
+
+  @pytest.mark.parametrize("shape,diff,counts", [
+      ((5, 7), False, (6, 1)),
+      ((5, 4), True, (6, 2)),
+      ((3, 4, 4), False, (6, 2)),
+      ((3, 4, 3), True, (6, 3)),
+  ])
+  def test_splits_complete_components_at_six_panels(self, tmp_path,
+                                                      monkeypatch, shape, diff,
+                                                      counts):
+    values = np.arange(np.prod(shape), dtype=float).reshape(shape) + 1
+    baseline = TestSliceTitles._field(values)
+    candidate = TestSliceTitles._field(values * 1.2)
+    figures = self._capture_pages(monkeypatch)
+    compare._plot_one_block(baseline,
+                            candidate, (None, ) * 6, ["before", "after"],
+                            "sim: field", str(tmp_path / "field.png"),
+                            None,
+                            diff=diff)
+    assert len(figures) == 2
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "field_p1.png", "field_p2.png"
+    ]
+    is_line = len(shape) == 2
+    for fig, count in zip(figures, counts):
+      panels = (fig.axes if is_line else
+                [ax for ax in fig.axes if ax.get_position().width > 0.05])
+      assert len(panels) == count
+    first_positions = [ax.get_position() for ax in
+                       (figures[0].axes if is_line else [
+                           ax for ax in figures[0].axes
+                           if ax.get_position().width > 0.05
+                       ])]
+    assert len({round(pos.x0, 2) for pos in first_positions}) == 3
+    assert len({round(pos.y0, 2) for pos in first_positions}) == 2
+    assert "page 1/2" in figures[0]._suptitle.get_text()
+    assert f"c{shape[-1] - 1}" in figures[-1]._suptitle.get_text()
+    if is_line:
+      labels = [line.get_label() for ax in figures[-1].axes
+                for line in ax.lines]
+    else:
+      labels = [ax.texts[0].get_text() for ax in figures[-1].axes
+                if ax.get_position().width > 0.05]
+    assert f"before_c{shape[-1] - 1}" in labels
+    assert f"after_c{shape[-1] - 1}" in labels
+    if diff:
+      assert (f"before_c{shape[-1] - 1} - after_c{shape[-1] - 1}"
+              in labels)
+
+  def test_fig_per_quantity_keeps_unlimited_layout(self, tmp_path,
+                                                    monkeypatch):
+    values = np.arange(3 * 4 * 3, dtype=float).reshape(3, 4, 3) + 1
+    figures = self._capture_pages(monkeypatch)
+    compare._plot_one_block(TestSliceTitles._field(values),
+                            TestSliceTitles._field(values * 1.2),
+                            (None, ) * 6, ["before", "after"], "sim: field",
+                            str(tmp_path / "field.png"),
+                            None,
+                            fig_per_quantity=True,
+                            diff=True)
+    assert len(figures) == 1
+    assert len([ax for ax in figures[0].axes
+                if ax.get_position().width > 0.05]) == 9
+    assert (tmp_path / "field.png").is_file()
+    assert figures[0]._suptitle.get_text() == "sim: field"
+
+  @pytest.mark.parametrize("shape,diff", [
+      ((5, 6), False),
+      ((5, 3), True),
+      ((3, 4, 3), False),
+      ((3, 4, 2), True),
+  ])
+  def test_exactly_six_panels_use_two_rows_and_three_columns(self, monkeypatch,
+                                                               shape, diff):
+    values = np.arange(np.prod(shape), dtype=float).reshape(shape) + 1
+    figures = self._capture_pages(monkeypatch)
+    compare._plot_one_block(TestSliceTitles._field(values),
+                            TestSliceTitles._field(values * 1.2),
+                            (None, ) * 6, ["before", "after"], "sim: field",
+                            None,
+                            None,
+                            diff=diff)
+    assert len(figures) == 1
+    panels = (figures[0].axes if len(shape) == 2 else [
+        ax for ax in figures[0].axes if ax.get_position().width > 0.05
+    ])
+    assert len(panels) == 6
+    assert len({round(ax.get_position().x0, 2) for ax in panels}) == 3
+    assert len({round(ax.get_position().y0, 2) for ax in panels}) == 2
+
+  def test_split_2d_diff_keeps_shared_and_independent_scales(self, monkeypatch):
+    values = np.arange(3 * 4 * 3, dtype=float).reshape(3, 4, 3) + 1
+    figures = self._capture_pages(monkeypatch)
+    compare._plot_one_block(TestSliceTitles._field(values),
+                            TestSliceTitles._field(values * 1.2),
+                            (None, ) * 6, ["before", "after"], "sim: field",
+                            None,
+                            None,
+                            diff=True)
+    panels = [ax for ax in figures[0].axes
+              if ax.get_position().width > 0.05]
+    clims = [ax.collections[0].get_clim() for ax in panels]
+    assert clims[0] == clims[1]
+    assert clims[0] != clims[2]
+    assert clims[3] == clims[4]
+    assert clims[3] != clims[5]
+
+  def test_selected_index_appears_on_every_split_page(self, monkeypatch):
+    values = np.ones((3, 4, 5, 4))
+    figures = self._capture_pages(monkeypatch)
+    compare._plot_one_block(TestSliceTitles._field(values),
+                            TestSliceTitles._field(values * 1.2),
+                            (None, None, "2", None, None, None),
+                            ["before", "after"],
+                            "rt_gk_helical_adapt_src_sheath_surr_3x2v_p1: "
+                            "ion_source_M3par", None, None,
+                            diff=True)
+    assert len(figures) == 2
+    assert all("z2=2" in fig._suptitle.get_text() for fig in figures)
+    assert all(max(map(len, fig._suptitle.get_text().splitlines())) <= 60
+               for fig in figures)
 
 
 class TestParseLabelPair:
@@ -1060,6 +1196,57 @@ class TestCombinedPdf:
     assert report.plotted == ("field_energy", )
     pdf_path = os.path.join(str(tmp_path / "out"), "postgkyl_compare_sims.pdf")
     assert _pdf_page_count(pdf_path) == 1 + 3  # title page + one per block
+
+  def test_multiblock_diff_pages_and_file_names(self, tmp_path):
+    paths = [tmp_path / "baseline", tmp_path / "candidate"]
+    for path, scale in zip(paths, (1.0, 1.2)):
+      path.mkdir()
+      for block in range(2):
+        values = np.arange(5 * 4, dtype=float).reshape(5, 4) * scale + 1
+        _write_dynvec(str(path), f"sim_b{block}", "many", np.arange(5),
+                      values)
+    report = _only(
+        compare.sims(str(paths[0]),
+                     str(paths[1]),
+                     must_include=["many"],
+                     num_plots=1,
+                     diff=True,
+                     out_dir=str(tmp_path / "pdf")))
+    assert report.plotted == ("many", )
+    assert _pdf_page_count(tmp_path / "pdf" / "postgkyl_compare_sims.pdf") == 5
+
+    compare.sims(str(paths[0]),
+                 str(paths[1]),
+                 must_include=["many"],
+                 num_plots=1,
+                 diff=True,
+                 file_per_fig=True,
+                 out_dir=str(tmp_path / "images"))
+    assert sorted(p.name for p in (tmp_path / "images").iterdir()) == [
+        "many_b0_p1.jpg", "many_b0_p2.jpg", "many_b1_p1.jpg",
+        "many_b1_p2.jpg"
+    ]
+
+    compare.sims(str(paths[0]),
+                 str(paths[1]),
+                 must_include=["many"],
+                 num_plots=1,
+                 diff=True,
+                 file_per_fig=True,
+                 fig_per_quantity=True,
+                 out_dir=str(tmp_path / "unlimited"))
+    assert sorted(p.name for p in (tmp_path / "unlimited").iterdir()) == [
+        "many_b0.jpg", "many_b1.jpg"
+    ]
+    compare.sims(str(paths[0]),
+                 str(paths[1]),
+                 must_include=["many"],
+                 num_plots=1,
+                 diff=True,
+                 fig_per_quantity=True,
+                 out_dir=str(tmp_path / "unlimited_pdf"))
+    assert _pdf_page_count(tmp_path / "unlimited_pdf" /
+                           "postgkyl_compare_sims.pdf") == 3
 
   def test_batch_writes_one_combined_pdf(self, tmp_path):
     base = tmp_path / "baseline"

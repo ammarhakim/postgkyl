@@ -307,6 +307,127 @@ class PostgkylSession:
             (gkyl-backed).
         """
 
+  def compare_sims(self,
+                   path0: str,
+                   path1: str,
+                   *,
+                   batch: bool = False,
+                   out_dir: str | None = None,
+                   file_per_fig: bool = False,
+                   fig_per_quantity: bool = False,
+                   pdf_name: str | None = None,
+                   num_plots: int = 5,
+                   must_include: list[str] | tuple[str, ...] | None = None,
+                   exclude: list[str] | tuple[str, ...] | None = None,
+                   labels: str | None = None,
+                   z0: str | None = None,
+                   z1: str | None = None,
+                   z2: str | None = None,
+                   z3: str | None = None,
+                   z4: str | None = None,
+                   z5: str | None = None,
+                   format: str = 'jpg',
+                   frame: int | None = None,
+                   diff: bool = False,
+                   verbose: bool = False) -> PostgkylSession:
+    r"""Compare two Gkeyll simulations' output and plot their biggest differences.
+
+        Finds every output quantity both sims wrote, ranks the shared ones by
+        :func:`postgkyl.numerics.max_abs_rel_diff` (largest relative difference
+        first), and plots ``num_plots`` of them -- always including every
+        ``must_include`` quantity. Use ``exclude`` to skip specific quantities or
+        prefixes.
+
+        A 2-D field (or a 3-D+ field once ``z0``..``z5`` have reduced it to 2-D)
+        is drawn with the two sims side by side on a shared color scale. Any axis
+        left unpinned by ``z0``..``z5`` beyond the 2 ``plot`` can draw is pinned
+        automatically: at the point where the two sims differ most (by relative
+        difference), the axes along which that difference itself changes fastest
+        (a normalized, 2nd-order finite-difference estimate) are kept, and every
+        other unpinned axis is fixed at its own index there -- so a 3-D, 4-D, 5-D,
+        or 6-D quantity is always plottable with no selectors at all, picking
+        whichever cross-section is most informative for that specific pair of
+        sims rather than an arbitrary fixed coordinate.
+
+        ``diff`` additionally plots ``baseline - candidate``: one more
+        overlay-adjacent panel per component for a dynvector/1-D field, or one
+        more side-by-side panel per component (with its own independent color
+        scale, since a difference is usually much smaller than the original
+        quantity) for a 2-D field. Labeled ``"<label0> - <label1>"`` for a
+        single-component quantity, or ``"<label0>_c<i> - <label1>_c<i>"`` per
+        component for a multi-component one.
+
+        Each figure contains at most six panels by default. Complete component
+        groups continue on numbered pages when necessary: a 1-D component needs
+        one panel (two with ``diff``), and a 2-D component needs two (three with
+        ``diff``). ``fig_per_quantity`` restores the unlimited, single-figure
+        layout for each quantity or multiblock patch.
+
+        By default, every plotted quantity is collected into one combined,
+        PDF, whose path is ``<out_dir>/<pdf_name>`` if ``out_dir`` was given, else
+        ``<cwd>/<pdf_name>``. Alternatively, passing ``file_per_fig`` yields
+        individual image files.
+
+        ``batch`` reinterprets ``path0``/``path1`` as directories with multiple
+        simulations each (rather than having one simulation each): each holds one
+        subdirectory per simulation. Subdirectories or simulations present in both
+        are compared.
+
+        Args:
+          path0: the first simulation's output directory (w/o --batch) or a
+            directory with one subdirectory per simulation (w/ --batch) to compare
+            against --path1.
+          path1: Path to data from the second simulation(s).
+          batch: Compare every simulation two directories-of-sims share.
+          pdf_name: Filename for the combined PDF; defaults to
+            ``"postgkyl_compare_sims.pdf"``.
+          out_dir: The path to the directory where the combined PDF is written to
+            (defaults to ``<cwd>/``). With --file_per_fig this is the directory
+            individual figures are written to (defaults to
+            ``<cwd>/postgkyl_compare_sims``).
+          file_per_fig: Write individual image files instead of one combined PDF.
+            A quantity that spans figures gets numbered ``_p1``, ``_p2``, ... files.
+          fig_per_quantity: Keep every component of a quantity on one figure,
+            without the default six-panel limit.
+          num_plots: Number of quantities to plot, including every
+            ``must_include`` entry.
+          must_include: Names of quantities (e.g. ``"field_energy"``) that must
+            beplotted.
+          exclude: Quantity-name prefixes to skip (e.g. ``"geo_"``, ``"bc_"``).
+          labels: The two legend labels for ``path0``/``path1`` as one
+            comma-separated string, e.g. ``"baseline,candidate"``; defaults to
+            each path's shortest distinguishing path segment
+          z0: Selector for coordinate direction 0.
+          z1: Selector for coordinate direction 1.
+          z2: Selector for coordinate direction 2.
+          z3: Selector for coordinate direction 3.
+          z4: Selector for coordinate direction 4.
+          z5: Selector for coordinate direction 5.
+          format: Output image file extension (e.g. ``"jpg"``, ``"png"``,
+            ``"pdf"``, ``"svg"``) if ``file_per_fig`` is set.
+          frame: Frame to compare for framed (per-timestep) quantities; defaults
+            to the latest frame both sims wrote. Quantities with no frame index
+            (dynvectors, single-snapshot fields) ignore this.
+          diff: Also plot ``baseline - candidate``, appended after the
+            baseline/candidate panel(s).
+          verbose: Print the full per-quantity report at the CLI (the ``repr`` of
+            the returned value). Default: CLI prints a one-line-per-sim summary.
+
+        Returns:
+          A dict mapping each compared simulation's name to its
+          :class:`CompareSimsReport`. Without ``batch``, this has exactly one
+          entry, keyed by ``path0``'s basename. With ``batch``, one entry per
+          simulation subdirectory shared by ``path0`` and ``path1``.
+
+        Raises:
+          ValueError: a ``must_include`` quantity is missing from either sim, two
+            compared files are structurally incompatible (block count or array
+            shape mismatch), ``labels`` is not exactly two comma-separated,
+            non-empty labels, ``pdf_name`` was given together with
+            ``file_per_fig``, or (``batch`` only) ``path0`` and ``path1`` share no
+            simulation subdirectory.
+        """
+
   def differentiate(self,
                     *,
                     direction: int | None = None,

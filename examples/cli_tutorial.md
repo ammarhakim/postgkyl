@@ -268,8 +268,15 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
     --pdf_name toy_sim_comparison.pdf
 ```
 
-`--file_per_fig` opts into individual image files instead (one per plotted
-quantity), ignoring `--pdf_name`. Without `--out_dir`, these go under
+`compare_sims` keeps at most six panels (two rows by three columns) on each
+figure. Complete components continue on numbered PDF pages when needed;
+`--diff` panels count toward the six. `--fig_per_quantity` restores the
+unlimited, single-figure layout for each quantity (or multiblock patch).
+
+`--file_per_fig` opts into individual image files instead, ignoring
+`--pdf_name`. A quantity needing multiple figures gets `_p1`, `_p2`, ...
+file suffixes; an unsplit quantity keeps its original filename. Without
+`--out_dir`, these go under
 `./postgkyl_compare_sims/` in the current directory:
 
 ```bash
@@ -277,6 +284,9 @@ pgkyl compare_sims --path0 tests/test_data/generated/compare_sims/baseline/toy_s
     --path1 tests/test_data/generated/compare_sims/candidate/toy_sim \
     --file_per_fig --out_dir /tmp/compare_sims_tutorial
 ```
+
+Use `--fig_per_quantity` with either output mode to keep all components
+of each quantity in one figure.
 
 `--diff` additionally plots `baseline - candidate`: one more
 overlay-adjacent panel per component for a dynvector, or one more
