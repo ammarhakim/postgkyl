@@ -29,6 +29,7 @@ from postgkyl.gdata.load import load
 from postgkyl.gdatastate import materialize_point_values
 from postgkyl.numerics import max_abs_rel_diff
 from postgkyl.numerics.grid_centering import sample_coordinates
+from postgkyl.numerics.idx_parser import idx_parser
 from postgkyl.operations.interpolate import interpolate
 from postgkyl.operations.select import select
 from postgkyl.render.matplotlib import plot
@@ -100,7 +101,6 @@ class _ReportDict(dict):
   prints a one-line-per-sim summary instead; ``--verbose``/``-v`` restores
   the full dict repr. Python callers of :func:`sims` are unaffected either
   way -- this is still a real ``dict``, just one whose __repr__ is overridden."""
-
   def __init__(self, data: dict[str, CompareSimsReport], *, verbose: bool):
     super().__init__(data)
     self._verbose = verbose
@@ -297,7 +297,8 @@ def _dominant_axes(values0: np.ndarray, values1: np.ndarray,
 def _reduced(data0, data1, zs: tuple):
   """Apply the caller's ``z0``..``z5`` selectors to both datasets, then pin
   any remaining axes beyond 2 via :func:`_dominant_axes` so both are
-  plottable regardless of their original dimensionality."""
+  plottable regardless of their original dimensionality. Return the pinned
+  indices alongside the reduced datasets for the plot title."""
   num_dims = min(data0.num_dims, data1.num_dims)
   explicit = {
       f"z{d}": z
@@ -306,9 +307,21 @@ def _reduced(data0, data1, zs: tuple):
   free_axes = [d for d in range(num_dims) if f"z{d}" not in explicit]
   auto = _dominant_axes(data0.values, data1.values, data0.grid, free_axes)
   kwargs = {**explicit, **{f"z{d}": idx for d, idx in auto.items()}}
+  pinned = {}
+  for d, z in enumerate(zs[:num_dims]):
+    if z is None:
+      continue
+    grid = data0.grid[d]
+    if grid.ndim == 1:
+      index = idx_parser(z, grid, data0.values.shape[d] == len(grid))
+    else:
+      index = idx_parser(z) if str(z).lstrip("-").isdigit() else None
+    if isinstance(index, int):
+      pinned[d] = index % data0.values.shape[d]
+  pinned.update(auto)
   if not kwargs:
-    return data0, data1
-  return select(data0, **kwargs), select(data1, **kwargs)
+    return data0, data1, pinned
+  return select(data0, **kwargs), select(data1, **kwargs), pinned
 
 
 def _resolve_frame(frame: int | None, path0: str, stem0: str, path1: str,
@@ -341,10 +354,8 @@ def _diff_quantity(path0: str, path1: str, quantity: str, stem0: str,
   return QuantityDiff(quantity, max_abs, max_rel)
 
 
-def _save_or_collect(fig, out_path: str | None, pdf: PdfPages | None) -> None:
-  """Either save ``fig`` to ``out_path`` (today's behavior, ``fig`` was
-  already written by ``plot(..., saveas=out_path)`` and this is a no-op), or
-  append it as one page of ``pdf`` and close it -- closing lets
+def _save_or_collect(fig, pdf: PdfPages | None) -> None:
+  """Append ``fig`` as one page of ``pdf`` and close it -- closing lets
   ``plot(..., figure=0)`` safely recreate a fresh figure 0 the next time
   it's called, confirmed by testing (a closed figure number is reused
   cleanly, with no stale axes/legend bleeding into the next quantity)."""
@@ -442,7 +453,13 @@ def _plot_one_block(data0,
                     out_path: str | None,
                     pdf: PdfPages | None,
                     diff: bool = False) -> None:
-  data0, data1 = _reduced(_point_values(data0), _point_values(data1), zs)
+  data0, data1, pinned = _reduced(_point_values(data0), _point_values(data1),
+                                  zs)
+  if pinned:
+    title += " (" + ", ".join(f"z{d}={index}"
+                              for d, index in sorted(pinned.items())) + ")"
+  if len(title) > 60:
+    title = title.replace(": ", ":\n", 1)
   # Not data0 - data1: that operator enforces a strict (rtol=1e-9) grid-
   # coordinate match, but two independently-run sims' grids commonly agree
   # only to ~1e-6 relative (platform/compiler floating-point noise) even
@@ -454,7 +471,6 @@ def _plot_one_block(data0,
   # equal by _diff_quantity before either dataset reaches this function.
   diff_data = (data0._result(data0.grid, data0.values -
                              data1.values) if diff else None)
-  saveas = out_path if pdf is None else None
   num_comps = data0.num_comps
   # plot()'s explicit legend_labels are used verbatim on every component
   # subplot, with no added _cN suffix (a deliberate, documented contract
@@ -513,7 +529,7 @@ def _plot_one_block(data0,
                clear=True,
                title=title,
                no_show=True,
-               saveas=(None if diff_data is not None else saveas),
+               saveas=None,
                **extra_axes_kwargs,
                **legend_kwargs)
     if diff_data is not None:
@@ -522,7 +538,7 @@ def _plot_one_block(data0,
                  start_axes=num_comps,
                  num_axes=num_comps,
                  no_show=True,
-                 saveas=saveas,
+                 saveas=None,
                  legend_labels=diff_piece_labels)
   else:
     if diff_data is None:
@@ -533,7 +549,7 @@ def _plot_one_block(data0,
                  clear=True,
                  title=title,
                  no_show=True,
-                 saveas=saveas,
+                 saveas=None,
                  **legend_kwargs)
     else:
       # Unlike 1-D, a 2-D (pcolormesh) panel brings along its own colorbar
@@ -560,9 +576,13 @@ def _plot_one_block(data0,
                  clear=True,
                  title=title,
                  no_show=True,
-                 saveas=saveas,
+                 saveas=None,
                  legend_labels=all_labels)
-  _save_or_collect(fig, out_path, pdf)
+  if fig._suptitle is not None:
+    fig._suptitle.set_fontsize(10)
+  if out_path is not None:
+    fig.savefig(out_path, dpi=200)
+  _save_or_collect(fig, pdf)
 
 
 def _compare_one(
@@ -583,7 +603,6 @@ def _compare_one(
     format: str,
     frame: int | None,
     pdf: PdfPages | None = None,
-    title_prefix: str = "",
     diff: bool = False,
 ) -> CompareSimsReport:
   """One single-sim comparison -- the body ``sims()`` runs once directly, or
@@ -594,8 +613,8 @@ def _compare_one(
   ``pdf``, when given, collects every quantity's figure as a page instead of
   writing individual image files (``out_dir``/``format`` are then unused for
   plotting, though ``out_dir`` is still reported on the returned
-  :class:`CompareSimsReport`). ``title_prefix`` is prepended to each page's
-  title (e.g. ``"<sim_name>: "`` in batch mode).
+  :class:`CompareSimsReport`). Each page is titled using the simulation name
+  parsed from the plotted file, which may differ from its batch directory.
   """
   exclude_prefixes = _DEFAULT_EXCLUDE_PREFIXES + tuple(exclude or ())
   must_include = list(must_include or [])
@@ -652,6 +671,7 @@ def _compare_one(
   plotted: list[str] = []
   for quantity in selected:
     stem0, stem1 = quantities0[quantity], quantities1[quantity]
+    sim_name = io.parse_output_name(f"{stem0}.gkyl").sim
     common_frame = _resolve_frame(frame, path0, stem0, path1, stem1)
     out_path = None if pdf is not None else os.path.join(
         out_dir, f"{quantity}.{format}")
@@ -662,7 +682,7 @@ def _compare_one(
                    common_frame,
                    zs,
                    resolved_labels,
-                   f"{title_prefix}{quantity}",
+                   f"{sim_name}: {quantity}",
                    out_path,
                    pdf,
                    diff=diff)
@@ -722,8 +742,7 @@ def _batch(
       os.path.basename(os.path.normpath(path1))
   ]
   return {
-      name:
-      _compare_one(
+      name: _compare_one(
           os.path.join(path0, name),
           os.path.join(path1, name),
           out_dir=out_dir if pdf is not None else os.path.join(out_dir, name),
@@ -740,7 +759,6 @@ def _batch(
           format=format,
           frame=frame,
           pdf=pdf,
-          title_prefix=f"{name}: ",
           diff=diff,
       )
       for name in common
@@ -933,9 +951,9 @@ def sims(
   if not file_per_fig:
     pdf_dir = out_dir if out_dir is not None else os.getcwd()
     pdf_path = os.path.join(pdf_dir, pdf_name or _DEFAULT_PDF_NAME)
+    sim_names = _shared_subdirs(path0, path1) if batch else None
     os.makedirs(pdf_dir, exist_ok=True)
     with PdfPages(pdf_path) as pdf:
-      sim_names = _shared_subdirs(path0, path1) if batch else None
       pdf.savefig(
           _title_page_figure(path0, path1, batch=batch, sim_names=sim_names))
       return _ReportDict(_run(pdf_dir, pdf), verbose=verbose)
