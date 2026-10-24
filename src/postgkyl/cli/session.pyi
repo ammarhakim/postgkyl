@@ -1261,6 +1261,9 @@ class PostgkylSession:
                   label: str | None = None) -> PostgkylSession:
     r"""Interpolate DG (modal/nodal) data at uniformly spaced points in each cell.
 
+        Surface-modal data are evaluated along tangential cells only; their face
+        coordinates along the perpendicular axis remain unchanged.
+
         Basis, polynomial order, and value_form are properties of ``data`` itself,
         fixed at load time (``pg.load(..., basis_type=..., poly_order=...,
         value_form=...)`` or the CLI's ``-b``/``-p``/``-v``) -- this verb only
@@ -1361,6 +1364,8 @@ class PostgkylSession:
         ``npoints`` reference points span the whole cell (``[-1, 1]``, endpoints
         included) and a NaN is spliced in at every cell interface, so a plot breaks
         the curve there rather than drawing a spuriously smooth line across it.
+        For surface coefficients, only tangential cells are expanded; the surface
+        coordinate stays fixed, including after selecting one face.
 
         Basis, polynomial order, and value_form are properties of ``data`` itself,
         fixed at load time, same as ``interpolate``. The result is flagged

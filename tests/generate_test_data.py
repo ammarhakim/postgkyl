@@ -81,6 +81,69 @@ def num_comps(basis: str, ndim: int, poly_order: int) -> int:
   return table[ndim - 1][idx_fn(poly_order)]
 
 
+def _generate_surface_fields(out_dir: Path) -> None:
+  """Exact affine fields stored in Gkeyll's doubled surface components."""
+  for ndim in (1, 2, 3):
+    cells = [d + 2 for d in range(ndim)]
+    lower = [-1.0 + d for d in range(ndim)]
+    upper = [2.0 + 2 * d for d in range(ndim)]
+    edges = [
+        np.linspace(lo, hi, count + 1)
+        for lo, hi, count in zip(lower, upper, cells)
+    ]
+    for direction in range(ndim):
+      tangents = [d for d in range(ndim) if d != direction]
+      block = (1, 2, 4)[ndim - 1]
+      norm = 2.0**((ndim - 1) / 2.0)
+      surface_shape = [
+          count + (d == direction) for d, count in enumerate(cells)
+      ]
+      coefficients = np.zeros((*surface_shape, 2 * block))
+      for idx in np.ndindex(*surface_shape):
+        surface = edges[direction][idx[direction]]
+        tangent_centers = [
+            0.5 * (edges[d][idx[d]] + edges[d][idx[d] + 1]) for d in tangents
+        ]
+        slopes = [3.0, -4.0]
+        value = 5.0 + 2.0 * surface + sum(
+            slopes[j] * coord for j, coord in enumerate(tangent_centers))
+        coefficients[idx + (0, )] = norm * value
+        coefficients[idx + (block, )] = norm * (7.0 - value)
+        for j, d in enumerate(tangents):
+          mode = norm * slopes[j] * np.diff(edges[d])[idx[d]] / (2 * np.sqrt(3))
+          coefficients[idx + (j + 1, )] = mode
+          coefficients[idx + (block + j + 1, )] = -mode
+
+      packed = np.zeros((*cells, 4 * block))
+      head = tuple(
+          slice(None, -1) if d == direction else slice(None)
+          for d in range(ndim))
+      tail = tuple(-1 if d == direction else slice(None) for d in range(ndim))
+      packed[..., :2 * block] = coefficients[head + (slice(None), )]
+      packed[..., 2 * block:] = packed[..., :2 * block]
+      packed[tail + (slice(2 * block, None), )] = coefficients[tail +
+                                                               (slice(None), )]
+      write_gkyl_field(
+          out_dir / f"surface_{ndim}d_dir{direction}.gkyl",
+          cells,
+          lower,
+          upper,
+          packed,
+          1,
+          "serendipity",
+          metadata={
+              "value_form":
+              f"modal_surf{direction}",
+              "analytic_function":
+              "f0=5+2*s+3*t0-4*t1; f1=7-f0 (omit absent tangents)",
+              "generation_method":
+              "Exact affine orthonormal surface-modal coefficients; the "
+              "upper face is stored in the last cell's second half.",
+              "description":
+              "Two analytic surface fields."
+          })
+
+
 def write_gkyl_field(
     path: Path,
     cells: list[int],
@@ -827,6 +890,7 @@ def generate_all(out_dir: Path | str) -> None:
   _generate_moment_frames(out_dir)
   _generate_fourier_samples(out_dir)
   _generate_representation_fields(out_dir)
+  _generate_surface_fields(out_dir)
   _generate_compare_sims_fixtures(out_dir)
 
   # Point samples of a plateau decay, 1.4 -> 1.2, on a narrow offset grid.
