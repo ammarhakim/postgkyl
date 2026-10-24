@@ -76,7 +76,7 @@ def _surface_binary(op, a, b, pa, pb):
         result *= -1.0
       shift = (scalar if scalar_first or op is operator.add else -scalar)
       result[..., ::layout.block_size] += dg.modal.constant_mode_shift(
-          layout.expansion_args[1], shift)
+          layout.ndim - 1, shift)
     else:
       raise NotImplementedError("surface nonlinear arithmetic requires a DG "
                                 "kernel; call .interpolate() first")

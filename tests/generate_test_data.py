@@ -94,7 +94,7 @@ def _generate_surface_fields(out_dir: Path) -> None:
     for direction in range(ndim):
       tangents = [d for d in range(ndim) if d != direction]
       block = (1, 2, 4)[ndim - 1]
-      norm = 2.0**(max(1, ndim - 1) / 2.0)
+      norm = 2.0**((ndim - 1) / 2.0)
       surface_shape = [
           count + (d == direction) for d, count in enumerate(cells)
       ]

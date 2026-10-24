@@ -40,14 +40,6 @@ class DGLayout:
   def basis_identity(self):
     return (*self.basis_args, self.cdim, self.vdim, self.surface_dir)
 
-  @property
-  def expansion_args(self):
-    """Basis used by each stored cell or surface coefficient block."""
-    if self.surface_dir is None:
-      return self.basis_args
-    return (self.basis_type, max(1, self.ndim - 1),
-            0 if self.ndim == 1 else self.poly_order)
-
 
 def resolve_basis_split(ctx: dict, ndim: int, ncomp: int) -> tuple[int, int]:
   """Resolve hybrid metadata without guessing between valid phase spaces.
@@ -116,17 +108,19 @@ def dg_layout(data: "GDataState") -> DGLayout | None:
       raise ValueError("surface coordinates must locate every face and "
                        "bound each tangential cell")
   cdim, vdim = resolve_basis_split(ctx, ndim, values.shape[-1])
-  expansion_dim = max(1, ndim - 1) if surface_dir is not None else ndim
-  expansion_order = 0 if surface_dir is not None and ndim == 1 else int(order)
-  b = basis.get_basis(
-      kind, expansion_dim, expansion_order,
-      **({} if surface_dir is not None else {
-          "cdim": cdim,
-          "vdim": vdim
-      }))
   nq = quadrature_order(data) if form == "quad" else None
-  block = (
-      b.num_quad if nq is None else nq**ndim) if form == "quad" else b.num_basis
+  if surface_dir is not None and ndim == 1:
+    block = 1  # Gkeyll stores the 0-D face value without basis normalization.
+  else:
+    expansion_dim = ndim - 1 if surface_dir is not None else ndim
+    b = basis.get_basis(
+        kind, expansion_dim, int(order),
+        **({} if surface_dir is not None else {
+            "cdim": cdim,
+            "vdim": vdim
+        }))
+    block = ((b.num_quad if nq is None else nq**ndim)
+             if form == "quad" else b.num_basis)
   if block <= 0 or values.shape[-1] == 0 or values.shape[-1] % block:
     raise ValueError(f"{form} component count {values.shape[-1]} must contain "
                      f"complete field blocks of {block}")

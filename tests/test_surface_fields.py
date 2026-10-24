@@ -114,15 +114,20 @@ def test_selected_surface_local_poly_can_plot():
   result.plot(no_show=True)
 
 
-@needs_gkeyll
 def test_1d_surface_plots_physical_values_at_faces():
   data = pg.load(_filename(1, 0))
   points = materialize_point_values(data)
   expected = 5.0 + 2.0 * data.grid[0]
   assert points.is_interpolated
   np.testing.assert_array_equal(points.grid[0], data.grid[0])
+  np.testing.assert_allclose(data.values[:, 0], expected, **ROUND_OFF)
   np.testing.assert_allclose(points.values[:, 0], expected, **ROUND_OFF)
   np.testing.assert_allclose(points.values[:, 1], 7.0 - expected, **ROUND_OFF)
+  np.testing.assert_allclose(data.interpolate().values, data.values,
+                             **ROUND_OFF)
+  np.testing.assert_allclose(data.local_poly().values, data.values, **ROUND_OFF)
+  np.testing.assert_allclose((data + 2.0).interpolate().values,
+                             data.values + 2.0, **ROUND_OFF)
   figure = data.select(comp=0).plot(no_show=True)
   line = figure.axes[0].lines[0]
   np.testing.assert_array_equal(line.get_xdata(), data.grid[0])

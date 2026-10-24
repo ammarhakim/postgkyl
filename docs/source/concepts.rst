@@ -41,8 +41,8 @@ their original interpretation.
 
 To plot the DG polynomial along a selected face with cell jumps visible, use
 ``pg.load(path).select(z1=0).local_poly().plot()`` for a ``modal_surf1`` file.
-In a 1D ``modal_surf0`` file, each face has only one constant coefficient;
-``plot()`` evaluates it and places the value directly at the cell boundary.
+In a 1D ``modal_surf0`` file, Gkeyll stores the face value directly, without
+DG basis normalization. ``plot()`` places each stored value at its boundary.
 
 Nodal and quadrature values support pointwise arithmetic, including native
 data. The native/NumPy backend and the value representation are separate

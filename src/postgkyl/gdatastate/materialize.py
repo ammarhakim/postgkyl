@@ -17,9 +17,10 @@ def materialize_point_values(data: "GDataState",
   """Return ordinary NumPy point values with their actual coordinates.
 
   Already unpacked values pass through. Packed nodal/quad fields are scattered
-  onto their tensor point grid and cease to carry a packed value_form. A 1-D
-  surface has one constant coefficient per face, so it is evaluated at that
-  face. Other modal coefficients require an explicit evaluation choice.
+  onto their tensor point grid and cease to carry a packed value_form. Gkeyll
+  stores 1-D surface values directly at the faces, so they become point values
+  without a basis transform. Other modal coefficients require an explicit
+  evaluation choice.
   """
   layout = dg_layout(data)
   if layout is None:

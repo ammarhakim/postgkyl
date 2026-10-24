@@ -39,10 +39,13 @@ def _expansion_basis(num_dims, poly_order, surface_dir, split):
     return num_dims, poly_order, split
   if not 0 <= surface_dir < num_dims:
     raise ValueError("surface direction is out of range")
-  return max(1, num_dims - 1), (0 if num_dims == 1 else poly_order), {
-      "cdim": None,
-      "vdim": None
-  }
+  return num_dims - 1, poly_order, {"cdim": None, "vdim": None}
+
+
+def _point_surface(values, grid):
+  """A 1-D surface is a 0-D point: Gkeyll stores its value directly."""
+  _validate_coefficients(values, grid, 1, surface_dir=0)
+  return [np.array(grid[0], copy=True)], np.array(values, copy=True)
 
 
 def _make_mesh(num_interp: int, edges: np.ndarray) -> np.ndarray:
@@ -108,14 +111,15 @@ def interpolate(values: np.ndarray,
 
   if not isinstance(num_interp, (int, np.integer)) or num_interp < 1:
     raise ValueError("num_interp must be a positive integer")
+  if num_dims == 1 and surface_dir == 0:
+    return _point_surface(values, grid)
   expansion_dim, expansion_order, split = _expansion_basis(
       num_dims, poly_order, surface_dir, split)
   nodes = num_basis(expansion_dim, expansion_order, basis_type, **split)
   _validate_coefficients(values, grid, nodes, surface_dir)
   num_fields = values.shape[-1] // nodes
-  basis_interp = 1 if surface_dir is not None and num_dims == 1 else num_interp
   c_mat = gpython_basis.interpolation_matrix(basis_type, expansion_dim,
-                                             expansion_order, basis_interp,
+                                             expansion_order, num_interp,
                                              **split)
 
   n2m = (gpython_basis.nodal_to_modal_matrix(
@@ -191,6 +195,8 @@ def local_poly(values: np.ndarray,
 
   if not isinstance(npoints, (int, np.integer)) or npoints < 2:
     raise ValueError("npoints must be an integer >= 2")
+  if num_dims == 1 and surface_dir == 0:
+    return _point_surface(values, grid)
   nodes_1d = np.linspace(-1.0, 1.0, npoints)
   num_nodes = len(nodes_1d)
 
@@ -199,11 +205,9 @@ def local_poly(values: np.ndarray,
   nb = num_basis(expansion_dim, expansion_order, basis_type, **split)
   _validate_coefficients(values, grid, nb, surface_dir)
   num_fields = values.shape[-1] // nb
-  eval_nodes = (np.array([0.0])
-                if surface_dir is not None and num_dims == 1 else nodes_1d)
   c_mat = gpython_basis.eval_matrix(
       basis_type, expansion_dim, expansion_order,
-      gpython_basis.tensor_points(eval_nodes, expansion_dim), **split)
+      gpython_basis.tensor_points(nodes_1d, expansion_dim), **split)
 
   n2m = (gpython_basis.nodal_to_modal_matrix(
       basis_type, expansion_dim, expansion_order, **split) if nodal else None)

@@ -26,7 +26,7 @@ def materialize_plot_data(data: "GDataState") -> "GDataState":
   """Keep interior modal coefficients on their grid; materialize point values.
 
   Interior modal coefficients remain separate plotting channels. A 1-D surface
-  coefficient has one unambiguous face value and is evaluated for plotting.
+  stores the face values directly, so they are plotted at those coordinates.
   The input representation is unchanged.
   """
   if data.ctx.get("value_form", "modal") == "modal":
